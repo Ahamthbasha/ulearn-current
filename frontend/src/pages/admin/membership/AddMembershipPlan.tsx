@@ -1,0 +1,120 @@
+import { Formik, Form } from 'formik';
+import * as Yup from 'yup';
+import InputField from '../../../components/common/InputField';
+import { createMembership } from '../../../api/action/AdminActionApi';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+
+const AddMembershipPlan = () => {
+  const navigate = useNavigate();
+
+  const initialValues = {
+    name: '',
+    durationInDays: '',
+    price: '',
+    description: '',
+    benefits: '',
+  };
+
+  const validationSchema = Yup.object().shape({
+  name: Yup.string()
+    .required('Plan name is required')
+    .max(50, 'Plan name must be under 50 characters'),
+
+  durationInDays: Yup.number()
+    .typeError('Duration must be a number')
+    .required('Duration is required')
+    .min(30, 'Minimum duration is 30 days'),
+
+  price: Yup.number()
+    .typeError('Price must be a number')
+    .required('Price is required')
+    .min(100, 'Price must be at least ₹100'),
+
+  description: Yup.string()
+    .required('Description is required')
+    .min(20, 'Description should be at least 20 characters')
+    .max(300, 'Description should not exceed 300 characters')
+    .matches(/^[A-Za-z\s]+$/, 'Description must contain only letters and spaces'),
+
+  benefits: Yup.string()
+    .required('At least one benefit is required')
+    .test('is-valid-benefits', 'Each benefit must contain only letters and be at least 3 characters', (value) => {
+      if (!value) return false;
+      const benefits = value.split(',').map((b) => b.trim());
+      return benefits.every((b) => /^[A-Za-z\s]{3,}$/.test(b));
+    }),
+});
+
+
+  const handleSubmit = async (
+    values: typeof initialValues,
+    { setSubmitting, resetForm, setFieldError }: any
+  ) => {
+    try {
+      const payload = {
+        name: values.name,
+        durationInDays: Number(values.durationInDays),
+        price: Number(values.price),
+        description: values.description || undefined,
+        benefits: values.benefits
+          ? values.benefits.split(',').map((b) => b.trim()).filter(Boolean)
+          : [],
+      };
+
+      await createMembership(payload);
+      toast.success('Membership plan created');
+      resetForm();
+      navigate('/admin/membership');
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Failed to create membership plan';
+
+      if (message.includes('already exists')) {
+        setFieldError('name', message);
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
+      <h2 className="text-2xl font-bold mb-6 text-blue-600">Create Membership Plan</h2>
+
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ isSubmitting }) => (
+          <Form className="space-y-4">
+            <InputField name="name" label="Plan Name" placeholder="Enter plan name" />
+            <InputField name="durationInDays" label="Duration (Days)" type="number" placeholder="e.g. 30" />
+            <InputField name="price" label="Price (₹)" type="number" placeholder="e.g. 499" />
+            <InputField name="description" label="Description" placeholder="Enter description" />
+            <InputField
+              name="benefits"
+              label="Benefits (comma separated)"
+              placeholder="e.g. Access to premium courses, Priority support"
+            />
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-3 px-4 rounded-lg text-white font-semibold transition ${
+                isSubmitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Plan'}
+            </button>
+          </Form>
+        )}
+      </Formik>
+    </div>
+  );
+};
+
+export default AddMembershipPlan;
+
