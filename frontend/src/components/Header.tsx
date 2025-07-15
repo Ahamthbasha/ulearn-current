@@ -29,16 +29,27 @@ const Header = () => {
     <header className="bg-blue-600 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
-        <div className="text-2xl font-bold cursor-pointer" onClick={() => navigate("/")}>
+        <div
+          className="text-2xl font-bold cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           Ulearn
         </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-6 font-semibold">
-          <a href="/" className="hover:text-gray-300">Home</a>
-          <a href="#" className="hover:text-gray-300">Courses</a>
-          <a href="#" className="hover:text-gray-300">Instructors</a>
-          <a href="#" className="hover:text-gray-300">About Us</a>
+          <button onClick={() => navigate("/")} className="hover:text-gray-300">
+            Home
+          </button>
+          <button onClick={() => navigate("/user/courses")} className="hover:text-gray-300">
+            Courses
+          </button>
+          <button onClick={() => navigate("/user/instructors")} className="hover:text-gray-300">
+            Instructors
+          </button>
+          <button onClick={() => navigate("/user/aboutUs")} className="hover:text-gray-300">
+            About Us
+          </button>
         </nav>
 
         {/* Desktop Right Side */}
@@ -103,10 +114,18 @@ const Header = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden px-4 pb-4 space-y-2 font-semibold">
-          <a href="/" className="block hover:text-gray-300">Home</a>
-          <a href="#" className="block hover:text-gray-300">Courses</a>
-          <a href="#" className="block hover:text-gray-300">Instructors</a>
-          <a href="#" className="block hover:text-gray-300">About Us</a>
+          <button onClick={() => { setIsOpen(false); navigate("/"); }} className="block w-full text-left hover:text-gray-300">
+            Home
+          </button>
+          <button onClick={() => { setIsOpen(false); navigate("/user/courses"); }} className="block w-full text-left hover:text-gray-300">
+            Courses
+          </button>
+          <button onClick={() => { setIsOpen(false); navigate("/user/instructors"); }} className="block w-full text-left hover:text-gray-300">
+            Instructors
+          </button>
+          <button onClick={() => { setIsOpen(false); navigate("/user/aboutUs"); }} className="block w-full text-left hover:text-gray-300">
+            About Us
+          </button>
 
           {!user.email ? (
             <>

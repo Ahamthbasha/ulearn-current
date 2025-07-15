@@ -132,23 +132,51 @@ const CourseListPage = () => {
           </div>
 
           {/* Sort Filter */}
-          <div>
-            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Sort</h3>
-            <ul className="space-y-2">
-              <li onClick={() => setSortOption("price-asc")} className="cursor-pointer hover:underline">
-                Price: Low to High
-              </li>
-              <li onClick={() => setSortOption("price-desc")} className="cursor-pointer hover:underline">
-                Price: High to Low
-              </li>
-              <li onClick={() => setSortOption("name-asc")} className="cursor-pointer hover:underline">
-                A - Z
-              </li>
-              <li onClick={() => setSortOption("name-desc")} className="cursor-pointer hover:underline">
-                Z - A
-              </li>
-            </ul>
-          </div>
+<div>
+  <h3 className="text-lg font-semibold border-b pb-2 mb-3">Sort</h3>
+  <ul className="space-y-2">
+    <li 
+      onClick={() => setSortOption("price-asc")} 
+      className={`cursor-pointer px-3 py-1 rounded-md ${
+        sortOption === "price-asc" 
+          ? "bg-teal-600 text-white" 
+          : "hover:bg-gray-100"
+      }`}
+    >
+      Price: Low to High
+    </li>
+    <li 
+      onClick={() => setSortOption("price-desc")} 
+      className={`cursor-pointer px-3 py-1 rounded-md ${
+        sortOption === "price-desc" 
+          ? "bg-teal-600 text-white" 
+          : "hover:bg-gray-100"
+      }`}
+    >
+      Price: High to Low
+    </li>
+    <li 
+      onClick={() => setSortOption("name-asc")} 
+      className={`cursor-pointer px-3 py-1 rounded-md ${
+        sortOption === "name-asc" 
+          ? "bg-teal-600 text-white" 
+          : "hover:bg-gray-100"
+      }`}
+    >
+      A - Z
+    </li>
+    <li 
+      onClick={() => setSortOption("name-desc")} 
+      className={`cursor-pointer px-3 py-1 rounded-md ${
+        sortOption === "name-desc" 
+          ? "bg-teal-600 text-white" 
+          : "hover:bg-gray-100"
+      }`}
+    >
+      Z - A
+    </li>
+  </ul>
+</div>
 
           <button
             onClick={handleClearFilters}

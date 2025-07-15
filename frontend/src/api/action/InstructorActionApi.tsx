@@ -632,3 +632,70 @@ export const downloadReceiptForMembership = async(txnId:string)=>{
     throw error
   }
 }
+
+
+export const createSlot = async (payload: {
+  startTime: Date | string;
+  endTime: Date | string;
+  price: number;
+}) => {
+  try {
+    const response = await API.post(InstructorRouterEndPoints.instructorCreateSlot, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const listSlots = async()=>{
+  try {
+    const response = await API.get(`${InstructorRouterEndPoints.instructorListSlots}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const updateSlot = async (
+  slotId: string,
+  payload: {
+    startTime?: Date | string;
+    endTime?: Date | string;
+    price?: number;
+  }
+) => {
+  try {
+    const response = await API.put(`${InstructorRouterEndPoints.instructorUpdateSlot}/${slotId}`, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteSlot = async(slotId:string)=>{
+  try {
+    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteSlot}/${slotId}`)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const slotHistory = async (
+  mode: "monthly" | "yearly" | "custom",
+  params: {
+    month?: number;
+    year?: number;
+    startDate?: string;
+    endDate?: string;
+  }
+) => {
+  try {
+    const queryParams = new URLSearchParams({ mode, ...params } as any).toString();
+    const response = await API.get(`${InstructorRouterEndPoints.instructorSlotHistory}?${queryParams}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

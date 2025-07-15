@@ -7,10 +7,11 @@ export interface IWalletService {
   debitWallet(ownerId: string|Types.ObjectId, amount: number, description: string, txnId: string): Promise<IWallet | null>;
   initializeWallet(ownerId: Types.ObjectId, onModel: string, role: string): Promise<IWallet>;
 
-  creditAdminWalletByEmail(email:string,amount:number,description:string,tnxId:string):Promise<void>
-
+   creditAdminWalletByEmail(email:string,amount:number,description:string,tnxId:string):Promise<void>
    getPaginatedTransactions(ownerId: Types.ObjectId, page: number, limit: number): Promise<{ transactions: IWallet["transactions"], total: number }>
-
    getAdminWalletByEmail(email: string): Promise<IWallet | null>;
+
+   //getBalance
+   getBalance(ownerId:Types.ObjectId):Promise<number>
 
 }

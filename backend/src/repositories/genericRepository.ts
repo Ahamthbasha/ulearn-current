@@ -39,6 +39,8 @@ export interface IGenericRepository<T extends Document> {
 
   find(filter: object, populate?: PopulateArg, sort?: Record<string, SortOrder>): Promise<T[]>;
 
+  countDocuments(filter: object): Promise<number>;
+
 }
 
 export class GenericRepository<T extends Document> {
@@ -186,6 +188,11 @@ async find(
   }
 
   return await query;
+}
+
+
+async countDocuments(filter: object): Promise<number> {
+  return await this.model.countDocuments(filter);
 }
 
 

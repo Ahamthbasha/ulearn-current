@@ -75,6 +75,14 @@ const InstructorRouterEndPoints = {
   instructorMembershipPurchaseHistory : "/api/instructor/membershipOrders",
   instructorMembershipDetails : "/api/instructor/membershipOrder",
   instructorDownloadReceiptForMembership : "/api/instructor/membershipOrder",
+
+  //slot
+
+  instructorCreateSlot : "/api/instructor/createSlot",
+  instructorListSlots : "/api/instructor/slots",
+  instructorUpdateSlot : "/api/instructor/slot",
+  instructorDeleteSlot : "/api/instructor/slot",
+  instructorSlotHistory: "/api/instructor/slotStats",
 }
 
 export default InstructorRouterEndPoints

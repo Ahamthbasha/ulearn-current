@@ -11,4 +11,5 @@ export default interface IInstructorRepository extends IGenericRepository<IInstr
 
     //enrollment side use
     findById(id: string): Promise<IInstructor | null>;
+
 }

@@ -15,6 +15,8 @@ export class StudentWalletController implements IStudentWalletController{
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
       const wallet = await this.walletService.getWallet(ownerId);
+
+      console.log(wallet)
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
       console.error(error);

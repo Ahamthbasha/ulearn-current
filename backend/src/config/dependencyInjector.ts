@@ -589,9 +589,7 @@ const instructorMembershipService: IInstructorMembershipService =
 const instructorMembershipController: IInstructorMembershipController =
   new InstructorMembershipController(instructorMembershipService);
 
-
-
-  //buying membership or instructor checkout
+//buying membership or instructor checkout
 
 import { IInstructorMembershipOrderRepository } from "../repositories/interfaces/IInstructorMembershipOrderRepository";
 import { InstructorMembershipOrderRepository } from "../repositories/instructorRepository/instructorMembershipOrderRepository";
@@ -603,21 +601,27 @@ import { IInstructorMembershipOrderController } from "../controllers/instructorC
 import { InstructorMembershipOrderController } from "../controllers/instructorController/instructorMembershipOrderController";
 import { razorpay } from "../utils/razorpay";
 import { SendEmail } from "../utils/sendOtpEmail";
-import { IEmail } from "../types/Email"; 
+import { IEmail } from "../types/Email";
 
-const emailService : IEmail = new SendEmail()
-const instructorMembershipOrderRepository : IInstructorMembershipOrderRepository = new InstructorMembershipOrderRepository()
+const emailService: IEmail = new SendEmail();
+const instructorMembershipOrderRepository: IInstructorMembershipOrderRepository =
+  new InstructorMembershipOrderRepository();
 
-const instructorMembershipOrderService : IInstructorMembershipOrderService= new InstructorMembershipOrderService(instructorMembershipOrderRepository,
-  instructorMembershipRepository,
-  instructorRepository,
-  razorpay,
-  walletService,
-  emailService
-)
+const instructorMembershipOrderService: IInstructorMembershipOrderService =
+  new InstructorMembershipOrderService(
+    instructorMembershipOrderRepository,
+    instructorMembershipRepository,
+    instructorRepository,
+    razorpay,
+    walletService,
+    emailService
+  );
 
-const instructorMembershipOrderController : IInstructorMembershipOrderController = new InstructorMembershipOrderController(instructorMembershipOrderService,instructorMembershipService)
-
+const instructorMembershipOrderController: IInstructorMembershipOrderController =
+  new InstructorMembershipOrderController(
+    instructorMembershipOrderService,
+    instructorMembershipService
+  );
 
 /////////////////////ADMIN MEMBERSHIP ORDER MANAGEMENT/////////////////////////////////////
 
@@ -630,47 +634,90 @@ import { AdminMembershipOrderService } from "../services/adminServices/AdminMemb
 import { IAdminMembershipOrderController } from "../controllers/adminControllers/interface/IAdminMembershipOrderController";
 import { AdminMembershipOrderController } from "../controllers/adminControllers/adminMembershipOrderController";
 
+const adminMembershipOrderRepository: IAdminMembershipOrderRepository =
+  new AdminMembershipOrderRepository();
 
-const adminMembershipOrderRepository : IAdminMembershipOrderRepository = new AdminMembershipOrderRepository()
+const adminMembershipOrderService: IAdminMembershipOrderService =
+  new AdminMembershipOrderService(adminMembershipOrderRepository);
 
-const adminMembershipOrderService : IAdminMembershipOrderService = new AdminMembershipOrderService(adminMembershipOrderRepository)
+const adminMembershipOrderController: IAdminMembershipOrderController =
+  new AdminMembershipOrderController(adminMembershipOrderService);
 
-const adminMembershipOrderController : IAdminMembershipOrderController = new AdminMembershipOrderController(adminMembershipOrderService)
+///////////////SLOT MANAGEMENT////////////////////////////
 
+import { IInstructorSlotRepository } from "../repositories/interfaces/IInstructorSlotRepository";
+import { InstructorSlotRepository } from "../repositories/instructorRepository/instructorSlotRepository";
 
+import { IInstructorSlotService } from "../services/interface/IInstructorSlotService";
+import { InstructorSlotService } from "../services/instructorServices/InstructorSlotService";
 
+import { IInstructorSlotController } from "../controllers/instructorController/interfaces/IInstructorSlotController";
+import { InstructorSlotController } from "../controllers/instructorController/instructorSlotController";
 
+const instructorSlotRepository: IInstructorSlotRepository =
+  new InstructorSlotRepository();
 
+const instructorSlotService: IInstructorSlotService = new InstructorSlotService(
+  instructorSlotRepository
+);
 
+const instructorSlotController: IInstructorSlotController =
+  new InstructorSlotController(instructorSlotService);
 
+////////////INSTRUCTOR LISTING ON STUDENT SIDE///////////
 
+import { IStudentInstructorListingRepository } from "../repositories/interfaces/IStudentInstructorListingRepository";
+import { StudentInstructorListingRepository } from "../repositories/studentRepository/studentInstructorListingRepository";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import { IStudentInstructorListingService } from "../services/interface/IStudentInstructorListingService";
+import { StudentInstructorListingService } from "../services/studentServices/StudentInstructorListingService";
 
 
+import { IStudentInstructorListingController } from "../controllers/studentControllers/interfaces/IStudentInstructorListingController";
+import { StudentInstructorListingController } from "../controllers/studentControllers/studentInstructorListingController";
+
+
+const studentInstructorListingRepository : IStudentInstructorListingRepository = new StudentInstructorListingRepository()
+
+const studentInstructorListingService : IStudentInstructorListingService = new StudentInstructorListingService(studentInstructorListingRepository)
+
+const studentInstructorListingController : IStudentInstructorListingController = new StudentInstructorListingController(studentInstructorListingService)
+
+////student slot viewing////
+
+import { IStudentSlotRepository } from "../repositories/interfaces/IStudentSlotRepository";
+import { StudentSlotRepository } from "../repositories/studentRepository/StudentSlotRepository";
+
+import { IStudentSlotService } from "../services/interface/IStudentSlotService";
+import { StudentSlotService } from "../services/studentServices/StudentSlotService";
+
+
+import { IStudentSlotController } from "../controllers/studentControllers/interfaces/IStudentSlotController";
+import { StudentSlotController } from "../controllers/studentControllers/studentSlotController";
+
+const studentSlotRepository : IStudentSlotRepository = new StudentSlotRepository()
+
+const studentSlotService : IStudentSlotService = new StudentSlotService(studentSlotRepository)
+
+const studentSlotController : IStudentSlotController = new StudentSlotController(studentSlotService)
+
+///////////////////student slot booking managment//////////
+
+import { IStudentSlotBookingRepository } from "../repositories/interfaces/IStudentSlotBookingRepository";
+import { StudentSlotBookingRepository } from "../repositories/studentRepository/studentSlotBookingRepository";
+
+import { IStudentSlotBookingService } from "../services/interface/IStudentSlotBookingService";
+import { StudentSlotBookingService } from "../services/studentServices/StudentSlotBookingService";
+
+import { IStudentSlotBookingController } from "../controllers/studentControllers/interfaces/IStudentSlotBookingController";
+import { StudentSlotBookingController } from "../controllers/studentControllers/studentSlotBookingController";
+
+
+const studentSlotBookingRepository : IStudentSlotBookingRepository = new StudentSlotBookingRepository()
+
+const studentSlotBookingService : IStudentSlotBookingService = new StudentSlotBookingService(studentSlotBookingRepository,studentSlotRepository,walletService)
+
+const studentSlotBookingController : IStudentSlotBookingController = new StudentSlotBookingController(studentSlotBookingService)
 
 
 
@@ -731,4 +778,12 @@ export {
   instructorMembershipOrderController,
   //admin membership order controller
   adminMembershipOrderController,
+  //instructor slot management
+  instructorSlotController,
+  //student side instructor listing
+  studentInstructorListingController,
+  //slot viewing
+  studentSlotController,
+  //slot booking
+  studentSlotBookingController,
 };

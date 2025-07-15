@@ -26,6 +26,15 @@ import WalletPage from '../pages/student/wallet/WalletPage'
 import StudentOrderHistoryPage from '../pages/student/order/StudentOrderHistoryPage'
 import StudentOrderDetailPage from '../pages/student/order/StudentOrderDetailPage'
 import NotFound from '../components/common/NotFound'
+import InstructorListPage from '../pages/student/instructor/InstructorListPage'
+import InstructorDetailPage from '../pages/student/instructor/InstructorDetailPage'
+import AboutUsPage from '../pages/AboutUsPage'
+import StudentAvailableSlotsPage from '../pages/student/slot/StudentAvailableSlotsPage'
+import SlotCheckoutPage from '../pages/student/slotCheckout/slotCheckoutPage'
+import SlotHistoryPage from '../pages/student/slot/SlotHistoryPage'
+import SlotBookingDetailPage from '../pages/student/slot/SlotBookingDetailpage'
+
+
 const StudentRouter = () => {
   return (
     <Routes>
@@ -38,10 +47,18 @@ const StudentRouter = () => {
         <Route path='/user/course/:courseId' element={<CourseDetailPage/>}/>
         <Route path='/user/courses' element={<CourseListPage/>}/>
 
+        {/* instructor list */}
+        <Route path="/user/instructors" element={<InstructorListPage/>}/>
+        <Route path="/user/instructor/:instructorId" element={<InstructorDetailPage/>}/>
+        <Route path="/user/instructor/:instructorId/slots" element={<StudentAvailableSlotsPage/>}/>
+
         {/* reset password in case of forgot password */}
         <Route path='/user/verifyEmail' element={<ForgotPassword/>} />
         <Route path='/user/forgotPasswordOtp' element={<ResetVerificationOTP/>}/>
         <Route path='/user/resetPassword' element={<ResetPassword/>}/>
+
+        {/* About us */}
+        <Route path="/user/aboutUs" element={<AboutUsPage/>}/>
         </Route>
 
         {/* profile management */}
@@ -57,6 +74,13 @@ const StudentRouter = () => {
             <Route path='wallet' element={<WalletPage/>}/>
             <Route path='order' element={<StudentOrderHistoryPage/>}/>
             <Route path='order/:orderId' element={<StudentOrderDetailPage/>}/>
+
+            <Route path="checkout/:slotId" element={<SlotCheckoutPage/>}/>
+
+
+            {/* slot history */}
+            <Route path="slotsHistory" element={<SlotHistoryPage/>}/>
+            <Route path="slotHistory/:bookingId" element={<SlotBookingDetailPage/>}/>
           </Route>
           
           {/* Enrolled course detail - outside sidebar layout for better UX */}

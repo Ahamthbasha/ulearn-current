@@ -13,6 +13,7 @@ import {
   instructorWalletPaymentController,
   instructorMembershipController,
   instructorMembershipOrderController,
+  instructorSlotController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 
@@ -382,26 +383,120 @@ router.post(
 
 ///////instructor membership////////////////////////////
 
-router.get('/membershipPlans',authenticateToken,isInstructor,instructorMembershipController.getPlans.bind(instructorMembershipController))
+router.get(
+  "/membershipPlans",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipController.getPlans.bind(instructorMembershipController)
+);
 
-router.get('/isMentor',authenticateToken,isInstructor,instructorMembershipController.getStatus.bind(instructorMembershipController))
+router.get(
+  "/isMentor",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipController.getStatus.bind(instructorMembershipController)
+);
 
-router.get('/membership/active',authenticateToken,isInstructor,instructorMembershipController.getActiveMembership.bind(instructorMembershipController))
+router.get(
+  "/membership/active",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipController.getActiveMembership.bind(
+    instructorMembershipController
+  )
+);
 
 //purchase membership
 
-router.post("/checkout/:planId",authenticateToken,isInstructor,instructorMembershipOrderController.initiateCheckout.bind(instructorMembershipOrderController))
+router.post(
+  "/checkout/:planId",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipOrderController.initiateCheckout.bind(
+    instructorMembershipOrderController
+  )
+);
 
-router.post("/verify",authenticateToken,isInstructor,isInstructor,instructorMembershipOrderController.verifyOrder.bind(instructorMembershipOrderController))
+router.post(
+  "/verify",
+  authenticateToken,
+  isInstructor,
+  isInstructor,
+  instructorMembershipOrderController.verifyOrder.bind(
+    instructorMembershipOrderController
+  )
+);
 
-router.post('/membership/purchaseWallet/:planId',authenticateToken,isInstructor,instructorMembershipOrderController.purchaseWithWallet.bind(instructorMembershipOrderController))
+router.post(
+  "/membership/purchaseWallet/:planId",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipOrderController.purchaseWithWallet.bind(
+    instructorMembershipOrderController
+  )
+);
 
-router.get("/membershipOrders",authenticateToken,isInstructor,instructorMembershipOrderController.getInstructorOrders.bind(instructorMembershipOrderController))
+router.get(
+  "/membershipOrders",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipOrderController.getInstructorOrders.bind(
+    instructorMembershipOrderController
+  )
+);
 
-router.get("/membershipOrder/:txnId",authenticateToken,isInstructor,instructorMembershipOrderController.getMembershipOrderDetail.bind(instructorMembershipOrderController))
+router.get(
+  "/membershipOrder/:txnId",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipOrderController.getMembershipOrderDetail.bind(
+    instructorMembershipOrderController
+  )
+);
 
-router.get("/membershipOrder/:txnId/receipt",authenticateToken,isInstructor,instructorMembershipOrderController.downloadReceipt.bind(instructorMembershipOrderController))
+router.get(
+  "/membershipOrder/:txnId/receipt",
+  authenticateToken,
+  isInstructor,
+  instructorMembershipOrderController.downloadReceipt.bind(
+    instructorMembershipOrderController
+  )
+);
 
+router.post(
+  "/createSlot",
+  authenticateToken,
+  isInstructor,
+  instructorSlotController.createSlot.bind(instructorSlotController)
+);
+
+router.get(
+  "/slots",
+  authenticateToken,
+  isInstructor,
+  instructorSlotController.listSlots.bind(instructorSlotController)
+);
+
+router.put(
+  "/slot/:slotId",
+  authenticateToken,
+  isInstructor,
+  instructorSlotController.updateSlot.bind(instructorSlotController)
+);
+
+router.delete(
+  "/slot/:slotId",
+  authenticateToken,
+  isInstructor,
+  instructorSlotController.deleteSlot.bind(instructorSlotController)
+);
+
+router.get(
+  "/slotStats",
+  authenticateToken,
+  isInstructor,
+  instructorSlotController.getSlotStatsByMonth.bind(instructorSlotController)
+);
 
 const instructorRoutes = router;
 

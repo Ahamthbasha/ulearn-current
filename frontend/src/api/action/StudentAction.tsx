@@ -1,6 +1,7 @@
 import { API } from "../../service/axios";
 import UserRouterEndpoints from "../../types/endPoints/userEndPoint";
 import type QuizPayload from "../../types/interfaces/IQuizPayload";
+import type { ListInstructorParams } from "../../types/interfaces/ListInstructorParams";
 
 export const getProfile = async() =>{
     try {
@@ -296,6 +297,7 @@ export const getWallet = async() => {
     throw error
   }
 }
+
 export const creditWallet = async (data: {
   amount: number;
   description: string;
@@ -405,3 +407,110 @@ export const downloadInvoice = async (orderId: string) => {
     throw error;
   }
 };
+
+export const listInstructors = async (params: ListInstructorParams) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) queryParams.append(key, value.toString());
+    });
+
+    const response = await API.get(
+      `${UserRouterEndpoints.userSideInstructorLists}?${queryParams.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const instructorDetailsById = async(instructorId:string)=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userSideInstructorDetailsById}/${instructorId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getSkillAndExpertise = async()=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetSkillsAndExpertise}`)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getSlotsOfParticularInstructor = async(instructorId:string)=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userViewSlotsParticularInstructor}/${instructorId}`)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const slotCheckout = async(slotId:string)=>{
+  try {
+    const response = await API.post(`${UserRouterEndpoints.userSlotInitiateCheckout}/${slotId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const verifySlotPayment = async (bookingId: string, txnId: string, status: "paid" | "failed") => {
+  try {
+    const response = await API.post(`${UserRouterEndpoints.userSlotVerifyPayment}`, {
+      bookingId,
+      txnId,
+      status,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const bookSlotViaWallet = async(slotId:string)=>{
+  try {
+    const response = await API.post(`${UserRouterEndpoints.userBookSlotViaWallet}/${slotId}`)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const bookingHistory = async()=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetSlotBookingHistory}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const bookingDetail = async(bookingId:string)=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetSpecificSlotDetail}/${bookingId}`)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const slotReceipt = async(bookingId:string)=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userDownloadSlotReceipt}/${bookingId}/receipt`,
+      {responseType:'blob'}
+    )
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}

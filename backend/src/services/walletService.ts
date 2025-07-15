@@ -71,6 +71,11 @@ async getAdminWalletByEmail(email: string): Promise<IWallet | null> {
   return this.walletRepository.findByOwnerId(admin._id);
 }
 
+//wallet balance
 
+async getBalance(ownerId: Types.ObjectId): Promise<number> {
+  const wallet = await this.walletRepository.findByOwnerId(ownerId);
+  return wallet?.balance ?? 0;
+}
 
 }
