@@ -248,5 +248,56 @@ async sendMembershipExpiryReminder(name: string, email: string, expiryDate: Date
   return await transporter.sendMail(mailOptions);
 }
 
+async sendSlotBookingConfirmation(
+  name: string,
+  email: string,
+  instructorName: string,
+  date: string,
+  startTime: string,
+  endTime: string
+): Promise<SentMessageInfo> {
+  const userEmail = process.env.USER_EMAIL;
+  const userPassword = process.env.USER_PASSWORD;
+
+  if (!userEmail || !userPassword) {
+    throw new Error("Email credentials are not set in the environment");
+  }
+
+  const transporter = nodeMailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: userEmail,
+      pass: userPassword,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+
+  const mailOptions = {
+    from: userEmail,
+    to: email,
+    subject: "✅ Slot Booking Confirmed - uLearn",
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #e8f5e9;">
+        <div style="background-color: white; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #4CAF50;">Slot Booking Confirmed!</h2>
+          <p>Hello <strong>${name}</strong>,</p>
+          <p>Your session with <strong>${instructorName}</strong> has been successfully booked.</p>
+          <p><strong>Date:</strong> ${date}</p>
+          <p><strong>Start Time:</strong> ${startTime}</p>
+          <p><strong>End Time:</strong> ${endTime}</p>
+          <p>We look forward to your session!</p>
+          <p>– uLearn Team</p>
+        </div>
+      </div>
+    `,
+  };
+
+  return await transporter.sendMail(mailOptions);
+}
+
+
+
 
 }

@@ -4,6 +4,7 @@ import {
   membershipInitiateCheckout,
   verifyMembershipPurchase,
   purchaseMembershipWithWallet,
+  instructorGetWallet,
 } from "../../../api/action/InstructorActionApi";
 import { toast } from "react-toastify";
 import { CheckCircle } from "lucide-react";
@@ -19,6 +20,7 @@ const MembershipCheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
   const [orderData, setOrderData] = useState<{
     razorpayOrderId: string;
@@ -31,20 +33,28 @@ const MembershipCheckoutPage: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    const fetchOrder = async () => {
+    const fetchCheckoutData = async () => {
       try {
         if (!planId) throw new Error("Plan ID not provided");
 
         const data = await membershipInitiateCheckout(planId);
         setOrderData(data);
+
+        const walletData = await instructorGetWallet();
+        if (walletData?.wallet?.balance != null) {
+          setWalletBalance(walletData.wallet.balance);
+        } else {
+          setWalletBalance(0);
+        }
       } catch (error) {
-        toast.error("Failed to initiate payment");
+        console.error(error);
+        toast.error("Failed to load checkout or wallet data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrder();
+    fetchCheckoutData();
   }, [planId]);
 
   const handlePayment = () => {
@@ -111,6 +121,15 @@ const MembershipCheckoutPage: React.FC = () => {
       <p className="mb-2"><strong>Duration:</strong> {orderData.durationInDays} days</p>
       <p className="mb-2"><strong>Price:</strong> ₹{orderData.amount}</p>
 
+      {walletBalance !== null && (
+        <p className="mb-2">
+          <strong>Your Wallet Balance:</strong>{" "}
+          <span className={walletBalance < orderData.amount ? "text-red-500" : "text-green-600"}>
+            ₹{walletBalance}
+          </span>
+        </p>
+      )}
+
       {orderData.description && (
         <p className="mt-3 text-sm text-gray-600">{orderData.description}</p>
       )}
@@ -137,9 +156,13 @@ const MembershipCheckoutPage: React.FC = () => {
         <button
           onClick={handleWalletPurchase}
           className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition disabled:opacity-60"
-          disabled={isProcessing}
+          disabled={isProcessing || (walletBalance !== null && walletBalance < orderData.amount)}
         >
-          {isProcessing ? "Processing..." : "Pay with Wallet"}
+          {isProcessing
+            ? "Processing..."
+            : walletBalance !== null && walletBalance < orderData.amount
+            ? "Insufficient Wallet Balance"
+            : "Pay with Wallet"}
         </button>
       </div>
     </div>

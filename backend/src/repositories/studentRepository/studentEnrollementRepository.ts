@@ -65,7 +65,7 @@ export class StudentEnrollmentRepository
     );
   }
 
-  async submitQuizResult(
+async submitQuizResult(
   userId: Types.ObjectId,
   courseId: Types.ObjectId,
   quizData: {
@@ -77,27 +77,29 @@ export class StudentEnrollmentRepository
 ): Promise<IEnrollment | null> {
   console.log("📥 Submitting quiz result:", quizData);
 
-  const enrollment = await this.findOneAndUpdate(
-    {
-      userId,
-      courseId,
-      "completedQuizzes.quizId": { $ne: quizData.quizId },
-    },
-    {
-      $push: {
-        completedQuizzes: {
-          ...quizData,
-          attemptedAt: new Date(),
-        },
-      },
-    },
-    { new: true }
-  );
-
+  const enrollment = await this.findOne({ userId, courseId });
   if (!enrollment) {
     console.log("❌ Enrollment not found during quiz submission");
     return null;
   }
+
+  // Check if the quiz already exists and update it if so
+  const quizIndex = enrollment.completedQuizzes.findIndex(
+    (q) => q.quizId.toString() === quizData.quizId.toString()
+  );
+
+  const updatedQuiz = {
+    ...quizData,
+    attemptedAt: new Date(),
+  };
+
+  if (quizIndex !== -1) {
+    enrollment.completedQuizzes[quizIndex] = updatedQuiz;
+  } else {
+    enrollment.completedQuizzes.push(updatedQuiz);
+  }
+
+  await enrollment.save();
 
   if (quizData.scorePercentage < 50) {
     console.log("❌ Score is below 50%, certificate will not be generated.");
@@ -121,8 +123,6 @@ export class StudentEnrollmentRepository
   const totalChapters = Array.isArray(course.chapters) ? course.chapters.length : 0;
   const completedChaptersCount = fullEnrollment.completedChapters.length;
 
-  console.log(`📚 Total Chapters: ${totalChapters}, ✅ Completed: ${completedChaptersCount}`);
-
   const allChaptersCompleted = totalChapters > 0 && completedChaptersCount === totalChapters;
 
   if (!allChaptersCompleted) {
@@ -141,7 +141,6 @@ export class StudentEnrollmentRepository
     return enrollment;
   }
 
-  // ✅ Fetch Instructor
   const instructor = await this.instructorRepository.findById(course.instructorId);
   const instructorName = instructor?.username || "Course Instructor";
 
@@ -150,7 +149,7 @@ export class StudentEnrollmentRepository
   const certificateUrl = await generateCertificate({
     studentName: student.username,
     courseName: course.courseName,
-    instructorName, // ✅ Pass instructor name
+    instructorName,
     userId: userId.toString(),
     courseId: courseId.toString(),
   });
@@ -168,9 +167,8 @@ export class StudentEnrollmentRepository
 
   console.log("✅ Enrollment updated with certificate data.");
 
-  return enrollment;
+  return await this.findOne({ userId, courseId });
 }
-
 
   async areAllChaptersCompleted(
     userId: Types.ObjectId,

@@ -1,6 +1,6 @@
 import { IStudentSlotBookingController } from "./interfaces/IStudentSlotBookingController";
 import { IStudentSlotBookingService } from "../../services/interface/IStudentSlotBookingService";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { PopulatedBooking } from "../../types/PopulatedBooking";
@@ -17,39 +17,39 @@ export class StudentSlotBookingController
   ): Promise<void> {
     try {
       const { slotId } = req.params;
-      const studentId = req.user?.id; // assuming you attach user in middleware
-
+      const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
 
-      const { booking, razorpayOrder } =
-        await this.bookingService.initiateCheckout(slotId, studentId);
-
-      res.status(StatusCode.CREATED).json({
-        success: true,
-        booking,
-        razorpayOrder,
-      });
+      const result = await this.bookingService.initiateCheckout(
+        slotId,
+        studentId
+      );
+      res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (err: any) {
+      console.error("initiateCheckout error:", err);
       res
         .status(StatusCode.BAD_REQUEST)
         .json({ success: false, message: err.message });
     }
   }
 
-  async verifyPayment(req: Request, res: Response): Promise<void> {
+  async verifyPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { bookingId, status, txnId } = req.body;
+      const { slotId, razorpay_payment_id } = req.body ?? {};
+      const studentId = req.user?.id;
+      if (!studentId) throw new Error("Unauthorized");
 
-      if (!bookingId || !txnId || !status) {
-        throw new Error("Missing payment verification data");
-      }
+      if (!slotId || !razorpay_payment_id)
+        throw new Error("Missing payment details");
 
-      await this.bookingService.updatePaymentStatus(bookingId, status, txnId);
-
-      res
-        .status(StatusCode.OK)
-        .json({ success: true, message: "Payment updated successfully" });
+      const booking = await this.bookingService.verifyPayment(
+        slotId,
+        studentId,
+        razorpay_payment_id
+      );
+      res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
+      console.error("verifyPayment error:", err);
       res
         .status(StatusCode.BAD_REQUEST)
         .json({ success: false, message: err.message });
@@ -68,30 +68,36 @@ export class StudentSlotBookingController
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
+      console.error("bookViaWallet error:", err);
       res
         .status(StatusCode.BAD_REQUEST)
         .json({ success: false, message: err.message });
     }
   }
 
-  async getBookingHistory(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
-      const studentId = req.user?.id;
-      if (!studentId) throw new Error("Unauthorized");
+  async getBookingHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const studentId = req.user?.id;
+    if (!studentId) throw new Error("Unauthorized");
 
-      const bookings = await this.bookingService.getStudentBookingHistory(
-        studentId
-      );
-      res.status(StatusCode.OK).json({ success: true, data: bookings });
-    } catch (err: any) {
-      res
-        .status(StatusCode.BAD_REQUEST)
-        .json({ success: false, message: err.message });
-    }
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const result = await this.bookingService.getStudentBookingHistoryPaginated(
+      studentId,
+      page,
+      limit
+    );
+
+    res.status(StatusCode.OK).json({ success: true, ...result });
+  } catch (err: any) {
+    console.error("getBookingHistory error:", err);
+    res
+      .status(StatusCode.BAD_REQUEST)
+      .json({ success: false, message: err.message });
   }
+}
+
 
   async getBookingDetail(
     req: AuthenticatedRequest,
@@ -104,7 +110,6 @@ export class StudentSlotBookingController
       const booking = await this.bookingService.getStudentBookingById(
         bookingId
       );
-
       if (!booking) {
         res
           .status(StatusCode.NOT_FOUND)
@@ -114,38 +119,47 @@ export class StudentSlotBookingController
 
       res.status(StatusCode.OK).json({ success: true, data: booking });
     } catch (err: any) {
+      console.error("getBookingDetail error:", err);
       res
         .status(StatusCode.BAD_REQUEST)
         .json({ success: false, message: err.message });
     }
   }
 
-  async downloadReceipt(req: AuthenticatedRequest, res: Response): Promise<void> {
-  try {
-    const bookingId = req.params.bookingId;
-    if (!bookingId) throw new Error("Booking ID is required");
+  async downloadReceipt(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
+    try {
+      const bookingId = req.params.bookingId;
+      if (!bookingId) throw new Error("Booking ID is required");
 
-    const booking = await this.bookingService.getStudentBookingById(bookingId);
+      const booking = await this.bookingService.getStudentBookingById(
+        bookingId
+      );
+      if (
+        !booking ||
+        typeof booking.slotId === "string" ||
+        typeof booking.instructorId === "string" ||
+        typeof booking.studentId === "string"
+      ) {
+        throw new Error("Booking is not fully populated");
+      }
 
-    if (
-      !booking ||
-      typeof booking.slotId === "string" ||
-      typeof booking.instructorId === "string" ||
-      typeof booking.studentId === "string"
-    ) {
-      throw new Error("Booking is not fully populated");
+      const populatedBooking = booking as PopulatedBooking;
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=slot-receipt-${bookingId}.pdf`
+      );
+      generateSlotReceiptPdf(res, populatedBooking);
+    } catch (err: any) {
+      console.error("downloadReceipt error:", err);
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: err.message || "Failed to generate receipt",
+      });
     }
-
-    // ✅ Fully typed, no 'any'
-    const populatedBooking = booking as PopulatedBooking;
-
-    generateSlotReceiptPdf(res, populatedBooking);
-  } catch (err: any) {
-    res.status(StatusCode.BAD_REQUEST).json({
-      success: false,
-      message: err.message || "Failed to generate receipt",
-    });
   }
-}
-
 }

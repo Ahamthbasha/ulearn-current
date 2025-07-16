@@ -7,7 +7,7 @@ export interface IBooking extends Document {
   studentId: Types.ObjectId;
   instructorId: Types.ObjectId|IInstructor;
   slotId: Types.ObjectId|ISlot;
-  status: "pending" | "confirmed" | "cancelled";
+  status: "pending" | "confirmed" | "cancelled" | "initiated";
   paymentStatus: "paid" | "failed" | "pending";
   txnId?: string;
   createdAt: Date;
@@ -21,7 +21,7 @@ const BookingSchema = new Schema<IBooking>(
     slotId: { type: Schema.Types.ObjectId, ref: "Slot", required: true },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled"],
+      enum: ["pending", "confirmed", "cancelled","initiated"],
       default: "confirmed",
     },
     paymentStatus: {

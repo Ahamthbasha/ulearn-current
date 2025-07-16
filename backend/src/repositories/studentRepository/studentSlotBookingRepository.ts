@@ -31,13 +31,16 @@ export class StudentSlotBookingRepository
   return await super.findOne(filter, populate);
 }
 
-async findAllBookingsByStudent(
+async findAllBookingsByStudentPaginated(
   studentId: string,
+  page: number,
+  limit: number,
   populate: PopulateOptions[] = []
-): Promise<IBooking[]> {
+): Promise<{ data: IBooking[]; total: number }> {
   const filter = { studentId: new Types.ObjectId(studentId) };
-  return await this.find(filter, populate, { createdAt: -1 }); // latest first
+  return await this.paginate(filter, page, limit, { createdAt: -1 }, populate);
 }
+
 
 
 }

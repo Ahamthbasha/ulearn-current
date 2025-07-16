@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getSlotsOfParticularInstructor } from "../../../api/action/StudentAction";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import { isStudentLoggedIn } from "../../../utils/auth"; // adjust the path as needed
 
 interface Slot {
   _id: string;
@@ -16,6 +17,7 @@ const StudentAvailableSlotsPage = () => {
   const navigate = useNavigate();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
+  const isLoggedIn = isStudentLoggedIn();
 
   useEffect(() => {
     if (instructorId) {
@@ -26,7 +28,6 @@ const StudentAvailableSlotsPage = () => {
   const fetchSlots = async (id: string) => {
     try {
       const res = await getSlotsOfParticularInstructor(id);
-      console.log(res)
       setSlots(res.data || []);
     } catch (err) {
       toast.error("Failed to load slots.");
@@ -71,7 +72,12 @@ const StudentAvailableSlotsPage = () => {
                     className="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-100 transition disabled:opacity-50"
                     disabled={slot.isBooked}
                     onClick={() => {
-                      navigate(`/user/checkout/${slot._id}`);
+                      if (!isLoggedIn) {
+                        toast.info("Please login to book a slot.");
+                        navigate("/user/login");
+                      } else {
+                        navigate(`/user/checkout/${slot._id}`);
+                      }
                     }}
                   >
                     {format(new Date(slot.startTime), "hh:mm a")} -{" "}

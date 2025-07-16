@@ -12,28 +12,14 @@ import { IWalletService } from "../interface/IWalletService";
 import { IEmail } from "../../types/Email";
 
 export class InstructorMembershipOrderService implements IInstructorMembershipOrderService {
-  private readonly membershipOrderRepo: IInstructorMembershipOrderRepository;
-  private readonly planRepo: IInstructorMembershipRepository;
-  private readonly instructorRepo: IInstructorRepository;
-  private readonly razorpay: Razorpay;
-  private readonly walletService: IWalletService;
-  private readonly emailService: IEmail;
-
   constructor(
-    membershipOrderRepo: IInstructorMembershipOrderRepository,
-    planRepo: IInstructorMembershipRepository,
-    instructorRepo: IInstructorRepository,
-    razorpay: Razorpay,
-    walletService: IWalletService,
-    emailService: IEmail
-  ) {
-    this.membershipOrderRepo = membershipOrderRepo;
-    this.planRepo = planRepo;
-    this.instructorRepo = instructorRepo;
-    this.walletService = walletService;
-    this.razorpay = razorpay;
-    this.emailService = emailService; // ✅ Correct injection
-  }
+    private readonly membershipOrderRepo: IInstructorMembershipOrderRepository,
+    private readonly planRepo: IInstructorMembershipRepository,
+    private readonly instructorRepo: IInstructorRepository,
+    private readonly razorpay: Razorpay,
+    private readonly walletService: IWalletService,
+    private readonly emailService: IEmail
+  ) {}
 
   async initiateCheckout(instructorId: string, planId: string) {
     const instructor = await this.instructorRepo.findById(instructorId);
@@ -55,13 +41,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       receipt: `receipt_${Date.now()}`,
     });
 
-    await this.membershipOrderRepo.createOrder({
-      instructorId,
-      planId,
-      razorpayOrderId: razorpayOrder.id,
-      amount: plan.price,
-      status: "pending",
-    });
+    // ❌ Do not create DB order yet — move to verify step
 
     return {
       razorpayOrderId: razorpayOrder.id,
@@ -78,6 +58,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     razorpayOrderId,
     paymentId,
     signature,
+    instructorId,
   }: {
     razorpayOrderId: string;
     paymentId: string;
@@ -93,27 +74,48 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       throw new Error("Invalid Razorpay signature");
     }
 
-    const order = await this.membershipOrderRepo.findByRazorpayOrderId(razorpayOrderId);
-    if (!order || order.paymentStatus === "paid") {
-      throw new Error("Order not found or already processed");
+    const instructor = await this.instructorRepo.findById(instructorId);
+    if (!instructor) throw new Error("Instructor not found");
+
+    let order = await this.membershipOrderRepo.findByRazorpayOrderId(razorpayOrderId);
+    let plan: IMembershipPlan | null = null;
+
+    if (order) {
+      plan = await this.planRepo.findById(order.membershipPlanId.toString());
+    } else if (instructor.membershipPlanId) {
+      plan = await this.planRepo.findById(instructor.membershipPlanId.toString());
     }
 
-    const plan = await this.planRepo.findById(order.membershipPlanId.toString()) as IMembershipPlan;
-    if (!plan || !plan.durationInDays) {
+    if (!plan || !plan.durationInDays || !plan._id) {
       throw new Error("Invalid membership plan");
     }
 
     const now = new Date();
     const expiryDate = new Date(now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000);
 
-    await this.membershipOrderRepo.updateOrderStatus(razorpayOrderId, {
-      txnId: razorpayOrderId,
-      paymentStatus: "paid",
-      startDate: now,
-      endDate: expiryDate,
-    });
+    if (!order) {
+      order = await this.membershipOrderRepo.createOrder({
+        instructorId,
+        planId: plan._id.toString(),
+        razorpayOrderId,
+        amount: plan.price,
+        status: "paid",
+        startDate: now,
+        endDate: expiryDate,
+      });
+    } else {
+      if (order.paymentStatus === "paid") {
+        throw new Error("Order already processed");
+      }
 
-    await this.instructorRepo.update(order.instructorId.toString(), {
+      await this.membershipOrderRepo.updateOrderStatus(razorpayOrderId, {
+        paymentStatus: "paid",
+        startDate: now,
+        endDate: expiryDate,
+      });
+    }
+
+    await this.instructorRepo.update(instructorId, {
       isMentor: true,
       membershipExpiryDate: expiryDate,
       membershipPlanId: plan._id as Types.ObjectId,
@@ -126,16 +128,12 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       paymentId
     );
 
-    // ✅ Send membership activation email
-    const instructorData = await this.instructorRepo.findById(order.instructorId.toString());
-    if (instructorData) {
-      await this.emailService.sendMembershipPurchaseEmail(
-        instructorData.username || "Instructor",
-        instructorData.email || "",
-        plan.name,
-        expiryDate
-      );
-    }
+    await this.emailService.sendMembershipPurchaseEmail(
+      instructor.username || "Instructor",
+      instructor.email || "",
+      plan.name,
+      expiryDate
+    );
   }
 
   async purchaseWithWallet(instructorId: string, planId: string): Promise<void> {
@@ -149,8 +147,8 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       throw new Error("You already have an active membership.");
     }
 
-    const plan = await this.planRepo.findById(planId);
-    if (!plan) throw new Error("Membership plan not found");
+    const plan = await this.planRepo.findById(planId) as IMembershipPlan;
+    if (!plan || !plan._id) throw new Error("Membership plan not found");
 
     const amount = plan.price;
     const txnId = `wallet_membership_${Date.now()}`;
@@ -187,15 +185,14 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     const expiry = new Date(now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000);
 
     await this.membershipOrderRepo.createOrder({
-  instructorId,
-  planId,
-  razorpayOrderId: txnId,
-  amount,
-  status: "paid",
-  startDate: now,
-  endDate: expiry,
-});
-
+      instructorId,
+      planId: plan._id.toString(),
+      razorpayOrderId: txnId,
+      amount,
+      status: "paid",
+      startDate: now,
+      endDate: expiry,
+    });
 
     await this.instructorRepo.update(instructorId, {
       isMentor: true,
@@ -203,7 +200,6 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       membershipPlanId: plan._id as Types.ObjectId,
     });
 
-    // ✅ Send membership email
     await this.emailService.sendMembershipPurchaseEmail(
       instructor.username,
       instructor.email,
@@ -213,30 +209,25 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
   }
 
   async getInstructorOrders(
-  instructorId: string,
-  page: number = 1,
-  limit: number = 10
-): Promise<{ data: IInstructorMembershipOrder[]; total: number }> {
-  return await this.membershipOrderRepo.findAllByInstructorId(instructorId, page, limit);
-}
-
-
-
-async getOrderByTxnId(txnId: string, instructorId: string) {
-  const order = await this.membershipOrderRepo.findOneByTxnId(txnId);
-  if (!order) throw new Error("Order not found");
-
-  const orderInstructorId = (order.instructorId as any)._id
-    ? (order.instructorId as any)._id.toString()
-    : order.instructorId.toString();
-
-  if (orderInstructorId !== instructorId.toString()) {
-    throw new Error("Unauthorized access");
+    instructorId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ data: IInstructorMembershipOrder[]; total: number }> {
+    return await this.membershipOrderRepo.findAllByInstructorId(instructorId, page, limit);
   }
 
-  return order;
-}
+  async getOrderByTxnId(txnId: string, instructorId: string) {
+    const order = await this.membershipOrderRepo.findOneByTxnId(txnId);
+    if (!order) throw new Error("Order not found");
 
+    const orderInstructorId = (order.instructorId as any)._id
+      ? (order.instructorId as any)._id.toString()
+      : order.instructorId.toString();
 
+    if (orderInstructorId !== instructorId.toString()) {
+      throw new Error("Unauthorized access");
+    }
 
+    return order;
+  }
 }

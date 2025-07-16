@@ -382,13 +382,15 @@ router.get(
   studentSlotBookingController.getBookingDetail.bind(
     studentSlotBookingController
   )
-)
+);
 
 router.get(
   "/booking/:bookingId/receipt",
   authenticateToken,
   isStudent,
-  studentSlotBookingController.downloadReceipt.bind(studentSlotBookingController)
-)
+  studentSlotBookingController.downloadReceipt.bind(
+    studentSlotBookingController
+  )
+);
 
 export default router;

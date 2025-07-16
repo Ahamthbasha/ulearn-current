@@ -30,7 +30,7 @@ import InstructorListPage from '../pages/student/instructor/InstructorListPage'
 import InstructorDetailPage from '../pages/student/instructor/InstructorDetailPage'
 import AboutUsPage from '../pages/AboutUsPage'
 import StudentAvailableSlotsPage from '../pages/student/slot/StudentAvailableSlotsPage'
-import SlotCheckoutPage from '../pages/student/slotCheckout/slotCheckoutPage'
+import SlotCheckoutPage from '../pages/student/slotCheckout/SlotCheckoutPage' 
 import SlotHistoryPage from '../pages/student/slot/SlotHistoryPage'
 import SlotBookingDetailPage from '../pages/student/slot/SlotBookingDetailpage'
 

@@ -3,7 +3,6 @@ import { IInstructorMembershipController } from "./interfaces/IInstructorMembers
 import { IInstructorMembershipService } from "../../services/interface/IInstructorMembershipService";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
 
-
 export class InstructorMembershipController implements IInstructorMembershipController {
   constructor(private readonly service: IInstructorMembershipService) {}
 

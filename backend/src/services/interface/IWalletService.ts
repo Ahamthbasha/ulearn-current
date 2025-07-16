@@ -10,8 +10,4 @@ export interface IWalletService {
    creditAdminWalletByEmail(email:string,amount:number,description:string,tnxId:string):Promise<void>
    getPaginatedTransactions(ownerId: Types.ObjectId, page: number, limit: number): Promise<{ transactions: IWallet["transactions"], total: number }>
    getAdminWalletByEmail(email: string): Promise<IWallet | null>;
-
-   //getBalance
-   getBalance(ownerId:Types.ObjectId):Promise<number>
-
 }

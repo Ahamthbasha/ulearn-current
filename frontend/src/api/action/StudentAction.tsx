@@ -462,18 +462,18 @@ export const slotCheckout = async(slotId:string)=>{
   }
 }
 
-export const verifySlotPayment = async (bookingId: string, txnId: string, status: "paid" | "failed") => {
+export const verifySlotPayment = async (slotId: string, razorpay_payment_id: string) => {
   try {
     const response = await API.post(`${UserRouterEndpoints.userSlotVerifyPayment}`, {
-      bookingId,
-      txnId,
-      status,
+      slotId,
+      razorpay_payment_id,
     });
     return response.data;
   } catch (error) {
     throw error;
   }
 };
+
 
 export const bookSlotViaWallet = async(slotId:string)=>{
   try {
@@ -485,14 +485,16 @@ export const bookSlotViaWallet = async(slotId:string)=>{
   }
 }
 
-export const bookingHistory = async()=>{
+export const bookingHistory = async (page = 1, limit = 5) => {
   try {
-    const response = await API.get(`${UserRouterEndpoints.userGetSlotBookingHistory}`)
-    return response.data
+    const response = await API.get(
+      `${UserRouterEndpoints.userGetSlotBookingHistory}?page=${page}&limit=${limit}`
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const bookingDetail = async(bookingId:string)=>{
   try {

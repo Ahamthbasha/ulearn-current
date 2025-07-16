@@ -1,7 +1,7 @@
 import { IStudentSlotRepository } from "../interfaces/IStudentSlotRepository";
 import SlotModel, { ISlot } from "../../models/slotModel";
 import { GenericRepository } from "../genericRepository";
-
+import { PopulateOptions } from "mongoose";
 export class StudentSlotRepository
   extends GenericRepository<ISlot>
   implements IStudentSlotRepository
@@ -34,5 +34,8 @@ async findById(slotId: string): Promise<ISlot | null> {
     return super.update(slotId, update);
   }
 
+  async findOne(filter: object, populate?: PopulateOptions[]): Promise<ISlot | null> {
+    return await super.findOne(filter, populate);
+  }
 
 }

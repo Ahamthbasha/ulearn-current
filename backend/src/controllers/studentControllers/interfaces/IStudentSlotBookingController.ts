@@ -1,10 +1,11 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthenticatedRequest } from "../../../middlewares/AuthenticatedRoutes";
 
 export interface IStudentSlotBookingController {
-  initiateCheckout(req: Request, res: Response): Promise<void>;
-  verifyPayment(req: Request, res: Response): Promise<void>;
-  bookViaWallet(req: Request, res: Response): Promise<void>;
-  getBookingHistory(req: Request, res: Response): Promise<void>;
-  getBookingDetail(req:Request,res:Response):Promise<void>
-  downloadReceipt(req:Request, res: Response): Promise<void>
+  initiateCheckout(req: AuthenticatedRequest, res: Response): Promise<void>;
+  verifyPayment(req: AuthenticatedRequest, res: Response): Promise<void>;
+  bookViaWallet(req: AuthenticatedRequest, res: Response): Promise<void>;
+  getBookingHistory(req: AuthenticatedRequest, res: Response): Promise<void>;
+  getBookingDetail(req: AuthenticatedRequest, res: Response): Promise<void>;
+  downloadReceipt(req: AuthenticatedRequest, res: Response): Promise<void>;
 }

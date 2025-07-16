@@ -28,25 +28,31 @@ interface Booking {
   createdAt: string;
 }
 
+const PAGE_SIZE = 5;
+
 const SlotHistoryPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await bookingHistory();
-        setBookings(res.data || []);
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to load bookings");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchBookings = async (page: number) => {
+    try {
+      setLoading(true);
+      const res = await bookingHistory(page, PAGE_SIZE);
+      setBookings(res.data || []);
+      setTotalBookings(res.total || 0);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load bookings");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchBookings();
-  }, []);
+  useEffect(() => {
+    fetchBookings(currentPage);
+  }, [currentPage]);
 
   const columns = [
     {
@@ -93,6 +99,12 @@ const SlotHistoryPage = () => {
             onAction={handleViewDetails}
             actionLabel="View"
             emptyText="No bookings found"
+            pagination={{
+              currentPage,
+              totalItems: totalBookings,
+              pageSize: PAGE_SIZE,
+              onPageChange: setCurrentPage,
+            }}
           />
         )}
       </div>

@@ -19,7 +19,7 @@ const SlotCheckoutPage = () => {
   const { slotId } = useParams();
   const navigate = useNavigate();
 
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<any>(null); // booking contains slotId and instructorId
   const [order, setOrder] = useState<any>(null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -29,17 +29,25 @@ const SlotCheckoutPage = () => {
 
     const init = async () => {
       try {
-        // Fetch wallet balance
         const walletRes = await getWallet();
         setWalletBalance(walletRes.wallet?.balance || 0);
 
-        // Initiate slot checkout
-        const { booking, razorpayOrder } = await slotCheckout(slotId);
+        const res = await slotCheckout(slotId); // Get the full response
+        const { booking, razorpayOrder } = res;
+
+        if (!booking || !razorpayOrder) {
+          console.warn("Missing booking or razorpayOrder", { booking, razorpayOrder });
+          toast.error("Failed to load booking details.");
+          navigate("/user/slotsHistory");
+          return;
+        }
+
         setBooking(booking);
         setOrder(razorpayOrder);
       } catch (err: any) {
+        console.error("❌ Checkout initiation error:", err.response?.data || err.message);
         toast.error(err.response?.data?.message || "Failed to initiate booking");
-        navigate("/student/slots");
+        navigate("/user/slotsHistory");
       } finally {
         setLoading(false);
       }
@@ -60,11 +68,11 @@ const SlotCheckoutPage = () => {
       order_id: order.id,
       handler: async function (response: any) {
         try {
-          await verifySlotPayment(booking._id, response.razorpay_payment_id, "paid");
-          toast.success("Slot booked successfully!");
-          navigate("/student/slot-history");
+          await verifySlotPayment(slotId!, response.razorpay_payment_id);
+          toast.success("✅ Slot booked successfully!");
+          navigate("/user/slotsHistory");
         } catch (err: any) {
-          toast.error(err.response?.data?.message || "Payment verification failed");
+          toast.error(err.response?.data?.message || "❌ Payment verification failed");
         }
       },
       prefill: {
@@ -81,24 +89,25 @@ const SlotCheckoutPage = () => {
   };
 
   const handleWalletPayment = async () => {
-  const slotPrice = booking?.slotId?.price || 0;
+    const slotPrice = booking?.slotId?.price || 0;
 
-  if (walletBalance < slotPrice) {
-    toast.error("❌ Insufficient wallet balance. Please use Razorpay or recharge your wallet.");
-    return;
-  }
+    if (walletBalance < slotPrice) {
+      toast.error("❌ Insufficient wallet balance. Please use Razorpay or recharge your wallet.");
+      return;
+    }
 
-  try {
-    await bookSlotViaWallet(slotId!);
-    toast.success("✅ Slot booked using wallet!");
-    navigate("/student/slot-history");
-  } catch (err: any) {
-    toast.error(err.response?.data?.message || "❌ Wallet booking failed");
-  }
-};
+    try {
+      await bookSlotViaWallet(slotId!);
+      toast.success("✅ Slot booked using wallet!");
+      navigate("/user/slotsHistory");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "❌ Wallet booking failed");
+    }
+  };
 
-
-  const slotPrice = booking?.slotId?.price || 0;
+  const slot = booking?.slotId || {};
+  const instructor = booking?.instructorId || {};
+  const slotPrice = slot?.price || 0;
 
   if (loading) return <div className="p-6 text-center">Loading...</div>;
 
@@ -107,21 +116,21 @@ const SlotCheckoutPage = () => {
       <div className="max-w-2xl mx-auto shadow-lg border rounded-2xl p-8">
         <h2 className="text-2xl font-bold mb-6 text-center">Confirm Your Slot Booking</h2>
 
-        {booking && booking.slotId ? (
+        {booking && slot ? (
           <div className="space-y-4">
             <p>
               <strong>Date:</strong>{" "}
-              {format(new Date(booking.slotId.startTime), "dd-MM-yyyy")}
+              {format(new Date(slot.startTime), "dd-MM-yyyy")}
             </p>
             <p>
               <strong>Time:</strong>{" "}
-              {`${format(new Date(booking.slotId.startTime), "h:mm a")} - ${format(
-                new Date(booking.slotId.endTime),
+              {`${format(new Date(slot.startTime), "h:mm a")} - ${format(
+                new Date(slot.endTime),
                 "h:mm a"
               )}`}
             </p>
             <p>
-              <strong>Instructor:</strong> {booking.instructorId?.username || "N/A"}
+              <strong>Instructor:</strong> {instructor.username || "N/A"}
             </p>
             <p>
               <strong>Price:</strong> ₹{slotPrice}

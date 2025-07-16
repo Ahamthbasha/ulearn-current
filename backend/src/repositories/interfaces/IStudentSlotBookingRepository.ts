@@ -7,9 +7,12 @@ export interface IStudentSlotBookingRepository {
   findBookingById(id: string, populate?: PopulateOptions[]): Promise<IBooking | null>;
   findOne(filter: object, populate?: PopulateOptions[]): Promise<IBooking | null>; // ✅ Add this
 
-  findAllBookingsByStudent(
+  findAllBookingsByStudentPaginated(
   studentId: string,
+  page: number,
+  limit: number,
   populate?: PopulateOptions[]
-): Promise<IBooking[]>;
+): Promise<{ data: IBooking[]; total: number }>;
+
 
 }

@@ -470,6 +470,7 @@ export const instructorGetWallet = async() => {
     throw error
   }
 }
+
 export const instructorCreditWallet = async (data: {
   amount: number;
   description: string;
