@@ -4,10 +4,17 @@ import { IEnrollment } from "../../models/enrollmentModel";
 
 export interface IStudentEnrollmentRepository {
   getAllEnrolledCourses(userId: Types.ObjectId): Promise<IEnrollment[]>;
-  getEnrollmentByCourseDetails(userId: Types.ObjectId, courseId: Types.ObjectId): Promise<IEnrollment | null>;
-  markChapterCompleted(userId: Types.ObjectId, courseId: Types.ObjectId, chapterId: Types.ObjectId): Promise<IEnrollment | null>;
+  getEnrollmentByCourseDetails(
+    userId: Types.ObjectId,
+    courseId: Types.ObjectId
+  ): Promise<IEnrollment | null>;
+  markChapterCompleted(
+    userId: Types.ObjectId,
+    courseId: Types.ObjectId,
+    chapterId: Types.ObjectId
+  ): Promise<IEnrollment | null>;
 
-   submitQuizResult(
+  submitQuizResult(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
     quizData: {
@@ -18,6 +25,8 @@ export interface IStudentEnrollmentRepository {
     }
   ): Promise<IEnrollment | null>;
 
-  areAllChaptersCompleted(userId: Types.ObjectId, courseId: Types.ObjectId): Promise<boolean>;
-
+  areAllChaptersCompleted(
+    userId: Types.ObjectId,
+    courseId: Types.ObjectId
+  ): Promise<boolean>;
 }

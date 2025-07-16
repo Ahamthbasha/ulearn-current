@@ -27,7 +27,9 @@ export const startMembershipExpiryJob = () => {
           );
           console.log(`📧 Reminder sent to: ${instructor.email}`);
         } else {
-          console.warn(`⚠️ Skipped reminder: No expiry date for ${instructor.email}`);
+          console.warn(
+            `⚠️ Skipped reminder: No expiry date for ${instructor.email}`
+          );
         }
       }
 

@@ -1,6 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface IMembershipPlan extends Document {
+  _id:string;
   name: string;
   price: number;
   durationInDays: number;

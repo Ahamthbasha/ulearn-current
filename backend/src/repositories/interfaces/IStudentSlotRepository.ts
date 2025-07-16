@@ -6,6 +6,5 @@ export interface IStudentSlotRepository {
   findById(slotId: string): Promise<ISlot | null>;
   update(slotId: string, update: Partial<ISlot>): Promise<ISlot | null>;
 
-
-  findOne(filter:object,populate?:PopulateOptions[]):Promise<ISlot | null>
+  findOne(filter: object, populate?: PopulateOptions[]): Promise<ISlot | null>;
 }

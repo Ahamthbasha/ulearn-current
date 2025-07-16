@@ -1,21 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   courseDetail,
   getCart,
   addToCart,
-  removeFromCart,
-} from "../../../api/action/StudentAction";
-
-import {
   addToWishlist,
   removeFromWishlist,
   courseAlreadyExistInWishlist,
 } from "../../../api/action/StudentAction";
-
-import { Heart } from "lucide-react";
-import { isStudentLoggedIn } from "../../../utils/auth"; // ✅ import login check
+import { Heart, ShoppingCart } from "lucide-react";
+import { isStudentLoggedIn } from "../../../utils/auth";
 
 interface CourseDetail {
   _id: string;
@@ -32,15 +27,17 @@ interface CourseDetail {
   category: {
     _id: string;
     categoryName: string;
-  };
+  } | null;
   instructorId: {
     _id: string;
     username: string;
-  };
+  } | null;
 }
 
 const CourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [chapterCount, setChapterCount] = useState(0);
@@ -60,7 +57,9 @@ const CourseDetailPage = () => {
 
         if (isStudentLoggedIn()) {
           const cartRes = await getCart();
-          const inCart = cartRes?.data?.courses?.some((c: any) => c._id === courseId);
+          const inCart = cartRes?.data?.courses?.some(
+            (c: any) => c._id === courseId
+          );
           setIsInCart(inCart);
 
           const wishRes = await courseAlreadyExistInWishlist(courseId!);
@@ -68,6 +67,7 @@ const CourseDetailPage = () => {
         }
       } catch (error) {
         console.error(error);
+        toast.error("Failed to fetch course details");
       } finally {
         setLoading(false);
       }
@@ -76,30 +76,22 @@ const CourseDetailPage = () => {
     if (courseId) fetchData();
   }, [courseId]);
 
-  const handleCartToggle = async () => {
+  const handleAddToCart = async () => {
     if (!isStudentLoggedIn()) {
-      toast.info("Please log in to manage your cart");
+      toast.info("Please log in to add to cart");
       return;
     }
 
     try {
-      if (!courseId) return;
-
-      if (isInCart) {
-        await removeFromCart(courseId);
-        toast.success("Course removed from cart");
-        setIsInCart(false);
-      } else {
-        await addToCart(courseId);
-        toast.success("Course added to cart");
-        setIsInCart(true);
-      }
+      await addToCart(courseId!);
+      toast.success("Course added to cart");
+      setIsInCart(true);
     } catch (error: any) {
       if (error?.response?.status === 409) {
         toast.info("Course is already in cart");
         setIsInCart(true);
       } else {
-        toast.error("Cart operation failed");
+        toast.error("Failed to add to cart");
       }
     }
   };
@@ -156,7 +148,9 @@ const CourseDetailPage = () => {
               <button
                 onClick={handleWishlistToggle}
                 className="text-red-500 hover:text-red-600 transition"
-                title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                title={
+                  isInWishlist ? "Remove from wishlist" : "Add to wishlist"
+                }
               >
                 <Heart
                   size={28}
@@ -168,10 +162,12 @@ const CourseDetailPage = () => {
 
             <div className="grid grid-cols-2 gap-y-2 text-gray-800 text-sm mt-4">
               <p>
-                <strong>Instructor:</strong> {course.instructorId.username}
+                <strong>Instructor:</strong>{" "}
+                {course.instructorId?.username || "N/A"}
               </p>
               <p>
-                <strong>Category:</strong> {course.category.categoryName}
+                <strong>Category:</strong>{" "}
+                {course.category?.categoryName || "N/A"}
               </p>
               <p>
                 <strong>Duration:</strong> {course.duration}
@@ -191,16 +187,23 @@ const CourseDetailPage = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleCartToggle}
-            className={`${
-              isInCart
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-blue-600 hover:bg-blue-700"
-            } text-white font-semibold py-2 px-6 rounded-md shadow mt-6 w-fit`}
-          >
-            {isInCart ? "Remove From Cart" : "Add To Cart"}
-          </button>
+          {isInCart ? (
+            <button
+              onClick={() => navigate("/user/cart")}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-md shadow mt-6 w-fit flex items-center gap-2"
+            >
+              <ShoppingCart size={18} />
+              Go to Cart
+            </button>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md shadow mt-6 w-fit flex items-center gap-2"
+            >
+              <ShoppingCart size={18} />
+              Add to Cart
+            </button>
+          )}
         </div>
       </div>
 

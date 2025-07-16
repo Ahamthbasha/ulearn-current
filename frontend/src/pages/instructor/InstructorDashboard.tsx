@@ -11,17 +11,18 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { BookOpen, DollarSign, Award, Target } from "lucide-react";
 import {
-  BookOpen,
-  DollarSign,
-  Award,
-  Target,
-} from "lucide-react";
-import { getDashboard, getRevenueDashboard,exportRevenueReport } from "../../api/action/InstructorActionApi";
+  getDashboard,
+  getRevenueDashboard,
+  exportRevenueReport,
+} from "../../api/action/InstructorActionApi";
 import { type IDashboardData } from "../../types/interfaces/IdashboardTypes";
 
 const InstructorDashboard = () => {
-  const [dashboardData, setDashboardData] = useState<IDashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<IDashboardData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,23 +33,24 @@ const InstructorDashboard = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-const fetchReport = async () => {
-  if (
-    reportRange === "custom" &&
-    (!startDate || !endDate || new Date(startDate) > new Date(endDate))
-  ) {
-    alert("Please provide a valid date range. Start date must be before or equal to end date.");
-    return;
-  }
+  const fetchReport = async () => {
+    if (
+      reportRange === "custom" &&
+      (!startDate || !endDate || new Date(startDate) > new Date(endDate))
+    ) {
+      alert(
+        "Please provide a valid date range. Start date must be before or equal to end date."
+      );
+      return;
+    }
 
-  try {
-    const data = await getRevenueDashboard(reportRange, startDate, endDate);
-    setReportData(data?.data || []);
-  } catch (error) {
-    console.error("Failed to fetch report:", error);
-  }
-};
-
+    try {
+      const data = await getRevenueDashboard(reportRange, startDate, endDate);
+      setReportData(data?.data || []);
+    } catch (error) {
+      console.error("Failed to fetch report:", error);
+    }
+  };
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -98,7 +100,13 @@ const fetchReport = async () => {
     );
   }
 
-  const { topCourses, categorySales, monthlySales, totalRevenue, totalCourseSales } = dashboardData;
+  const {
+    topCourses,
+    categorySales,
+    monthlySales,
+    totalRevenue,
+    totalCourseSales,
+  } = dashboardData;
 
   const monthlyData = monthlySales.map((item) => ({
     month: `${item.month}/${item.year}`,
@@ -114,14 +122,25 @@ const fetchReport = async () => {
 
   const totalCategories = categorySales.length;
 
-  const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
+  const COLORS = [
+    "#3B82F6",
+    "#10B981",
+    "#F59E0B",
+    "#EF4444",
+    "#8B5CF6",
+    "#EC4899",
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Instructor Dashboard</h1>
-          <p className="text-gray-600">Overview of your teaching performance and earnings</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Instructor Dashboard
+          </h1>
+          <p className="text-gray-600">
+            Overview of your teaching performance and earnings
+          </p>
         </div>
 
         {/* Stats */}
@@ -129,8 +148,12 @@ const fetchReport = async () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">₹{totalRevenue.toLocaleString()}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Revenue
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ₹{totalRevenue.toLocaleString()}
+                </p>
               </div>
               <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
                 <DollarSign className="h-6 w-6 text-green-600" />
@@ -141,8 +164,12 @@ const fetchReport = async () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Course Sales</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCourseSales}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Course Sales
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalCourseSales}
+                </p>
               </div>
               <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <BookOpen className="h-6 w-6 text-blue-600" />
@@ -153,8 +180,12 @@ const fetchReport = async () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Courses</p>
-                <p className="text-2xl font-bold text-gray-900">{topCourses.length}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Active Courses
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {topCourses.length}
+                </p>
               </div>
               <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
                 <Award className="h-6 w-6 text-purple-600" />
@@ -166,7 +197,9 @@ const fetchReport = async () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Categories</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCategories}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalCategories}
+                </p>
               </div>
               <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <Target className="h-6 w-6 text-orange-600" />
@@ -177,169 +210,186 @@ const fetchReport = async () => {
 
         {/* Revenue Report Generator */}
         {/* Revenue Report Generator */}
-<div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
-  <h3 className="text-lg font-semibold text-gray-900 mb-4">Generate Revenue Report</h3>
-  <div className="flex flex-wrap gap-4 items-end">
-    <select
-      value={reportRange}
-      onChange={(e) => setReportRange(e.target.value as any)}
-      className="border rounded px-3 py-2"
-    >
-      <option value="daily">Daily</option>
-      <option value="weekly">Weekly</option>
-      <option value="monthly">Monthly</option>
-      <option value="yearly">Yearly</option>
-      <option value="custom">Custom</option>
-    </select>
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Generate Revenue Report
+          </h3>
+          <div className="flex flex-wrap gap-4 items-end">
+            <select
+              value={reportRange}
+              onChange={(e) => setReportRange(e.target.value as any)}
+              className="border rounded px-3 py-2"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+              <option value="custom">Custom</option>
+            </select>
 
-    {reportRange === "custom" && (
-  <>
-    <input
-      type="date"
-      value={startDate}
-      onChange={(e) => setStartDate(e.target.value)}
-      max={new Date().toISOString().split("T")[0]} // ✅ max today
-      className="border rounded px-3 py-2"
-    />
-    <input
-      type="date"
-      value={endDate}
-      onChange={(e) => setEndDate(e.target.value)}
-      max={new Date().toISOString().split("T")[0]} // ✅ max today
-      className="border rounded px-3 py-2"
-    />
-  </>
-)}
+            {reportRange === "custom" && (
+              <>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]} // ✅ max today
+                  className="border rounded px-3 py-2"
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]} // ✅ max today
+                  className="border rounded px-3 py-2"
+                />
+              </>
+            )}
 
-<button
-  onClick={fetchReport}
-  disabled={
-    reportRange === "custom" &&
-    (!startDate || !endDate || new Date(startDate) > new Date(endDate))
-  }
-  className={`${
-    reportRange === "custom" &&
-    (!startDate || !endDate || new Date(startDate) > new Date(endDate))
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-emerald-600 hover:bg-emerald-700"
-  } text-white px-4 py-2 rounded transition`}
->
-  Create Report
-</button>
+            <button
+              onClick={fetchReport}
+              disabled={
+                reportRange === "custom" &&
+                (!startDate ||
+                  !endDate ||
+                  new Date(startDate) > new Date(endDate))
+              }
+              className={`${
+                reportRange === "custom" &&
+                (!startDate ||
+                  !endDate ||
+                  new Date(startDate) > new Date(endDate))
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-emerald-600 hover:bg-emerald-700"
+              } text-white px-4 py-2 rounded transition`}
+            >
+              Create Report
+            </button>
+          </div>
 
-  </div>
+          {reportData.length > 0 ? (
+            <div className="mt-6 overflow-x-auto">
+              {/* Export Buttons */}
+              <div className="flex justify-end gap-4 mb-4">
+                <button
+                  onClick={() =>
+                    exportRevenueReport(
+                      reportRange,
+                      "excel",
+                      startDate,
+                      endDate
+                    )
+                  }
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                >
+                  Export Excel
+                </button>
+                <button
+                  onClick={() =>
+                    exportRevenueReport(reportRange, "pdf", startDate, endDate)
+                  }
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                >
+                  Export PDF
+                </button>
+              </div>
 
-  {reportData.length > 0 ? (
-  <div className="mt-6 overflow-x-auto">
-    {/* Export Buttons */}
-    <div className="flex justify-end gap-4 mb-4">
-      <button
-        onClick={() =>
-          exportRevenueReport(reportRange, "excel", startDate, endDate)
-        }
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-      >
-        Export Excel
-      </button>
-      <button
-        onClick={() =>
-          exportRevenueReport(reportRange, "pdf", startDate, endDate)
-        }
-        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-      >
-        Export PDF
-      </button>
-    </div>
+              {/* Report Table */}
+              <table className="w-full border rounded shadow-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Order ID</th>
+                    <th className="px-4 py-2 text-left">Date</th>
+                    <th className="px-4 py-2 text-left">Courses</th>
+                    <th className="px-4 py-2 text-left">Total Price</th>
+                    <th className="px-4 py-2 text-left">Instructor Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(
+                    reportData.reduce<
+                      Record<
+                        string,
+                        {
+                          date: string;
+                          courses: string[];
+                          totalPrice: number;
+                          totalInstructorEarning: number;
+                        }
+                      >
+                    >((acc, curr) => {
+                      const orderId = curr._id.toString();
 
-    {/* Report Table */}
-    <table className="w-full border rounded shadow-sm">
-  <thead className="bg-gray-100">
-    <tr>
-      <th className="px-4 py-2 text-left">Order ID</th>
-      <th className="px-4 py-2 text-left">Date</th>
-      <th className="px-4 py-2 text-left">Courses</th>
-      <th className="px-4 py-2 text-left">Total Price</th>
-      <th className="px-4 py-2 text-left">Instructor Revenue</th>
-    </tr>
-  </thead>
-  <tbody>
-    {Object.entries(
-      reportData.reduce<Record<
-        string,
-        {
-          date: string;
-          courses: string[];
-          totalPrice: number;
-          totalInstructorEarning: number;
-        }
-      >>((acc, curr) => {
-        const orderId = curr._id.toString();
+                      if (!acc[orderId]) {
+                        acc[orderId] = {
+                          date: curr.createdAt,
+                          courses: [],
+                          totalPrice: 0,
+                          totalInstructorEarning: 0,
+                        };
+                      }
 
-        if (!acc[orderId]) {
-          acc[orderId] = {
-            date: curr.createdAt,
-            courses: [],
-            totalPrice: 0,
-            totalInstructorEarning: 0,
-          };
-        }
+                      acc[orderId].courses.push(curr.courseName);
+                      acc[orderId].totalPrice += curr.coursePrice;
+                      acc[orderId].totalInstructorEarning +=
+                        curr.instructorEarning;
 
-        acc[orderId].courses.push(curr.courseName);
-        acc[orderId].totalPrice += curr.coursePrice;
-        acc[orderId].totalInstructorEarning += curr.instructorEarning;
+                      return acc;
+                    }, {})
+                  ).map(([orderId, data], idx) => (
+                    <tr key={idx} className="border-t">
+                      <td className="px-4 py-2">#{orderId}</td>
+                      <td className="px-4 py-2">
+                        {new Date(data.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2">{data.courses.join(", ")}</td>
+                      <td className="px-4 py-2">
+                        ₹{data.totalPrice.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2 text-green-700">
+                        ₹{data.totalInstructorEarning.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
 
-        return acc;
-      }, {})
-    ).map(([orderId, data], idx) => (
-      <tr key={idx} className="border-t">
-        <td className="px-4 py-2">#{orderId}</td>
-        <td className="px-4 py-2">
-          {new Date(data.date).toLocaleDateString()}
-        </td>
-        <td className="px-4 py-2">{data.courses.join(", ")}</td>
-        <td className="px-4 py-2">₹{data.totalPrice.toFixed(2)}</td>
-        <td className="px-4 py-2 text-green-700">
-          ₹{data.totalInstructorEarning.toFixed(2)}
-        </td>
-      </tr>
-    ))}
-  </tbody>
-
-  <tfoot>
-    <tr className="bg-gray-100 font-semibold">
-      <td colSpan={4} className="px-4 py-2 text-right">Total Instructor Revenue</td>
-      <td className="px-4 py-2 text-green-700">
-  ₹{(
-    Object.values(
-      reportData.reduce((acc, curr) => {
-        const orderId = curr._id.toString();
-        acc[orderId] = acc[orderId] || 0;
-        acc[orderId] += curr.instructorEarning;
-        return acc;
-      }, {} as Record<string, number>)
-    ) as number[]
-  ).reduce((sum, val) => sum + val, 0).toFixed(2)}
-</td>
-
-    </tr>
-  </tfoot>
-</table>
-
-  </div>
-) : (
-  <p className="text-gray-500 mt-4">
-    No data available. Please generate a report.
-  </p>
-)}
-
-
-</div>
-
+                <tfoot>
+                  <tr className="bg-gray-100 font-semibold">
+                    <td colSpan={4} className="px-4 py-2 text-right">
+                      Total Instructor Revenue
+                    </td>
+                    <td className="px-4 py-2 text-green-700">
+                      ₹
+                      {(
+                        Object.values(
+                          reportData.reduce((acc, curr) => {
+                            const orderId = curr._id.toString();
+                            acc[orderId] = acc[orderId] || 0;
+                            acc[orderId] += curr.instructorEarning;
+                            return acc;
+                          }, {} as Record<string, number>)
+                        ) as number[]
+                      )
+                        .reduce((sum, val) => sum + val, 0)
+                        .toFixed(2)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 mt-4">
+              No data available. Please generate a report.
+            </p>
+          )}
+        </div>
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Performance</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Monthly Performance
+            </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -358,7 +408,9 @@ const fetchReport = async () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Category Distribution</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Category Distribution
+            </h3>
             <div className="flex flex-col lg:flex-row items-center">
               <div className="flex-1">
                 <ResponsiveContainer width="100%" height={200}>
@@ -373,26 +425,42 @@ const fetchReport = async () => {
                       dataKey="value"
                     >
                       {categoryData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${value} sales`, "Sales"]} />
+                    <Tooltip
+                      formatter={(value) => [`${value} sales`, "Sales"]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
               <div className="flex-1 mt-4 lg:mt-0 lg:ml-4 space-y-3">
                 {categoryData.map((entry, index) => (
-                  <div key={entry.name} className="flex items-center justify-between">
+                  <div
+                    key={entry.name}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center space-x-2">
                       <div
                         className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        style={{
+                          backgroundColor: COLORS[index % COLORS.length],
+                        }}
                       ></div>
-                      <span className="text-sm font-medium text-gray-700">{entry.name}</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        {entry.name}
+                      </span>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-gray-900">{entry.value}</div>
-                      <div className="text-xs text-gray-500">{entry.percentage}%</div>
+                      <div className="text-sm font-bold text-gray-900">
+                        {entry.value}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {entry.percentage}%
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -403,7 +471,9 @@ const fetchReport = async () => {
 
         {/* Top Selling Courses */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Selling Courses</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Top Selling Courses
+          </h3>
           <div className="space-y-4">
             {topCourses.length > 0 ? (
               topCourses.map((course, index) => (
@@ -419,7 +489,8 @@ const fetchReport = async () => {
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
                         target.style.display = "none";
-                        const fallback = target.nextElementSibling as HTMLElement | null;
+                        const fallback =
+                          target.nextElementSibling as HTMLElement | null;
                         if (fallback) fallback.style.display = "flex";
                       }}
                     />
@@ -432,12 +503,16 @@ const fetchReport = async () => {
                       {course.courseName}
                     </h4>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-sm text-gray-500">{course.count} sales</span>
+                      <span className="text-sm text-gray-500">
+                        {course.count} sales
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-                      <span className="text-sm font-bold text-blue-600">#{index + 1}</span>
+                      <span className="text-sm font-bold text-blue-600">
+                        #{index + 1}
+                      </span>
                     </div>
                   </div>
                 </div>

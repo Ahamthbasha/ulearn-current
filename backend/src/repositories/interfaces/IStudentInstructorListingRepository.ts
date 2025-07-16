@@ -1,7 +1,6 @@
 import { IInstructor } from "../../models/instructorModel";
 
 export interface IStudentInstructorListingRepository {
-
   listMentorInstructorsPaginated(
     page: number,
     limit: number,
@@ -13,6 +12,8 @@ export interface IStudentInstructorListingRepository {
 
   getMentorInstructorById(id: string): Promise<IInstructor | null>;
 
-  getAvailableSkillsAndExpertise(): Promise<{ skills: string[]; expertise: string[] }>;
-
+  getAvailableSkillsAndExpertise(): Promise<{
+    skills: string[];
+    expertise: string[];
+  }>;
 }

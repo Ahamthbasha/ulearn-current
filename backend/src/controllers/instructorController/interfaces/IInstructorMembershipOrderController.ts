@@ -6,5 +6,5 @@ export interface IInstructorMembershipOrderController {
   purchaseWithWallet(req: Request, res: Response): Promise<void>;
   getInstructorOrders(req: Request, res: Response): Promise<void>;
   getMembershipOrderDetail(req: Request, res: Response): Promise<void>;
-  downloadReceipt(req: Request, res: Response): Promise<void>
+  downloadReceipt(req: Request, res: Response): Promise<void>;
 }

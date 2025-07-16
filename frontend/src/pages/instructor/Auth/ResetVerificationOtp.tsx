@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { instructorVerifyResetOtp, instructorForgotResendOtp } from '../../../api/auth/InstructorAuthentication';
+import {
+  instructorVerifyResetOtp,
+  instructorForgotResendOtp,
+} from "../../../api/auth/InstructorAuthentication";
 
 const ResetVerificationOTP = () => {
-  const [otp, setOtp] = useState<string[]>(Array(4).fill(''));
+  const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
   const [counter, setCounter] = useState<number>(60);
   const [resendActive, setResendActive] = useState(false);
   const navigate = useNavigate();
@@ -13,7 +16,7 @@ const ResetVerificationOTP = () => {
   useEffect(() => {
     if (counter > 0) {
       const timer = setInterval(() => {
-        setCounter(prev => prev - 1);
+        setCounter((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
     } else {
@@ -33,7 +36,10 @@ const ResetVerificationOTP = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const value = e.target.value;
     const newOTP = [...otp];
     newOTP[index] = value;
@@ -46,14 +52,17 @@ const ResetVerificationOTP = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       document.getElementById(`otpInput-${index - 1}`)?.focus();
     }
   };
 
   const handleSubmit = async () => {
-    const OTP = otp.join('');
+    const OTP = otp.join("");
     if (OTP.length !== 4) {
       toast.error("Please enter the full OTP!");
       return;
@@ -63,7 +72,7 @@ const ResetVerificationOTP = () => {
     const response = await instructorVerifyResetOtp(email, OTP);
     if (response.success) {
       toast.success(response.message);
-      navigate('/instructor/resetPassword');
+      navigate("/instructor/resetPassword");
     } else {
       toast.error(response.message);
     }
@@ -72,7 +81,6 @@ const ResetVerificationOTP = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-cyan-100 px-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-8 sm:p-10">
-        
         {/* Logo (text-based for now) */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-extrabold text-indigo-700 tracking-wide">
@@ -104,27 +112,29 @@ const ResetVerificationOTP = () => {
         </div>
 
         {/* Submit Button - Hidden after 60 seconds */}
-{counter > 0 && (
-  <button
-    type="button"
-    onClick={handleSubmit}
-    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white text-base font-medium rounded-lg shadow hover:opacity-90 transition"
-  >
-    Continue
-  </button>
-)}
+        {counter > 0 && (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white text-base font-medium rounded-lg shadow hover:opacity-90 transition"
+          >
+            Continue
+          </button>
+        )}
 
-{/* Resend Link */}
-<div className="text-center mt-4 text-sm">
-  {resendActive ? (
-    <button onClick={handleResend} className="text-indigo-600 font-medium hover:underline">
-      Resend OTP
-    </button>
-  ) : (
-    <span className="text-gray-500">Resend in {counter} seconds</span>
-  )}
-</div>
-
+        {/* Resend Link */}
+        <div className="text-center mt-4 text-sm">
+          {resendActive ? (
+            <button
+              onClick={handleResend}
+              className="text-indigo-600 font-medium hover:underline"
+            >
+              Resend OTP
+            </button>
+          ) : (
+            <span className="text-gray-500">Resend in {counter} seconds</span>
+          )}
+        </div>
       </div>
     </div>
   );

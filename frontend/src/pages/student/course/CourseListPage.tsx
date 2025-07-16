@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { CoursesFiltered, getAllCategories } from "../../../api/action/StudentAction";
+import {
+  CoursesFiltered,
+  getAllCategories,
+} from "../../../api/action/StudentAction";
 import CourseCard from "../../../components/StudentComponents/CourseCard";
 import { toast } from "react-toastify";
 
@@ -36,7 +39,9 @@ const CourseListPage = () => {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  const [sortOption, setSortOption] = useState<"name-asc" | "name-desc" | "price-asc" | "price-desc">("name-asc");
+  const [sortOption, setSortOption] = useState<
+    "name-asc" | "name-desc" | "price-asc" | "price-desc"
+  >("name-asc");
 
   const coursesPerPage = 8;
 
@@ -93,7 +98,9 @@ const CourseListPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <h2 className="text-2xl font-semibold mb-6 text-center">Explore Courses</h2>
+      <h2 className="text-2xl font-semibold mb-6 text-center">
+        Explore Courses
+      </h2>
 
       {/* Centered Search Bar */}
       <div className="mb-10 flex justify-center">
@@ -110,7 +117,9 @@ const CourseListPage = () => {
         {/* Sidebar Filters */}
         <aside className="w-full lg:w-1/4 space-y-8">
           <div>
-            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Category</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 mb-3">
+              Category
+            </h3>
             <ul className="space-y-2">
               {categories.map((cat) => (
                 <li
@@ -132,51 +141,51 @@ const CourseListPage = () => {
           </div>
 
           {/* Sort Filter */}
-<div>
-  <h3 className="text-lg font-semibold border-b pb-2 mb-3">Sort</h3>
-  <ul className="space-y-2">
-    <li 
-      onClick={() => setSortOption("price-asc")} 
-      className={`cursor-pointer px-3 py-1 rounded-md ${
-        sortOption === "price-asc" 
-          ? "bg-teal-600 text-white" 
-          : "hover:bg-gray-100"
-      }`}
-    >
-      Price: Low to High
-    </li>
-    <li 
-      onClick={() => setSortOption("price-desc")} 
-      className={`cursor-pointer px-3 py-1 rounded-md ${
-        sortOption === "price-desc" 
-          ? "bg-teal-600 text-white" 
-          : "hover:bg-gray-100"
-      }`}
-    >
-      Price: High to Low
-    </li>
-    <li 
-      onClick={() => setSortOption("name-asc")} 
-      className={`cursor-pointer px-3 py-1 rounded-md ${
-        sortOption === "name-asc" 
-          ? "bg-teal-600 text-white" 
-          : "hover:bg-gray-100"
-      }`}
-    >
-      A - Z
-    </li>
-    <li 
-      onClick={() => setSortOption("name-desc")} 
-      className={`cursor-pointer px-3 py-1 rounded-md ${
-        sortOption === "name-desc" 
-          ? "bg-teal-600 text-white" 
-          : "hover:bg-gray-100"
-      }`}
-    >
-      Z - A
-    </li>
-  </ul>
-</div>
+          <div>
+            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Sort</h3>
+            <ul className="space-y-2">
+              <li
+                onClick={() => setSortOption("price-asc")}
+                className={`cursor-pointer px-3 py-1 rounded-md ${
+                  sortOption === "price-asc"
+                    ? "bg-teal-600 text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                Price: Low to High
+              </li>
+              <li
+                onClick={() => setSortOption("price-desc")}
+                className={`cursor-pointer px-3 py-1 rounded-md ${
+                  sortOption === "price-desc"
+                    ? "bg-teal-600 text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                Price: High to Low
+              </li>
+              <li
+                onClick={() => setSortOption("name-asc")}
+                className={`cursor-pointer px-3 py-1 rounded-md ${
+                  sortOption === "name-asc"
+                    ? "bg-teal-600 text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                A - Z
+              </li>
+              <li
+                onClick={() => setSortOption("name-desc")}
+                className={`cursor-pointer px-3 py-1 rounded-md ${
+                  sortOption === "name-desc"
+                    ? "bg-teal-600 text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                Z - A
+              </li>
+            </ul>
+          </div>
 
           <button
             onClick={handleClearFilters}

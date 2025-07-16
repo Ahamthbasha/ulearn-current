@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getSpecificCourse, submitQuiz } from "../../../api/action/StudentAction";
+import {
+  getSpecificCourse,
+  submitQuiz,
+} from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 
 interface QuizQuestion {
@@ -28,7 +31,9 @@ const QuizAttemptPage = () => {
     const fetchQuiz = async () => {
       try {
         const res = await getSpecificCourse(courseId!);
-        const quizData = res?.enrollment?.courseId?.quizzes?.find((q: Quiz) => q._id === quizId);
+        const quizData = res?.enrollment?.courseId?.quizzes?.find(
+          (q: Quiz) => q._id === quizId
+        );
         if (!quizData) {
           toast.error("Quiz not found");
           navigate(`/user/enrolled`);
@@ -46,11 +51,22 @@ const QuizAttemptPage = () => {
   }, [courseId, quizId, navigate]);
 
   const handleOptionChange = (qIndex: number, option: string) => {
-    setAnswers(prev => ({ ...prev, [qIndex]: option }));
+    setAnswers((prev) => ({ ...prev, [qIndex]: option }));
   };
 
   const handleSubmit = async () => {
     if (!quiz) return;
+
+    // ✅ Validation: Ensure all questions are answered
+    const unanswered = quiz.questions
+      .map((_, idx) => idx)
+      .filter((i) => !answers[i]);
+
+    if (unanswered.length > 0) {
+      const missed = unanswered.map((i) => `Q${i + 1}`).join(", ");
+      toast.error(`Please answer the following question(s): ${missed}`);
+      return;
+    }
 
     const total = quiz.questions.length;
     let correct = 0;
@@ -66,13 +82,12 @@ const QuizAttemptPage = () => {
     try {
       setSubmitting(true);
       await submitQuiz({
-  courseId: courseId!,
-  quizId: quizId!,
-  totalQuestions: total,
-  correctAnswers: correct,
-  percentage
-});
-
+        courseId: courseId!,
+        quizId: quizId!,
+        totalQuestions: total,
+        correctAnswers: correct,
+        percentage,
+      });
 
       toast.success(`Submitted! You scored ${percentage}%`);
       navigate(`/user/enrolled`);
@@ -106,7 +121,10 @@ const QuizAttemptPage = () => {
 
         <div className="space-y-8">
           {quiz.questions.map((q, index) => (
-            <div key={index} className="p-4 border rounded-lg shadow-sm bg-gray-50">
+            <div
+              key={index}
+              className="p-4 border rounded-lg shadow-sm bg-gray-50"
+            >
               <p className="font-semibold text-gray-700 mb-3">
                 {index + 1}. {q.questionText}
               </p>

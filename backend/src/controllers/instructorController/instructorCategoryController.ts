@@ -3,10 +3,16 @@ import { IInstructorCategoryController } from "./interfaces/IInstructorCategoryC
 import { IInstructorCategoryService } from "../../services/interface/IInstructorCategoryService";
 import { StatusCode } from "../../utils/enums";
 
-export class InstructorCategoryController implements IInstructorCategoryController {
+export class InstructorCategoryController
+  implements IInstructorCategoryController
+{
   constructor(private readonly categoryService: IInstructorCategoryService) {}
 
-  async getListedCategories(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getListedCategories(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const categories = await this.categoryService.fetchActiveCategories();
       res.status(StatusCode.OK).json({ success: true, data: categories });

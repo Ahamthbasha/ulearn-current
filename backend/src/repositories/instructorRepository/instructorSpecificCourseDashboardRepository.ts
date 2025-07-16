@@ -21,7 +21,9 @@ export class InstructorSpecificCourseDashboardRepository
     let totalRevenue = 0;
 
     for (const payment of payments || []) {
-      const order = await this.orderRepo.findById((payment.orderId as Types.ObjectId).toString());
+      const order = await this.orderRepo.findById(
+        (payment.orderId as Types.ObjectId).toString()
+      );
 
       if (order?.courses.includes(courseId)) {
         const course = await this.courseRepo.findById(courseId.toString());
@@ -45,7 +47,7 @@ export class InstructorSpecificCourseDashboardRepository
       courseId.toString(),
       {
         path: "category",
-        select: "categoryName"
+        select: "categoryName",
       }
     );
 
@@ -61,7 +63,9 @@ export class InstructorSpecificCourseDashboardRepository
     const monthlyMap = new Map<string, number>();
 
     for (const payment of payments || []) {
-      const order = await this.orderRepo.findById((payment.orderId as Types.ObjectId).toString());
+      const order = await this.orderRepo.findById(
+        (payment.orderId as Types.ObjectId).toString()
+      );
 
       if (order?.courses.includes(courseId)) {
         const course = await this.courseRepo.findById(courseId.toString());

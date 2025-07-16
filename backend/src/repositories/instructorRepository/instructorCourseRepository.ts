@@ -14,7 +14,10 @@ export class InstructorCourseRepository
     return await this.create(courseData);
   }
 
-  async updateCourse(courseId: string, courseData: Partial<ICourse>): Promise<ICourse | null> {
+  async updateCourse(
+    courseId: string,
+    courseData: Partial<ICourse>
+  ): Promise<ICourse | null> {
     return await this.update(courseId, courseData); // ✅ using GenericRepository method
   }
 
@@ -23,49 +26,53 @@ export class InstructorCourseRepository
   }
 
   async getCourseById(courseId: string): Promise<ICourse | null> {
-    return await this.findByIdWithPopulate(courseId,{
-      path:'category',
-      select:'categoryName'
+    return await this.findByIdWithPopulate(courseId, {
+      path: "category",
+      select: "categoryName",
     }); // ✅ using GenericRepository method
   }
 
-async getCoursesByInstructorWithPagination(
-  instructorId: string,
-  page: number,
-  limit: number,
-  search: string = ""
-): Promise<{ data: ICourse[]; total: number }> {
-  const filter: any = { instructorId };
+  async getCoursesByInstructorWithPagination(
+    instructorId: string,
+    page: number,
+    limit: number,
+    search: string = ""
+  ): Promise<{ data: ICourse[]; total: number }> {
+    const filter: any = { instructorId };
 
-  if (search) {
-    filter.courseName = { $regex: new RegExp(search, "i") }; // case-insensitive search
+    if (search) {
+      filter.courseName = { $regex: new RegExp(search, "i") }; // case-insensitive search
+    }
+
+    return await this.paginate(
+      filter,
+      page,
+      limit,
+      { createdAt: -1 },
+      { path: "category", select: "categoryName" }
+    );
   }
 
-  return await this.paginate(
-    filter,
-    page,
-    limit,
-    { createdAt: -1 },
-    {path:'category',select:'categoryName'}
-  );
-}
+  async findCourseByNameForInstructor(
+    courseName: string,
+    instructorId: string
+  ): Promise<ICourse | null> {
+    return await this.findOne({ courseName, instructorId });
+  }
 
+  async findCourseByNameForInstructorExcludingId(
+    courseName: string,
+    instructorId: string,
+    excludeId: string
+  ): Promise<ICourse | null> {
+    return await this.findOne({
+      courseName,
+      instructorId,
+      _id: { $ne: excludeId },
+    });
+  }
 
-async findCourseByNameForInstructor(courseName: string, instructorId: string): Promise<ICourse | null> {
-  return await this.findOne({ courseName, instructorId });
-}
-
-async findCourseByNameForInstructorExcludingId(courseName: string, instructorId: string, excludeId: string): Promise<ICourse | null> {
-  return await this.findOne({
-    courseName,
-    instructorId,
-    _id: { $ne: excludeId },
-  });
-}
-
-async publishCourse(courseId: string): Promise<ICourse | null> {
-  return await this.update(courseId, { isPublished: true });
-}
-
-
+  async publishCourse(courseId: string): Promise<ICourse | null> {
+    return await this.update(courseId, { isPublished: true });
+  }
 }

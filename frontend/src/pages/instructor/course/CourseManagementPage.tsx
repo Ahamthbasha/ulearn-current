@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { instructorGetCourseById, publishCourse } from "../../../api/action/InstructorActionApi";
+import {
+  instructorGetCourseById,
+  publishCourse,
+} from "../../../api/action/InstructorActionApi";
 import Card from "../../../components/common/Card";
 
 const CourseManagementPage = () => {
@@ -46,7 +49,9 @@ const CourseManagementPage = () => {
   }
 
   if (!course) {
-    return <div className="text-center py-8 text-red-500">Course not found</div>;
+    return (
+      <div className="text-center py-8 text-red-500">Course not found</div>
+    );
   }
 
   return (
@@ -117,28 +122,27 @@ const CourseManagementPage = () => {
 
         {/* 🧪 Check Publish API Button */}
         {course.isPublished ? (
-  <button
-    disabled
-    className="bg-green-600 text-white px-5 py-2 rounded-md text-sm font-medium shadow opacity-70 cursor-not-allowed"
-  >
-    ✅ Course Published
-  </button>
-) : (
-  <button
-    onClick={handlePublish}
-    className="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
-  >
-    🚀 Publish Course
-  </button>
-)}
+          <button
+            disabled
+            className="bg-green-600 text-white px-5 py-2 rounded-md text-sm font-medium shadow opacity-70 cursor-not-allowed"
+          >
+            ✅ Course Published
+          </button>
+        ) : (
+          <button
+            onClick={handlePublish}
+            className="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+          >
+            🚀 Publish Course
+          </button>
+        )}
 
-<button
-    onClick={() => navigate(`/instructor/courseDashboard/${courseId}`)}
-    className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
-  >
-    📊 View Course Dashboard
-  </button>
-
+        <button
+          onClick={() => navigate(`/instructor/courseDashboard/${courseId}`)}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+        >
+          📊 View Course Dashboard
+        </button>
       </div>
     </div>
   );

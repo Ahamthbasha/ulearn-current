@@ -15,51 +15,64 @@ export class StudentCourseController implements IStudentCourseController {
       res.status(200).json({ success: true, data: result });
     } catch (error) {
       console.error("Error fetching all courses:", error);
-      res.status(500).json({ success: false, message: "Failed to fetch courses" });
+      res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch courses" });
     }
   }
 
-async getFilteredCourses(req: Request, res: Response): Promise<void> {
-  try {
-    const { page = "1", limit = "8", search = "", sort = "name-asc", category = "" } = req.query;
+  async getFilteredCourses(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        page = "1",
+        limit = "8",
+        search = "",
+        sort = "name-asc",
+        category = "",
+      } = req.query;
 
-    console.log('filtered courses',req.query)
+      console.log("filtered courses", req.query);
 
-    const parsedPage = parseInt(page as string);
-    const parsedLimit = parseInt(limit as string);
-    const searchTerm = search.toString();
-    const sortOption = sort.toString() as
-      | "name-asc"
-      | "name-desc"
-      | "price-asc"
-      | "price-desc";
-    const categoryId = category ? category.toString() : undefined;
+      const parsedPage = parseInt(page as string);
+      const parsedLimit = parseInt(limit as string);
+      const searchTerm = search.toString();
+      const sortOption = sort.toString() as
+        | "name-asc"
+        | "name-desc"
+        | "price-asc"
+        | "price-desc";
+      const categoryId = category ? category.toString() : undefined;
 
-    const result = await this.studentCourseService.getFilteredCoursesWithDetails(
-      parsedPage,
-      parsedLimit,
-      searchTerm,
-      sortOption,
-      categoryId
-    );
+      const result =
+        await this.studentCourseService.getFilteredCoursesWithDetails(
+          parsedPage,
+          parsedLimit,
+          searchTerm,
+          sortOption,
+          categoryId
+        );
 
-    res.status(200).json({ success: true, ...result });
-  } catch (error) {
-    console.error("Error fetching paginated courses:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch courses" });
+      res.status(200).json({ success: true, ...result });
+    } catch (error) {
+      console.error("Error fetching paginated courses:", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch courses" });
+    }
   }
-}
-
-
 
   async getCourseDetails(req: Request, res: Response): Promise<void> {
     const { courseId } = req.params;
     try {
-      const details = await this.studentCourseService.getCourseDetailsById(courseId);
+      const details = await this.studentCourseService.getCourseDetailsById(
+        courseId
+      );
       res.status(200).json({ success: true, data: details });
     } catch (error) {
       console.error("Error fetching course details:", error);
-      res.status(500).json({ success: false, message: "Failed to fetch course details" });
+      res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch course details" });
     }
   }
 }

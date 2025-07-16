@@ -4,31 +4,49 @@ import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 import Card from "../../../components/common/Card";
-import { instructorGetProfile, instructorUpdateProfile } from "../../../api/action/InstructorActionApi";
+import {
+  instructorGetProfile,
+  instructorUpdateProfile,
+} from "../../../api/action/InstructorActionApi";
 import { useDispatch } from "react-redux";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
 
 const ProfileSchema = Yup.object().shape({
   name: Yup.string()
     .trim()
-    .matches(/^[a-zA-Z0-9_ ]{3,30}$/, "Name must be 3–30 characters and can contain letters, numbers, spaces, or underscores")
+    .matches(
+      /^[a-zA-Z0-9_ ]{3,30}$/,
+      "Name must be 3–30 characters and can contain letters, numbers, spaces, or underscores"
+    )
     .required("Name is required"),
 
-  skills: Yup.string()
-    .test("valid-skills", "Please enter at least one skill", (value) => {
+  skills: Yup.string().test(
+    "valid-skills",
+    "Please enter at least one skill",
+    (value) => {
       if (!value) return false;
-      const skills = value.split(",").map((s) => s.trim()).filter(Boolean);
+      const skills = value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       return skills.length > 0;
-    }),
+    }
+  ),
 
-  expertise: Yup.string()
-    .test("valid-expertise", "Please enter at least one expertise", (value) => {
+  expertise: Yup.string().test(
+    "valid-expertise",
+    "Please enter at least one expertise",
+    (value) => {
       if (!value) return false;
-      const exp = value.split(",").map((s) => s.trim()).filter(Boolean);
+      const exp = value
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       return exp.length > 0;
-    }),
+    }
+  ),
 });
 
 const InstructorProfileEditPage = () => {
@@ -65,8 +83,14 @@ const InstructorProfileEditPage = () => {
   const handleSubmit = async (values: any) => {
     const formData = new FormData();
     formData.append("username", values.name.trim());
-    formData.append("skills", JSON.stringify(values.skills.split(",").map((s: string) => s.trim())));
-    formData.append("expertise", JSON.stringify(values.expertise.split(",").map((e: string) => e.trim())));
+    formData.append(
+      "skills",
+      JSON.stringify(values.skills.split(",").map((s: string) => s.trim()))
+    );
+    formData.append(
+      "expertise",
+      JSON.stringify(values.expertise.split(",").map((e: string) => e.trim()))
+    );
     if (values.profilePic) {
       formData.append("profilePic", values.profilePic);
     }
@@ -74,15 +98,17 @@ const InstructorProfileEditPage = () => {
     try {
       const response = await instructorUpdateProfile(formData);
       if (response.success) {
-        dispatch(setInstructor({
-          userId: response.data._id,
-          name: response.data.username,
-          email: response.data.email,
-          role: response.data.role,
-          isBlocked: response.data.isBlocked,
-          isVerified: response.data.isVerified,
-          profilePicture: response.data.profilePicUrl,
-        }));
+        dispatch(
+          setInstructor({
+            userId: response.data._id,
+            name: response.data.username,
+            email: response.data.email,
+            role: response.data.role,
+            isBlocked: response.data.isBlocked,
+            isVerified: response.data.isVerified,
+            profilePicture: response.data.profilePicUrl,
+          })
+        );
         toast.success("Profile updated successfully");
         setTimeout(() => {
           navigate("/instructor/profile");
@@ -109,23 +135,47 @@ const InstructorProfileEditPage = () => {
         >
           {({ setFieldValue }) => (
             <Form className="space-y-4">
-              <InputField name="name" label="Name" type="text" placeholder="Enter your name" />
-              <InputField name="skills" label="Skills (comma separated)" type="text" placeholder="e.g. JavaScript, React" />
-              <InputField name="expertise" label="Expertise (comma separated)" type="text" placeholder="e.g. MERN Stack" />
+              <InputField
+                name="name"
+                label="Name"
+                type="text"
+                placeholder="Enter your name"
+              />
+              <InputField
+                name="skills"
+                label="Skills (comma separated)"
+                type="text"
+                placeholder="e.g. JavaScript, React"
+              />
+              <InputField
+                name="expertise"
+                label="Expertise (comma separated)"
+                type="text"
+                placeholder="e.g. MERN Stack"
+              />
 
               <div className="flex flex-col">
-                <label className="mb-1 font-medium text-sm">Profile Picture</label>
+                <label className="mb-1 font-medium text-sm">
+                  Profile Picture
+                </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(event: any) => {
                     const fileInput = event.currentTarget;
                     const file = fileInput.files[0];
-                    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+                    const allowedTypes = [
+                      "image/jpeg",
+                      "image/png",
+                      "image/jpg",
+                      "image/webp",
+                    ];
 
                     if (file) {
                       if (!allowedTypes.includes(file.type)) {
-                        toast.error("Only image files (JPG, JPEG, PNG, WebP) are allowed");
+                        toast.error(
+                          "Only image files (JPG, JPEG, PNG, WebP) are allowed"
+                        );
                         fileInput.value = ""; // ❌ Clear the invalid file
                         return;
                       }
@@ -133,7 +183,8 @@ const InstructorProfileEditPage = () => {
                       setFieldValue("profilePic", file);
 
                       const reader = new FileReader();
-                      reader.onload = () => setPreviewImage(reader.result as string);
+                      reader.onload = () =>
+                        setPreviewImage(reader.result as string);
                       reader.readAsDataURL(file);
                     }
                   }}

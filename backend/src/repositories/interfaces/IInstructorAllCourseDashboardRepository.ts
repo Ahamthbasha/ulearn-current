@@ -7,11 +7,9 @@ export interface IInstructorAllCourseDashboardRepository {
   getTotalRevenue(instructorId: Types.ObjectId): Promise<number>;
   getTotalCourseSales(instructorId: Types.ObjectId): Promise<number>;
   getDetailedRevenueReport(
-  instructorId: Types.ObjectId,
-  range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
-  startDate?: Date,
-  endDate?: Date
-): Promise<any[]>;
-
-
+    instructorId: Types.ObjectId,
+    range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<any[]>;
 }

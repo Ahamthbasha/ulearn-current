@@ -12,8 +12,8 @@ const navItems = [
   { name: "Wishlist", path: "/user/wishlist", icon: "❤️" },
   { name: "Cart", path: "/user/cart", icon: "🛒" },
   { name: "Settings", path: "/user/profile", icon: "⚙️" },
-  {name:"Wallet",path:"/user/wallet",icon:"💵"},
-  {name:"Order",path:"/user/order",icon:"📦"}
+  { name: "Wallet", path: "/user/wallet", icon: "💵" },
+  { name: "Order", path: "/user/order", icon: "📦" },
 ];
 
 const StudentSidebarLayout = () => {
@@ -39,12 +39,19 @@ const StudentSidebarLayout = () => {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Sidebar */}
-      <aside className={`${isCollapsed ? 'w-20' : 'w-72'} bg-white shadow-xl flex flex-col relative overflow-hidden transition-all duration-300 ease-in-out`}>
+      <aside
+        className={`${
+          isCollapsed ? "w-20" : "w-72"
+        } bg-white shadow-xl flex flex-col relative overflow-hidden transition-all duration-300 ease-in-out`}
+      >
         {/* Decorative background gradient */}
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-600 to-purple-600 opacity-5"></div>
 
         {/* Logo Header */}
-        <div className="relative flex items-center justify-center h-20 border-b border-gray-100 cursor-pointer" onClick={()=>navigate('/')}>
+        <div
+          className="relative flex items-center justify-center h-20 border-b border-gray-100 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-lg">U</span>
@@ -63,13 +70,20 @@ const StudentSidebarLayout = () => {
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
           >
-            <svg 
-              className={`w-5 h-5 transform transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-5 h-5 transform transition-transform duration-300 ${
+                isCollapsed ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 19l-7-7 7-7"
+              />
             </svg>
           </button>
         </div>
@@ -92,7 +106,9 @@ const StudentSidebarLayout = () => {
             </div>
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-gray-800 truncate">{username}</p>
+                <p className="font-semibold text-gray-800 truncate">
+                  {username}
+                </p>
               </div>
             )}
           </div>
@@ -115,9 +131,9 @@ const StudentSidebarLayout = () => {
                     isActive
                       ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105"
                       : "text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:transform hover:scale-105"
-                  } ${isCollapsed ? 'justify-center' : ''}`
+                  } ${isCollapsed ? "justify-center" : ""}`
                 }
-                title={isCollapsed ? item.name : ''}
+                title={isCollapsed ? item.name : ""}
               >
                 {({ isActive }) => (
                   <>
@@ -152,7 +168,9 @@ const StudentSidebarLayout = () => {
                 "The beautiful thing about learning is that no one can take it
                 away from you."
               </p>
-              <p className="text-right mt-2 text-xs text-gray-500">– B.B. King</p>
+              <p className="text-right mt-2 text-xs text-gray-500">
+                – B.B. King
+              </p>
             </div>
           )}
 
@@ -160,11 +178,11 @@ const StudentSidebarLayout = () => {
           <button
             onClick={handleLogout}
             className={`w-full text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 py-2 px-4 rounded-lg transition duration-200 ${
-              isCollapsed ? 'text-center' : ''
+              isCollapsed ? "text-center" : ""
             }`}
-            title={isCollapsed ? 'Logout' : ''}
+            title={isCollapsed ? "Logout" : ""}
           >
-            {isCollapsed ? '🚪' : 'Logout'}
+            {isCollapsed ? "🚪" : "Logout"}
           </button>
         </div>
       </aside>

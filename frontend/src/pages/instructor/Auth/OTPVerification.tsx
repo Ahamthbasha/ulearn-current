@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { resendOtp, verifyOtp } from "../../../api/auth/InstructorAuthentication";
-import otpImage from '../../../assets/otp.jpg';
+import {
+  resendOtp,
+  verifyOtp,
+} from "../../../api/auth/InstructorAuthentication";
+import otpImage from "../../../assets/otp.jpg";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -94,7 +97,9 @@ const OTPVerification = () => {
         <div className="w-full md:w-1/2 p-6 sm:p-10">
           {/* Brand */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-blue-700 tracking-wide">ULearn</h1>
+            <h1 className="text-3xl font-bold text-blue-700 tracking-wide">
+              ULearn
+            </h1>
           </div>
 
           {/* Heading */}
@@ -102,7 +107,8 @@ const OTPVerification = () => {
             Verify Your Email Address
           </h2>
           <p className="text-gray-600 mt-2 text-sm">
-            A verification OTP has been sent to your email. Please enter the OTP below.
+            A verification OTP has been sent to your email. Please enter the OTP
+            below.
           </p>
 
           {/* OTP Inputs */}

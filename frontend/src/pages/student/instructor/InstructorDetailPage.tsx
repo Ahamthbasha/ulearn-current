@@ -42,7 +42,9 @@ const InstructorDetailPage = () => {
   }
 
   if (!instructor) {
-    return <div className="p-6 text-center text-gray-500">Instructor not found.</div>;
+    return (
+      <div className="p-6 text-center text-gray-500">Instructor not found.</div>
+    );
   }
 
   return (
@@ -50,19 +52,19 @@ const InstructorDetailPage = () => {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Profile Image */}
 
-<div className="w-48 h-48 bg-gray-100 border rounded-xl flex items-center justify-center overflow-hidden">
-  <img
-    src={instructor.profilePicUrl || "/default-avatar.png"}
-    alt={instructor.username}
-    className="max-w-full max-h-full object-contain"
-  />
-</div>
-
-
+        <div className="w-48 h-48 bg-gray-100 border rounded-xl flex items-center justify-center overflow-hidden">
+          <img
+            src={instructor.profilePicUrl || "/default-avatar.png"}
+            alt={instructor.username}
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
 
         {/* Instructor Info */}
         <div className="flex-1 space-y-3">
-          <h2 className="text-2xl font-bold text-gray-800">{instructor.username}</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {instructor.username}
+          </h2>
           <p className="text-gray-700">
             <strong>Email:</strong> {instructor.email}
           </p>

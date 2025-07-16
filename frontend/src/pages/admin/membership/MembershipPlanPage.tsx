@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { Pencil, Trash2, Plus, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { Pencil, Trash2, Plus, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import DataTable, {
   type Column,
   type ActionButton,
-} from '../../../components/AdminComponents/DataTable';
-import ConfirmationModal from '../../../components/common/ConfirmationModal';
+} from "../../../components/AdminComponents/DataTable";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import {
   getAllMembership,
   deleteMembership,
   toggleMembershipStatus,
-} from '../../../api/action/AdminActionApi';
-import { toast } from 'react-toastify';
+} from "../../../api/action/AdminActionApi";
+import { toast } from "react-toastify";
 
 interface IMembershipPlan {
   _id: string;
@@ -26,27 +26,34 @@ const MembershipPlanPage = () => {
   const [plans, setPlans] = useState<IMembershipPlan[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(1);
   const [total, setTotal] = useState(0);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [toggleModalOpen, setToggleModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<IMembershipPlan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<IMembershipPlan | null>(
+    null
+  );
 
   const navigate = useNavigate();
 
   const fetchPlans = async () => {
     setLoading(true);
     try {
-      const response = await getAllMembership({ page: currentPage, limit, search: searchTerm });
-      console.log(response)
+      const response = await getAllMembership({
+        page: currentPage,
+        limit,
+        search: searchTerm,
+      });
+      console.log(response);
       setPlans(response.plans || []);
       setTotal(response.total || 0);
       setError(null);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Failed to load membership plans';
+      const msg =
+        err?.response?.data?.message || "Failed to load membership plans";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -68,7 +75,7 @@ const MembershipPlanPage = () => {
   };
 
   const handleCreate = () => {
-    navigate('/admin/membership/add');
+    navigate("/admin/membership/add");
   };
 
   const handleEdit = (plan: IMembershipPlan) => {
@@ -89,10 +96,12 @@ const MembershipPlanPage = () => {
     if (!selectedPlan) return;
     try {
       await deleteMembership(selectedPlan._id);
-      toast.success('Membership plan deleted');
+      toast.success("Membership plan deleted");
       fetchPlans();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to delete membership plan');
+      toast.error(
+        err?.response?.data?.message || "Failed to delete membership plan"
+      );
     } finally {
       setDeleteModalOpen(false);
       setSelectedPlan(null);
@@ -103,10 +112,16 @@ const MembershipPlanPage = () => {
     if (!selectedPlan) return;
     try {
       await toggleMembershipStatus(selectedPlan._id);
-      toast.success(`Plan ${selectedPlan.isActive ? 'deactivated' : 'activated'} successfully`);
+      toast.success(
+        `Plan ${
+          selectedPlan.isActive ? "deactivated" : "activated"
+        } successfully`
+      );
       fetchPlans();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to update plan status');
+      toast.error(
+        err?.response?.data?.message || "Failed to update plan status"
+      );
     } finally {
       setToggleModalOpen(false);
       setSelectedPlan(null);
@@ -121,58 +136,58 @@ const MembershipPlanPage = () => {
 
   const columns: Column<IMembershipPlan>[] = [
     {
-      key: 'serialNo',
-      title: 'S.NO',
+      key: "serialNo",
+      title: "S.NO",
       render: (_val, _record, index) => (
         <span className="text-sm text-gray-900">
           {(currentPage - 1) * limit + index + 1}
         </span>
       ),
     },
-    { key: 'name', title: 'Plan Name' },
-    { key: 'durationInDays', title: 'Duration (Days)' },
-    { key: 'price', title: 'Price (₹)' },
+    { key: "name", title: "Plan Name" },
+    { key: "durationInDays", title: "Duration (Days)" },
+    { key: "price", title: "Price (₹)" },
     {
-      key: 'isActive',
-      title: 'Status',
+      key: "isActive",
+      title: "Status",
       render: (val) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            val ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            val ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
           }`}
         >
-          {val ? 'Active' : 'Inactive'}
+          {val ? "Active" : "Inactive"}
         </span>
       ),
     },
     {
-      key: 'createdAt',
-      title: 'Created At',
+      key: "createdAt",
+      title: "Created At",
       render: (value) => new Date(value).toLocaleDateString(),
     },
   ];
 
   const actions: ActionButton<IMembershipPlan>[] = [
     {
-      key: 'edit',
-      label: 'Edit',
+      key: "edit",
+      label: "Edit",
       icon: <Pencil size={16} />,
       onClick: handleEdit,
-      className: 'bg-yellow-500 hover:bg-yellow-600 text-white',
+      className: "bg-yellow-500 hover:bg-yellow-600 text-white",
     },
     {
-      key: 'delete',
-      label: 'Delete',
+      key: "delete",
+      label: "Delete",
       icon: <Trash2 size={16} />,
       onClick: handleDeletePrompt,
-      className: 'bg-red-500 hover:bg-red-600 text-white',
+      className: "bg-red-500 hover:bg-red-600 text-white",
     },
     {
-      key: 'toggle',
-      label: 'Toggle Status',
+      key: "toggle",
+      label: "Toggle Status",
       icon: <CheckCircle size={16} />,
       onClick: handleTogglePrompt,
-      className: 'bg-blue-500 hover:bg-blue-600 text-white',
+      className: "bg-blue-500 hover:bg-blue-600 text-white",
     },
   ];
 
@@ -224,11 +239,11 @@ const MembershipPlanPage = () => {
       {/* Toggle Status Confirmation Modal */}
       <ConfirmationModal
         isOpen={toggleModalOpen}
-        title={`${selectedPlan?.isActive ? 'Deactivate' : 'Activate'} Plan`}
+        title={`${selectedPlan?.isActive ? "Deactivate" : "Activate"} Plan`}
         message={`Are you sure you want to ${
-          selectedPlan?.isActive ? 'deactivate' : 'activate'
+          selectedPlan?.isActive ? "deactivate" : "activate"
         } the "${selectedPlan?.name}" plan?`}
-        confirmText={selectedPlan?.isActive ? 'Deactivate' : 'Activate'}
+        confirmText={selectedPlan?.isActive ? "Deactivate" : "Activate"}
         cancelText="Cancel"
         onConfirm={handleConfirmToggle}
         onCancel={handleCancelModal}

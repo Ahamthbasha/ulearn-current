@@ -20,7 +20,20 @@ interface MonthlyData {
   totalSales: number;
 }
 
-const monthMap = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const monthMap = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 const SpecificDashboardPage = () => {
   const { courseId } = useParams();
@@ -70,13 +83,15 @@ const SpecificDashboardPage = () => {
 
   const formattedData = monthlyPerformance.map((item) => ({
     name: `${monthMap[item.month - 1]} ${item.year}`,
-    revenue: item.totalSales
+    revenue: item.totalSales,
   }));
 
   return (
     <div className="min-h-screen p-6 bg-gray-50">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Course Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          Course Dashboard
+        </h1>
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -84,7 +99,9 @@ const SpecificDashboardPage = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">₹{revenue.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ₹{revenue.toLocaleString()}
+                </p>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
                 <DollarSign className="text-green-600" />
@@ -96,7 +113,9 @@ const SpecificDashboardPage = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-gray-500">Total Enrollments</p>
-                <p className="text-2xl font-bold text-gray-900">{enrollments}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {enrollments}
+                </p>
               </div>
               <div className="bg-blue-100 p-3 rounded-full">
                 <Users className="text-blue-600" />
@@ -108,7 +127,9 @@ const SpecificDashboardPage = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-gray-500">Category</p>
-                <p className="text-xl font-semibold text-gray-900">{category || "N/A"}</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {category || "N/A"}
+                </p>
               </div>
               <div className="bg-purple-100 p-3 rounded-full">
                 <Tag className="text-purple-600" />
@@ -119,21 +140,27 @@ const SpecificDashboardPage = () => {
 
         {/* Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Monthly Revenue Performance</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            Monthly Revenue Performance
+          </h2>
           <ResponsiveContainer width="100%" height={300}>
-  <BarChart
-    data={formattedData}
-    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-  >
-    <CartesianGrid strokeDasharray="3 3" />
-    <XAxis dataKey="name" />
-    <YAxis tickFormatter={(value) => `₹${value}`} />
-    <Tooltip formatter={(value: number) => [`₹${value.toLocaleString()}`, "Revenue"]} />
-    <Legend />
-    <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
-  </BarChart>
-</ResponsiveContainer>
-
+            <BarChart
+              data={formattedData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis tickFormatter={(value) => `₹${value}`} />
+              <Tooltip
+                formatter={(value: number) => [
+                  `₹${value.toLocaleString()}`,
+                  "Revenue",
+                ]}
+              />
+              <Legend />
+              <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

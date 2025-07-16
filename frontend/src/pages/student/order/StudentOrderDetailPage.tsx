@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { orderDetail, downloadInvoice } from "../../../api/action/StudentAction";
+import {
+  orderDetail,
+  downloadInvoice,
+} from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 
 interface Course {
@@ -78,7 +81,10 @@ export default function StudentOrderDetailPage() {
   };
 
   if (loading) return <div className="text-center py-20">Loading...</div>;
-  if (!order) return <div className="text-center py-20 text-red-500">Order not found.</div>;
+  if (!order)
+    return (
+      <div className="text-center py-20 text-red-500">Order not found.</div>
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8">
@@ -87,7 +93,9 @@ export default function StudentOrderDetailPage() {
         <div className="bg-white rounded-xl shadow-lg mb-6 p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Order Details</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                Order Details
+              </h1>
               <p className="text-gray-600 text-sm sm:text-base">
                 Order placed on {formatDate(order.createdAt)}
               </p>
@@ -96,7 +104,12 @@ export default function StudentOrderDetailPage() {
               onClick={handleDownloadInvoice}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -113,23 +126,37 @@ export default function StudentOrderDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
           {/* Customer Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Customer</h3>
-            <p className="text-gray-700 font-medium">{order.userId?.username || "N/A"}</p>
-            <p className="text-gray-600 text-sm">{order.userId?.email || "N/A"}</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Customer
+            </h3>
+            <p className="text-gray-700 font-medium">
+              {order.userId?.username || "N/A"}
+            </p>
+            <p className="text-gray-600 text-sm">
+              {order.userId?.email || "N/A"}
+            </p>
           </div>
 
           {/* Payment Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Payment</h3>
-            <p className="text-gray-700 font-medium capitalize">{order.gateway}</p>
-            <p className="text-2xl font-bold text-gray-800">₹{order.amount.toLocaleString()}</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Payment
+            </h3>
+            <p className="text-gray-700 font-medium capitalize">
+              {order.gateway}
+            </p>
+            <p className="text-2xl font-bold text-gray-800">
+              ₹{order.amount.toLocaleString()}
+            </p>
           </div>
 
           {/* Status Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Status</h3>
             <span
-              className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}
+              className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+                order.status
+              )}`}
             >
               {order.status}
             </span>
@@ -140,7 +167,9 @@ export default function StudentOrderDetailPage() {
         {/* Courses List */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-800">Purchased Courses</h3>
+            <h3 className="text-xl font-semibold text-gray-800">
+              Purchased Courses
+            </h3>
           </div>
 
           {/* Table for desktop */}
@@ -148,8 +177,12 @@ export default function StudentOrderDetailPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-700">Course</th>
-                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Price</th>
+                  <th className="text-left py-4 px-6 font-semibold text-gray-700">
+                    Course
+                  </th>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">
+                    Price
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -162,7 +195,9 @@ export default function StudentOrderDetailPage() {
                         className="w-16 h-16 rounded-lg object-cover"
                       />
                       <div>
-                        <h4 className="font-medium text-gray-800">{course.courseName}</h4>
+                        <h4 className="font-medium text-gray-800">
+                          {course.courseName}
+                        </h4>
                         <p className="text-sm text-gray-600">Digital Course</p>
                       </div>
                     </td>
@@ -185,9 +220,13 @@ export default function StudentOrderDetailPage() {
                   className="w-16 h-16 rounded-lg object-cover"
                 />
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-800">{course.courseName}</h4>
+                  <h4 className="font-medium text-gray-800">
+                    {course.courseName}
+                  </h4>
                   <p className="text-sm text-gray-600">Digital Course</p>
-                  <p className="text-lg font-semibold text-gray-800">₹{course.price.toLocaleString()}</p>
+                  <p className="text-lg font-semibold text-gray-800">
+                    ₹{course.price.toLocaleString()}
+                  </p>
                 </div>
               </div>
             ))}
@@ -195,8 +234,12 @@ export default function StudentOrderDetailPage() {
 
           {/* Total Section */}
           <div className="bg-gray-50 p-6 border-t border-gray-200 flex justify-between items-center">
-            <span className="text-lg font-semibold text-gray-700">Total Amount:</span>
-            <span className="text-2xl font-bold text-gray-800">₹{order.amount.toLocaleString()}</span>
+            <span className="text-lg font-semibold text-gray-700">
+              Total Amount:
+            </span>
+            <span className="text-2xl font-bold text-gray-800">
+              ₹{order.amount.toLocaleString()}
+            </span>
           </div>
         </div>
       </div>

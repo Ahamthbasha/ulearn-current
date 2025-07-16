@@ -1,4 +1,10 @@
-import { Model, Document, SortOrder, PopulateOptions, PipelineStage } from "mongoose";
+import {
+  Model,
+  Document,
+  SortOrder,
+  PopulateOptions,
+  PipelineStage,
+} from "mongoose";
 
 type PopulateArg = PopulateOptions | PopulateOptions[] | string[];
 
@@ -6,7 +12,7 @@ export interface IGenericRepository<T extends Document> {
   create(payload: Partial<T>): Promise<T>;
   create(payload: Partial<T>[]): Promise<T[]>;
 
-  findOne(filter: object,populate?:PopulateArg): Promise<T | null>;
+  findOne(filter: object, populate?: PopulateArg): Promise<T | null>;
   findById(id: string): Promise<T | null>;
   findAll(
     filter?: object,
@@ -33,14 +39,21 @@ export interface IGenericRepository<T extends Document> {
     populate?: PopulateArg
   ): Promise<{ data: T[]; total: number }>;
 
-  findOneAndUpdate(filter:object,update:object,options?:object):Promise<T|null>
+  findOneAndUpdate(
+    filter: object,
+    update: object,
+    options?: object
+  ): Promise<T | null>;
 
   aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
 
-  find(filter: object, populate?: PopulateArg, sort?: Record<string, SortOrder>): Promise<T[]>;
+  find(
+    filter: object,
+    populate?: PopulateArg,
+    sort?: Record<string, SortOrder>
+  ): Promise<T[]>;
 
   countDocuments(filter: object): Promise<number>;
-
 }
 
 export class GenericRepository<T extends Document> {
@@ -58,15 +71,14 @@ export class GenericRepository<T extends Document> {
   }
 
   async findOne(filter: object, populate?: PopulateArg): Promise<T | null> {
-  let query = this.model.findOne(filter);
+    let query = this.model.findOne(filter);
 
-  if (populate) {
-    query = query.populate(populate);
+    if (populate) {
+      query = query.populate(populate);
+    }
+
+    return await query.exec();
   }
-
-  return await query;
-}
-
 
   async findAll(
     filter: object = {},
@@ -126,14 +138,15 @@ export class GenericRepository<T extends Document> {
       query = query.populate(populate);
     }
 
-    const data = await query
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const data = await query.skip((page - 1) * limit).limit(limit);
 
     return { data, total };
   }
 
-  async findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null> {
+  async findByIdWithPopulate(
+    id: string,
+    populate?: PopulateArg
+  ): Promise<T | null> {
     let query = this.model.findById(id);
     if (populate) {
       query = query.populate(populate);
@@ -159,41 +172,36 @@ export class GenericRepository<T extends Document> {
   }
 
   async findOneAndUpdate(
-  filter: object,
-  update: object,
-  options: object = { new: true }
-): Promise<T | null> {
-  return this.model.findOneAndUpdate(filter, update, options);
-}
-
-
-
-async aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]> {
-  return this.model.aggregate<R>(pipeline);
-}
-
-async find(
-  filter: object = {},
-  populate?: PopulateArg,
-  sort: Record<string, SortOrder> = {}
-): Promise<T[]> {
-  let query = this.model.find(filter);
-
-  if (populate) {
-    query = query.populate(populate);
+    filter: object,
+    update: object,
+    options: object = { new: true }
+  ): Promise<T | null> {
+    return this.model.findOneAndUpdate(filter, update, options);
   }
 
-  if (Object.keys(sort).length > 0) {
-    query = query.sort(sort);
+  async aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]> {
+    return this.model.aggregate<R>(pipeline);
   }
 
-  return await query;
-}
+  async find(
+    filter: object = {},
+    populate?: PopulateArg,
+    sort: Record<string, SortOrder> = {}
+  ): Promise<T[]> {
+    let query = this.model.find(filter);
 
+    if (populate) {
+      query = query.populate(populate);
+    }
 
-async countDocuments(filter: object): Promise<number> {
-  return await this.model.countDocuments(filter);
-}
+    if (Object.keys(sort).length > 0) {
+      query = query.sort(sort);
+    }
 
+    return await query;
+  }
 
+  async countDocuments(filter: object): Promise<number> {
+    return await this.model.countDocuments(filter);
+  }
 }

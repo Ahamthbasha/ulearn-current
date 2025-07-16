@@ -33,7 +33,10 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     } as Partial<IOrder>);
   }
 
-  async updateOrderStatus(orderId: Types.ObjectId, status: "SUCCESS" | "FAILED"): Promise<IOrder | null> {
+  async updateOrderStatus(
+    orderId: Types.ObjectId,
+    status: "SUCCESS" | "FAILED"
+  ): Promise<IOrder | null> {
     return this.orderRepo.update(orderId.toString(), { status });
   }
 
@@ -41,8 +44,11 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     return this.paymentRepo.create(data);
   }
 
-  async createEnrollments(userId: Types.ObjectId, courseIds: Types.ObjectId[]): Promise<IEnrollment[]> {
-    const enrollments = courseIds.map(courseId => ({
+  async createEnrollments(
+    userId: Types.ObjectId,
+    courseIds: Types.ObjectId[]
+  ): Promise<IEnrollment[]> {
+    const enrollments = courseIds.map((courseId) => ({
       userId,
       courseId,
       completionStatus: "NOT_STARTED",
@@ -53,19 +59,18 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   }
 
   async getCourseNamesByIds(courseIds: Types.ObjectId[]): Promise<string[]> {
-    const courses = await this.courseRepo.findAll(
-      { _id: { $in: courseIds } }
-    );
+    const courses = await this.courseRepo.findAll({ _id: { $in: courseIds } });
     return (courses || []).map((c) => c.courseName);
   }
 
-  async getEnrolledCourseIds(userId: Types.ObjectId): Promise<Types.ObjectId[]> {
-  const enrollments = await this.enrollmentRepo.findAll({ userId }) || [];
-  return enrollments.map(e => e.courseId);
-}
+  async getEnrolledCourseIds(
+    userId: Types.ObjectId
+  ): Promise<Types.ObjectId[]> {
+    const enrollments = (await this.enrollmentRepo.findAll({ userId })) || [];
+    return enrollments.map((e) => e.courseId);
+  }
 
-getCourseRepo(): ICourseRepository {
-    return this.courseRepo
-}
-
+  getCourseRepo(): ICourseRepository {
+    return this.courseRepo;
+  }
 }

@@ -27,7 +27,9 @@ const Membership: React.FC = () => {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
-  const [activePlanExpiryDate, setActivePlanExpiryDate] = useState<string | null>(null);
+  const [activePlanExpiryDate, setActivePlanExpiryDate] = useState<
+    string | null
+  >(null);
   const navigate = useNavigate();
 
   useEffect(() => {

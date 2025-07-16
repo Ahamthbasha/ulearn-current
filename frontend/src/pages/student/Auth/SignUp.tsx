@@ -56,48 +56,47 @@ const SignUp = () => {
     }
   };
 
-const handleGoogleLogin = async (credentialResponse: any) => {
-  try {
-    if (!credentialResponse.credential) {
-      toast.error("Invalid Google Credential");
-      return;
+  const handleGoogleLogin = async (credentialResponse: any) => {
+    try {
+      if (!credentialResponse.credential) {
+        toast.error("Invalid Google Credential");
+        return;
+      }
+
+      const decoded: any = jwtDecode(credentialResponse.credential);
+
+      const response = await googleLogin({
+        name: decoded.name,
+        email: decoded.email,
+        password: decoded.sub,
+        profilePicture: decoded.picture,
+        role: "student",
+      });
+
+      const user = response?.user;
+
+      if (user) {
+        dispatch(
+          setUser({
+            _id: user._id,
+            username: user.name,
+            email: user.email,
+            role: user.role,
+            isBlocked: user.isBlocked,
+            profilePicUrl: user.profilePicture,
+          })
+        );
+        localStorage.setItem("user", JSON.stringify(user));
+        toast.success(response.message || "Signed up with Google!"); // ✅ this should now show
+        navigate("/");
+      } else {
+        toast.error(response.message || "Google sign-up failed");
+      }
+    } catch (error: any) {
+      console.error("Google Login Error:", error);
+      toast.error(error.message || "Google login failed");
     }
-
-    const decoded: any = jwtDecode(credentialResponse.credential);
-
-    const response = await googleLogin({
-      name: decoded.name,
-      email: decoded.email,
-      password: decoded.sub,
-      profilePicture: decoded.picture,
-      role: "student",
-    });
-
-    const user = response?.user;
-
-    if (user) {
-      dispatch(
-        setUser({
-          _id: user._id,
-          username: user.name,
-          email: user.email,
-          role: user.role,
-          isBlocked: user.isBlocked,
-          profilePicUrl: user.profilePicture,
-        })
-      );
-      localStorage.setItem("user", JSON.stringify(user));
-      toast.success(response.message || "Signed up with Google!"); // ✅ this should now show
-      navigate("/");
-    } else {
-      toast.error(response.message || "Google sign-up failed");
-    }
-  } catch (error: any) {
-    console.error("Google Login Error:", error);
-    toast.error(error.message || "Google login failed");
-  }
-};
-
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -130,12 +129,28 @@ const handleGoogleLogin = async (credentialResponse: any) => {
             >
               {() => (
                 <Form className="space-y-4">
-                  <InputField name="username" type="text" label="Username" placeholder="Enter username" />
-                  <InputField name="email" type="email" label="Email" placeholder="Enter email" />
+                  <InputField
+                    name="username"
+                    type="text"
+                    label="Username"
+                    placeholder="Enter username"
+                  />
+                  <InputField
+                    name="email"
+                    type="email"
+                    label="Email"
+                    placeholder="Enter email"
+                  />
                   <PasswordField name="password" placeholder="Enter password" />
-                  <PasswordField name="confirmPassword" placeholder="Confirm password" />
+                  <PasswordField
+                    name="confirmPassword"
+                    placeholder="Confirm password"
+                  />
 
-                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+                  >
                     Register
                   </button>
                 </Form>
@@ -144,8 +159,12 @@ const handleGoogleLogin = async (credentialResponse: any) => {
 
             {/* Divider and Google Login */}
             <div className="mt-6">
-              <p className="text-center text-sm text-gray-500 mb-2">Or sign up with Google</p>
-              <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+              <p className="text-center text-sm text-gray-500 mb-2">
+                Or sign up with Google
+              </p>
+              <GoogleOAuthProvider
+                clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
+              >
                 <div className="flex justify-center">
                   <GoogleLogin
                     onSuccess={handleGoogleLogin}

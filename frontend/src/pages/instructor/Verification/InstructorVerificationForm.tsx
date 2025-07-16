@@ -23,12 +23,19 @@ const InstructorVerificationForm: React.FC = () => {
 
   const validationSchema = Yup.object({
     name: Yup.string()
-  .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces")
-  .min(2, "Name must be at least 2 characters")
-  .max(50, "Name must be at most 50 characters")
-  .required("Name is required")
-  .trim(),
-    email: Yup.string().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,"Enter a valid email format").trim().lowercase().required("Email is required"),
+      .matches(/^[A-Za-z\s]+$/, "Name can only contain letters and spaces")
+      .min(2, "Name must be at least 2 characters")
+      .max(50, "Name must be at most 50 characters")
+      .required("Name is required")
+      .trim(),
+    email: Yup.string()
+      .matches(
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        "Enter a valid email format"
+      )
+      .trim()
+      .lowercase()
+      .required("Email is required"),
     degreeCertificate: Yup.mixed().required("Degree Certificate is required"),
     resume: Yup.mixed().required("Resume is required"),
   });
@@ -60,7 +67,9 @@ const InstructorVerificationForm: React.FC = () => {
   return (
     <div className="max-w-lg mx-auto p-4 sm:p-8 mt-8 bg-white rounded shadow">
       <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center">
-        {emailFromQuery ? "Re-Verify Instructor Profile" : "Instructor Verification"}
+        {emailFromQuery
+          ? "Re-Verify Instructor Profile"
+          : "Instructor Verification"}
       </h2>
       <Formik
         initialValues={initialValues}
@@ -100,7 +109,10 @@ const InstructorVerificationForm: React.FC = () => {
                 className="text-sm"
                 onChange={(e) => {
                   if (e.currentTarget.files?.[0]) {
-                    setFieldValue("degreeCertificate", e.currentTarget.files[0]);
+                    setFieldValue(
+                      "degreeCertificate",
+                      e.currentTarget.files[0]
+                    );
                   }
                 }}
               />

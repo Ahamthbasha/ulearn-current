@@ -5,6 +5,7 @@ import {
   checkoutCompleted,
   removeFromCart,
 } from "../../../api/action/StudentAction";
+import { getWallet } from "../../../api/action/StudentAction"; // ✅ import wallet API
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +14,10 @@ interface Course {
   courseName: string;
   price: number;
   thumbnailUrl: string;
+}
+
+interface Wallet {
+  balance: number;
 }
 
 declare global {
@@ -24,11 +29,15 @@ declare global {
 const CheckoutPage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "wallet">("razorpay"); // ✅ added
+  const [wallet, setWallet] = useState<Wallet | null>(null); // ✅ wallet state
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "wallet">(
+    "razorpay"
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCartCourses();
+    fetchWalletBalance();
   }, []);
 
   const fetchCartCourses = async () => {
@@ -43,6 +52,16 @@ const CheckoutPage = () => {
     }
   };
 
+  const fetchWalletBalance = async () => {
+    try {
+      const res = await getWallet();
+      console.log("wallet balance", res);
+      setWallet(res?.wallet || { balance: 0 });
+    } catch (error) {
+      toast.error("Failed to fetch wallet balance.");
+    }
+  };
+
   const totalAmount = courses.reduce((sum, c) => sum + c.price, 0);
 
   const handlePayment = async () => {
@@ -54,7 +73,11 @@ const CheckoutPage = () => {
 
       const courseIds = courses.map((c) => c._id);
 
-      const response = await initiateCheckout(courseIds, totalAmount, paymentMethod); // ✅ pass method
+      const response = await initiateCheckout(
+        courseIds,
+        totalAmount,
+        paymentMethod
+      );
       const order = response?.order;
 
       if (paymentMethod === "wallet") {
@@ -63,7 +86,7 @@ const CheckoutPage = () => {
         return;
       }
 
-      // Razorpay flow
+      // Razorpay payment flow
       if (!order || !order.gatewayOrderId) {
         toast.error("Failed to initiate order with Razorpay.");
         return;
@@ -158,7 +181,9 @@ const CheckoutPage = () => {
                     <td className="py-3 px-4 text-right">₹{course.price}</td>
                     <td className="py-3 px-4 text-center">
                       <button
-                        onClick={() => handleRemove(course._id, course.courseName)}
+                        onClick={() =>
+                          handleRemove(course._id, course.courseName)
+                        }
                         className="text-red-500 hover:underline text-sm"
                       >
                         Remove
@@ -179,8 +204,15 @@ const CheckoutPage = () => {
             </table>
           </div>
 
+          {/* ✅ Wallet Balance */}
+          {wallet && (
+            <div className="mt-6 text-sm text-gray-700">
+              <strong>💰 Wallet Balance:</strong> ₹{wallet.balance.toFixed(2)}
+            </div>
+          )}
+
           {/* ✅ Payment Method Selection */}
-          <div className="mt-6">
+          <div className="mt-4">
             <label className="font-medium mr-4">Choose Payment Method:</label>
             <label className="mr-6">
               <input

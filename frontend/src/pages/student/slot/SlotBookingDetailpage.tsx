@@ -95,7 +95,10 @@ export default function SlotBookingDetailPage() {
   };
 
   if (loading) return <div className="text-center py-20">Loading...</div>;
-  if (!booking) return <div className="text-center py-20 text-red-500">Booking not found.</div>;
+  if (!booking)
+    return (
+      <div className="text-center py-20 text-red-500">Booking not found.</div>
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8">
@@ -104,9 +107,12 @@ export default function SlotBookingDetailPage() {
         <div className="bg-white rounded-xl shadow-lg mb-6 p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Booking Details</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                Booking Details
+              </h1>
               <p className="text-gray-600 text-sm sm:text-base">
-                Booked on {booking.createdAt ? formatDate(booking.createdAt) : "N/A"}
+                Booked on{" "}
+                {booking.createdAt ? formatDate(booking.createdAt) : "N/A"}
               </p>
             </div>
 
@@ -126,16 +132,28 @@ export default function SlotBookingDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
           {/* Student Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Student</h3>
-            <p className="text-gray-700 font-medium">{booking.studentId?.username || "N/A"}</p>
-            <p className="text-gray-600 text-sm">{booking.studentId?.email || "N/A"}</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Student
+            </h3>
+            <p className="text-gray-700 font-medium">
+              {booking.studentId?.username || "N/A"}
+            </p>
+            <p className="text-gray-600 text-sm">
+              {booking.studentId?.email || "N/A"}
+            </p>
           </div>
 
           {/* Instructor Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Instructor</h3>
-            <p className="text-gray-700 font-medium">{booking.instructorId?.username || "N/A"}</p>
-            <p className="text-gray-600 text-sm">{booking.instructorId?.email || "N/A"}</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Instructor
+            </h3>
+            <p className="text-gray-700 font-medium">
+              {booking.instructorId?.username || "N/A"}
+            </p>
+            <p className="text-gray-600 text-sm">
+              {booking.instructorId?.email || "N/A"}
+            </p>
           </div>
 
           {/* Status Info */}
@@ -148,14 +166,18 @@ export default function SlotBookingDetailPage() {
             >
               {booking.status}
             </span>
-            <p className="text-sm text-gray-600 mt-1">Booking ID: {booking._id}</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Booking ID: {booking._id}
+            </p>
           </div>
         </div>
 
         {/* Slot Info */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-800">Slot Information</h3>
+            <h3 className="text-xl font-semibold text-gray-800">
+              Slot Information
+            </h3>
           </div>
 
           <div className="p-6">
@@ -164,12 +186,15 @@ export default function SlotBookingDetailPage() {
                 <p className="text-gray-600">Date</p>
                 <p className="text-gray-800 font-medium">
                   {booking.slotId?.startTime
-                    ? new Date(booking.slotId.startTime).toLocaleDateString("en-IN", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
+                    ? new Date(booking.slotId.startTime).toLocaleDateString(
+                        "en-IN",
+                        {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )
                     : "N/A"}
                 </p>
               </div>
@@ -177,13 +202,18 @@ export default function SlotBookingDetailPage() {
                 <p className="text-gray-600">Time</p>
                 <p className="text-gray-800 font-medium">
                   {booking.slotId?.startTime && booking.slotId?.endTime
-                    ? formatDateTimeRange(booking.slotId.startTime, booking.slotId.endTime)
+                    ? formatDateTimeRange(
+                        booking.slotId.startTime,
+                        booking.slotId.endTime
+                      )
                     : "N/A"}
                 </p>
               </div>
               <div>
                 <p className="text-gray-600">Transaction ID</p>
-                <p className="text-gray-800 font-medium">{booking.txnId || "N/A"}</p>
+                <p className="text-gray-800 font-medium">
+                  {booking.txnId || "N/A"}
+                </p>
               </div>
               <div>
                 <p className="text-gray-600">Amount</p>

@@ -3,13 +3,19 @@ import { IStudentCheckoutController } from "./interfaces/IStudentCheckoutControl
 import { IStudentCheckoutService } from "../../services/interface/IStudentCheckoutService";
 import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
-import { CheckoutErrorMessages, CheckoutSuccessMessage } from "../../utils/constants";
+import {
+  CheckoutErrorMessages,
+  CheckoutSuccessMessage,
+} from "../../utils/constants";
 import { Types } from "mongoose";
 
 export class StudentCheckoutController implements IStudentCheckoutController {
   constructor(private readonly checkoutService: IStudentCheckoutService) {}
 
-  async initiateCheckout(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async initiateCheckout(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const { courseIds, totalAmount, paymentMethod } = req.body;
       const userId = new Types.ObjectId(req.user?.id);
@@ -26,7 +32,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         userId,
         courseIds,
         totalAmount,
-        paymentMethod  // 👈 required now
+        paymentMethod // 👈 required now
       );
 
       res.status(StatusCode.OK).json({
@@ -34,11 +40,13 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         message: CheckoutSuccessMessage.ORDER_CREATED,
         order,
       });
-
     } catch (error: any) {
       const errorMsg = error.message || CheckoutErrorMessages.CHECKOUT_FAILED;
 
-      if (errorMsg.includes("already enrolled") || errorMsg.includes("Insufficient wallet")) {
+      if (
+        errorMsg.includes("already enrolled") ||
+        errorMsg.includes("Insufficient wallet")
+      ) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: errorMsg,

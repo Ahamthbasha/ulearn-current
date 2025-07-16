@@ -14,11 +14,17 @@ export class InstructorProfileRepository
     return await this.findOne({ email });
   }
 
-  async updateProfile(id: string, data: Partial<IInstructor>): Promise<IInstructor | null> {
+  async updateProfile(
+    id: string,
+    data: Partial<IInstructor>
+  ): Promise<IInstructor | null> {
     return await this.updateOne({ _id: id }, data);
   }
 
-  async updatePassword(email: string, hashedPassword: string): Promise<IInstructor | null> {
+  async updatePassword(
+    email: string,
+    hashedPassword: string
+  ): Promise<IInstructor | null> {
     return await this.updateOne({ email }, { password: hashedPassword });
   }
 }

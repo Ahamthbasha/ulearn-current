@@ -2,4 +2,5 @@
 import { IGenericRepository } from "../genericRepository";
 import { IEnrollment } from "../../models/enrollmentModel";
 
-export interface IEnrollmentRepository extends IGenericRepository<IEnrollment> {}
+export interface IEnrollmentRepository
+  extends IGenericRepository<IEnrollment> {}

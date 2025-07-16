@@ -20,11 +20,11 @@ const AboutUsPage = () => {
           About Us
         </h1>
         <p className="text-lg text-gray-600 leading-relaxed mb-10">
-          Welcome to <span className="font-semibold text-blue-600">uLearn</span>,
-          your trusted platform for personalized mentorship and expert learning.
-          We connect learners with industry professionals to accelerate their
-          careers through one-on-one sessions, structured courses, and real-world
-          insights.
+          Welcome to <span className="font-semibold text-blue-600">uLearn</span>
+          , your trusted platform for personalized mentorship and expert
+          learning. We connect learners with industry professionals to
+          accelerate their careers through one-on-one sessions, structured
+          courses, and real-world insights.
         </p>
       </div>
 
@@ -60,8 +60,8 @@ const AboutUsPage = () => {
           Meet Our Team
         </h2>
         <p className="text-center text-gray-600 mb-6">
-          We're a passionate group of educators, engineers, and innovators committed
-          to reshaping education through mentorship.
+          We're a passionate group of educators, engineers, and innovators
+          committed to reshaping education through mentorship.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 text-center">

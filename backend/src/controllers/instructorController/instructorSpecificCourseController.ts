@@ -26,11 +26,14 @@ export class InstructorSpecificCourseDashboardController
         new Types.ObjectId(courseId)
       );
 
-      console.log(data)
+      console.log(data);
 
       res.status(StatusCode.OK).json({ success: true, data });
     } catch (error) {
-      console.error("[InstructorSpecificCourseDashboardController] Error:", error);
+      console.error(
+        "[InstructorSpecificCourseDashboardController] Error:",
+        error
+      );
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: "Failed to fetch course dashboard",

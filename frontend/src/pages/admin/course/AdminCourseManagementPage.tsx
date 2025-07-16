@@ -27,7 +27,9 @@ const AdminCourseManagementPage = () => {
   const [limit] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchCourses = async () => {

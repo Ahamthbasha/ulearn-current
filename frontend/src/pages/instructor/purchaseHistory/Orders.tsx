@@ -78,7 +78,9 @@ const Orders = () => {
           data={orders}
           columns={columns}
           actionLabel="View"
-          onAction={(order) => navigate(`/instructor/membershipOrders/${order.txnId}`)}
+          onAction={(order) =>
+            navigate(`/instructor/membershipOrders/${order.txnId}`)
+          }
           emptyText="No membership purchases found."
           pagination={{
             currentPage: page,

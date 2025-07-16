@@ -75,29 +75,32 @@ export class StudentSlotBookingController
     }
   }
 
-  async getBookingHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
-  try {
-    const studentId = req.user?.id;
-    if (!studentId) throw new Error("Unauthorized");
+  async getBookingHistory(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
+    try {
+      const studentId = req.user?.id;
+      if (!studentId) throw new Error("Unauthorized");
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
 
-    const result = await this.bookingService.getStudentBookingHistoryPaginated(
-      studentId,
-      page,
-      limit
-    );
+      const result =
+        await this.bookingService.getStudentBookingHistoryPaginated(
+          studentId,
+          page,
+          limit
+        );
 
-    res.status(StatusCode.OK).json({ success: true, ...result });
-  } catch (err: any) {
-    console.error("getBookingHistory error:", err);
-    res
-      .status(StatusCode.BAD_REQUEST)
-      .json({ success: false, message: err.message });
+      res.status(StatusCode.OK).json({ success: true, ...result });
+    } catch (err: any) {
+      console.error("getBookingHistory error:", err);
+      res
+        .status(StatusCode.BAD_REQUEST)
+        .json({ success: false, message: err.message });
+    }
   }
-}
-
 
   async getBookingDetail(
     req: AuthenticatedRequest,

@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 
 export class ChapterReadOnlyRepository implements IChapterReadOnlyRepository {
   async countChaptersByCourse(courseId: string): Promise<number> {
-    return await ChapterModel.countDocuments({ courseId: new mongoose.Types.ObjectId(courseId) });
+    return await ChapterModel.countDocuments({
+      courseId: new mongoose.Types.ObjectId(courseId),
+    });
   }
 }

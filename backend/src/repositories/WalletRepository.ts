@@ -1,23 +1,34 @@
 import { IWalletRepository } from "./interfaces/IWalletRepository";
-import WalletModel,{IWallet} from "../models/walletModel";
-import {Types} from "mongoose"
+import WalletModel, { IWallet } from "../models/walletModel";
+import { Types } from "mongoose";
 import { GenericRepository } from "./genericRepository";
 
-export class WalletRepository extends GenericRepository<IWallet> implements IWalletRepository {
-
-    constructor(){
-        super(WalletModel)
-    }
+export class WalletRepository
+  extends GenericRepository<IWallet>
+  implements IWalletRepository
+{
+  constructor() {
+    super(WalletModel);
+  }
   async findByOwnerId(ownerId: Types.ObjectId): Promise<IWallet | null> {
     return await this.findOne({ ownerId });
   }
 
-  async createWallet(ownerId: Types.ObjectId, onModel: string, role: string): Promise<IWallet> {
+  async createWallet(
+    ownerId: Types.ObjectId,
+    onModel: string,
+    role: string
+  ): Promise<IWallet> {
     const wallet = new WalletModel({ ownerId, onModel, role });
     return wallet.save();
   }
 
-  async creditWallet(ownerId: Types.ObjectId, amount: number, description: string, txnId: string): Promise<IWallet | null> {
+  async creditWallet(
+    ownerId: Types.ObjectId,
+    amount: number,
+    description: string,
+    txnId: string
+  ): Promise<IWallet | null> {
     return await this.findOneAndUpdate(
       { ownerId },
       {
@@ -25,7 +36,7 @@ export class WalletRepository extends GenericRepository<IWallet> implements IWal
         $push: {
           transactions: {
             amount,
-            type: 'credit',
+            type: "credit",
             description,
             txnId,
             date: new Date(),
@@ -36,7 +47,12 @@ export class WalletRepository extends GenericRepository<IWallet> implements IWal
     );
   }
 
-  async debitWallet(ownerId: Types.ObjectId, amount: number, description: string, txnId: string): Promise<IWallet | null> {
+  async debitWallet(
+    ownerId: Types.ObjectId,
+    amount: number,
+    description: string,
+    txnId: string
+  ): Promise<IWallet | null> {
     const wallet = await this.findOne({ ownerId });
     if (!wallet || wallet.balance < amount) return null;
 
@@ -47,7 +63,7 @@ export class WalletRepository extends GenericRepository<IWallet> implements IWal
         $push: {
           transactions: {
             amount,
-            type: 'debit',
+            type: "debit",
             description,
             txnId,
             date: new Date(),
@@ -58,18 +74,21 @@ export class WalletRepository extends GenericRepository<IWallet> implements IWal
     );
   }
 
-  async getPaginatedTransactions(ownerId: Types.ObjectId, page: number, limit: number): Promise<{ transactions: IWallet["transactions"], total: number }> {
-  const wallet = await WalletModel.findOne({ ownerId });
+  async getPaginatedTransactions(
+    ownerId: Types.ObjectId,
+    page: number,
+    limit: number
+  ): Promise<{ transactions: IWallet["transactions"]; total: number }> {
+    const wallet = await WalletModel.findOne({ ownerId });
 
-  if (!wallet) return { transactions: [], total: 0 };
+    if (!wallet) return { transactions: [], total: 0 };
 
-  const total = wallet.transactions.length;
+    const total = wallet.transactions.length;
 
-  const transactions = wallet.transactions
-    .sort((a, b) => b.date.getTime() - a.date.getTime()) // Newest first
-    .slice((page - 1) * limit, page * limit);
+    const transactions = wallet.transactions
+      .sort((a, b) => b.date.getTime() - a.date.getTime()) // Newest first
+      .slice((page - 1) * limit, page * limit);
 
-  return { transactions, total };
-}
-
+    return { transactions, total };
+  }
 }

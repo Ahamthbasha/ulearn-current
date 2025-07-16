@@ -3,7 +3,6 @@ import InstructorModel, { IInstructor } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
 import { PipelineStage } from "mongoose";
 
-
 export class StudentInstructorListingRepository
   extends GenericRepository<IInstructor>
   implements IStudentInstructorListingRepository
@@ -65,7 +64,10 @@ export class StudentInstructorListingRepository
     return await this.findOne({ _id: id, isMentor: true, isBlocked: false });
   }
 
-  async getAvailableSkillsAndExpertise(): Promise<{ skills: string[]; expertise: string[] }> {
+  async getAvailableSkillsAndExpertise(): Promise<{
+    skills: string[];
+    expertise: string[];
+  }> {
     const skillsPipeline: PipelineStage[] = [
       { $match: { isMentor: true, isBlocked: false } },
       { $unwind: "$skills" },
@@ -90,5 +92,4 @@ export class StudentInstructorListingRepository
       expertise: expertiseResult.map((e) => e.expertise),
     };
   }
-
 }

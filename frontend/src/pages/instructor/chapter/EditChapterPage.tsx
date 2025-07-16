@@ -8,7 +8,10 @@ import { Loader2 } from "lucide-react";
 import Card from "../../../components/common/Card";
 import InputField from "../../../components/common/InputField";
 import { Button } from "../../../components/common/Button";
-import { getChapterById, updateChapter } from "../../../api/action/InstructorActionApi";
+import {
+  getChapterById,
+  updateChapter,
+} from "../../../api/action/InstructorActionApi";
 
 const BUCKET_BASE_URL = "https://your-s3-bucket.s3.amazonaws.com"; // Replace with your actual base URL
 
@@ -41,7 +44,10 @@ const chapterSchema = Yup.object().shape({
 });
 
 const EditChapterPage = () => {
-  const { courseId, chapterId } = useParams<{ courseId: string; chapterId: string }>();
+  const { courseId, chapterId } = useParams<{
+    courseId: string;
+    chapterId: string;
+  }>();
   const navigate = useNavigate();
 
   const [initialValues, setInitialValues] = useState({
@@ -86,63 +92,68 @@ const EditChapterPage = () => {
   }, [chapterId, courseId]);
 
   const handleSubmit = async (values: typeof initialValues) => {
-  if (!courseId || !chapterId) return toast.error("Invalid request");
+    if (!courseId || !chapterId) return toast.error("Invalid request");
 
-  if (videoFile) {
-  const allowedVideoMimeTypes = [
-    "video/mp4",
-    "video/webm",
-    "video/ogg",
-    "video/x-matroska",
-    "video/quicktime",
-    "video/x-msvideo",
-  ];
-  const allowedExtensions = ["mp4", "webm", "ogg", "mkv", "mov", "avi"];
+    if (videoFile) {
+      const allowedVideoMimeTypes = [
+        "video/mp4",
+        "video/webm",
+        "video/ogg",
+        "video/x-matroska",
+        "video/quicktime",
+        "video/x-msvideo",
+      ];
+      const allowedExtensions = ["mp4", "webm", "ogg", "mkv", "mov", "avi"];
 
-  const ext = videoFile.name.split(".").pop()?.toLowerCase();
+      const ext = videoFile.name.split(".").pop()?.toLowerCase();
 
-  if (
-    !allowedVideoMimeTypes.includes(videoFile.type) ||
-    !ext ||
-    !allowedExtensions.includes(ext)
-  ) {
-    return toast.error("Invalid file. Only real video formats (mp4, webm, mkv, etc.) are allowed.");
-  }
-  
-}
-
-
-  if (captionFile) {
-    const ext = captionFile.name.split(".").pop()?.toLowerCase();
-    if (!["vtt", "srt"].includes(ext || "")) {
-      return toast.error("Only .vtt or .srt files allowed for captions");
+      if (
+        !allowedVideoMimeTypes.includes(videoFile.type) ||
+        !ext ||
+        !allowedExtensions.includes(ext)
+      ) {
+        return toast.error(
+          "Invalid file. Only real video formats (mp4, webm, mkv, etc.) are allowed."
+        );
+      }
     }
-  }
 
-  try {
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("chapterTitle", values.chapterTitle.trim());
-    formData.append("description", values.description.trim());
-    formData.append("chapterNumber", String(values.chapterNumber));
-    formData.append("courseId", courseId);
-    if (videoFile) formData.append("video", videoFile);
-    if (captionFile) formData.append("captions", captionFile);
+    if (captionFile) {
+      const ext = captionFile.name.split(".").pop()?.toLowerCase();
+      if (!["vtt", "srt"].includes(ext || "")) {
+        return toast.error("Only .vtt or .srt files allowed for captions");
+      }
+    }
 
-    await updateChapter(courseId, chapterId, formData);
-    toast.success("Chapter updated successfully");
-    navigate(`/instructor/course/${courseId}/chapters`);
-  } catch (error: any) {
-    const message = error?.response?.data?.message || "Failed to update chapter";
-    toast.error(message);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("chapterTitle", values.chapterTitle.trim());
+      formData.append("description", values.description.trim());
+      formData.append("chapterNumber", String(values.chapterNumber));
+      formData.append("courseId", courseId);
+      if (videoFile) formData.append("video", videoFile);
+      if (captionFile) formData.append("captions", captionFile);
+
+      await updateChapter(courseId, chapterId, formData);
+      toast.success("Chapter updated successfully");
+      navigate(`/instructor/course/${courseId}/chapters`);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || "Failed to update chapter";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="px-4 py-6">
-      <Card title="Edit Chapter" padded className="bg-white shadow-sm rounded-lg">
+      <Card
+        title="Edit Chapter"
+        padded
+        className="bg-white shadow-sm rounded-lg"
+      >
         <Formik
           enableReinitialize
           initialValues={initialValues}
@@ -153,13 +164,24 @@ const EditChapterPage = () => {
             <Form className="space-y-4">
               <InputField name="chapterTitle" label="Chapter Title" useFormik />
               <InputField name="description" label="Description" useFormik />
-              <InputField name="chapterNumber" label="Chapter Number" type="number" useFormik />
+              <InputField
+                name="chapterNumber"
+                label="Chapter Number"
+                type="number"
+                useFormik
+              />
 
               {/* Video File Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Existing Video</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Existing Video
+                </label>
                 {existingVideoUrl && (
-                  <video src={existingVideoUrl} controls className="w-full h-64 my-2 rounded" />
+                  <video
+                    src={existingVideoUrl}
+                    controls
+                    className="w-full h-64 my-2 rounded"
+                  />
                 )}
                 <input
                   type="file"
@@ -171,7 +193,9 @@ const EditChapterPage = () => {
 
               {/* Caption File Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Existing Captions</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Existing Captions
+                </label>
                 {existingCaptionsUrl && (
                   <a
                     href={existingCaptionsUrl}

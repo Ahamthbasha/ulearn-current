@@ -1,4 +1,8 @@
-import { ChapterModel, CreateChapterDTO, IChapter } from "../../models/chapterModel";
+import {
+  ChapterModel,
+  CreateChapterDTO,
+  IChapter,
+} from "../../models/chapterModel";
 import { GenericRepository } from "../genericRepository";
 import { IInstructorChapterRepository } from "../interfaces/IInstructorChapterRepository";
 
@@ -23,7 +27,10 @@ export class InstructorChapterRepository
     return await this.findById(chapterId);
   }
 
-  async updateChapter(chapterId: string, data: Partial<IChapter>): Promise<IChapter | null> {
+  async updateChapter(
+    chapterId: string,
+    data: Partial<IChapter>
+  ): Promise<IChapter | null> {
     return await this.update(chapterId, data);
   }
 
@@ -32,25 +39,24 @@ export class InstructorChapterRepository
   }
 
   async findByTitleOrNumberAndCourseId(
-  courseId: string,
-  chapterTitle: string,
-  chapterNumber: number
-): Promise<IChapter | null> {
-  return await this.findOne({
-    courseId,
-    $or: [
-      { chapterTitle: { $regex: `^${chapterTitle}$`, $options: "i" } },
-      { chapterNumber: chapterNumber }
-    ]
-  });
-}
+    courseId: string,
+    chapterTitle: string,
+    chapterNumber: number
+  ): Promise<IChapter | null> {
+    return await this.findOne({
+      courseId,
+      $or: [
+        { chapterTitle: { $regex: `^${chapterTitle}$`, $options: "i" } },
+        { chapterNumber: chapterNumber },
+      ],
+    });
+  }
 
-async paginateChapters(
-  filter: object,
-  page: number,
-  limit: number
-): Promise<{ data: IChapter[]; total: number }> {
-  return this.paginate(filter, page, limit, { chapterNumber: 1 });
-}
-
+  async paginateChapters(
+    filter: object,
+    page: number,
+    limit: number
+  ): Promise<{ data: IChapter[]; total: number }> {
+    return this.paginate(filter, page, limit, { chapterNumber: 1 });
+  }
 }

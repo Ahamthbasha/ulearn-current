@@ -1,15 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  listSlots,
-  deleteSlot,
-} from "../../../api/action/InstructorActionApi";
-import {
-  format,
-  isSameDay,
-  parseISO,
-  startOfWeek,
-  addDays,
-} from "date-fns";
+import { listSlots, deleteSlot } from "../../../api/action/InstructorActionApi";
+import { format, isSameDay, parseISO, startOfWeek, addDays } from "date-fns";
 import { toast } from "react-toastify";
 import { PlusCircle, Trash2, Pencil } from "lucide-react";
 import SlotModal from "../../../components/InstructorComponents/SlotModal";

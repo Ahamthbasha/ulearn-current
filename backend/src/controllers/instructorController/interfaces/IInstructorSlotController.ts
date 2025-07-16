@@ -6,5 +6,4 @@ export interface IInstructorSlotController {
   deleteSlot(req: Request, res: Response): Promise<void>;
   listSlots(req: Request, res: Response): Promise<void>;
   getSlotStatsByMonth(req: Request, res: Response): Promise<void>;
-
 }

@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import { membershipDetail, downloadReceiptForMembership } from "../../../api/action/InstructorActionApi";
+import {
+  membershipDetail,
+  downloadReceiptForMembership,
+} from "../../../api/action/InstructorActionApi";
 import { Download } from "lucide-react";
 // import fileDownload from "js-file-download";
 
@@ -74,7 +77,8 @@ const MembershipOrderDetail = () => {
         <div>
           <h2 className="text-2xl font-bold">Membership Order Details</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Order placed on {format(new Date(order.createdAt), "MMMM d, yyyy 'at' hh:mm a")}
+            Order placed on{" "}
+            {format(new Date(order.createdAt), "MMMM d, yyyy 'at' hh:mm a")}
           </p>
         </div>
 
@@ -97,7 +101,9 @@ const MembershipOrderDetail = () => {
         </div>
         <div className="border rounded p-4">
           <p className="text-gray-500 text-sm">Payment</p>
-          <p className="font-semibold">{isWalletPayment ? "Wallet" : "Razorpay"}</p>
+          <p className="font-semibold">
+            {isWalletPayment ? "Wallet" : "Razorpay"}
+          </p>
           <p className="font-semibold text-lg">₹{order.price}</p>
         </div>
         <div className="border rounded p-4">
@@ -128,11 +134,15 @@ const MembershipOrderDetail = () => {
           </div>
           <div>
             <p className="text-gray-500 text-sm">Start Date</p>
-            <p className="font-semibold">{format(new Date(order.startDate), "dd MMM yyyy")}</p>
+            <p className="font-semibold">
+              {format(new Date(order.startDate), "dd MMM yyyy")}
+            </p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">End Date</p>
-            <p className="font-semibold">{format(new Date(order.endDate), "dd MMM yyyy")}</p>
+            <p className="font-semibold">
+              {format(new Date(order.endDate), "dd MMM yyyy")}
+            </p>
           </div>
         </div>
       </div>

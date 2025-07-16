@@ -236,7 +236,7 @@ import { AdminCourseRepository } from "../repositories/adminRepository/adminCour
 import { IAdminCourseService } from "../services/interface/IAdminCourseService";
 import { AdminCourseService } from "../services/adminServices/AdminCourseService";
 
-import { IAdminCourseController } from "../controllers/adminControllers/interface/IAdminCourseControllet";
+import { IAdminCourseController } from "../controllers/adminControllers/interface/IAdminCourseController";
 import { AdminCourseController } from "../controllers/adminControllers/adminCourseController";
 
 const adminCourseRepository: IAdminCourseRepository =

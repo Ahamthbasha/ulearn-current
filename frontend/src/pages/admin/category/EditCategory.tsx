@@ -3,7 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
-import { getCategoryById, editCategory } from "../../../api/action/AdminActionApi";
+import {
+  getCategoryById,
+  editCategory,
+} from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
 
 const EditCategoryPage = () => {
@@ -23,7 +26,7 @@ const EditCategoryPage = () => {
         } else {
           toast.error(response?.data?.message);
         }
-      } catch (err) { 
+      } catch (err) {
         toast.error("something went wrong");
       } finally {
         setLoading(false);
@@ -44,26 +47,24 @@ const EditCategoryPage = () => {
           enableReinitialize
           initialValues={initialValues}
           validationSchema={Yup.object({
-  name: Yup.string()
-    .required("Category name is required")
-    .test(
-      "is-valid-category",
-      "Must be at least 5 characters with alphabet letters (no only numbers/symbols)",
-      (value) => {
-        if (!value) return false;
-        const trimmed = value.trim();
+            name: Yup.string()
+              .required("Category name is required")
+              .test(
+                "is-valid-category",
+                "Must be at least 5 characters with alphabet letters (no only numbers/symbols)",
+                (value) => {
+                  if (!value) return false;
+                  const trimmed = value.trim();
 
-        // At least 5 characters, contains at least 1 alphabet, not just digits/symbols
-        const hasMinLength = trimmed.length >= 5;
-        const hasLetters = /[a-zA-Z]/.test(trimmed);
-        const notOnlySymbolsOrDigits = /[a-zA-Z]/.test(trimmed); // Ensures there's a letter
+                  // At least 5 characters, contains at least 1 alphabet, not just digits/symbols
+                  const hasMinLength = trimmed.length >= 5;
+                  const hasLetters = /[a-zA-Z]/.test(trimmed);
+                  const notOnlySymbolsOrDigits = /[a-zA-Z]/.test(trimmed); // Ensures there's a letter
 
-        return hasMinLength && hasLetters && notOnlySymbolsOrDigits;
-      }
-    )
-})}
-
-
+                  return hasMinLength && hasLetters && notOnlySymbolsOrDigits;
+                }
+              ),
+          })}
           onSubmit={async (values, { setSubmitting }) => {
             try {
               const response = await editCategory(categoryId!, values.name);
@@ -73,8 +74,8 @@ const EditCategoryPage = () => {
               } else {
                 toast.error(response.message || "Failed to update category");
               }
-            } catch (err:any) {
-              const message = err?.response?.data?.message
+            } catch (err: any) {
+              const message = err?.response?.data?.message;
               toast.error(message);
             } finally {
               setSubmitting(false);

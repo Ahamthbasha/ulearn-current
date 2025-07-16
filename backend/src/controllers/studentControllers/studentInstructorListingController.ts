@@ -43,7 +43,9 @@ export class StudentInstructorListingController
   async getMentorById(req: Request, res: Response): Promise<void> {
     try {
       const { instructorId } = req.params;
-      const mentor = await this.instructorListingService.getMentorById(instructorId);
+      const mentor = await this.instructorListingService.getMentorById(
+        instructorId
+      );
 
       if (!mentor) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -63,18 +65,16 @@ export class StudentInstructorListingController
   }
 
   async getAvailableFilters(_req: Request, res: Response): Promise<void> {
-  try {
-    const filters = await this.instructorListingService.getAvailableFilters();
-    console.log("filters",filters)
-    res.status(StatusCode.OK).json({ success: true, ...filters });
-  } catch (error) {
-    console.log(error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "Failed to fetch filter options",
-    });
+    try {
+      const filters = await this.instructorListingService.getAvailableFilters();
+      console.log("filters", filters);
+      res.status(StatusCode.OK).json({ success: true, ...filters });
+    } catch (error) {
+      console.log(error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Failed to fetch filter options",
+      });
+    }
   }
-}
-
-
 }

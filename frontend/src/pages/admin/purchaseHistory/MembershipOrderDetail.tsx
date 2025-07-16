@@ -60,7 +60,9 @@ const MembershipOrderDetail: React.FC = () => {
         </button>
 
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-blue-600 mb-4">Membership Order Details</h2>
+          <h2 className="text-2xl font-bold text-blue-600 mb-4">
+            Membership Order Details
+          </h2>
 
           {loading ? (
             <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -75,7 +77,9 @@ const MembershipOrderDetail: React.FC = () => {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Plan</h3>
                 <p>{order.membershipPlan.name}</p>
-                <p className="text-gray-500">{order.membershipPlan.durationInDays} days</p>
+                <p className="text-gray-500">
+                  {order.membershipPlan.durationInDays} days
+                </p>
               </div>
 
               <div>
@@ -84,7 +88,9 @@ const MembershipOrderDetail: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Payment Status</h3>
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  Payment Status
+                </h3>
                 <span
                   className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
                     order.paymentStatus === "paid"
@@ -109,7 +115,9 @@ const MembershipOrderDetail: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Transaction ID</h3>
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  Transaction ID
+                </h3>
                 <p>{order.txnId}</p>
               </div>
 
@@ -119,7 +127,9 @@ const MembershipOrderDetail: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">No order data found.</div>
+            <div className="text-center py-8 text-gray-500">
+              No order data found.
+            </div>
           )}
         </div>
       </div>

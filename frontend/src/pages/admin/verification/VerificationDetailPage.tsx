@@ -22,7 +22,9 @@ const VerificationDetailsPage = () => {
   const { email } = useParams<{ email: string }>();
   const [request, setRequest] = useState<VerificationRequest | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updatingAction, setUpdatingAction] = useState<"approve" | "reject" | null>(null);
+  const [updatingAction, setUpdatingAction] = useState<
+    "approve" | "reject" | null
+  >(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
   const fetchRequest = async () => {
@@ -74,9 +76,7 @@ const VerificationDetailsPage = () => {
 
   if (!request) {
     return (
-      <div className="text-center text-red-500 mt-10">
-        Request not found.
-      </div>
+      <div className="text-center text-red-500 mt-10">Request not found.</div>
     );
   }
 

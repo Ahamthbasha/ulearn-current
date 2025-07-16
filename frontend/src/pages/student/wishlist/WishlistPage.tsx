@@ -4,7 +4,6 @@ import {
   removeFromWishlist,
   addToCart,
   getCart,
-  removeFromCart,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -34,7 +33,9 @@ const WishlistPage = () => {
   const fetchWishlist = async () => {
     try {
       const response = await getWishlist();
-      const validItems = response.data.filter((item: WishlistItem) => item.courseId !== null);
+      const validItems = response.data.filter(
+        (item: WishlistItem) => item.courseId !== null
+      );
       setWishlist(validItems);
     } catch (error) {
       toast.error("Failed to fetch wishlist");
@@ -53,6 +54,16 @@ const WishlistPage = () => {
     }
   };
 
+  const handleAddToCart = async (courseId: string) => {
+    try {
+      await addToCart(courseId);
+      toast.success("Added to cart");
+      fetchCartItems();
+    } catch (error) {
+      toast.error("Failed to add to cart");
+    }
+  };
+
   const handleRemoveFromWishlist = async (courseId: string) => {
     try {
       await removeFromWishlist(courseId);
@@ -60,21 +71,6 @@ const WishlistPage = () => {
       fetchWishlist();
     } catch (error) {
       toast.error("Failed to remove from wishlist");
-    }
-  };
-
-  const toggleCart = async (courseId: string) => {
-    try {
-      if (cartCourseIds.includes(courseId)) {
-        await removeFromCart(courseId);
-        toast.success("Removed from cart");
-      } else {
-        await addToCart(courseId);
-        toast.success("Added to cart");
-      }
-      fetchCartItems();
-    } catch (error) {
-      toast.error("Cart operation failed");
     }
   };
 
@@ -118,17 +114,26 @@ const WishlistPage = () => {
                         className="w-24 h-16 object-cover rounded"
                       />
                     </td>
-                    <td className="p-3 border font-medium">{course.courseName}</td>
+                    <td className="p-3 border font-medium">
+                      {course.courseName}
+                    </td>
                     <td className="p-3 border">₹{course.price}</td>
                     <td className="p-3 border">
-                      <button
-                        onClick={() => toggleCart(course._id)}
-                        className={`px-3 py-1 rounded text-white text-sm ${
-                          isInCart ? "bg-red-500" : "bg-green-600"
-                        }`}
-                      >
-                        {isInCart ? "Remove from Cart" : "Add to Cart"}
-                      </button>
+                      {isInCart ? (
+                        <button
+                          onClick={() => navigate("/user/cart")}
+                          className="px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white text-sm"
+                        >
+                          Go to Cart
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddToCart(course._id)}
+                          className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm"
+                        >
+                          Add to Cart
+                        </button>
+                      )}
                     </td>
                     <td className="p-3 border">
                       <button

@@ -60,13 +60,19 @@ const EnrolledCoursesPage = () => {
   };
 
   if (loading)
-    return <p className="p-6 text-center text-gray-600">Loading enrolled courses...</p>;
+    return (
+      <p className="p-6 text-center text-gray-600">
+        Loading enrolled courses...
+      </p>
+    );
 
   if (enrollments.length === 0)
     return (
       <div className="p-6 text-center">
         <h2 className="text-2xl font-bold mb-3">No Enrolled Courses</h2>
-        <p className="text-gray-600 mb-4">Browse and enroll in a course to see it here.</p>
+        <p className="text-gray-600 mb-4">
+          Browse and enroll in a course to see it here.
+        </p>
         <button
           onClick={() => navigate("/user/courses")}
           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md"
@@ -101,7 +107,9 @@ const EnrolledCoursesPage = () => {
                   className="cursor-pointer"
                   onClick={() => navigate(`/user/enrolled/${course._id}`)}
                 >
-                  <h3 className="text-xl font-semibold mb-1">{course.courseName}</h3>
+                  <h3 className="text-xl font-semibold mb-1">
+                    {course.courseName}
+                  </h3>
                   <p className="text-sm text-gray-600 mb-2">
                     Status:{" "}
                     <span
@@ -116,7 +124,9 @@ const EnrolledCoursesPage = () => {
                       {enroll.completionStatus.toLowerCase()}
                     </span>
                   </p>
-                  <p className="text-right font-bold text-blue-600 mb-2">₹{course.price}</p>
+                  <p className="text-right font-bold text-blue-600 mb-2">
+                    ₹{course.price}
+                  </p>
                 </div>
 
                 {enroll.certificateGenerated ? (

@@ -1,121 +1,146 @@
 import InstructorRouterEndPoints from "../../types/endPoints/instructorEndPoint";
-import fileDownload from 'js-file-download';
+import fileDownload from "js-file-download";
 import { API } from "../../service/axios";
-import {type IQuestionPayload, type ICreateQuizPayload } from "../../types/interfaces/IQuiz";
+import {
+  type IQuestionPayload,
+  type ICreateQuizPayload,
+} from "../../types/interfaces/IQuiz";
 
-import {type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesParam";
-
+import { type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesParam";
 
 //verification api call
 
-export const sendVerification = async (formData:FormData)=>{
-    try {
-        const response = await API.post(InstructorRouterEndPoints.instructorSendVerificationRequest,formData,{
-            headers:{
-                "Content-Type":"multipart/form-data"
-            },
-            withCredentials:true
-        })
-        console.log('sendVerification request',response.data)
-        return response.data
-    } catch (error) {
-        console.log(error)
-    }
-}
+export const sendVerification = async (formData: FormData) => {
+  try {
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorSendVerificationRequest,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      }
+    );
+    console.log("sendVerification request", response.data);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-export const getVerificationRequestByemail = async (email:string) =>{
-    try {
-        const response = await API.get(`${InstructorRouterEndPoints.instructorGetVerificationStatus}/${email}`,{
-            withCredentials:true
-        })
+export const getVerificationRequestByemail = async (email: string) => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetVerificationStatus}/${email}`,
+      {
+        withCredentials: true,
+      }
+    );
 
-        console.log('instructorVerification detail',response.data)
+    console.log("instructorVerification detail", response.data);
 
-        return response.data
-    } catch (error) {
-        throw error
-    }
-}
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 //profile management api call
 
-export const instructorGetProfile = async() =>{
-    try {
-        const response = await API.get(InstructorRouterEndPoints.instructorProfilePage,{
-            withCredentials:true
-        })
-    
-        console.log('instructor profile data response',response.data)
+export const instructorGetProfile = async () => {
+  try {
+    const response = await API.get(
+      InstructorRouterEndPoints.instructorProfilePage,
+      {
+        withCredentials: true,
+      }
+    );
 
-        return response.data
-    } catch (error:any) {
-        if(error.response && error.response.data){
-            return error.response.data
-        }
+    console.log("instructor profile data response", response.data);
+
+    return response.data;
+  } catch (error: any) {
+    if (error.response && error.response.data) {
+      return error.response.data;
     }
-}
+  }
+};
 
-export const instructorUpdateProfile = async(formData:FormData):Promise<any> => {
-    try {
-        const response = await API.put(InstructorRouterEndPoints.instructorUpdateProfile,formData,{
-            headers:{"Content-Type":"multipart/form-data"},
-            withCredentials:true
-        })
+export const instructorUpdateProfile = async (
+  formData: FormData
+): Promise<any> => {
+  try {
+    const response = await API.put(
+      InstructorRouterEndPoints.instructorUpdateProfile,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      }
+    );
 
-        console.log('instructor updateprofile response',response.data)
+    console.log("instructor updateprofile response", response.data);
 
-        return response.data
-    } catch (error) {
-        throw error
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const instructorUpdatePassword = async (data: any): Promise<any> => {
+  try {
+    const response = await API.put(
+      InstructorRouterEndPoints.instructorUpdatePassword,
+      data,
+      {
+        withCredentials: true,
+      }
+    );
+
+    console.log("instructor password updation data", response.data);
+
+    return response.data;
+  } catch (error: any) {
+    if (error.response && error.response.data) {
+      return error.response.data;
     }
-}
-
-export const instructorUpdatePassword = async(data:any):Promise<any>=>{
-    try {
-        const response = await API.put(InstructorRouterEndPoints.instructorUpdatePassword,data,{
-            withCredentials:true
-        })
-
-        console.log('instructor password updation data',response.data)
-
-        return response.data
-    } catch (error:any) {
-        if(error.response && error.response.data){
-            return error.response.data
-        }
-    }
-}
+  }
+};
 
 //FETCH CATEGORY
 
 export const getInstructorCategories = async (): Promise<any[]> => {
-    try {
-        const response = await API.get("/api/instructor/categories", {
-          withCredentials: true,
-        });
-        return response.data.data;    
-    } catch (error) {
-        throw error
-    }
+  try {
+    const response = await API.get("/api/instructor/categories", {
+      withCredentials: true,
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 //course management actions
 
-export const instructorCreateCourse = async (formData: FormData): Promise<any> => {
-    try {
-        const response = await API.post(InstructorRouterEndPoints.instructorCreateCourse,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data"
-            },
-            withCredentials:true
-          }
-        );
-        return response.data;    
-    } catch (error) {
-        throw error
-    }
+export const instructorCreateCourse = async (
+  formData: FormData
+): Promise<any> => {
+  try {
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorCreateCourse,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Update Course
@@ -123,50 +148,60 @@ export const instructorUpdateCourse = async (
   courseId: string,
   formData: FormData
 ): Promise<any> => {
-    try {
-        const response = await API.put(`${InstructorRouterEndPoints.instructorUpdateCourse}/${courseId}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            withCredentials:true
-          }
-        );
-        return response.data;
-    } catch (error) {
-        throw error
-    }
+  try {
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorUpdateCourse}/${courseId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Delete Course
-export const instructorDeleteCourse = async (courseId: string): Promise<any> => {
-    try {
-        const response = await API.delete(
-          `${InstructorRouterEndPoints.instructorDeleteCourse}/${courseId}`,{
-              withCredentials:true
-          }
-        );
-        return response.data;    
-    } catch (error) {
-        throw error
-    }
+export const instructorDeleteCourse = async (
+  courseId: string
+): Promise<any> => {
+  try {
+    const response = await API.delete(
+      `${InstructorRouterEndPoints.instructorDeleteCourse}/${courseId}`,
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Get Course By ID
-export const instructorGetCourseById = async (courseId: string): Promise<any> => {
-    try {
-        const response = await API.get(`${InstructorRouterEndPoints.instructorGetCourseById}/${courseId}`,{
-          withCredentials:true
-        }
-        );
-        return response.data;   
-    } catch (error) {
-        throw error
-    }
+export const instructorGetCourseById = async (
+  courseId: string
+): Promise<any> => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetCourseById}/${courseId}`,
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export const fetchInstructorCourses = async (params: FetchCoursesParams = {}) => {
+export const fetchInstructorCourses = async (
+  params: FetchCoursesParams = {}
+) => {
   try {
     const response = await API.get(
       InstructorRouterEndPoints.instructorGetCreatedCourses,
@@ -203,55 +238,70 @@ export const getChaptersByCourse = async (
   }
 };
 
-export const getChapterById = async (courseId:string,chapterId:string)=>{
-    try {
-        const response = await API.get(`${InstructorRouterEndPoints.instructorGetSingleChapter}/${courseId}/${chapterId}`)
+export const getChapterById = async (courseId: string, chapterId: string) => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetSingleChapter}/${courseId}/${chapterId}`
+    );
 
-        console.log('get chapter by id',response.data)
-        return response.data.data
-    } catch (error) {
-        throw error
-    }
-}
-
-export const createChapter = async (courseId: string, formData: FormData) => {
-    try {
-      const response = await API.post(`${InstructorRouterEndPoints.instructorCreateChapter}/${courseId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      console.log('create Chapter',response.data)
-      return response.data.data;
+    console.log("get chapter by id", response.data);
+    return response.data.data;
   } catch (error) {
-    throw error
+    throw error;
   }
 };
 
-export const updateChapter = async (courseId: string,chapterId: string,formData: FormData) => {
-    try {
-        const response = await API.put(`${InstructorRouterEndPoints.instructorUpdateChapter}/${courseId}/${chapterId}`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        console.log('update chapter',response.data)
-        return response.data.data;
-    } catch (error) {
-        throw error
-    }
+export const createChapter = async (courseId: string, formData: FormData) => {
+  try {
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorCreateChapter}/${courseId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("create Chapter", response.data);
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateChapter = async (
+  courseId: string,
+  chapterId: string,
+  formData: FormData
+) => {
+  try {
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorUpdateChapter}/${courseId}/${chapterId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    console.log("update chapter", response.data);
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const deleteChapter = async (courseId: string, chapterId: string) => {
-    try {
-        const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteChapter}/${courseId}/${chapterId}`);
-        return response.data;
-    } catch (error) {
-        throw error
-    }
+  try {
+    const response = await API.delete(
+      `${InstructorRouterEndPoints.instructorDeleteChapter}/${courseId}/${chapterId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
-
 
 //quiz related actions
 
@@ -275,7 +325,9 @@ export const createQuiz = async (quizData: ICreateQuizPayload) => {
 
 export const deleteQuiz = async (quizId: string) => {
   try {
-    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteQuiz}/${quizId}`);
+    const response = await API.delete(
+      `${InstructorRouterEndPoints.instructorDeleteQuiz}/${quizId}`
+    );
     console.log("Delete Quiz:", response.data);
     return response.data;
   } catch (error) {
@@ -285,7 +337,9 @@ export const deleteQuiz = async (quizId: string) => {
 
 export const getQuizById = async (quizId: string) => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorGetQuizById}/${quizId}`);
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetQuizById}/${quizId}`
+    );
     console.log("Get Quiz By ID:", response.data);
     return response.data.data;
   } catch (error) {
@@ -295,7 +349,9 @@ export const getQuizById = async (quizId: string) => {
 
 export const getQuizByCourseId = async (courseId: string) => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorGetQuizByCourseId}/${courseId}`);
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetQuizByCourseId}/${courseId}`
+    );
     console.log("Get Quiz By Course ID:", response.data);
     return response.data.data;
   } catch (error) {
@@ -333,7 +389,7 @@ export const addQuestionToQuiz = async (
       questionData,
       {
         headers: { "Content-Type": "application/json" },
-        withCredentials: true
+        withCredentials: true,
       }
     );
     return response.data.data;
@@ -353,7 +409,7 @@ export const updateQuestionInQuiz = async (
       questionData,
       {
         headers: { "Content-Type": "application/json" },
-        withCredentials: true
+        withCredentials: true,
       }
     );
     return response.data.data;
@@ -377,39 +433,43 @@ export const deleteQuestionFromQuiz = async (
   }
 };
 
-export const publishCourse = async(courseId:string) => {
+export const publishCourse = async (courseId: string) => {
   try {
-    const response = await API.patch(`${InstructorRouterEndPoints.instructorPublishCourseById}/${courseId}/publish`)
+    const response = await API.patch(
+      `${InstructorRouterEndPoints.instructorPublishCourseById}/${courseId}/publish`
+    );
 
-    return response.data
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 //dashboard
 
-export const getDashboard = async()=>{
+export const getDashboard = async () => {
   try {
-    const response = await API.get(InstructorRouterEndPoints.instructorGetDashboard)
+    const response = await API.get(
+      InstructorRouterEndPoints.instructorGetDashboard
+    );
 
-    return response.data.data
+    return response.data.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const getRevenueDashboard = async (
-  range: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
+  range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
   startDate?: string,
   endDate?: string
 ) => {
   try {
     const queryParams = new URLSearchParams({ range });
 
-    if (range === 'custom' && startDate && endDate) {
-      queryParams.append('startDate', startDate);
-      queryParams.append('endDate', endDate);
+    if (range === "custom" && startDate && endDate) {
+      queryParams.append("startDate", startDate);
+      queryParams.append("endDate", endDate);
     }
 
     const endpoint = InstructorRouterEndPoints.instructorGetDashboardReport;
@@ -434,13 +494,18 @@ export const exportRevenueReport = async (
       params.endDate = endDate;
     }
 
-    const response = await API.get("/api/instructor/dashboard/reportRevenueExport", {
-      params,
-      responseType: "blob", // ⬅ Important to handle file streams
-    });
+    const response = await API.get(
+      "/api/instructor/dashboard/reportRevenueExport",
+      {
+        params,
+        responseType: "blob", // ⬅ Important to handle file streams
+      }
+    );
 
     const filename =
-      format === "excel" ? "Instructor_Revenue_Report.xlsx" : "Instructor_Revenue_Report.pdf";
+      format === "excel"
+        ? "Instructor_Revenue_Report.xlsx"
+        : "Instructor_Revenue_Report.pdf";
 
     fileDownload(response.data, filename);
   } catch (error) {
@@ -449,27 +514,30 @@ export const exportRevenueReport = async (
   }
 };
 
-
-export const specificCourseDashboard = async(courseId:string)=>{
+export const specificCourseDashboard = async (courseId: string) => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorSpecificCourse}/${courseId}`)
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorSpecificCourse}/${courseId}`
+    );
 
-    return response.data
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 // wallet page
 
-export const instructorGetWallet = async() => {
+export const instructorGetWallet = async () => {
   try {
-    const response = await API.get(InstructorRouterEndPoints.instructorGetWallet)
-    return response.data
+    const response = await API.get(
+      InstructorRouterEndPoints.instructorGetWallet
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const instructorCreditWallet = async (data: {
   amount: number;
@@ -477,7 +545,10 @@ export const instructorCreditWallet = async (data: {
   txnId: string;
 }) => {
   try {
-    const response = await API.post(InstructorRouterEndPoints.instructorCreditWallet, data);
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorCreditWallet,
+      data
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -491,7 +562,10 @@ export const instructorDebitWallet = async (data: {
   txnId: string;
 }) => {
   try {
-    const response = await API.post(InstructorRouterEndPoints.instructorDebitWallet, data);
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorDebitWallet,
+      data
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -503,7 +577,10 @@ export const instructorCreateWalletRechargeOrder = async (data: {
   amount: number;
 }) => {
   try {
-    const response = await API.post(InstructorRouterEndPoints.instructorCreateOrderForWalletCredit, data);
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorCreateOrderForWalletCredit,
+      data
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -518,62 +595,9 @@ export const instructorVerifyPayment = async (data: {
   amount: number;
 }) => {
   try {
-    const response = await API.post(InstructorRouterEndPoints.instructorVerifyPayment, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const instructorWalletTransactionHistory = async (page: number = 1, limit: number = 5) => {
-  try {
-    const response = await API.get(InstructorRouterEndPoints.instructorGetTransactions, {
-      params: { page, limit },
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-
-export const instructorViewMemberships = async()=>{
-  try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorViewMembership}`)
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-export const isMentorOrNot = async()=>{
-  try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorMentorOrNot}`)
-    return response.data
-  } catch (error) {
-   throw error 
-  }
-}
-
-export const membershipInitiateCheckout = async(planId:string)=>{
-  try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorInitiateCheckout}/${planId}`)
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-// 🔧 Update this function to accept payload
-export const verifyMembershipPurchase = async (payload: {
-  razorpayOrderId: string;
-  paymentId: string;
-  signature: string;
-}) => {
-  try {
     const response = await API.post(
-      InstructorRouterEndPoints.instructorVerifyMembership,
-      payload // send the payload here
+      InstructorRouterEndPoints.instructorVerifyPayment,
+      data
     );
     return response.data;
   } catch (error) {
@@ -581,59 +605,137 @@ export const verifyMembershipPurchase = async (payload: {
   }
 };
 
-export const retrieveActiveMembershipPlan = async()=>{
+export const instructorWalletTransactionHistory = async (
+  page: number = 1,
+  limit: number = 5
+) => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorCheckActiveMembership}`)
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-export const purchaseMembershipWithWallet = async(planId:string)=>{
-  try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorPurcahseMembershipWithWallet}/${planId}`)
-
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-export const membershipPurchaseHistory = async (page = 1, limit = 10) => {
-  try {
-    const response = await API.get(InstructorRouterEndPoints.instructorMembershipPurchaseHistory, {
-      params: { page, limit },
-    });
+    const response = await API.get(
+      InstructorRouterEndPoints.instructorGetTransactions,
+      {
+        params: { page, limit },
+      }
+    );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-
-export const membershipDetail = async(txnId:string)=>{
+export const instructorViewMemberships = async () => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorMembershipDetails}/${txnId}`)
-    console.log(response.data)
-    return response.data
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorViewMembership}`
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
-export const downloadReceiptForMembership = async(txnId:string)=>{
+export const isMentorOrNot = async () => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorDownloadReceiptForMembership}/${txnId}/receipt`,{
-      responseType:"blob"
-    })
-    fileDownload(response.data,`Membership_Receipt_${txnId}.pdf`)
-    return response.data
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorMentorOrNot}`
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
+export const membershipInitiateCheckout = async (planId: string) => {
+  try {
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorInitiateCheckout}/${planId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 🔧 Update this function to accept payload
+export const verifyMembershipPurchase = async (payload: {
+  razorpayOrderId: string;
+  paymentId: string;
+  signature: string;
+  planId: string;
+}) => {
+  try {
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorVerifyMembership,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const retrieveActiveMembershipPlan = async () => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorCheckActiveMembership}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const purchaseMembershipWithWallet = async (planId: string) => {
+  try {
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorPurcahseMembershipWithWallet}/${planId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const membershipPurchaseHistory = async (page = 1, limit = 10) => {
+  try {
+    const response = await API.get(
+      InstructorRouterEndPoints.instructorMembershipPurchaseHistory,
+      {
+        params: { page, limit },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const membershipDetail = async (txnId: string) => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorMembershipDetails}/${txnId}`
+    );
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const downloadReceiptForMembership = async (txnId: string) => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorDownloadReceiptForMembership}/${txnId}/receipt`,
+      {
+        responseType: "blob",
+      }
+    );
+    fileDownload(response.data, `Membership_Receipt_${txnId}.pdf`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const createSlot = async (payload: {
   startTime: Date | string;
@@ -641,21 +743,26 @@ export const createSlot = async (payload: {
   price: number;
 }) => {
   try {
-    const response = await API.post(InstructorRouterEndPoints.instructorCreateSlot, payload);
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorCreateSlot,
+      payload
+    );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const listSlots = async()=>{
+export const listSlots = async () => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorListSlots}`)
-    return response.data
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorListSlots}`
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const updateSlot = async (
   slotId: string,
@@ -666,22 +773,27 @@ export const updateSlot = async (
   }
 ) => {
   try {
-    const response = await API.put(`${InstructorRouterEndPoints.instructorUpdateSlot}/${slotId}`, payload);
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorUpdateSlot}/${slotId}`,
+      payload
+    );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const deleteSlot = async(slotId:string)=>{
+export const deleteSlot = async (slotId: string) => {
   try {
-    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteSlot}/${slotId}`)
+    const response = await API.delete(
+      `${InstructorRouterEndPoints.instructorDeleteSlot}/${slotId}`
+    );
 
-    return response.data
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const slotHistory = async (
   mode: "monthly" | "yearly" | "custom",
@@ -693,8 +805,13 @@ export const slotHistory = async (
   }
 ) => {
   try {
-    const queryParams = new URLSearchParams({ mode, ...params } as any).toString();
-    const response = await API.get(`${InstructorRouterEndPoints.instructorSlotHistory}?${queryParams}`);
+    const queryParams = new URLSearchParams({
+      mode,
+      ...params,
+    } as any).toString();
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorSlotHistory}?${queryParams}`
+    );
     return response.data;
   } catch (error) {
     throw error;

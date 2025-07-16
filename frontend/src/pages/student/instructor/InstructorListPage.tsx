@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { listInstructors, getSkillAndExpertise } from "../../../api/action/StudentAction";
+import {
+  listInstructors,
+  getSkillAndExpertise,
+} from "../../../api/action/StudentAction";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -30,18 +33,18 @@ const InstructorListPage = () => {
 
   // Fetch filters only once
   const fetchFilters = async () => {
-  try {
-    const response = await getSkillAndExpertise();
-    console.log("Full response:", response); // Add this line
-    console.log("Skills:", response.skills); // Add this line
-    console.log("Expertise:", response.expertise); // Add this line
-    setAllSkills(response.skills || []);
-    setAllExpertise(response.expertise || []);
-  } catch (error) {
-    console.log("Error details:", error); // Make this more detailed
-    toast.error("Failed to load filters");
-  }
-};
+    try {
+      const response = await getSkillAndExpertise();
+      console.log("Full response:", response); // Add this line
+      console.log("Skills:", response.skills); // Add this line
+      console.log("Expertise:", response.expertise); // Add this line
+      setAllSkills(response.skills || []);
+      setAllExpertise(response.expertise || []);
+    } catch (error) {
+      console.log("Error details:", error); // Make this more detailed
+      toast.error("Failed to load filters");
+    }
+  };
 
   const fetchInstructors = async () => {
     try {
@@ -78,7 +81,13 @@ const InstructorListPage = () => {
 
   useEffect(() => {
     fetchInstructors();
-  }, [currentPage, debouncedSearch, sortOrder, selectedSkill, selectedExpertise]);
+  }, [
+    currentPage,
+    debouncedSearch,
+    sortOrder,
+    selectedSkill,
+    selectedExpertise,
+  ]);
 
   const handleClearFilter = () => {
     setSearchTerm("");
@@ -91,7 +100,9 @@ const InstructorListPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <h2 className="text-2xl font-semibold mb-6 text-center">Find Your Instructor</h2>
+      <h2 className="text-2xl font-semibold mb-6 text-center">
+        Find Your Instructor
+      </h2>
 
       {/* Search */}
       <div className="mb-10 flex justify-center">
@@ -129,7 +140,9 @@ const InstructorListPage = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold border-b pb-2 mb-3">Expertise</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 mb-3">
+              Expertise
+            </h3>
             <ul className="flex flex-wrap gap-2">
               {allExpertise.map((exp) => (
                 <li
@@ -153,13 +166,17 @@ const InstructorListPage = () => {
             <h3 className="text-lg font-semibold border-b pb-2 mb-3">Sort</h3>
             <ul className="space-y-2">
               <li
-                className={`cursor-pointer ${sortOrder === "asc" ? "font-bold" : ""}`}
+                className={`cursor-pointer ${
+                  sortOrder === "asc" ? "font-bold" : ""
+                }`}
                 onClick={() => setSortOrder("asc")}
               >
                 A - Z
               </li>
               <li
-                className={`cursor-pointer ${sortOrder === "desc" ? "font-bold" : ""}`}
+                className={`cursor-pointer ${
+                  sortOrder === "desc" ? "font-bold" : ""
+                }`}
                 onClick={() => setSortOrder("desc")}
               >
                 Z - A
@@ -184,7 +201,9 @@ const InstructorListPage = () => {
           {loading ? (
             <div className="text-center text-gray-500">Loading...</div>
           ) : instructors.length === 0 ? (
-            <div className="text-center text-gray-500">No instructors found.</div>
+            <div className="text-center text-gray-500">
+              No instructors found.
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -198,12 +217,16 @@ const InstructorListPage = () => {
                       alt={instructor.username}
                       className="w-24 h-24 rounded-full mb-3 object-contain bg-white border p-1"
                     />
-                    <h3 className="text-lg font-semibold mb-1">{instructor.username}</h3>
+                    <h3 className="text-lg font-semibold mb-1">
+                      {instructor.username}
+                    </h3>
                     <p className="text-sm text-gray-600 mb-2">
                       {instructor.skills?.join(", ") || "No skills listed"}
                     </p>
                     <button
-                      onClick={() => navigate(`/user/instructor/${instructor._id}`)}
+                      onClick={() =>
+                        navigate(`/user/instructor/${instructor._id}`)
+                      }
                       className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                     >
                       View Details

@@ -59,7 +59,9 @@ const SlotHistoryPage = () => {
       key: "slotId" as keyof Booking,
       label: "Date",
       render: (value: Slot) =>
-        value?.startTime ? format(new Date(value.startTime), "dd-MM-yyyy") : "N/A",
+        value?.startTime
+          ? format(new Date(value.startTime), "dd-MM-yyyy")
+          : "N/A",
     },
     {
       key: "slotId" as keyof Booking,
@@ -87,7 +89,9 @@ const SlotHistoryPage = () => {
   return (
     <div className="min-h-screen bg-white px-6 py-10 md:px-20">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">📖 Slot Booking History</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          📖 Slot Booking History
+        </h1>
 
         {loading ? (
           <p className="text-center text-gray-500">Loading...</p>

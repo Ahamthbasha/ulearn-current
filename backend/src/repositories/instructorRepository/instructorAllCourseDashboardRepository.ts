@@ -6,16 +6,20 @@ import {
   ITopSellingCourse,
   ICategorySales,
   IMonthlySales,
-} from '../../types/dashboardTypes';
+} from "../../types/dashboardTypes";
 
-export class InstructorAllCourseDashboardRepository implements IInstructorAllCourseDashboardRepository {
+export class InstructorAllCourseDashboardRepository
+  implements IInstructorAllCourseDashboardRepository
+{
   private orderRepo: IGenericRepository<IOrder>;
 
   constructor(orderRepo: IGenericRepository<IOrder>) {
     this.orderRepo = orderRepo;
   }
 
-  async getTopSellingCourses(instructorId: Types.ObjectId): Promise<ITopSellingCourse[]> {
+  async getTopSellingCourses(
+    instructorId: Types.ObjectId
+  ): Promise<ITopSellingCourse[]> {
     return this.orderRepo.aggregate<ITopSellingCourse>([
       { $match: { status: "SUCCESS" } },
       { $unwind: "$courses" },
@@ -42,7 +46,9 @@ export class InstructorAllCourseDashboardRepository implements IInstructorAllCou
     ]);
   }
 
-  async getCategoryWiseSales(instructorId: Types.ObjectId): Promise<ICategorySales[]> {
+  async getCategoryWiseSales(
+    instructorId: Types.ObjectId
+  ): Promise<ICategorySales[]> {
     return this.orderRepo.aggregate<ICategorySales>([
       { $match: { status: "SUCCESS" } },
       { $unwind: "$courses" },
@@ -80,7 +86,9 @@ export class InstructorAllCourseDashboardRepository implements IInstructorAllCou
     ]);
   }
 
-  async getMonthlySalesGraph(instructorId: Types.ObjectId): Promise<IMonthlySales[]> {
+  async getMonthlySalesGraph(
+    instructorId: Types.ObjectId
+  ): Promise<IMonthlySales[]> {
     return this.orderRepo.aggregate<IMonthlySales>([
       { $match: { status: "SUCCESS" } },
       { $unwind: "$courses" },
@@ -162,97 +170,94 @@ export class InstructorAllCourseDashboardRepository implements IInstructorAllCou
     return result[0]?.totalSales || 0;
   }
 
- async getDetailedRevenueReport(
-  instructorId: Types.ObjectId,
-  range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
-  startDate?: Date,
-  endDate?: Date
-): Promise<any[]> {
-  const now = new Date();
-  let start: Date;
-  let end: Date = now;
+  async getDetailedRevenueReport(
+    instructorId: Types.ObjectId,
+    range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<any[]> {
+    const now = new Date();
+    let start: Date;
+    let end: Date = now;
 
-  switch (range) {
-    case "daily":
-      start = new Date();
-      start.setHours(0, 0, 0, 0);
-      end = new Date();
-      end.setHours(23, 59, 59, 999);
-      break;
-    case "weekly":
-      start = new Date(now);
-      start.setDate(now.getDate() - now.getDay());
-      start.setHours(0, 0, 0, 0);
-      break;
-    case "monthly":
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    case "yearly":
-      start = new Date(now.getFullYear(), 0, 1);
-      break;
-    case "custom":
-      if (!startDate || !endDate) {
-        throw new Error("Start and end date required for custom range");
-      }
-      start = new Date(startDate);
-      end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      break;
-    default:
-      throw new Error("Invalid range");
+    switch (range) {
+      case "daily":
+        start = new Date();
+        start.setHours(0, 0, 0, 0);
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+        break;
+      case "weekly":
+        start = new Date(now);
+        start.setDate(now.getDate() - now.getDay());
+        start.setHours(0, 0, 0, 0);
+        break;
+      case "monthly":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case "yearly":
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+      case "custom":
+        if (!startDate || !endDate) {
+          throw new Error("Start and end date required for custom range");
+        }
+        start = new Date(startDate);
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        break;
+      default:
+        throw new Error("Invalid range");
+    }
+
+    return this.orderRepo.aggregate([
+      {
+        $match: {
+          status: "SUCCESS",
+          createdAt: { $gte: start, $lte: end },
+        },
+      },
+      { $unwind: "$courses" },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "courses",
+          foreignField: "_id",
+          as: "courseInfo",
+        },
+      },
+      { $unwind: "$courseInfo" },
+      {
+        $match: {
+          "courseInfo.instructorId": instructorId,
+        },
+      },
+      {
+        $lookup: {
+          from: "payments",
+          localField: "_id", // order ID
+          foreignField: "orderId", // in payments collection
+          as: "paymentInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$paymentInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          createdAt: 1,
+          orderId: "$_id",
+          paymentMethod: { $ifNull: ["$paymentInfo.method", "N/A"] },
+          courseName: "$courseInfo.courseName",
+          coursePrice: "$courseInfo.price",
+          instructorEarning: { $multiply: ["$courseInfo.price", 0.9] },
+          totalOrderAmount: "$amount",
+        },
+      },
+      { $sort: { createdAt: -1 } },
+    ]);
   }
-
-  return this.orderRepo.aggregate([
-    {
-      $match: {
-        status: "SUCCESS",
-        createdAt: { $gte: start, $lte: end }
-      }
-    },
-    { $unwind: "$courses" },
-    {
-      $lookup: {
-        from: "courses",
-        localField: "courses",
-        foreignField: "_id",
-        as: "courseInfo"
-      }
-    },
-    { $unwind: "$courseInfo" },
-    {
-      $match: {
-        "courseInfo.instructorId": instructorId
-      }
-    },
-    {
-      $lookup: {
-        from: "payments",
-        localField: "_id", // order ID
-        foreignField: "orderId", // in payments collection
-        as: "paymentInfo"
-      }
-    },
-    {
-      $unwind: {
-        path: "$paymentInfo",
-        preserveNullAndEmptyArrays: true
-      }
-    },
-    {
-      $project: {
-        createdAt: 1,
-        orderId: "$_id",
-        paymentMethod: { $ifNull: ["$paymentInfo.method", "N/A"] },
-        courseName: "$courseInfo.courseName",
-        coursePrice: "$courseInfo.price",
-        instructorEarning: { $multiply: ["$courseInfo.price", 0.9] },
-        totalOrderAmount: "$amount"
-      }
-    },
-    { $sort: { createdAt: -1 } }
-  ]);
-}
-
-
-
 }

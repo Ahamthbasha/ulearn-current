@@ -41,16 +41,14 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       receipt: `receipt_${Date.now()}`,
     });
 
-    // ❌ Do not create DB order yet — move to verify step
-
     return {
       razorpayOrderId: razorpayOrder.id,
       amount: plan.price,
       currency: "INR",
       planName: plan.name,
       durationInDays: plan.durationInDays,
-      description: plan.description,
-      benefits: plan.benefits,
+      description: plan.description || "",
+      benefits: plan.benefits || [],
     };
   }
 
@@ -59,11 +57,13 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     paymentId,
     signature,
     instructorId,
+    planId,
   }: {
     razorpayOrderId: string;
     paymentId: string;
     signature: string;
     instructorId: string;
+    planId: string;
   }): Promise<void> {
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
@@ -78,14 +78,8 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     if (!instructor) throw new Error("Instructor not found");
 
     let order = await this.membershipOrderRepo.findByRazorpayOrderId(razorpayOrderId);
-    let plan: IMembershipPlan | null = null;
 
-    if (order) {
-      plan = await this.planRepo.findById(order.membershipPlanId.toString());
-    } else if (instructor.membershipPlanId) {
-      plan = await this.planRepo.findById(instructor.membershipPlanId.toString());
-    }
-
+    const plan = await this.planRepo.findById(planId) as IMembershipPlan;
     if (!plan || !plan.durationInDays || !plan._id) {
       throw new Error("Invalid membership plan");
     }
@@ -118,7 +112,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     await this.instructorRepo.update(instructorId, {
       isMentor: true,
       membershipExpiryDate: expiryDate,
-      membershipPlanId: plan._id as Types.ObjectId,
+      membershipPlanId: new Types.ObjectId(plan._id),
     });
 
     await this.walletService.creditAdminWalletByEmail(
@@ -197,7 +191,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     await this.instructorRepo.update(instructorId, {
       isMentor: true,
       membershipExpiryDate: expiry,
-      membershipPlanId: plan._id as Types.ObjectId,
+      membershipPlanId: new Types.ObjectId(plan._id),
     });
 
     await this.emailService.sendMembershipPurchaseEmail(

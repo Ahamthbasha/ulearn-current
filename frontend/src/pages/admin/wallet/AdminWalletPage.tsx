@@ -159,10 +159,14 @@ export default function AdminWalletPage() {
                     <td className="py-3 px-4 text-blue-600 font-mono break-all">
                       {txn.txnId}
                     </td>
-                    <td className="py-3 px-4 capitalize font-medium">{txn.type}</td>
+                    <td className="py-3 px-4 capitalize font-medium">
+                      {txn.type}
+                    </td>
                     <td
                       className={`py-3 px-4 font-semibold ${
-                        txn.type === "credit" ? "text-green-600" : "text-red-600"
+                        txn.type === "credit"
+                          ? "text-green-600"
+                          : "text-red-600"
                       }`}
                     >
                       ₹{txn.amount.toFixed(2)}
@@ -175,7 +179,10 @@ export default function AdminWalletPage() {
                 ))
               ) : (
                 <tr>
-                  <td className="py-4 px-4 text-center text-gray-500" colSpan={5}>
+                  <td
+                    className="py-4 px-4 text-center text-gray-500"
+                    colSpan={5}
+                  >
                     No transactions found.
                   </td>
                 </tr>
@@ -187,19 +194,21 @@ export default function AdminWalletPage() {
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 mt-4">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => fetchTransactions(pageNum)}
-                className={`px-3 py-1 rounded-md border ${
-                  pageNum === currentPage
-                    ? "bg-purple-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-purple-50"
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => fetchTransactions(pageNum)}
+                  className={`px-3 py-1 rounded-md border ${
+                    pageNum === currentPage
+                      ? "bg-purple-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-purple-50"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              )
+            )}
           </div>
         )}
       </Card>

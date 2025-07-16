@@ -19,7 +19,9 @@ const QuizManagementPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
-  const [questions, setQuestions] = useState<(IQuestion & { quizId?: string })[]>([]);
+  const [questions, setQuestions] = useState<
+    (IQuestion & { quizId?: string })[]
+  >([]);
   const [quizId, setQuizId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -32,10 +34,16 @@ const QuizManagementPage = () => {
 
     try {
       setLoading(true);
-      const response = await getPaginatedQuestionsByCourseId(courseId, page, limit, search);
+      const response = await getPaginatedQuestionsByCourseId(
+        courseId,
+        page,
+        limit,
+        search
+      );
       console.log("Paginated Quiz Response:", response);
 
-      const derivedQuizId = response.quizId || (response.questions[0]?._id ?? null);
+      const derivedQuizId =
+        response.quizId || (response.questions[0]?._id ?? null);
 
       const questionsWithQuizId = response.questions.map((q: IQuestion) => ({
         ...q,
@@ -92,7 +100,9 @@ const QuizManagementPage = () => {
               {quizId ? (
                 <>
                   <Button
-                    onClick={() => navigate(`/instructor/course/${courseId}/quiz/add`)}
+                    onClick={() =>
+                      navigate(`/instructor/course/${courseId}/quiz/add`)
+                    }
                     className="w-full sm:w-auto flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -109,7 +119,9 @@ const QuizManagementPage = () => {
                 </>
               ) : (
                 <Button
-                  onClick={() => navigate(`/instructor/course/${courseId}/quiz/add`)}
+                  onClick={() =>
+                    navigate(`/instructor/course/${courseId}/quiz/add`)
+                  }
                   className="w-full sm:w-auto flex items-center justify-center"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -142,7 +154,9 @@ const QuizManagementPage = () => {
               { key: "correctAnswer", label: "Correct Answer" },
             ]}
             onEdit={(q) =>
-              navigate(`/instructor/course/${courseId}/quiz/edit/${q.quizId}?questionId=${q._id}`)
+              navigate(
+                `/instructor/course/${courseId}/quiz/edit/${q.quizId}?questionId=${q._id}`
+              )
             }
             onDelete={(q) => {
               if (q._id && q.quizId) handleDeleteQuestion(q._id, q.quizId);
@@ -156,7 +170,9 @@ const QuizManagementPage = () => {
             }}
           />
         ) : (
-          <p className="text-sm text-gray-600">No quiz or questions found yet.</p>
+          <p className="text-sm text-gray-600">
+            No quiz or questions found yet.
+          </p>
         )}
       </Card>
     </div>

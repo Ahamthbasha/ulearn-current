@@ -12,7 +12,12 @@ import {
 } from "../../../api/action/InstructorActionApi";
 
 const MAX_VIDEO_SIZE_MB = 200;
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 const CourseEditPage = () => {
@@ -21,9 +26,15 @@ const CourseEditPage = () => {
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [categories, setCategories] = useState<{ _id: string; categoryName: string }[]>([]);
-  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
-  const [existingDemoVideoUrl, setExistingDemoVideoUrl] = useState<string | null>(null);
+  const [categories, setCategories] = useState<
+    { _id: string; categoryName: string }[]
+  >([]);
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<
+    string | null
+  >(null);
+  const [existingDemoVideoUrl, setExistingDemoVideoUrl] = useState<
+    string | null
+  >(null);
   const [thumbnailError, setThumbnailError] = useState("");
   const [videoError, setVideoError] = useState("");
 
@@ -44,20 +55,42 @@ const CourseEditPage = () => {
     validationSchema: Yup.object({
       courseName: Yup.string()
         .trim()
-        .matches(/^[A-Za-z ]{6,}$/, "Minimum 6 letters. Only letters and spaces allowed")
+        .matches(
+          /^[A-Za-z ]{6,}$/,
+          "Minimum 6 letters. Only letters and spaces allowed"
+        )
         .required("Course name is required"),
+
       description: Yup.string()
         .trim()
-        .min(10, "Must be at least 10 characters")
+        .min(10, "Description must be at least 10 characters")
+        .max(300, "Description must not exceed 300 characters")
+        .matches(
+          /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{20,}$/,
+          "Description must include meaningful text, not just numbers or symbols"
+        )
+        .test(
+          "not-just-symbols-or-digits",
+          "Description must contain meaningful text (at least 5 letters)",
+          (value) => {
+            if (!value) return false;
+            const alphaCount = (value.match(/[A-Za-z]/g) || []).length;
+            return alphaCount >= 5;
+          }
+        )
         .required("Description is required"),
+
       category: Yup.string().required("Category is required"),
+
       price: Yup.number()
         .typeError("Must be a number")
         .positive("Price must be greater than 0")
         .required("Price is required"),
+
       duration: Yup.string()
         .matches(/^[1-9][0-9]*$/, "Duration must be a positive number")
         .required("Duration is required"),
+
       level: Yup.string()
         .oneOf(["beginner", "intermediate", "advanced"], "Invalid level")
         .required("Level is required"),
@@ -77,10 +110,9 @@ const CourseEditPage = () => {
       setSubmitting(true);
       try {
         const res = await instructorUpdateCourse(courseId!, formData);
-        console.log('response editpage',res)
         toast.success(res.message);
         navigate("/instructor/courses");
-      } catch (error:any) {
+      } catch (error: any) {
         toast.error(error?.response?.data.message);
       } finally {
         setSubmitting(false);
@@ -178,7 +210,6 @@ const CourseEditPage = () => {
         <InputField name="courseName" label="Course Name" />
         <InputField name="description" label="Description" />
 
-        {/* Category */}
         <div>
           <label className="block mb-1 font-medium">Category</label>
           <select
@@ -203,7 +234,6 @@ const CourseEditPage = () => {
         <InputField name="price" label="Price" type="number" />
         <InputField name="duration" label="Duration (in hours)" />
 
-        {/* Level */}
         <div>
           <label className="block mb-1 font-medium">Level</label>
           <select
@@ -222,7 +252,6 @@ const CourseEditPage = () => {
           )}
         </div>
 
-        {/* Thumbnail Upload */}
         <div>
           <label className="block mb-1 font-medium">Thumbnail</label>
           {existingThumbnailUrl && (
@@ -239,10 +268,11 @@ const CourseEditPage = () => {
             accept="image/*"
             onChange={handleThumbnailChange}
           />
-          {thumbnailError && <p className="text-red-500 text-sm">{thumbnailError}</p>}
+          {thumbnailError && (
+            <p className="text-red-500 text-sm">{thumbnailError}</p>
+          )}
         </div>
 
-        {/* Demo Video Upload */}
         <div>
           <label className="block mb-1 font-medium">Demo Video</label>
           {existingDemoVideoUrl && (
@@ -262,12 +292,13 @@ const CourseEditPage = () => {
           {videoError && <p className="text-red-500 text-sm">{videoError}</p>}
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={submitting}
           className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg shadow text-white ${
-            submitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            submitting
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
           {submitting ? (

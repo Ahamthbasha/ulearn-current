@@ -1,4 +1,4 @@
-import { Response  } from "express";
+import { Response } from "express";
 import { AuthenticatedRequest } from "../../../middlewares/AuthenticatedRoutes";
 
 export interface IAdminWalletController {

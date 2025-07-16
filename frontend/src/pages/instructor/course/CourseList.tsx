@@ -38,7 +38,7 @@ const CourseListPage = () => {
     try {
       setLoading(true);
       const response = await fetchInstructorCourses({ page, limit, search });
-      console.log(response)
+      console.log(response);
       setCourses(response?.data || []);
       setTotal(response?.total || 0);
     } catch (err: any) {
@@ -110,7 +110,9 @@ const CourseListPage = () => {
       render: (value) => (
         <span
           className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-            value ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+            value
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
           }`}
         >
           {value ? "Published" : "Unpublished"}

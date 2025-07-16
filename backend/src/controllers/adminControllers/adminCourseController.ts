@@ -1,4 +1,4 @@
-import { IAdminCourseController } from "./interface/IAdminCourseControllet";
+import { IAdminCourseController } from "./interface/IAdminCourseController";
 import { IAdminCourseService } from "../../services/interface/IAdminCourseService";
 import { Request, Response } from "express";
 
@@ -27,7 +27,9 @@ export class AdminCourseController implements IAdminCourseController {
       });
     } catch (error) {
       console.error("Error fetching courses:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 
@@ -35,7 +37,9 @@ export class AdminCourseController implements IAdminCourseController {
     try {
       const { courseId } = req.params;
 
-      const updatedCourse = await this.adminCourseService.toggleCourseListing(courseId);
+      const updatedCourse = await this.adminCourseService.toggleCourseListing(
+        courseId
+      );
 
       if (!updatedCourse) {
         res.status(404).json({ success: false, message: "Course not found" });
@@ -49,7 +53,9 @@ export class AdminCourseController implements IAdminCourseController {
       res.status(200).json({ success: true, message, data: updatedCourse });
     } catch (error) {
       console.error("Error toggling listing status:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   }
 }

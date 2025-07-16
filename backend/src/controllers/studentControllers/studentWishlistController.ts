@@ -3,11 +3,15 @@ import { Types } from "mongoose";
 import { IStudentWishlistController } from "./interfaces/IStudentWishlistController";
 import { IStudentWishlistService } from "../../services/interface/IStudentWishlistService";
 import { StatusCode } from "../../utils/enums";
-import { WishlistSuccessMessage, WishlistErrorMessage, StudentErrorMessages } from "../../utils/constants";
+import {
+  WishlistSuccessMessage,
+  WishlistErrorMessage,
+  StudentErrorMessages,
+} from "../../utils/constants";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
-import {ICourse} from "../../models/courseModel"
+import { ICourse } from "../../models/courseModel";
 
 export class StudentWishlistController implements IStudentWishlistController {
   private wishlistService: IStudentWishlistService;
@@ -18,12 +22,15 @@ export class StudentWishlistController implements IStudentWishlistController {
 
   async addToWishlist(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      console.log('i am running')
-      console.log(req.body)
+      console.log("i am running");
+      console.log(req.body);
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.body.courseId);
 
-      const exists = await this.wishlistService.isCourseInWishlist(userId, courseId);
+      const exists = await this.wishlistService.isCourseInWishlist(
+        userId,
+        courseId
+      );
       if (exists) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
@@ -47,7 +54,10 @@ export class StudentWishlistController implements IStudentWishlistController {
     }
   }
 
-  async removeFromWishlist(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async removeFromWishlist(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
@@ -66,14 +76,17 @@ export class StudentWishlistController implements IStudentWishlistController {
     }
   }
 
-async getWishlistCourses(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getWishlistCourses(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
 
       const wishlist = await this.wishlistService.getWishlistCourses(userId);
 
       for (const item of wishlist) {
-        const course = item.courseId as ICourse
+        const course = item.courseId as ICourse;
         if (course?.thumbnailUrl) {
           course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
         }
@@ -93,12 +106,18 @@ async getWishlistCourses(req: AuthenticatedRequest, res: Response): Promise<void
     }
   }
 
-  async isCourseInWishlist(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async isCourseInWishlist(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
 
-      const exists = await this.wishlistService.isCourseInWishlist(userId, courseId);
+      const exists = await this.wishlistService.isCourseInWishlist(
+        userId,
+        courseId
+      );
       res.status(StatusCode.OK).json({
         success: true,
         exists,

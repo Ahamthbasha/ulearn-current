@@ -213,7 +213,8 @@ const EnrolledCourseDetailPage = () => {
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  {completedChapterIds.length} of {course.chapters.length} chapters completed
+                  {completedChapterIds.length} of {course.chapters.length}{" "}
+                  chapters completed
                 </p>
               </>
             )}
@@ -296,16 +297,22 @@ const EnrolledCourseDetailPage = () => {
                     <button
                       onClick={async () => {
                         try {
-                          const res = await checkChapterCompletedOrNot(course._id);
+                          const res = await checkChapterCompletedOrNot(
+                            course._id
+                          );
                           if (res?.allCompleted) {
-                            navigate(`/quiz/${course._id}/${course.quizzes[0]._id}`);
+                            navigate(
+                              `/quiz/${course._id}/${course.quizzes[0]._id}`
+                            );
                           } else {
                             toast.warning(
                               "Please complete all chapters before attempting the quiz."
                             );
                           }
                         } catch {
-                          toast.error("Unable to check chapter completion status.");
+                          toast.error(
+                            "Unable to check chapter completion status."
+                          );
                         }
                       }}
                       className={`w-full flex items-center justify-center px-4 py-2 ${
@@ -333,7 +340,9 @@ const EnrolledCourseDetailPage = () => {
                           d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      {!sidebarCollapsed && <span className="ml-2">Start Quiz</span>}
+                      {!sidebarCollapsed && (
+                        <span className="ml-2">Start Quiz</span>
+                      )}
                     </button>
                   </div>
                 )}
@@ -345,7 +354,9 @@ const EnrolledCourseDetailPage = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col bg-white">
           <div className="p-6 border-b border-gray-200 bg-white">
-            <h1 className="text-2xl font-bold text-gray-800">{currentChapter.chapterTitle}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {currentChapter.chapterTitle}
+            </h1>
             <p className="text-gray-600 mt-1">
               Chapter {currentChapterIndex + 1} of {course.chapters.length}
             </p>

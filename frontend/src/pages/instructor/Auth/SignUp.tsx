@@ -6,10 +6,13 @@ import { useDispatch } from "react-redux";
 
 import InputField from "../../../components/common/InputField";
 import PasswordField from "../../../components/common/PasswordField";
-import { signup, googleLogin } from '../../../api/auth/InstructorAuthentication';
+import {
+  signup,
+  googleLogin,
+} from "../../../api/auth/InstructorAuthentication";
 
 import { setInstructor } from "../../../redux/slices/instructorSlice";
-import InstructorSignUp from '../../../assets/Mentorship.jpg'
+import InstructorSignUp from "../../../assets/Mentorship.jpg";
 
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
@@ -80,14 +83,14 @@ const SignUp = () => {
             role: instructor.role,
             isBlocked: instructor.isBlocked,
             profilePicture: instructor.profilePicture,
-            isVerified:instructor.isVerified
+            isVerified: instructor.isVerified,
           })
         );
         localStorage.setItem("instructor", JSON.stringify(instructor));
         toast.success(response.message || "Signed up with Google!");
-        if(instructor.isVerified){
-          navigate('/instructor/dashboard')
-        }else{
+        if (instructor.isVerified) {
+          navigate("/instructor/dashboard");
+        } else {
           navigate("/instructor/verification");
         }
       } else {
@@ -129,12 +132,28 @@ const SignUp = () => {
             >
               {() => (
                 <Form className="space-y-4">
-                  <InputField name="username" type="text" label="Username" placeholder="Enter username" />
-                  <InputField name="email" type="email" label="Email" placeholder="Enter email" />
+                  <InputField
+                    name="username"
+                    type="text"
+                    label="Username"
+                    placeholder="Enter username"
+                  />
+                  <InputField
+                    name="email"
+                    type="email"
+                    label="Email"
+                    placeholder="Enter email"
+                  />
                   <PasswordField name="password" placeholder="Enter password" />
-                  <PasswordField name="confirmPassword" placeholder="Confirm password" />
+                  <PasswordField
+                    name="confirmPassword"
+                    placeholder="Confirm password"
+                  />
 
-                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+                  >
                     Register
                   </button>
                 </Form>
@@ -143,8 +162,12 @@ const SignUp = () => {
 
             {/* Divider and Google Login */}
             <div className="mt-6">
-              <p className="text-center text-sm text-gray-500 mb-2">Or sign up with Google</p>
-              <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+              <p className="text-center text-sm text-gray-500 mb-2">
+                Or sign up with Google
+              </p>
+              <GoogleOAuthProvider
+                clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
+              >
                 <div className="flex justify-center">
                   <GoogleLogin
                     onSuccess={handleGoogleLogin}

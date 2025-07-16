@@ -10,7 +10,10 @@ import {
 } from "../../../api/action/InstructorActionApi";
 
 const EditQuizPage = () => {
-  const { courseId, quizId } = useParams<{ courseId: string; quizId: string }>();
+  const { courseId, quizId } = useParams<{
+    courseId: string;
+    quizId: string;
+  }>();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,7 +32,9 @@ const EditQuizPage = () => {
 
       try {
         const quiz = await getQuizById(quizId);
-        const question = quiz?.questions?.find((q: any) => q._id === questionId);
+        const question = quiz?.questions?.find(
+          (q: any) => q._id === questionId
+        );
 
         if (question) {
           setInitialValues({
@@ -48,19 +53,19 @@ const EditQuizPage = () => {
     fetchQuestionData();
   }, [quizId, questionId]);
 
-const handleSubmit = async (data: SingleQuestionFormValues) => {
-  if (!quizId || !questionId) return;
+  const handleSubmit = async (data: SingleQuestionFormValues) => {
+    if (!quizId || !questionId) return;
 
-  try {
-    await updateQuestionInQuiz(quizId, questionId, data);
-    toast.success("Question updated successfully");
-    navigate(`/instructor/course/${courseId}/quiz`);
-  } catch (err: any) {
-    const errorMessage = err?.response?.data?.message ?? "Failed to update question";
-    toast.error(errorMessage);
-  }
-};
-
+    try {
+      await updateQuestionInQuiz(quizId, questionId, data);
+      toast.success("Question updated successfully");
+      navigate(`/instructor/course/${courseId}/quiz`);
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.message ?? "Failed to update question";
+      toast.error(errorMessage);
+    }
+  };
 
   return (
     <div className="p-4">

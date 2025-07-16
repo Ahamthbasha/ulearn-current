@@ -11,16 +11,21 @@ export interface IStudentCheckoutRepository {
     razorpayOrderId: string
   ): Promise<IOrder>;
 
-  updateOrderStatus(orderId: Types.ObjectId, status: "SUCCESS" | "FAILED"): Promise<IOrder | null>;
+  updateOrderStatus(
+    orderId: Types.ObjectId,
+    status: "SUCCESS" | "FAILED"
+  ): Promise<IOrder | null>;
 
   savePayment(data: Partial<IPayment>): Promise<IPayment>;
 
-  createEnrollments(userId: Types.ObjectId, courseIds: Types.ObjectId[]): Promise<IEnrollment[]>;
+  createEnrollments(
+    userId: Types.ObjectId,
+    courseIds: Types.ObjectId[]
+  ): Promise<IEnrollment[]>;
 
-  getCourseNamesByIds(courseIds:Types.ObjectId[]):Promise<string[]>
+  getCourseNamesByIds(courseIds: Types.ObjectId[]): Promise<string[]>;
 
   getEnrolledCourseIds(userId: Types.ObjectId): Promise<Types.ObjectId[]>;
 
-  getCourseRepo() :ICourseRepository
-
+  getCourseRepo(): ICourseRepository;
 }

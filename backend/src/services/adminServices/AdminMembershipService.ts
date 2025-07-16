@@ -22,18 +22,21 @@ export class AdminMembershipService implements IAdminMembershipService {
   }
 
   async updatePlan(id: string, data: Partial<IMembershipPlan>): Promise<IMembershipPlan | null> {
-    if (data.name) {
-      const existing = await this.membershipRepository.findOne({
-        name: { $regex: new RegExp(`^${data.name}$`, 'i') },
-      });
+  if (data.name) {
+    const existing = await this.membershipRepository.findOne({
+      name: { $regex: new RegExp(`^${data.name}$`, 'i') },
+    }) as IMembershipPlan | null;
 
-      if (existing?._id?.toString() !== id) {
-        throw new Error("Another membership plan with this name already exists.");
-      }
+    if (existing && existing._id.toString() !== id) {
+      throw new Error("Another membership plan with this name already exists.");
     }
-
-    return this.membershipRepository.updatePlan(id, data);
   }
+
+  return this.membershipRepository.updatePlan(id, data);
+}
+
+
+
 
   async deletePlan(id: string): Promise<boolean> {
     return this.membershipRepository.deletePlan(id);

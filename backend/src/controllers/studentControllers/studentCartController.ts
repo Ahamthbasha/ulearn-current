@@ -3,7 +3,11 @@ import { Types } from "mongoose";
 import { IStudentCartService } from "../../services/interface/IStudentCartService";
 import { IStudentCartController } from "./interfaces/IStudentCartController";
 import { StatusCode } from "../../utils/enums";
-import { CartErrorMessage, CartSuccessMessage, StudentErrorMessages } from "../../utils/constants";
+import {
+  CartErrorMessage,
+  CartSuccessMessage,
+  StudentErrorMessages,
+} from "../../utils/constants";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
 
@@ -58,11 +62,11 @@ export class StudentCartController implements IStudentCartController {
       );
 
       if (alreadyInCart) {
-      res.status(StatusCode.CONFLICT).json({
+        res.status(StatusCode.CONFLICT).json({
           success: false,
           message: CartErrorMessage.COURSE_ALREADYEXIST_IN_CART,
         });
-        return
+        return;
       }
 
       const updatedCart = await this.cartService.addToCart(userId, courseId);
@@ -80,12 +84,18 @@ export class StudentCartController implements IStudentCartController {
     }
   }
 
-  async removeFromCart(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async removeFromCart(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
 
-      const updatedCart = await this.cartService.removeFromCart(userId, courseId);
+      const updatedCart = await this.cartService.removeFromCart(
+        userId,
+        courseId
+      );
       res.status(StatusCode.OK).json({
         success: true,
         message: CartSuccessMessage.COURSE_REMOVED_FROM_CART,

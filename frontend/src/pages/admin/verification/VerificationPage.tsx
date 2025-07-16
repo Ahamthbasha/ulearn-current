@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DataTable, { type Column, type ActionButton } from "../../../components/AdminComponents/DataTable";
+import DataTable, {
+  type Column,
+  type ActionButton,
+} from "../../../components/AdminComponents/DataTable";
 import { Eye } from "lucide-react";
 import { getAllVerificationRequests } from "../../../api/action/AdminActionApi";
 

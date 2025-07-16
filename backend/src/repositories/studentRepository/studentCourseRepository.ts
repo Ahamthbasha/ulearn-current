@@ -5,7 +5,6 @@ import { IChapterReadOnlyRepository } from "../interfaces/IChapterReadOnlyReposi
 import { IQuizReadOnlyRepository } from "../interfaces/IQuizReadOnlyRepository";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
-
 export class StudentCourseRepository
   extends GenericRepository<ICourse>
   implements IStudentCourseRepository
@@ -33,8 +32,12 @@ export class StudentCourseRepository
     const result = await Promise.all(
       listedCourses.map(async (course) => {
         const courseId = course._id.toString();
-        const chapterCount = await this.chapterRepo.countChaptersByCourse(courseId);
-        const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(courseId);
+        const chapterCount = await this.chapterRepo.countChaptersByCourse(
+          courseId
+        );
+        const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(
+          courseId
+        );
 
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
@@ -52,91 +55,99 @@ export class StudentCourseRepository
     return result;
   }
 
-async getFilteredCourses(
-  page: number,
-  limit: number,
-  searchTerm = "",
-  sort: "name-asc" | "name-desc" | "price-asc" | "price-desc" = "name-asc",
-  categoryId?: string
-): Promise<{
-  data: {
-    course: ICourse;
-    chapterCount: number;
-    quizQuestionCount: number;
-  }[];
-  total: number;
-}> {
-  const filter: any = {
-    isListed: true,
-    isPublished: true,
-  };
+  async getFilteredCourses(
+    page: number,
+    limit: number,
+    searchTerm = "",
+    sort: "name-asc" | "name-desc" | "price-asc" | "price-desc" = "name-asc",
+    categoryId?: string
+  ): Promise<{
+    data: {
+      course: ICourse;
+      chapterCount: number;
+      quizQuestionCount: number;
+    }[];
+    total: number;
+  }> {
+    const filter: any = {
+      isListed: true,
+      isPublished: true,
+    };
 
-  if (searchTerm) {
-    filter.$or = [
-      { courseName: { $regex: searchTerm, $options: "i" } },
-      { description: { $regex: searchTerm, $options: "i" } },
-    ];
+    if (searchTerm) {
+      filter.$or = [
+        { courseName: { $regex: searchTerm, $options: "i" } },
+        { description: { $regex: searchTerm, $options: "i" } },
+      ];
+    }
+
+    if (categoryId) {
+      filter.category = categoryId;
+    }
+
+    let sortOption: any = { createdAt: -1 };
+    switch (sort) {
+      case "name-asc":
+        sortOption = { courseName: 1 };
+        break;
+      case "name-desc":
+        sortOption = { courseName: -1 };
+        break;
+      case "price-asc":
+        sortOption = { price: 1 };
+        break;
+      case "price-desc":
+        sortOption = { price: -1 };
+        break;
+    }
+
+    const { data: courses, total } = await this.paginate(
+      filter,
+      page,
+      limit,
+      sortOption,
+      ["category", "instructorId"]
+    );
+
+    const result = await Promise.all(
+      courses.map(async (course) => {
+        const chapterCount = await this.chapterRepo.countChaptersByCourse(
+          course._id.toString()
+        );
+        const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(
+          course._id.toString()
+        );
+        const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+
+        return {
+          course: {
+            ...course.toObject(),
+            thumbnailUrl: signedThumbnailUrl,
+          },
+          chapterCount,
+          quizQuestionCount,
+        };
+      })
+    );
+
+    return { data: result, total };
   }
 
-  if (categoryId) {
-    filter.category = categoryId;
-  }
-
-  let sortOption: any = { createdAt: -1 };
-  switch (sort) {
-    case "name-asc":
-      sortOption = { courseName: 1 };
-      break;
-    case "name-desc":
-      sortOption = { courseName: -1 };
-      break;
-    case "price-asc":
-      sortOption = { price: 1 };
-      break;
-    case "price-desc":
-      sortOption = { price: -1 };
-      break;
-  }
-
-  const { data: courses, total } = await this.paginate(
-    filter,
-    page,
-    limit,
-    sortOption,
-    ["category", "instructorId"]
-  );
-
-  const result = await Promise.all(
-    courses.map(async (course) => {
-      const chapterCount = await this.chapterRepo.countChaptersByCourse(course._id.toString());
-      const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(course._id.toString());
-      const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
-
-      return {
-        course: {
-          ...course.toObject(),
-          thumbnailUrl: signedThumbnailUrl,
-        },
-        chapterCount,
-        quizQuestionCount,
-      };
-    })
-  );
-
-  return { data: result, total };
-}
-
-
-async getCourseDetails(courseId: string): Promise<{
+  async getCourseDetails(courseId: string): Promise<{
     course: ICourse | null;
     chapterCount: number;
     quizQuestionCount: number;
   }> {
-    const course = await this.findByIdWithPopulate(courseId, ["category", "instructorId"]);
+    const course = await this.findByIdWithPopulate(courseId, [
+      "category",
+      "instructorId",
+    ]);
     if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
 
     const chapterCount = await this.chapterRepo.countChaptersByCourse(courseId);
-    const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(courseId);
+    const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(
+      courseId
+    );
 
     const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
     const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);

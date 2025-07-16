@@ -4,7 +4,11 @@ import { IAdminService } from "../../services/interface/IAdminService";
 import { JwtService } from "../../utils/jwt";
 import { config } from "dotenv";
 import { Roles, StatusCode } from "../../utils/enums";
-import { AdminErrorMessages, AdminSuccessMessages, ResponseError } from "../../utils/constants";
+import {
+  AdminErrorMessages,
+  AdminSuccessMessages,
+  ResponseError,
+} from "../../utils/constants";
 
 config();
 
@@ -84,31 +88,36 @@ export class AdminController implements IAdminController {
   }
 
   async getAllUsers(req: Request, res: Response): Promise<any> {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = (req.query.search as string) || "";
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = (req.query.search as string) || "";
 
-    const { users, total } = await this.adminService.getAllUsers(page, limit, search);
+      const { users, total } = await this.adminService.getAllUsers(
+        page,
+        limit,
+        search
+      );
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: users.length > 0
-        ? ResponseError.FETCH_USER
-        : ResponseError.USER_NOT_FOUND,
-      users,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit)
-    });
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: ResponseError.FETCH_ERROR,
-    });
+      return res.status(StatusCode.OK).json({
+        success: true,
+        message:
+          users.length > 0
+            ? ResponseError.FETCH_USER
+            : ResponseError.USER_NOT_FOUND,
+        users,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      });
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: ResponseError.FETCH_ERROR,
+      });
+    }
   }
-}
 
   async getAllInstructors(req: Request, res: Response): Promise<any> {
     try {
@@ -128,8 +137,8 @@ export class AdminController implements IAdminController {
             : ResponseError.USERFETCHING_ERROR,
         instructors,
         total,
-        page:Number(page),
-        totalPages:Math.ceil(total/Number(limit))
+        page: Number(page),
+        totalPages: Math.ceil(total / Number(limit)),
       });
     } catch (error) {
       console.error("Error fetching instructors:", error);

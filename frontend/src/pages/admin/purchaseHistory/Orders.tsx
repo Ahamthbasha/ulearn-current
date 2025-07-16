@@ -42,7 +42,7 @@ const Orders: React.FC = () => {
     try {
       setLoading(true);
       const response = await getMembershipPurchaseHistory();
-      console.log(response)
+      console.log(response);
       setOrders(response.data);
       const total = response.total || 0;
       setTotalPages(Math.ceil(total / limit));
@@ -76,7 +76,9 @@ const Orders: React.FC = () => {
       render: (_, record) => (
         <div>
           <div className="font-medium">{record.membershipPlan.name}</div>
-          <div className="text-sm text-gray-500">{record.membershipPlan.durationInDays} days</div>
+          <div className="text-sm text-gray-500">
+            {record.membershipPlan.durationInDays} days
+          </div>
         </div>
       ),
     },
@@ -123,7 +125,8 @@ const Orders: React.FC = () => {
           key: "view",
           label: "View Details",
           icon: <Eye size={16} />,
-          onClick: (record) => navigate(`/admin/membershipPurchase/${record.txnId}`),
+          onClick: (record) =>
+            navigate(`/admin/membershipPurchase/${record.txnId}`),
         },
       ]}
     />

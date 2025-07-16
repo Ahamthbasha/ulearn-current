@@ -36,7 +36,10 @@ const SlotCheckoutPage = () => {
         const { booking, razorpayOrder } = res;
 
         if (!booking || !razorpayOrder) {
-          console.warn("Missing booking or razorpayOrder", { booking, razorpayOrder });
+          console.warn("Missing booking or razorpayOrder", {
+            booking,
+            razorpayOrder,
+          });
           toast.error("Failed to load booking details.");
           navigate("/user/slotsHistory");
           return;
@@ -45,8 +48,13 @@ const SlotCheckoutPage = () => {
         setBooking(booking);
         setOrder(razorpayOrder);
       } catch (err: any) {
-        console.error("❌ Checkout initiation error:", err.response?.data || err.message);
-        toast.error(err.response?.data?.message || "Failed to initiate booking");
+        console.error(
+          "❌ Checkout initiation error:",
+          err.response?.data || err.message
+        );
+        toast.error(
+          err.response?.data?.message || "Failed to initiate booking"
+        );
         navigate("/user/slotsHistory");
       } finally {
         setLoading(false);
@@ -72,7 +80,9 @@ const SlotCheckoutPage = () => {
           toast.success("✅ Slot booked successfully!");
           navigate("/user/slotsHistory");
         } catch (err: any) {
-          toast.error(err.response?.data?.message || "❌ Payment verification failed");
+          toast.error(
+            err.response?.data?.message || "❌ Payment verification failed"
+          );
         }
       },
       prefill: {
@@ -92,7 +102,9 @@ const SlotCheckoutPage = () => {
     const slotPrice = booking?.slotId?.price || 0;
 
     if (walletBalance < slotPrice) {
-      toast.error("❌ Insufficient wallet balance. Please use Razorpay or recharge your wallet.");
+      toast.error(
+        "❌ Insufficient wallet balance. Please use Razorpay or recharge your wallet."
+      );
       return;
     }
 
@@ -114,7 +126,9 @@ const SlotCheckoutPage = () => {
   return (
     <div className="min-h-screen bg-white py-10 px-6 md:px-20">
       <div className="max-w-2xl mx-auto shadow-lg border rounded-2xl p-8">
-        <h2 className="text-2xl font-bold mb-6 text-center">Confirm Your Slot Booking</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Confirm Your Slot Booking
+        </h2>
 
         {booking && slot ? (
           <div className="space-y-4">
@@ -137,7 +151,11 @@ const SlotCheckoutPage = () => {
             </p>
             <p>
               <strong>Your Wallet Balance:</strong>{" "}
-              <span className={walletBalance >= slotPrice ? "text-green-600" : "text-red-600"}>
+              <span
+                className={
+                  walletBalance >= slotPrice ? "text-green-600" : "text-red-600"
+                }
+              >
                 ₹{walletBalance}
               </span>
             </p>

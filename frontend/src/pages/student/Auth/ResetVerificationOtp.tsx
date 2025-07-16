@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { verifyEmail, verifyResetOtp } from '../../../api/auth/UserAuthentication';
+import {
+  verifyEmail,
+  verifyResetOtp,
+} from "../../../api/auth/UserAuthentication";
 
 const ResetVerificationOTP = () => {
-  const [otp, setOtp] = useState<string[]>(Array(4).fill(''));
+  const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
   const [counter, setCounter] = useState<number>(60);
   const [resendActive, setResendActive] = useState(false);
   const navigate = useNavigate();
@@ -13,7 +16,7 @@ const ResetVerificationOTP = () => {
   useEffect(() => {
     if (counter > 0) {
       const timer = setInterval(() => {
-        setCounter(prev => prev - 1);
+        setCounter((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
     } else {
@@ -35,7 +38,10 @@ const ResetVerificationOTP = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const value = e.target.value;
     if (!/^\d?$/.test(value)) return; // only digits
 
@@ -50,15 +56,18 @@ const ResetVerificationOTP = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       document.getElementById(`otpInput-${index - 1}`)?.focus();
     }
   };
 
   const handleSubmit = async () => {
-    const OTP = otp.join('');
-    if (OTP.length !== 4 || otp.some((digit) => digit === '')) {
+    const OTP = otp.join("");
+    if (OTP.length !== 4 || otp.some((digit) => digit === "")) {
       toast.error("Please enter the full OTP!");
       return;
     }
@@ -67,7 +76,7 @@ const ResetVerificationOTP = () => {
     const response = await verifyResetOtp(email, OTP);
     if (response.success) {
       toast.success(response.message);
-      navigate('/user/resetPassword');
+      navigate("/user/resetPassword");
     } else {
       toast.error(response.message);
     }
@@ -76,7 +85,6 @@ const ResetVerificationOTP = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-cyan-100 px-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-8 sm:p-10">
-        
         {/* Logo */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-extrabold text-indigo-700 tracking-wide">

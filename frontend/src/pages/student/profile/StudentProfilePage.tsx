@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import InputField from "../../../components/common/InputField"; // path as per your setup
@@ -8,7 +8,6 @@ import Card from "../../../components/common/Card";
 import { setUser } from "../../../redux/slices/userSlice";
 import { getProfile } from "../../../api/action/StudentAction";
 
-
 import { useDispatch } from "react-redux";
 const StudentProfilePage = () => {
   const [profile, setProfile] = useState<any>(null);
@@ -16,26 +15,25 @@ const StudentProfilePage = () => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   useEffect(() => {
-  const fetchProfile = async () => {
-    try {
-      const response = await getProfile();
-      console.log(response);
-      
-      if (response.success) {
-        dispatch(setUser(response.data));
-        setProfile(response.data);
-      } else {
-        toast.error(response.message || "Failed to fetch profile ❌");
+    const fetchProfile = async () => {
+      try {
+        const response = await getProfile();
+        console.log(response);
+
+        if (response.success) {
+          dispatch(setUser(response.data));
+          setProfile(response.data);
+        } else {
+          toast.error(response.message || "Failed to fetch profile ❌");
+        }
+      } catch (error: any) {
+        console.error("Failed to load profile", error);
+        toast.error("Something went wrong while fetching profile.");
       }
-    } catch (error: any) {
-      console.error("Failed to load profile", error);
-      toast.error("Something went wrong while fetching profile.");
-    }
-  };
+    };
 
-  fetchProfile();
-}, []);
-
+    fetchProfile();
+  }, []);
 
   if (!profile) {
     return <div className="p-4">Loading...</div>;
@@ -49,7 +47,7 @@ const StudentProfilePage = () => {
         footer={
           <div className="flex flex-col gap-2 justify-center items-center">
             <button
-              onClick={() => window.location.href = "/user/editProfile"}
+              onClick={() => (window.location.href = "/user/editProfile")}
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
             >
               Edit Profile
@@ -78,11 +76,22 @@ const StudentProfilePage = () => {
         </div>
 
         <div className="space-y-2 text-sm sm:text-base">
-          <p><strong>Username:</strong> {profile.username}</p>
-          <p><strong>Email:</strong> {profile.email}</p>
-          <p><strong>Skills:</strong> {profile.skills?.join(", ") || "None"}</p>
-          <p><strong>Expertise:</strong> {profile.expertise?.join(", ") || "None"}</p>
-          <p><strong>Status:</strong> {profile.currentStatus || "N/A"}</p>
+          <p>
+            <strong>Username:</strong> {profile.username}
+          </p>
+          <p>
+            <strong>Email:</strong> {profile.email}
+          </p>
+          <p>
+            <strong>Skills:</strong> {profile.skills?.join(", ") || "None"}
+          </p>
+          <p>
+            <strong>Expertise:</strong>{" "}
+            {profile.expertise?.join(", ") || "None"}
+          </p>
+          <p>
+            <strong>Status:</strong> {profile.currentStatus || "N/A"}
+          </p>
         </div>
       </Card>
 
@@ -91,31 +100,35 @@ const StudentProfilePage = () => {
           <h2 className="text-lg font-semibold mb-4">🔒 Change Password</h2>
           <Formik
             initialValues={{
-              currentPassword: '',
-              newPassword: '',
-              confirmPassword: '',
+              currentPassword: "",
+              newPassword: "",
+              confirmPassword: "",
             }}
             validationSchema={Yup.object({
-  currentPassword: Yup.string().required("Current password is required"),
-  newPassword: Yup.string()
-    .required("New password is required")
-    .min(6, "Password must be at least 6 characters")
-    .matches(/[A-Z]/, "Must contain at least one uppercase letter")
-    .matches(/[a-z]/, "Must contain at least one lowercase letter")
-    .matches(/[0-9]/, "Must contain at least one number")
-    .matches(/[!@#$%^&*(),.?":{}|<>]/, "Must contain at least one special character"),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref("newPassword")], "Passwords must match")
-    .required("Confirm your new password"),
-})}
-
+              currentPassword: Yup.string().required(
+                "Current password is required"
+              ),
+              newPassword: Yup.string()
+                .required("New password is required")
+                .min(6, "Password must be at least 6 characters")
+                .matches(/[A-Z]/, "Must contain at least one uppercase letter")
+                .matches(/[a-z]/, "Must contain at least one lowercase letter")
+                .matches(/[0-9]/, "Must contain at least one number")
+                .matches(
+                  /[!@#$%^&*(),.?":{}|<>]/,
+                  "Must contain at least one special character"
+                ),
+              confirmPassword: Yup.string()
+                .oneOf([Yup.ref("newPassword")], "Passwords must match")
+                .required("Confirm your new password"),
+            })}
             onSubmit={async (values, { resetForm }) => {
               try {
                 const res = await updatePassword({
                   currentPassword: values.currentPassword,
                   newPassword: values.newPassword,
                 });
-                console.log(res)
+                console.log(res);
                 if (res.success) {
                   toast.success("Password updated successfully");
                   resetForm();
@@ -123,8 +136,9 @@ const StudentProfilePage = () => {
                 } else {
                   toast.error(res.message || "Password update failed");
                 }
-              } catch (error:any) {
-                const errorMessage = error?.response?.data?.message || "Password update failed"
+              } catch (error: any) {
+                const errorMessage =
+                  error?.response?.data?.message || "Password update failed";
                 toast.error(errorMessage);
               }
             }}

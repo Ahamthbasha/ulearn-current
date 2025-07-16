@@ -1,6 +1,6 @@
 import { Formik, Form } from "formik";
-import * as Yup from 'yup';
-import { toast } from 'react-toastify';
+import * as Yup from "yup";
+import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
 
 import InputField from "../../../components/common/InputField";
@@ -8,7 +8,7 @@ import { verifyEmail } from "../../../api/auth/UserAuthentication";
 
 const ForgotPassword = () => {
   const initialValues = {
-    email: ""
+    email: "",
   };
 
   const navigate = useNavigate();
@@ -21,7 +21,9 @@ const ForgotPassword = () => {
         toast.success(response.message);
         navigate(`/user/forgotPasswordOtp`);
       } else {
-        toast.error(response?.message || "An error occurred. Please try again.");
+        toast.error(
+          response?.message || "An error occurred. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error during password reset request", error);
@@ -30,7 +32,7 @@ const ForgotPassword = () => {
   };
 
   const emailSchema = Yup.object().shape({
-    email: Yup.string().email("Invalid email").required("Email is required")
+    email: Yup.string().email("Invalid email").required("Email is required"),
   });
 
   return (
@@ -42,10 +44,16 @@ const ForgotPassword = () => {
             <span className="text-orange-500">U</span>learn
           </div>
           <h2 className="text-xl font-semibold mt-2">Forgot Password</h2>
-          <p className="text-sm text-gray-600">Enter your email to reset your password</p>
+          <p className="text-sm text-gray-600">
+            Enter your email to reset your password
+          </p>
         </div>
 
-        <Formik initialValues={initialValues} validationSchema={emailSchema} onSubmit={onSubmit}>
+        <Formik
+          initialValues={initialValues}
+          validationSchema={emailSchema}
+          onSubmit={onSubmit}
+        >
           {() => (
             <Form className="space-y-5">
               <InputField
@@ -66,7 +74,10 @@ const ForgotPassword = () => {
         </Formik>
 
         <div className="text-center mt-6">
-          <Link to="/user/login" className="text-sm text-blue-600 hover:underline">
+          <Link
+            to="/user/login"
+            className="text-sm text-blue-600 hover:underline"
+          >
             &larr; Back to Login
           </Link>
         </div>

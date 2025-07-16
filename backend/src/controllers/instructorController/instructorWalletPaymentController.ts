@@ -4,7 +4,9 @@ import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
 import { IInstructorWalletPaymentController } from "./interfaces/IInstructorWalletPaymentController";
 
-export class InstructorWalletPaymentController implements IInstructorWalletPaymentController {
+export class InstructorWalletPaymentController
+  implements IInstructorWalletPaymentController
+{
   constructor(private walletPaymentService: IWalletPaymentService) {}
 
   async createOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -23,7 +25,12 @@ export class InstructorWalletPaymentController implements IInstructorWalletPayme
 
   async verifyPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+      const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        amount,
+      } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -40,8 +47,8 @@ export class InstructorWalletPaymentController implements IInstructorWalletPayme
         signature: razorpay_signature,
         amount,
         userId,
-        role: "instructor",      // 👈 specific to instructor
-        onModel: "Instructor",   // 👈 specific to instructor
+        role: "instructor", // 👈 specific to instructor
+        onModel: "Instructor", // 👈 specific to instructor
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });

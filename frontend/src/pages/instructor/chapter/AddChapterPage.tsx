@@ -15,7 +15,10 @@ const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
     .transform((value) => value.trim())
     .min(5, "Chapter title must be at least 5 characters long")
-    .matches(textOnlyRegex, "Chapter title must contain only letters and single spaces")
+    .matches(
+      textOnlyRegex,
+      "Chapter title must contain only letters and single spaces"
+    )
     .test(
       "not-blank",
       "Chapter title cannot be only spaces",
@@ -26,7 +29,10 @@ const chapterSchema = Yup.object().shape({
   description: Yup.string()
     .transform((value) => value.trim())
     .min(10, "Description must be at least 10 characters long")
-    .matches(textOnlyRegex, "Description must contain only letters and single spaces")
+    .matches(
+      textOnlyRegex,
+      "Description must contain only letters and single spaces"
+    )
     .test(
       "not-blank",
       "Description cannot be only spaces",
@@ -51,27 +57,26 @@ const AddChapterPage = () => {
   const [loading, setLoading] = useState(false);
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
+    const file = e.target.files?.[0];
 
-  if (!file) return;
+    if (!file) return;
 
-  const isVideo = file.type.startsWith("video/");
+    const isVideo = file.type.startsWith("video/");
 
-  if (!isVideo) {
-    toast.error("Only video files are allowed.");
-    
-    // Reset the file input manually
-    e.target.value = "";  // ⬅️ Clear the input
-    setVideoFile(null);
-    setVideoPreview(null);
-    return;
-  }
+    if (!isVideo) {
+      toast.error("Only video files are allowed.");
 
-  // All good
-  setVideoFile(file);
-  setVideoPreview(URL.createObjectURL(file));
-};
+      // Reset the file input manually
+      e.target.value = ""; // ⬅️ Clear the input
+      setVideoFile(null);
+      setVideoPreview(null);
+      return;
+    }
 
+    // All good
+    setVideoFile(file);
+    setVideoPreview(URL.createObjectURL(file));
+  };
 
   const handleCaptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,12 +112,12 @@ const AddChapterPage = () => {
       if (captionFile) formData.append("captions", captionFile);
 
       const res = await createChapter(courseId, formData);
-      console.log('response from res',res)
+      console.log("response from res", res);
       toast.success(res?.data?.message);
       navigate(`/instructor/course/${courseId}/chapters`);
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message
-      toast.error(message|| "Chapter creation failed");
+      const message = error?.response?.data?.message || error?.message;
+      toast.error(message || "Chapter creation failed");
     } finally {
       setLoading(false);
     }
@@ -120,7 +125,11 @@ const AddChapterPage = () => {
 
   return (
     <div className="px-4 py-6">
-      <Card title="Add Chapter" padded className="bg-white shadow-sm rounded-lg">
+      <Card
+        title="Add Chapter"
+        padded
+        className="bg-white shadow-sm rounded-lg"
+      >
         <Formik
           initialValues={{
             chapterTitle: "",
@@ -134,11 +143,18 @@ const AddChapterPage = () => {
             <Form className="space-y-4">
               <InputField name="chapterTitle" label="Chapter Title" useFormik />
               <InputField name="description" label="Description" useFormik />
-              <InputField name="chapterNumber" label="Chapter Number" type="number" useFormik />
+              <InputField
+                name="chapterNumber"
+                label="Chapter Number"
+                type="number"
+                useFormik
+              />
 
               {/* Video File Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Video File *</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Video File *
+                </label>
                 <input
                   type="file"
                   accept="video/*"
@@ -150,13 +166,19 @@ const AddChapterPage = () => {
               {/* Video Preview */}
               {videoPreview && (
                 <div className="mt-2">
-                  <video controls src={videoPreview} className="w-full max-h-96 rounded" />
+                  <video
+                    controls
+                    src={videoPreview}
+                    className="w-full max-h-96 rounded"
+                  />
                 </div>
               )}
 
               {/* Caption File Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Caption File (optional)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Caption File (optional)
+                </label>
                 <input
                   type="file"
                   accept=".vtt,.srt"

@@ -58,7 +58,7 @@ const MembershipCheckoutPage: React.FC = () => {
   }, [planId]);
 
   const handlePayment = () => {
-    if (!orderData) return;
+    if (!orderData || !planId) return;
 
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -73,6 +73,7 @@ const MembershipCheckoutPage: React.FC = () => {
             razorpayOrderId: response.razorpay_order_id,
             paymentId: response.razorpay_payment_id,
             signature: response.razorpay_signature,
+            planId, // include planId here
           });
 
           toast.success("Membership activated successfully!");
@@ -111,20 +112,40 @@ const MembershipCheckoutPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-10">Loading checkout...</div>;
-  if (!orderData) return <div className="text-center mt-10 text-red-500">Failed to load order.</div>;
+  if (loading)
+    return <div className="text-center mt-10">Loading checkout...</div>;
+  if (!orderData)
+    return (
+      <div className="text-center mt-10 text-red-500">
+        Failed to load order.
+      </div>
+    );
 
   return (
     <div className="max-w-md mx-auto p-6 border rounded-lg mt-10 shadow">
-      <h2 className="text-2xl font-bold mb-4 text-center">Membership Checkout</h2>
-      <p className="mb-2"><strong>Plan Name:</strong> {orderData.planName}</p>
-      <p className="mb-2"><strong>Duration:</strong> {orderData.durationInDays} days</p>
-      <p className="mb-2"><strong>Price:</strong> ₹{orderData.amount}</p>
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        Membership Checkout
+      </h2>
+      <p className="mb-2">
+        <strong>Plan Name:</strong> {orderData.planName}
+      </p>
+      <p className="mb-2">
+        <strong>Duration:</strong> {orderData.durationInDays} days
+      </p>
+      <p className="mb-2">
+        <strong>Price:</strong> ₹{orderData.amount}
+      </p>
 
       {walletBalance !== null && (
         <p className="mb-2">
           <strong>Your Wallet Balance:</strong>{" "}
-          <span className={walletBalance < orderData.amount ? "text-red-500" : "text-green-600"}>
+          <span
+            className={
+              walletBalance < orderData.amount
+                ? "text-red-500"
+                : "text-green-600"
+            }
+          >
             ₹{walletBalance}
           </span>
         </p>
@@ -137,7 +158,10 @@ const MembershipCheckoutPage: React.FC = () => {
       {orderData.benefits && orderData.benefits.length > 0 && (
         <ul className="mt-4 space-y-2">
           {orderData.benefits.map((benefit, idx) => (
-            <li key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+            <li
+              key={idx}
+              className="flex items-center gap-2 text-sm text-gray-700"
+            >
               <CheckCircle className="text-green-500 w-4 h-4" />
               {benefit}
             </li>
@@ -156,7 +180,10 @@ const MembershipCheckoutPage: React.FC = () => {
         <button
           onClick={handleWalletPurchase}
           className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition disabled:opacity-60"
-          disabled={isProcessing || (walletBalance !== null && walletBalance < orderData.amount)}
+          disabled={
+            isProcessing ||
+            (walletBalance !== null && walletBalance < orderData.amount)
+          }
         >
           {isProcessing
             ? "Processing..."

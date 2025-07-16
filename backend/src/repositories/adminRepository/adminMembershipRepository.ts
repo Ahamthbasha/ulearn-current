@@ -1,5 +1,8 @@
 import { IAdminMembershipRepository } from "../interfaces/IAdminMembershipRepository";
-import { MembershipPlanModel, IMembershipPlan } from "../../models/membershipPlanModel";
+import {
+  MembershipPlanModel,
+  IMembershipPlan,
+} from "../../models/membershipPlanModel";
 import { GenericRepository } from "../genericRepository";
 
 export class AdminMembershipRepository
@@ -10,11 +13,16 @@ export class AdminMembershipRepository
     super(MembershipPlanModel);
   }
 
-  async createPlan(planData: Partial<IMembershipPlan>): Promise<IMembershipPlan> {
+  async createPlan(
+    planData: Partial<IMembershipPlan>
+  ): Promise<IMembershipPlan> {
     return this.create(planData);
   }
 
-  async updatePlan(id: string, updateData: Partial<IMembershipPlan>): Promise<IMembershipPlan | null> {
+  async updatePlan(
+    id: string,
+    updateData: Partial<IMembershipPlan>
+  ): Promise<IMembershipPlan | null> {
     return this.update(id, updateData);
   }
 

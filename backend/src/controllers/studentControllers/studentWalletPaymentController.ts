@@ -22,7 +22,12 @@ export class StudentWalletPaymentController {
 
   async verifyPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+      const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        amount,
+      } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -39,8 +44,8 @@ export class StudentWalletPaymentController {
         signature: razorpay_signature,
         amount,
         userId,
-        role: "student",   // ✅ Hardcoded for Student
-        onModel: "User",   // ✅ Hardcoded for Student
+        role: "student", // ✅ Hardcoded for Student
+        onModel: "User", // ✅ Hardcoded for Student
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });

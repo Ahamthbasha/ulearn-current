@@ -10,7 +10,11 @@ export class AdminCourseRepository
     super(CourseModel);
   }
 
-  async getAllCourses(search = "", page = 1, limit = 10): Promise<{ data: ICourse[]; total: number }> {
+  async getAllCourses(
+    search = "",
+    page = 1,
+    limit = 10
+  ): Promise<{ data: ICourse[]; total: number }> {
     const filter = search
       ? { courseName: { $regex: search, $options: "i" } }
       : {};

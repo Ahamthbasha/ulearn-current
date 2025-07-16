@@ -4,7 +4,10 @@ import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { instructorCreateCourse, getInstructorCategories } from "../../../api/action/InstructorActionApi";
+import {
+  instructorCreateCourse,
+  getInstructorCategories,
+} from "../../../api/action/InstructorActionApi";
 import InputField from "../../../components/common/InputField";
 
 interface Category {
@@ -13,7 +16,12 @@ interface Category {
 }
 
 const MAX_VIDEO_SIZE_MB = 200;
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+];
 
 const CourseCreatePage = () => {
   const navigate = useNavigate();
@@ -39,7 +47,10 @@ const CourseCreatePage = () => {
   const validationSchema = Yup.object({
     courseName: Yup.string()
       .trim()
-      .matches(/^[A-Za-z ]{6,}$/, "Minimum 6 letters. Only letters and spaces allowed")
+      .matches(
+        /^[A-Za-z ]{6,}$/,
+        "Minimum 6 letters. Only letters and spaces allowed"
+      )
       .test("not-only-spaces", "Course name cannot be just spaces", (value) =>
         Boolean(value && value.trim().replace(/\s/g, "").length >= 6)
       )
@@ -47,8 +58,20 @@ const CourseCreatePage = () => {
 
     description: Yup.string()
       .trim()
-      .test("not-only-spaces", "Description must contain meaningful text", (value) =>
-        Boolean(value && value.trim().replace(/\s/g, "").length >= 10)
+      .min(10, "Description must be at least 10 characters")
+      .max(300, "Description must not exceed 300 characters")
+      .matches(
+        /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{20,}$/,
+        "Description must include meaningful text, not just symbols or numbers"
+      )
+      .test(
+        "not-repetitive-symbols",
+        "Description must contain letters or meaningful words",
+        (value) => {
+          if (!value) return false;
+          const stripped = value.replace(/[\s\d\W_]+/g, "");
+          return stripped.length >= 5; // At least 5 letters
+        }
       )
       .required("Description is required"),
 
@@ -64,7 +87,10 @@ const CourseCreatePage = () => {
       .required("Duration is required"),
 
     level: Yup.string()
-      .oneOf(["Beginner", "Intermediate", "Advanced"], "Invalid level selection")
+      .oneOf(
+        ["Beginner", "Intermediate", "Advanced"],
+        "Invalid level selection"
+      )
       .required("Level is required"),
   });
 
@@ -102,7 +128,7 @@ const CourseCreatePage = () => {
         const res = await instructorCreateCourse(formData);
         toast.success(res.data.message);
         navigate("/instructor/courses");
-      } catch (err:any) {
+      } catch (err: any) {
         toast.error(err?.response?.data?.message);
       } finally {
         setSubmitting(false);
@@ -165,7 +191,9 @@ const CourseCreatePage = () => {
 
         {/* Category Dropdown */}
         <div>
-          <label htmlFor="category" className="block font-medium mb-1">Category</label>
+          <label htmlFor="category" className="block font-medium mb-1">
+            Category
+          </label>
           <select
             id="category"
             name="category"
@@ -176,7 +204,9 @@ const CourseCreatePage = () => {
           >
             <option value="">Select Category</option>
             {categories.map((cat) => (
-              <option key={cat._id} value={cat._id}>{cat.categoryName}</option>
+              <option key={cat._id} value={cat._id}>
+                {cat.categoryName}
+              </option>
             ))}
           </select>
           {formik.touched.category && formik.errors.category && (
@@ -189,7 +219,9 @@ const CourseCreatePage = () => {
 
         {/* Level Dropdown */}
         <div>
-          <label htmlFor="level" className="block font-medium mb-1">Level</label>
+          <label htmlFor="level" className="block font-medium mb-1">
+            Level
+          </label>
           <select
             id="level"
             name="level"
@@ -220,17 +252,33 @@ const CourseCreatePage = () => {
               />
             </div>
           )}
-          <input type="file" name="thumbnail" accept="image/*" onChange={handleThumbnailChange} />
-          {thumbnailError && <p className="text-red-500 text-sm">{thumbnailError}</p>}
+          <input
+            type="file"
+            name="thumbnail"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+          />
+          {thumbnailError && (
+            <p className="text-red-500 text-sm">{thumbnailError}</p>
+          )}
         </div>
 
         {/* Demo Video Upload */}
         <div>
           <label className="block font-medium mb-1">Demo Video</label>
           {videoPreview && (
-            <video src={videoPreview} controls className="w-full h-56 rounded mb-2" />
+            <video
+              src={videoPreview}
+              controls
+              className="w-full h-56 rounded mb-2"
+            />
           )}
-          <input type="file" name="demoVideo" accept="video/*" onChange={handleVideoChange} />
+          <input
+            type="file"
+            name="demoVideo"
+            accept="video/*"
+            onChange={handleVideoChange}
+          />
           {videoError && <p className="text-red-500 text-sm">{videoError}</p>}
         </div>
 
@@ -239,7 +287,9 @@ const CourseCreatePage = () => {
           type="submit"
           disabled={submitting}
           className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg shadow text-white ${
-            submitting ? "bg-amber-400 cursor-not-allowed" : "bg-amber-500 hover:bg-amber-600"
+            submitting
+              ? "bg-amber-400 cursor-not-allowed"
+              : "bg-amber-500 hover:bg-amber-600"
           }`}
         >
           {submitting ? (
@@ -250,7 +300,14 @@ const CourseCreatePage = () => {
                 fill="none"
                 viewBox="0 0 24 24"
               >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
                 <path
                   className="opacity-75"
                   fill="currentColor"

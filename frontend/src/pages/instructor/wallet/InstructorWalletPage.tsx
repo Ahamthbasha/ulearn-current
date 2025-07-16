@@ -177,7 +177,10 @@ export default function InstructorWalletPage() {
                 ))
               ) : (
                 <tr>
-                  <td className="py-4 px-4 text-center text-gray-500" colSpan={5}>
+                  <td
+                    className="py-4 px-4 text-center text-gray-500"
+                    colSpan={5}
+                  >
                     No transactions found.
                   </td>
                 </tr>
@@ -189,19 +192,21 @@ export default function InstructorWalletPage() {
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 mt-4">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => fetchTransactions(pageNum)}
-                className={`px-3 py-1 rounded-md border ${
-                  pageNum === currentPage
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-indigo-50"
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => fetchTransactions(pageNum)}
+                  className={`px-3 py-1 rounded-md border ${
+                    pageNum === currentPage
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-indigo-50"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              )
+            )}
           </div>
         )}
       </Card>

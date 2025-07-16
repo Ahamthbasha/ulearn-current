@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 
 import {
   instructorGetProfile,
-  instructorUpdatePassword
+  instructorUpdatePassword,
 } from "../../../api/action/InstructorActionApi";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
 
@@ -21,17 +21,19 @@ const InstructorProfilePage = () => {
     const fetchProfile = async () => {
       try {
         const response = await instructorGetProfile();
-        console.log('response from profilepage instructor',response)
+        console.log("response from profilepage instructor", response);
         if (response.success) {
-          dispatch(setInstructor({
-            userId: response.data._id,
-            name: response.data.username,
-            email: response.data.email,
-            role: response.data.role,
-            isBlocked: response.data.isBlocked,
-            isVerified:response.data.isVerified,
-            profilePicture: response.data.profilePicUrl || null,
-          }));
+          dispatch(
+            setInstructor({
+              userId: response.data._id,
+              name: response.data.username,
+              email: response.data.email,
+              role: response.data.role,
+              isBlocked: response.data.isBlocked,
+              isVerified: response.data.isVerified,
+              profilePicture: response.data.profilePicUrl || null,
+            })
+          );
           setProfile(response.data);
         }
       } catch (error) {
@@ -83,12 +85,26 @@ const InstructorProfilePage = () => {
         </div>
 
         <div className="space-y-2 text-sm sm:text-base">
-          <p><strong>Username:</strong> {profile.username}</p>
-          <p><strong>Email:</strong> {profile.email}</p>
-          <p><strong>Skills:</strong> {profile.skills?.join(", ") || "None"}</p>
-          <p><strong>Expertise:</strong> {profile.expertise?.join(", ") || "None"}</p>
-          <p><strong>Status:</strong> {profile.isVerified ? "✅ Verified" : "⏳ Not Verified"}</p>
-          <p><strong>Mentor:</strong> {profile.isMentor ? "Yes" : "No"}</p>
+          <p>
+            <strong>Username:</strong> {profile.username}
+          </p>
+          <p>
+            <strong>Email:</strong> {profile.email}
+          </p>
+          <p>
+            <strong>Skills:</strong> {profile.skills?.join(", ") || "None"}
+          </p>
+          <p>
+            <strong>Expertise:</strong>{" "}
+            {profile.expertise?.join(", ") || "None"}
+          </p>
+          <p>
+            <strong>Status:</strong>{" "}
+            {profile.isVerified ? "✅ Verified" : "⏳ Not Verified"}
+          </p>
+          <p>
+            <strong>Mentor:</strong> {profile.isMentor ? "Yes" : "No"}
+          </p>
         </div>
       </Card>
 
@@ -102,14 +118,19 @@ const InstructorProfilePage = () => {
               confirmPassword: "",
             }}
             validationSchema={Yup.object({
-              currentPassword: Yup.string().required("Current password is required"),
+              currentPassword: Yup.string().required(
+                "Current password is required"
+              ),
               newPassword: Yup.string()
                 .required("New password is required")
                 .min(6, "Password must be at least 6 characters")
                 .matches(/[A-Z]/, "Must contain at least one uppercase letter")
                 .matches(/[a-z]/, "Must contain at least one lowercase letter")
                 .matches(/[0-9]/, "Must contain at least one number")
-                .matches(/[!@#$%^&*(),.?":{}|<>]/, "Must contain at least one special character"),
+                .matches(
+                  /[!@#$%^&*(),.?":{}|<>]/,
+                  "Must contain at least one special character"
+                ),
               confirmPassword: Yup.string()
                 .oneOf([Yup.ref("newPassword")], "Passwords must match")
                 .required("Confirm your new password"),

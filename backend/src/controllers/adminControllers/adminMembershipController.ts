@@ -28,7 +28,10 @@ export class AdminMembershipController implements IAdminMembershipController {
   async updatePlan(req: Request, res: Response): Promise<void> {
     try {
       const { membershipId } = req.params;
-      const updated = await this.membershipService.updatePlan(membershipId, req.body);
+      const updated = await this.membershipService.updatePlan(
+        membershipId,
+        req.body
+      );
 
       if (!updated) {
         res.status(404).json({ message: MembershipMessages.NOT_FOUND });

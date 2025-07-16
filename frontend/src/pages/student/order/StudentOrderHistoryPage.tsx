@@ -28,12 +28,14 @@ export default function StudentOrderHistoryPage() {
   const fetchOrders = async () => {
     try {
       const res = await allOrder(currentPage, pageSize);
-      const formattedOrders: DisplayOrder[] = res.orders.map((order: Order) => ({
-        ...order,
-        formattedDate: new Date(order.createdAt).toLocaleString(),
-        formattedAmount: `₹${order.amount.toFixed(2)}`,
-        formattedGateway: order.gateway.toUpperCase(),
-      }));
+      const formattedOrders: DisplayOrder[] = res.orders.map(
+        (order: Order) => ({
+          ...order,
+          formattedDate: new Date(order.createdAt).toLocaleString(),
+          formattedAmount: `₹${order.amount.toFixed(2)}`,
+          formattedGateway: order.gateway.toUpperCase(),
+        })
+      );
       setOrders(formattedOrders);
       setTotalOrders(res.total);
     } catch (error) {
@@ -53,27 +55,25 @@ export default function StudentOrderHistoryPage() {
     <div className="p-4">
       <h1 className="text-2xl font-semibold mb-4">My Orders</h1>
 
-  <EntityTable<DisplayOrder>
-  title="Order History"
-  data={orders}
-  columns={[
-    { key: "_id", label: "Order ID" },
-    { key: "formattedAmount", label: "Amount" },
-    { key: "formattedGateway", label: "Gateway" },
-    { key: "formattedDate", label: "Date" },
-  ]}
-  actionLabel="View"
-  onAction={handleView}
-  emptyText="No orders yet."
-  pagination={{
-    currentPage,
-    totalItems: totalOrders,
-    pageSize,
-    onPageChange: setCurrentPage,
-  }}
-/>
-
-
+      <EntityTable<DisplayOrder>
+        title="Order History"
+        data={orders}
+        columns={[
+          { key: "_id", label: "Order ID" },
+          { key: "formattedAmount", label: "Amount" },
+          { key: "formattedGateway", label: "Gateway" },
+          { key: "formattedDate", label: "Date" },
+        ]}
+        actionLabel="View"
+        onAction={handleView}
+        emptyText="No orders yet."
+        pagination={{
+          currentPage,
+          totalItems: totalOrders,
+          pageSize,
+          onPageChange: setCurrentPage,
+        }}
+      />
     </div>
   );
 }
