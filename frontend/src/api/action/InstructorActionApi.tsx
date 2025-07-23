@@ -817,3 +817,12 @@ export const slotHistory = async (
     throw error;
   }
 };
+
+export const slotDetailsInInstructor = async(slotId:string)=>{
+  try {
+    const response = await API.get(`${InstructorRouterEndPoints.instructorSlotDetail}/${slotId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}

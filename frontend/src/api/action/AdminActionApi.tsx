@@ -284,6 +284,7 @@ export const getWallet = async () => {
     throw error;
   }
 };
+
 export const creditWallet = async (data: {
   amount: number;
   description: string;

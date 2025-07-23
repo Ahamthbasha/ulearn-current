@@ -14,6 +14,7 @@ import {
   instructorMembershipController,
   instructorMembershipOrderController,
   instructorSlotController,
+  instructorSlotBookingController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 
@@ -463,6 +464,8 @@ router.get(
   )
 );
 
+//slot
+
 router.post(
   "/createSlot",
   authenticateToken,
@@ -497,6 +500,15 @@ router.get(
   isInstructor,
   instructorSlotController.getSlotStatsByMonth.bind(instructorSlotController)
 );
+
+//slot detail
+
+router.get(
+  "/slotBooking/:slotId",
+  authenticateToken,
+  isInstructor,
+  instructorSlotBookingController.getBookingDetail.bind(instructorSlotBookingController)
+)
 
 const instructorRoutes = router;
 

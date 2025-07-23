@@ -83,6 +83,10 @@ const InstructorRouterEndPoints = {
   instructorUpdateSlot : "/api/instructor/slot",
   instructorDeleteSlot : "/api/instructor/slot",
   instructorSlotHistory: "/api/instructor/slotStats",
+
+  //slot details
+
+  instructorSlotDetail : "/api/instructor/slotBooking",
 }
 
 export default InstructorRouterEndPoints

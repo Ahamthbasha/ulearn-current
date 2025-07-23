@@ -33,4 +33,6 @@ export interface IInstructorSlotRepository {
       bookedSlots: number;
     }[]
   >;
+
+  
 }

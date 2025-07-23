@@ -719,6 +719,24 @@ const studentSlotBookingService : IStudentSlotBookingService = new StudentSlotBo
 
 const studentSlotBookingController : IStudentSlotBookingController = new StudentSlotBookingController(studentSlotBookingService)
 
+////instructor viewing booked slot details//
+
+import { IInstructorSlotBookingRepository } from "../repositories/interfaces/IInstructorSlotBookingRepository";
+import { InstructorSlotBookingRepository } from "../repositories/instructorRepository/instructorSlotBookingRepository";
+
+import { IInstructorSlotBookingService } from "../services/interface/IInstructorSlotBookingService";
+import { InstructorSlotBookingService } from "../services/instructorServices/InstructorSlotBookingService";
+
+import { IInstructorSlotBookingController } from "../controllers/instructorController/interfaces/IInstructorSlotBookingController";
+import { InstructorSlotBookingController } from "../controllers/instructorController/instructorSlotBookingController";
+
+
+const instructorSlotBookingRepository : IInstructorSlotBookingRepository = new InstructorSlotBookingRepository()
+
+const instructorSlotBookingService : IInstructorSlotBookingService = new InstructorSlotBookingService(instructorSlotBookingRepository)
+
+const instructorSlotBookingController : IInstructorSlotBookingController = new InstructorSlotBookingController(instructorSlotBookingService)
+
 
 
 
@@ -786,4 +804,7 @@ export {
   studentSlotController,
   //slot booking
   studentSlotBookingController,
+  
+  //instructor slot
+  instructorSlotBookingController
 };

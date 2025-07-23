@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { IAdminMembershipController } from "./interface/IAdminMembershipController";
 import { IAdminMembershipService } from "../../services/interface/IAdminMembershipService";
 import { MembershipMessages } from "../../utils/constants";
+import { StatusCode } from "../../utils/enums";
 
 export class AdminMembershipController implements IAdminMembershipController {
   private membershipService: IAdminMembershipService;
@@ -13,12 +14,12 @@ export class AdminMembershipController implements IAdminMembershipController {
   async createPlan(req: Request, res: Response): Promise<void> {
     try {
       const plan = await this.membershipService.createPlan(req.body);
-      res.status(201).json({
+      res.status(StatusCode.CREATED).json({
         message: MembershipMessages.CREATE_SUCCESS,
         plan,
       });
     } catch (error) {
-      res.status(400).json({
+      res.status(StatusCode.BAD_REQUEST).json({
         message: MembershipMessages.CREATE_FAILURE,
         error: (error as Error).message || "Unknown error",
       });
@@ -34,7 +35,7 @@ export class AdminMembershipController implements IAdminMembershipController {
       );
 
       if (!updated) {
-        res.status(404).json({ message: MembershipMessages.NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 
@@ -43,7 +44,7 @@ export class AdminMembershipController implements IAdminMembershipController {
         plan: updated,
       });
     } catch (error) {
-      res.status(400).json({
+      res.status(StatusCode.BAD_REQUEST).json({
         message: MembershipMessages.UPDATE_FAILURE,
         error: (error as Error).message || "Unknown error",
       });
@@ -56,13 +57,13 @@ export class AdminMembershipController implements IAdminMembershipController {
       const deleted = await this.membershipService.deletePlan(membershipId);
 
       if (!deleted) {
-        res.status(404).json({ message: MembershipMessages.NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 
       res.json({ message: MembershipMessages.DELETE_SUCCESS });
     } catch (error) {
-      res.status(500).json({
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: MembershipMessages.DELETE_FAILURE,
         error: (error as Error).message || "Unknown error",
       });
@@ -75,7 +76,7 @@ export class AdminMembershipController implements IAdminMembershipController {
       const plan = await this.membershipService.getPlanById(membershipId);
 
       if (!plan) {
-        res.status(404).json({ message: MembershipMessages.NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 
@@ -84,7 +85,7 @@ export class AdminMembershipController implements IAdminMembershipController {
         plan,
       });
     } catch (error) {
-      res.status(500).json({
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: MembershipMessages.FETCH_ONE_FAILURE,
         error: (error as Error).message || "Unknown error",
       });
@@ -114,7 +115,7 @@ export class AdminMembershipController implements IAdminMembershipController {
         limit: Number(limit),
       });
     } catch (error) {
-      res.status(500).json({
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: MembershipMessages.FETCH_ALL_FAILURE,
         error: (error as Error).message || "Unknown error",
       });
@@ -127,7 +128,7 @@ export class AdminMembershipController implements IAdminMembershipController {
       const updated = await this.membershipService.toggleStatus(membershipId);
 
       if (!updated) {
-        res.status(404).json({ message: MembershipMessages.NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 
@@ -136,7 +137,7 @@ export class AdminMembershipController implements IAdminMembershipController {
         plan: updated,
       });
     } catch (error) {
-      res.status(500).json({
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: "Failed to update membership plan status.",
         error: (error as Error).message || "Unknown error",
       });

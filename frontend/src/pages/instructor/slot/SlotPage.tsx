@@ -83,7 +83,7 @@ const SlotPage = () => {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      {/* Header with "See Slot History" button */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Select Time Slot</h2>
         <button
@@ -148,9 +148,12 @@ const SlotPage = () => {
           getSlotsForDate(selectedDate).map((slot) => (
             <div
               key={slot._id}
+              onClick={() =>
+                slot.isBooked ? navigate(`/instructor/slots/${slot._id}`) : undefined
+              }
               className={`flex items-center gap-2 px-3 py-2 rounded-full border text-sm ${
                 slot.isBooked
-                  ? "bg-red-100 text-red-700 border-red-300"
+                  ? "bg-red-100 text-red-700 border-red-300 cursor-pointer hover:bg-red-200"
                   : "bg-blue-50 text-blue-700 border-blue-300"
               }`}
             >

@@ -158,7 +158,7 @@ export const GeneralServerErrorMsg = {
 export const JwtErrorMsg = {
   JWT_NOT_FOUND: "JWT not found in the cookies",
   INVALID_JWT: "Invalid JWT",
-  JWT_EXPIRATION: "1h" as const,
+  JWT_EXPIRATION: "2h" as const,
   JWT_REFRESH_EXPIRATION: "6h" as const,
 };
 

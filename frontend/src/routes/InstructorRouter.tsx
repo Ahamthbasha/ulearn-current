@@ -39,6 +39,8 @@ import Orders from '../pages/instructor/purchaseHistory/Orders'
 import MembershipOrderDetail from '../pages/instructor/purchaseHistory/MembershipOrderDetail'
 import NotFound from '../components/common/NotFound'
 import SlotHistoryPage from '../pages/instructor/slot/SlotHistoryPage'
+import SlotDetailPage from '../pages/instructor/slot/SlotDetailPage'
+
 
 const InstructorRouter = () => {
   return (
@@ -95,6 +97,8 @@ const InstructorRouter = () => {
     <Route element={<MentorRoute/>}>
     <Route path='slots' element={<SlotPage/>}/>
     <Route path="slotsHistory" element={<SlotHistoryPage/>}/>
+    <Route path="slots/:slotId" element={<SlotDetailPage/>}/>
+    
     </Route>
   </Route>
 </Route>

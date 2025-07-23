@@ -203,13 +203,13 @@ export const courseAlreadyExistInWishlist = async (courseId: string) => {
 export const initiateCheckout = async (
   courseIds: string[],
   totalAmount: number,
-  paymentMethod: "razorpay" | "wallet" // ✅ Add this
+  paymentMethod: "razorpay" | "wallet" 
 ) => {
   try {
     const response = await API.post(UserRouterEndpoints.userInitiateCheckout, {
       courseIds,
       totalAmount,
-      paymentMethod, // ✅ Send this to backend
+      paymentMethod, 
     });
     return response.data;
   } catch (error) {
@@ -246,7 +246,6 @@ export const checkoutCompleted = async ({
 export const getEnrolledCourses = async () => {
   try {
     const response = await API.get(UserRouterEndpoints.userGetEnrolledCourses);
-
     return response.data;
   } catch (error) {
     throw error;
@@ -340,7 +339,6 @@ export const creditWallet = async (data: {
   }
 };
 
-// ✅ Debit wallet
 export const debitWallet = async (data: {
   amount: number;
   description: string;
@@ -354,7 +352,6 @@ export const debitWallet = async (data: {
   }
 };
 
-// ✅ Create Razorpay order for wallet recharge
 export const createWalletRechargeOrder = async (data: { amount: number }) => {
   try {
     const response = await API.post(
@@ -367,7 +364,6 @@ export const createWalletRechargeOrder = async (data: { amount: number }) => {
   }
 };
 
-// ✅ Verify Razorpay payment and credit wallet
 export const verifyPayment = async (data: {
   razorpay_order_id: string;
   razorpay_payment_id: string;
@@ -430,7 +426,6 @@ export const downloadInvoice = async (orderId: string) => {
       }
     );
 
-    // ✅ Trigger file download in browser
     const blob = new Blob([response.data], { type: "application/pdf" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -439,7 +434,7 @@ export const downloadInvoice = async (orderId: string) => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-    window.URL.revokeObjectURL(url); // cleanup
+    window.URL.revokeObjectURL(url);
   } catch (error) {
     throw error;
   }
@@ -571,3 +566,4 @@ export const slotReceipt = async (bookingId: string) => {
     throw error;
   }
 };
+

@@ -5,8 +5,6 @@ export interface IStudentEnrollmentService {
   getAllEnrolledCourses(userId: Types.ObjectId): Promise<IEnrollment[]>;
   getEnrollmentCourseWithDetails(userId: Types.ObjectId, courseId: Types.ObjectId): Promise<IEnrollment | null>;
   completeChapter(userId: Types.ObjectId, courseId: Types.ObjectId, chapterId: Types.ObjectId): Promise<IEnrollment | null>;
-
-
    submitQuizResult(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,

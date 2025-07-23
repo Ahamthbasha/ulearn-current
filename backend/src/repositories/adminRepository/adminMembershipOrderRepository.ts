@@ -12,7 +12,7 @@ export class AdminMembershipOrderRepository
     const skip = (page - 1) * limit;
 
     const [orders, total] = await Promise.all([
-      InstructorMembershipOrderModel.find({ paymentStatus: "paid" }) // 🔥 Filter added here
+      InstructorMembershipOrderModel.find({ paymentStatus: "paid" }) 
         .populate("instructorId", "name email")
         .populate("membershipPlanId", "name durationInDays")
         .sort({ createdAt: -1 })

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { IAdminMembershipOrderController } from "./interface/IAdminMembershipOrderController";
 import { IAdminMembershipOrderService } from "../../services/interface/IAdminMembershipOrderService";
+import { StatusCode } from "../../utils/enums";
 
 export class AdminMembershipOrderController
   implements IAdminMembershipOrderController
@@ -17,12 +18,13 @@ export class AdminMembershipOrderController
       page,
       limit
     );
-    res.status(200).json({ data, total });
+    res.status(StatusCode.OK).json({ data, total });
   }
 
   async getOrderDetail(req: Request, res: Response): Promise<void> {
     const { txnId } = req.params;
     const order = await this.membershipOrderService.getOrderDetail(txnId);
-    res.status(200).json({ data: order });
+    res.status(StatusCode.OK).json({ data: order });
   }
+  
 }

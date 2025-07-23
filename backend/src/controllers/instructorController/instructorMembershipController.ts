@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { IInstructorMembershipController } from "./interfaces/IInstructorMembershipController";
 import { IInstructorMembershipService } from "../../services/interface/IInstructorMembershipService";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { StatusCode } from "../../utils/enums";
 
 export class InstructorMembershipController
   implements IInstructorMembershipController
@@ -11,10 +12,10 @@ export class InstructorMembershipController
   async getPlans(_req: Request, res: Response): Promise<void> {
     try {
       const plans = await this.service.getAvailablePlans();
-      res.status(200).json(plans);
+      res.status(StatusCode.OK).json(plans);
     } catch (err) {
       console.error("Error fetching membership plans:", err);
-      res.status(500).json({ message: "Something went wrong." });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Something went wrong." });
     }
   }
 
@@ -22,20 +23,20 @@ export class InstructorMembershipController
     try {
       const instructorId = req.user?.id;
       if (!instructorId) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;
       }
 
       const instructor = await this.service.getInstructorById(instructorId);
       if (!instructor) {
-        res.status(404).json({ message: "Instructor not found" });
+        res.status(StatusCode.NOT_FOUND).json({ message: "Instructor not found" });
         return;
       }
 
-      res.status(200).json({ isMentor: instructor.isMentor });
+      res.status(StatusCode.OK).json({ isMentor: instructor.isMentor });
     } catch (err) {
       console.error("Error getting mentor status:", err);
-      res.status(500).json({ message: "Something went wrong." });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Something went wrong." });
     }
   }
 
@@ -46,15 +47,15 @@ export class InstructorMembershipController
     try {
       const instructorId = req.user?.id;
       if (!instructorId) {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
         return;
       }
 
       const status = await this.service.getMembershipStatus(instructorId);
-      res.status(200).json(status);
+      res.status(StatusCode.OK).json(status);
     } catch (err) {
       console.error("Error fetching membership status:", err);
-      res.status(500).json({ message: "Something went wrong" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: "Something went wrong" });
     }
   }
 }

@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { bookingDetail, slotReceipt } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 import fileDownload from "js-file-download";
+import VideoCallModal from "../../../components/common/videocall/CreateCall"; // Import VideoCallModal
+import useVideoCall from "../../../components/common/videocall/UseVideoCall"; // Import useVideoCall hook
 
 interface User {
   username?: string;
@@ -32,12 +34,17 @@ export default function SlotBookingDetailPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSlotActive, setIsSlotActive] = useState(false);
+
+  // Initialize useVideoCall hook
+  const { showVideoCallModal, sender, handleCall, closeModal } = useVideoCall();
 
   useEffect(() => {
     const fetchBooking = async () => {
       try {
         const res = await bookingDetail(bookingId!);
         setBooking(res.data);
+        checkSlotActive(res.data.slotId?.startTime, res.data.slotId?.endTime);
       } catch (error) {
         toast.error("Failed to load booking details");
       } finally {
@@ -48,6 +55,14 @@ export default function SlotBookingDetailPage() {
     if (bookingId) fetchBooking();
   }, [bookingId]);
 
+  const checkSlotActive = (start?: string, end?: string) => {
+    if (!start || !end) return;
+    const now = new Date();
+    const startTime = new Date(start);
+    const endTime = new Date(end);
+    setIsSlotActive(now >= startTime && now <= endTime);
+  };
+
   const handleDownloadReceipt = async () => {
     if (!bookingId) return;
     try {
@@ -56,6 +71,17 @@ export default function SlotBookingDetailPage() {
     } catch (error) {
       toast.error("Failed to download receipt");
     }
+  };
+
+  // Modified handleJoinCall to trigger video call modal
+  const handleJoinCall = () => {
+    if (!booking?.instructorId?.email) {
+      toast.error("Instructor email not available");
+      return;
+    }
+    console.log("Join Video Call Button Clicked - Student Side");
+    console.log(booking.instructorId.email)
+    handleCall(booking.instructorId.email); // Trigger video call with instructor's email
   };
 
   const formatDateTimeRange = (start: string, end: string) => {
@@ -116,21 +142,28 @@ export default function SlotBookingDetailPage() {
               </p>
             </div>
 
-            {/* Download Button */}
-            <div>
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleDownloadReceipt}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200"
               >
                 Download Receipt
               </button>
+
+              {booking.status === "confirmed" && isSlotActive && (
+                <button
+                  onClick={handleJoinCall}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200"
+                >
+                  Join Video Call
+                </button>
+              )}
             </div>
           </div>
         </div>
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          {/* Student Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Student
@@ -143,7 +176,6 @@ export default function SlotBookingDetailPage() {
             </p>
           </div>
 
-          {/* Instructor Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Instructor
@@ -156,7 +188,6 @@ export default function SlotBookingDetailPage() {
             </p>
           </div>
 
-          {/* Status Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Status</h3>
             <span
@@ -172,7 +203,6 @@ export default function SlotBookingDetailPage() {
           </div>
         </div>
 
-        {/* Slot Info */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-xl font-semibold text-gray-800">
@@ -228,6 +258,15 @@ export default function SlotBookingDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Video Call Modal */}
+      {showVideoCallModal && (
+        <VideoCallModal
+          to={sender}
+          isOpen={showVideoCallModal}
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 }

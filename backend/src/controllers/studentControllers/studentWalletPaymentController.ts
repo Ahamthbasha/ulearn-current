@@ -44,8 +44,8 @@ export class StudentWalletPaymentController {
         signature: razorpay_signature,
         amount,
         userId,
-        role: "student", // ✅ Hardcoded for Student
-        onModel: "User", // ✅ Hardcoded for Student
+        role: "student", 
+        onModel: "User", 
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });

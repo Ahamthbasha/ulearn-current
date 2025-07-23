@@ -70,6 +70,8 @@ const UserRouterEndpoints = {
   userGetSlotBookingHistory : "/api/student/bookingHistory",
   userGetSpecificSlotDetail : "/api/student/booking",
   userDownloadSlotReceipt : "/api/student/booking",
+
+  
 };
 
 export default UserRouterEndpoints;
