@@ -56,7 +56,7 @@ const SlotDetailPage = () => {
   // Handle navigation after call ends
   const handleCloseModal = () => {
     closeModal();
-    navigate(`/instrutor/slots/${slotId}`); // Navigate to desired route after call ends
+    navigate(`/instructor/slots/${slotId}`); // Navigate to desired route after call ends
   };
 
   const handleJoinCall = () => {

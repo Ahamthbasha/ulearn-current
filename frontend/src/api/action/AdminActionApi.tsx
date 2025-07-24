@@ -2,6 +2,7 @@ import { API } from "../../service/axios";
 
 import AdminRoutersEndPoints from "../../types/endPoints/adminEndPoint";
 import { type IMembershipPayload } from "../../types/interfaces/IMembershipPayload";
+import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
 
 export const getAllUser = async (
   page = 1,
@@ -463,6 +464,49 @@ export const getMembershipPurchaseHistoryDetail = async (txnId: string) => {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminViewMembershipPuchaseHistoryDetail}/${txnId}`
     );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+//dashboard
+
+export const getDashboard = async() => {
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminDashboard}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getCourseReport = async (filter: ReportFilter) => {
+  try {
+    const params = new URLSearchParams();
+
+    params.append("type", filter.type);
+    if (filter.startDate) params.append("startDate", filter.startDate.toISOString());
+    if (filter.endDate) params.append("endDate", filter.endDate.toISOString());
+
+    const response = await API.get(`${AdminRoutersEndPoints.adminCourseReport}?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 🟢 Membership Report
+export const getMembershipCourseReport = async (filter: ReportFilter) => {
+  try {
+    const params = new URLSearchParams();
+
+    params.append("type", filter.type);
+    if (filter.startDate) params.append("startDate", filter.startDate.toISOString());
+    if (filter.endDate) params.append("endDate", filter.endDate.toISOString());
+
+    const response = await API.get(`${AdminRoutersEndPoints.adminMembershipReport}?${params.toString()}`);
     return response.data;
   } catch (error) {
     throw error;

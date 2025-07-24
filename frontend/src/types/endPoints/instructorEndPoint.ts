@@ -50,7 +50,10 @@ const InstructorRouterEndPoints = {
   //specific course dashboard
 
   instructorSpecificCourse : '/api/instructor/dashboard/specificCourse',
-
+  instructorSpecificCourseReport : '/api/instructor/dashboard/specificCourse',
+  instructorExportSpecificCourseReport : '/api/instructor/dashboard/specificCourse',
+  
+ //wallet
   instructorGetWallet : "/api/instructor/wallet",
   instructorCreditWallet : "/api/instructor/wallet/credit",
   instructorDebitWallet : "/api/instructor/wallet/debit",

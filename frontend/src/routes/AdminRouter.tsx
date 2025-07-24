@@ -23,6 +23,7 @@ import EditMembershipPlanPage from "../pages/admin/membership/EditMembershipPlan
 import Orders from "../pages/admin/purchaseHistory/Orders";
 import MembershipOrderDetail from "../pages/admin/purchaseHistory/MembershipOrderDetail";
 import NotFound from "../components/common/NotFound";
+import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
 
 //wallet
 
@@ -73,6 +74,8 @@ const AdminRouter = () => {
           {/* purchase history */}
           <Route path="orders" element={<Orders/>}/>
           <Route path="membershipPurchase/:txnId" element={<MembershipOrderDetail/>}/>
+
+          <Route path="dashboard" element={<AdminDashboard/>}/>
         </Route>
       </Route>
       <Route path="*" element={<NotFound/>}/>

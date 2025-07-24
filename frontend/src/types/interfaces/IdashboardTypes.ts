@@ -27,3 +27,10 @@ export interface IDashboardData {
   totalRevenue: number;
   totalCourseSales: number;
 }
+
+
+export interface ReportFilter {
+  type: "daily" | "weekly" | "monthly" | "custom";
+  startDate?: Date;
+  endDate?: Date;
+}

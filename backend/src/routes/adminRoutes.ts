@@ -8,6 +8,7 @@ import {
   adminWalletPaymentController,
   adminMembershipController,
   adminMembershipOrderController,
+  adminDashboardController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/AuthenticatedRoutes";
 
@@ -225,6 +226,30 @@ router.get(
     adminMembershipOrderController
   )
 );
+
+
+///////////////////dashboard////////////////////////
+
+router.get(
+  "/dashboard",
+  authenticateToken,
+  isAdmin,
+  adminDashboardController.getDashboardData.bind(adminDashboardController)
+)
+
+router.get(
+  "/dashboard/courseSalesReport",
+  authenticateToken,
+  isAdmin,
+  adminDashboardController.getCourseSalesReport.bind(adminDashboardController)
+)
+
+router.get(
+  "/dashboard/membershipSalesReport",
+  authenticateToken,
+  isAdmin,
+  adminDashboardController.getMembershipSalesReport.bind(adminDashboardController)
+)
 
 const adminRoutes = router;
 

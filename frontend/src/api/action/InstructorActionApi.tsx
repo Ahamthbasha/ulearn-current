@@ -520,8 +520,72 @@ export const specificCourseDashboard = async (courseId: string) => {
       `${InstructorRouterEndPoints.instructorSpecificCourse}/${courseId}`
     );
 
+    console.log('specific course',response.data)
+
     return response.data;
   } catch (error) {
+    throw error;
+  }
+};
+
+export const specificCourseReport = async (
+  courseId: string,
+  range: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
+  startDate?: string,
+  endDate?: string
+) => {
+  try {
+    const queryParams = new URLSearchParams();
+    queryParams.append('range', range);
+    if (range === 'custom') {
+      if (startDate) queryParams.append('startDate', startDate);
+      if (endDate) queryParams.append('endDate', endDate);
+    }
+
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorSpecificCourseReport}/${courseId}/revenueReport?${queryParams.toString()}`
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportSpecificCourseReport = async (
+  courseId: string,
+  filter: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
+  startDate?: string,
+  endDate?: string,
+  format: 'pdf' | 'excel' = 'pdf'
+): Promise<void> => {
+  try {
+    const params: Record<string, string> = {
+      range: filter,
+      format,
+    };
+
+    if (filter === 'custom' && startDate && endDate) {
+      params.startDate = startDate;
+      params.endDate = endDate;
+    }
+
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorExportSpecificCourseReport}/${courseId}/exportRevenueReport`,
+      {
+        params,
+        responseType: 'blob',
+      }
+    );
+
+    const filename =
+      format === 'excel'
+        ? 'Specific_Course_Revenue_Report.xlsx'
+        : 'Specific_Course_Revenue_Report.pdf';
+
+    fileDownload(response.data, filename);
+  } catch (error) {
+    console.error('Failed to export specific course report:', error);
     throw error;
   }
 };

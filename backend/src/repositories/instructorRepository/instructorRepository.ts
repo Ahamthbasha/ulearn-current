@@ -78,4 +78,12 @@ export default class InstructorRepository
   async findById(id: string): Promise<IInstructor | null> {
     return await super.findById(id);
   }
+
+  async getMentorCount(): Promise<number> {
+      return await this.countDocuments({isMentor:true})
+  }
+
+  async getInstructorCount(): Promise<number> {
+      return await this.countDocuments({isVerified:true})
+  }
 }

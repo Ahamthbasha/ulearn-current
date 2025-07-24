@@ -413,3 +413,6 @@ export const ResponseMessages = {
   VERIFICATION_FAILED: "Verification failed",
   WALLET_PURCHASE_FAILED:"Membership Purchasing via wallet is failed"
 };
+
+
+export const INSTRUCTOR_REVENUE_SHARE = 0.9

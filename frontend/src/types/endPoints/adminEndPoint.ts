@@ -44,6 +44,11 @@ const AdminRoutersEndPoints = {
   adminGetMembershipPurchaseHistory : "/api/admin/membershipPurchaseHistory",
   adminViewMembershipPuchaseHistoryDetail : "/api/admin/membershipPurchaseHistory",
 
+  //admin dashbaord
+
+  adminDashboard : "/api/admin/dashboard",
+  adminCourseReport : "/api/admin/dashboard/courseSalesReport",
+  adminMembershipReport : "/api/admin/dashboard/membershipSalesReport",
 
 };
 

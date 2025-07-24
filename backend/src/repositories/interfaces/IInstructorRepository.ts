@@ -15,4 +15,8 @@ export default interface IInstructorRepository
 
   //enrollment side use
   findById(id: string): Promise<IInstructor | null>;
+
+  //admin side
+  getMentorCount():Promise<number>
+  getInstructorCount():Promise<number>
 }

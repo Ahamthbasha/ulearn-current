@@ -330,6 +330,20 @@ router.get(
   )
 );
 
+router.get(
+  "/dashboard/specificCourse/:courseId/revenueReport",
+  authenticateToken,
+  isInstructor,
+  specificCourseDashboardController.getCourseRevenueReport.bind(specificCourseDashboardController)
+)
+
+router.get(
+  "/dashboard/specificCourse/:courseId/exportRevenueReport",
+  authenticateToken,
+  isInstructor,
+  specificCourseDashboardController.exportCourseRevenueReport.bind(specificCourseDashboardController)
+)
+
 //wallet related routes
 
 router.get(

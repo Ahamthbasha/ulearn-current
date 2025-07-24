@@ -1,18 +1,39 @@
+import {Types} from "mongoose"
+import { IInstructorCourseSpecificDashboardRepository 
+} from "../../repositories/interfaces/IInstructorSpecificCourseDashboardRepository";
 import { IInstructorSpecificCourseDashboardService } from "../interface/IInstructorSpecificCourseService";
-import { IInstructorCourseSpecificDashboardRepository } from "../../repositories/interfaces/IInstructorSpecificCourseDashboardRepository";
-import { Types } from "mongoose";
 
-export class InstructorSpecificCourseDashboardService implements IInstructorSpecificCourseDashboardService {
-  constructor(private dashboardRepository: IInstructorCourseSpecificDashboardRepository) {}
+export class InstructorSpecificCourseDashboardService
+  implements IInstructorSpecificCourseDashboardService
+{
+  constructor(
+    private dashboardRepository: IInstructorCourseSpecificDashboardRepository
+  ) {}
 
   async getCourseDashboard(courseId: Types.ObjectId) {
-    const [revenue, enrollments, category, monthlyPerformance] = await Promise.all([
-      this.dashboardRepository.getCourseRevenue(courseId),
-      this.dashboardRepository.getCourseEnrollmentCount(courseId),
-      this.dashboardRepository.getCourseCategory(courseId),
-      this.dashboardRepository.getMonthlyPerformance(courseId),
-    ]);
+    const [revenue, enrollments, category, monthlyPerformance, fullPrice] =
+      await Promise.all([
+        this.dashboardRepository.getCourseRevenue(courseId),
+        this.dashboardRepository.getCourseEnrollmentCount(courseId),
+        this.dashboardRepository.getCourseCategory(courseId),
+        this.dashboardRepository.getMonthlyPerformance(courseId),
+        this.dashboardRepository.getCoursePrice(courseId),
+      ]);
 
-    return { revenue, enrollments, category, monthlyPerformance };
+    return { fullPrice, revenue, enrollments, category, monthlyPerformance };
+  }
+
+  async getCourseRevenueReport(
+    courseId: Types.ObjectId,
+    range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+    startDate?: Date,
+    endDate?: Date
+  ) {
+    return this.dashboardRepository.getCourseRevenueReport(
+      courseId,
+      range,
+      startDate,
+      endDate
+    );
   }
 }

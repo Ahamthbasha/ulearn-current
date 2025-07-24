@@ -737,6 +737,54 @@ const instructorSlotBookingService : IInstructorSlotBookingService = new Instruc
 
 const instructorSlotBookingController : IInstructorSlotBookingController = new InstructorSlotBookingController(instructorSlotBookingService)
 
+///////////////admin dashboard repository//////////////////
+
+
+import { IAdminDashboardRepository } from "../repositories/interfaces/IAdminDashboardRepository";
+import { AdminDashboardRepository } from "../repositories/adminRepository/adminDashboardRepository";
+
+import { IAdminDashboardService } from "../services/interface/IAdminDashboardService";
+import { AdminDashboardService } from "../services/adminServices/AdminDashboardService";
+
+import { IAdminDashboardController } from "../controllers/adminControllers/interface/IAdminDashboardController";
+import { AdminDashboardController } from "../controllers/adminControllers/adminDashboardController";
+
+import { InstructorMembershipOrder } from "../../src/repositories/InstructorMemberShirpOrderRepository";
+
+const adminDashboardRepository : IAdminDashboardRepository = new AdminDashboardRepository(
+  instructorRepository,
+  new CourseRepository(),
+  new OrderRepository(),
+  new InstructorMembershipOrder()
+)
+
+const adminDashboardService : IAdminDashboardService = new AdminDashboardService(adminDashboardRepository)
+
+const adminDashboardController:IAdminDashboardController = new AdminDashboardController(adminDashboardService)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -806,5 +854,8 @@ export {
   studentSlotBookingController,
   
   //instructor slot
-  instructorSlotBookingController
+  instructorSlotBookingController,
+
+  //admin dashboard controller
+  adminDashboardController,
 };

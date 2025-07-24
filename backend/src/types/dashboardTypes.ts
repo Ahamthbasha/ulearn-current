@@ -19,3 +19,25 @@ export interface IMonthlySales {
   };
   totalSales: number;
 }
+
+
+export interface IAdminCourseSalesReportItem {
+  orderId: string;
+  date: Date;
+  courseName: string;
+  coursePrice: number;
+  adminShare: number;
+  instructorName:string
+}
+
+export interface IAdminMembershipReportItem {
+  orderId: string;
+  date: Date;
+  planName: string;
+  instructorName: string;
+  price: number;
+  paymentMethod: string;
+}
+
+export type FilterType = "daily" | "weekly" | "monthly" | "custom";
+
