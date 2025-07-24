@@ -36,7 +36,7 @@ export interface IAdminMembershipReportItem {
   planName: string;
   instructorName: string;
   price: number;
-  paymentMethod: string;
+  paymentMethod?: string;
 }
 
 export type FilterType = "daily" | "weekly" | "monthly" | "custom";

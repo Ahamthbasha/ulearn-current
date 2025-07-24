@@ -40,7 +40,4 @@ getMembershipSalesReport(filter: {
   totalRevenue: number;
   totalSales: number;
 }>;
-
-
-
 }

@@ -49,6 +49,8 @@ const AdminRoutersEndPoints = {
   adminDashboard : "/api/admin/dashboard",
   adminCourseReport : "/api/admin/dashboard/courseSalesReport",
   adminMembershipReport : "/api/admin/dashboard/membershipSalesReport",
+  adminExportReport : "/api/admin/dashboard/exportCourseReport",
+  adminExportMembershipReport : "/api/admin/dashboard/exportMembershipReport",
 
 };
 

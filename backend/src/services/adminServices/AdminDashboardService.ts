@@ -74,7 +74,4 @@ async getMembershipSalesReport(filter: {
     totalSales,
   };
 }
-
-
-
 }

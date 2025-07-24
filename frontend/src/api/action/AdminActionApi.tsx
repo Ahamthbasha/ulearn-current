@@ -3,6 +3,7 @@ import { API } from "../../service/axios";
 import AdminRoutersEndPoints from "../../types/endPoints/adminEndPoint";
 import { type IMembershipPayload } from "../../types/interfaces/IMembershipPayload";
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
+import fileDownload from "js-file-download";
 
 export const getAllUser = async (
   page = 1,
@@ -512,3 +513,37 @@ export const getMembershipCourseReport = async (filter: ReportFilter) => {
     throw error;
   }
 };
+
+export const exportReport = async (
+  reportType: "course" | "membership",
+  format: "excel" | "pdf",
+  filter: ReportFilter
+) => {
+  try {
+    const params = new URLSearchParams();
+    params.append("type", filter.type);
+    params.append("format", format);
+    if (filter.startDate) params.append("startDate", filter.startDate.toISOString());
+    if (filter.endDate) params.append("endDate", filter.endDate.toISOString());
+
+    // Use the correct endpoint based on reportType
+    const endpoint =
+      reportType === "course"
+        ? AdminRoutersEndPoints.adminExportReport
+        : AdminRoutersEndPoints.adminExportMembershipReport;
+
+    const response = await API.get(`${endpoint}?${params.toString()}`, {
+      responseType: "blob", // Important for handling binary data (Excel/PDF)
+    });
+
+    const extension = format === "excel" ? "xlsx" : "pdf";
+    const filename = `${reportType}-sales-report-${new Date().toISOString().split("T")[0]}.${extension}`;
+
+    // Use js-file-download to handle the download
+    fileDownload(response.data, filename);
+
+    return { success: true };
+  } catch (error) {
+    throw error;
+  }
+}

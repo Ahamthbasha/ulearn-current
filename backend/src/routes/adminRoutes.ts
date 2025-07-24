@@ -12,7 +12,7 @@ import {
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/AuthenticatedRoutes";
 
-import { isAdmin } from "../middlewares/roleAuth";
+import { isAdmin} from "../middlewares/roleAuth";
 
 let router = Router();
 
@@ -249,6 +249,21 @@ router.get(
   authenticateToken,
   isAdmin,
   adminDashboardController.getMembershipSalesReport.bind(adminDashboardController)
+)
+
+
+router.get(
+  "/dashboard/exportCourseReport",
+  authenticateToken,
+  isAdmin,
+  adminDashboardController.exportCourseSalesReport.bind(adminDashboardController)
+)
+
+router.get(
+  "/dashboard/exportMembershipReport",
+  authenticateToken,
+  isAdmin,
+  adminDashboardController.exportMembershipSalesReport.bind(adminDashboardController)
 )
 
 const adminRoutes = router;
