@@ -71,6 +71,16 @@ const UserRouterEndpoints = {
   userGetSpecificSlotDetail : "/api/student/booking",
   userDownloadSlotReceipt : "/api/student/booking",
 
+  //student dashboard
+
+  userDashboard : "/api/student/dashboard",
+  userCourseReport : "/api/student/dashboard/courseReport",
+  userSlotReport : "/api/student/dashboard/slotReport",
+  userExportCourseReport : "/api/student/dashboard/exportCourseReport",
+  userExportSlotReport : "/api/student/dashboard/exportSlotReport",
+
+  
+
   
 };
 

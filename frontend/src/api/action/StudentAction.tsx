@@ -2,6 +2,7 @@ import { API } from "../../service/axios";
 import UserRouterEndpoints from "../../types/endPoints/userEndPoint";
 import type QuizPayload from "../../types/interfaces/IQuizPayload";
 import type { ListInstructorParams } from "../../types/interfaces/ListInstructorParams";
+import fileDownload from "js-file-download";
 
 export const getProfile = async () => {
   try {
@@ -203,13 +204,13 @@ export const courseAlreadyExistInWishlist = async (courseId: string) => {
 export const initiateCheckout = async (
   courseIds: string[],
   totalAmount: number,
-  paymentMethod: "razorpay" | "wallet" 
+  paymentMethod: "razorpay" | "wallet"
 ) => {
   try {
     const response = await API.post(UserRouterEndpoints.userInitiateCheckout, {
       courseIds,
       totalAmount,
-      paymentMethod, 
+      paymentMethod,
     });
     return response.data;
   } catch (error) {
@@ -567,3 +568,118 @@ export const slotReceipt = async (bookingId: string) => {
   }
 };
 
+//dashboard
+
+export const dashboard = async () => {
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userDashboard}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const courseReport = async (filter: {
+  type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+  startDate?: string;
+  endDate?: string;
+}) => {
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userCourseReport}`, {
+      params: {
+        filter: filter.type,
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const slotReport = async (filter: {
+  type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+  startDate?: string;
+  endDate?: string;
+}) => {
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userSlotReport}`, {
+      params: {
+        filter: filter.type,
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportCourseReport = async (
+  format: "pdf" | "excel",
+  filter?: {
+    type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+    startDate?: string;
+    endDate?: string;
+  }
+) => {
+  try {
+    const response = await API.get(UserRouterEndpoints.userExportCourseReport, {
+      params: {
+        format,
+        filter: filter?.type,
+        startDate: filter?.startDate,
+        endDate: filter?.endDate,
+      },
+      responseType: "blob",
+    });
+
+    const filename =
+      format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
+    const blob = new Blob([response.data], {
+      type:
+        format === "pdf"
+          ? "application/pdf"
+          : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    fileDownload(blob, filename);
+  } catch (error) {
+    console.error("Error exporting course report:", error);
+    throw error;
+  }
+};
+
+export const exportSlotReport = async (
+  format: "pdf" | "excel",
+  filter?: {
+    type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+    startDate?: string;
+    endDate?: string;
+  }
+) => {
+  try {
+    const response = await API.get(UserRouterEndpoints.userExportSlotReport, {
+      params: {
+        format,
+        filter: filter?.type,
+        startDate: filter?.startDate,
+        endDate: filter?.endDate,
+      },
+      responseType: "blob",
+    });
+
+    const filename = format === "pdf" ? "slot-report.pdf" : "slot-report.xlsx";
+    const blob = new Blob([response.data], {
+      type:
+        format === "pdf"
+          ? "application/pdf"
+          : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    fileDownload(blob, filename);
+  } catch (error) {
+    console.error("Error exporting slot report:", error);
+    throw error;
+  }
+};

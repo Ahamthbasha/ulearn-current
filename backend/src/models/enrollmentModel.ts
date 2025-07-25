@@ -53,6 +53,6 @@ const enrollmentSchema = new Schema<IEnrollment>({
   certificateUrl: { type: String },
   completedChapters: { type: [completedChapterSchema], default: [] },
   completedQuizzes: { type: [completedQuizSchema], default: [] },
-}, { timestamps: false });
+}, { timestamps: true });
 
 export const EnrollmentModel = model<IEnrollment>("Enrollment", enrollmentSchema);

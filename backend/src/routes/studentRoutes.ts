@@ -14,6 +14,7 @@ import {
   studentInstructorListingController,
   studentSlotController,
   studentSlotBookingController,
+  studentDashboardController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 import authenticateToken from "../middlewares/AuthenticatedRoutes";
@@ -392,5 +393,43 @@ router.get(
     studentSlotBookingController
   )
 );
+
+
+//dashboard//
+
+router.get(
+  "/dashboard",
+  authenticateToken,
+  isStudent,
+  studentDashboardController.getDashboardData.bind(studentDashboardController)
+)
+
+router.get(
+  "/dashboard/courseReport",
+  authenticateToken,
+  isStudent,
+  studentDashboardController.getCourseReport.bind(studentDashboardController)
+)
+
+router.get(
+  "/dashboard/slotReport",
+  authenticateToken,
+  isStudent,
+  studentDashboardController.getSlotReport.bind(studentDashboardController)
+)
+
+router.get(
+  "/dashboard/exportCourseReport",
+  authenticateToken,
+  isStudent,
+  studentDashboardController.exportCourseReport.bind(studentDashboardController)
+)
+
+router.get(
+  "/dashboard/exportSlotReport",
+  authenticateToken,
+  isStudent,
+  studentDashboardController.exportSlotReport.bind(studentDashboardController)
+)
 
 export default router;

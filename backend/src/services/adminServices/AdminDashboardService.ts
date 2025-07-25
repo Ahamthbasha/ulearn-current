@@ -12,7 +12,9 @@ export class AdminDashboardService implements IAdminDashboardService {
       courseRevenue,
       membershipRevenue,
       courseSalesGraph,
-      membershipSalesGraph
+      membershipSalesGraph,
+      topCourses,
+      topCategories
     ] = await Promise.all([
       this.dashboardRepo.getInstructorCount(),
       this.dashboardRepo.getMentorCount(),
@@ -20,7 +22,9 @@ export class AdminDashboardService implements IAdminDashboardService {
       this.dashboardRepo.getTotalCourseRevenue(),
       this.dashboardRepo.getTotalMembershipRevenue(),
       this.dashboardRepo.getMonthlyCourseSales(),
-      this.dashboardRepo.getMonthlyMembershipSales()
+      this.dashboardRepo.getMonthlyMembershipSales(),
+      this.dashboardRepo.getTopSellingCourses(),
+      this.dashboardRepo.getTopSellingCategories()
     ]);
 
     return {
@@ -30,7 +34,9 @@ export class AdminDashboardService implements IAdminDashboardService {
       courseRevenue,
       membershipRevenue,
       courseSalesGraph,
-      membershipSalesGraph
+      membershipSalesGraph,
+      topCourses,
+      topCategories
     };
   }
 

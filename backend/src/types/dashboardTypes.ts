@@ -40,4 +40,22 @@ export interface IAdminMembershipReportItem {
 }
 
 export type FilterType = "daily" | "weekly" | "monthly" | "custom";
+export interface IStudentCourseReportItem {
+  orderId: string;
+  date: Date;
+  courseName: string;
+  price: number;
+  totalCost: number;
+}
 
+export interface IStudentSlotReportItem {
+  bookingId: string;
+  date: Date;
+  slotTime: {
+    startTime: string;
+    endTime: string;
+  };
+  instructorName: string;
+  price: number;
+  totalPrice: number;
+}

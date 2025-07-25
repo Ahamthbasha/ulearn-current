@@ -1,5 +1,3 @@
-// src/types/dashboardTypes.ts
-
 export interface ITopSellingCourse {
     _id:string,
   courseName: string;

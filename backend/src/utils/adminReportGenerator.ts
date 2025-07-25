@@ -4,23 +4,6 @@ import { PassThrough } from "stream";
 import { Response } from "express";
 import { IAdminCourseSalesReportItem,IAdminMembershipReportItem } from "../types/dashboardTypes";
 
-// interface CourseReportData {
-//   orderId: string;
-//   date: Date;
-//   courseName: string;
-//   coursePrice: number;
-//   adminShare: number;
-//   instructorName: string;
-// }
-
-// interface MembershipReportData {
-//   orderId: string;
-//   date: Date;
-//   planName: string;
-//   instructorName: string;
-//   price: number;
-// }
-
 export async function generateCourseSalesExcelReport(
   data: IAdminCourseSalesReportItem[],
   res: Response

@@ -763,7 +763,27 @@ const adminDashboardService : IAdminDashboardService = new AdminDashboardService
 const adminDashboardController:IAdminDashboardController = new AdminDashboardController(adminDashboardService)
 
 
+//////////////student dashboard repository//////////////////
 
+import { IStudentDashboardRepository } from "../repositories/interfaces/IStudentDashboardRepository";
+import { StudentDashboardRepository } from "../repositories/studentRepository/studentDashboardRepository";
+
+import { IStudentDashboardService } from "../services/interface/IStudentDashboardService";
+import { StudentDashboardService } from "../services/studentServices/StudentDashboardService";
+
+import { IStudentDashboardController } from "../controllers/studentControllers/interfaces/IStudentDashboardController";
+import { StudentDashboardController } from "../controllers/studentControllers/studentDashboardController";
+import { BookingRepository } from "../repositories/BookingRepository";
+
+const studentDashboardRepository : IStudentDashboardRepository = new StudentDashboardRepository(
+  new EnrollmentRepository(),
+  new BookingRepository(),
+  new OrderRepository()
+)
+
+const studentDashboardService : IStudentDashboardService = new StudentDashboardService(studentDashboardRepository)
+
+const studentDashboardController : IStudentDashboardController = new StudentDashboardController(studentDashboardService)
 
 
 
@@ -858,4 +878,7 @@ export {
 
   //admin dashboard controller
   adminDashboardController,
+
+  //student dashboard controller
+  studentDashboardController,
 };
