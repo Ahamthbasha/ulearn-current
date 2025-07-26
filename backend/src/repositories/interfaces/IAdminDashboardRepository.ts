@@ -1,4 +1,5 @@
 import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../types/dashboardTypes";
+
 export interface IAdminDashboardRepository {
   getInstructorCount(): Promise<number>;
   getMentorCount(): Promise<number>;
@@ -12,13 +13,19 @@ export interface IAdminDashboardRepository {
     type: "daily" | "weekly" | "monthly" | "custom";
     startDate?: Date;
     endDate?: Date;
-  }): Promise<IAdminCourseSalesReportItem[]>;
+  }, page?: number, limit?: number): Promise<{
+    items: IAdminCourseSalesReportItem[];
+    totalItems: number;
+  }>;
 
   getMembershipSalesReportFiltered(filter: {
     type: "daily" | "weekly" | "monthly" | "custom";
     startDate?: Date;
     endDate?: Date;
-  }): Promise<IAdminMembershipReportItem[]>;
+  }, page?: number, limit?: number): Promise<{
+    items: IAdminMembershipReportItem[];
+    totalItems: number;
+  }>;
 
   getTopSellingCourses(limit?: number): Promise<{ courseName: string; salesCount: number }[]>;
   getTopSellingCategories(limit?: number): Promise<{ categoryName: string }[]>;

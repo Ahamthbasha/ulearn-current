@@ -1,9 +1,10 @@
-import { IAdminDashboardRepository } from "../interfaces/IAdminDashboardRepository";
-import { CourseRepository } from "../CourseRepository";
-import { OrderRepository } from "../OrderRepository";
-import { InstructorMembershipOrder } from "../InstructorMemberShirpOrderRepository";
-import IInstructorRepository from "../interfaces/IInstructorRepository";
-import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../types/dashboardTypes";
+// import { IAdminDashboardRepository } from "../interfaces/IAdminDashboardRepository";
+// import { CourseRepository } from "../CourseRepository";
+// import { OrderRepository } from "../OrderRepository";
+// import { InstructorMembershipOrder } from "../InstructorMemberShirpOrderRepository";
+// import IInstructorRepository from "../interfaces/IInstructorRepository";
+// import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../types/dashboardTypes";
+// import { AggregationPipelineStage } from "../../types/dashboardTypes"; // Import the custom type
 
 // export class AdminDashboardRepository implements IAdminDashboardRepository {
 //   constructor(
@@ -94,7 +95,10 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //     type: "daily" | "weekly" | "monthly" | "custom";
 //     startDate?: Date;
 //     endDate?: Date;
-//   }): Promise<IAdminCourseSalesReportItem[]> {
+//   }, page?: number, limit?: number): Promise<{
+//     items: IAdminCourseSalesReportItem[];
+//     totalItems: number;
+//   }> {
 //     const now = new Date();
 //     let start: Date;
 //     let end: Date = now;
@@ -126,7 +130,7 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //         throw new Error("Invalid filter type");
 //     }
 
-//     return await this.orderRepo.aggregate<IAdminCourseSalesReportItem>([
+//     const aggregation: AggregationPipelineStage[] = [
 //       {
 //         $match: {
 //           status: "SUCCESS",
@@ -155,24 +159,57 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //       },
 //       { $unwind: "$instructor" },
 //       {
+//         $group: {
+//           _id: "$_id",
+//           orderId: { $first: "$_id" },
+//           date: { $first: "$createdAt" },
+//           courses: {
+//             $push: {
+//               courseName: "$courseDetails.courseName",
+//               instructorName: "$instructor.username",
+//               coursePrice: "$courseDetails.price",
+//               adminShare: { $multiply: ["$courseDetails.price", 0.10] }
+//             }
+//           },
+//           totalPrice: { $sum: "$courseDetails.price" },
+//           totalAdminShare: { $sum: { $multiply: ["$courseDetails.price", 0.10] } }
+//         }
+//       },
+//       {
 //         $project: {
 //           _id: 0,
-//           orderId: "$_id",
-//           date: "$createdAt",
-//           courseName: "$courseDetails.courseName",
-//           instructorName: "$instructor.username",
-//           coursePrice: "$amount",
-//           adminShare: { $multiply: ["$amount", 0.10] }
+//           orderId: 1,
+//           date: 1,
+//           courses: 1,
+//           totalPrice: 1,
+//           totalAdminShare: 1
 //         }
 //       }
-//     ]);
+//     ];
+
+//     const totalItems = await this.orderRepo.aggregate([
+//       { $match: { status: "SUCCESS", createdAt: { $gte: start, $lte: end } } },
+//       { $group: { _id: null, count: { $sum: 1 } } }
+//     ]).then(result => result[0]?.count || 0);
+
+//     if (page && limit) {
+//       aggregation.push({ $skip: (page - 1) * limit });
+//       aggregation.push({ $limit: limit });
+//     }
+
+//     const items = await this.orderRepo.aggregate<IAdminCourseSalesReportItem>(aggregation);
+
+//     return { items, totalItems };
 //   }
 
 //   async getMembershipSalesReportFiltered(filter: {
 //     type: "daily" | "weekly" | "monthly" | "custom";
 //     startDate?: Date;
 //     endDate?: Date;
-//   }): Promise<IAdminMembershipReportItem[]> {
+//   }, page?: number, limit?: number): Promise<{
+//     items: IAdminMembershipReportItem[];
+//     totalItems: number;
+//   }> {
 //     const now = new Date();
 //     let start: Date;
 //     let end: Date = now;
@@ -204,7 +241,7 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //         throw new Error("Invalid filter type");
 //     }
 
-//     return await this.membershipOrderRepo.aggregate<IAdminMembershipReportItem>([
+//     const aggregation: AggregationPipelineStage[] = [
 //       {
 //         $match: {
 //           paymentStatus: "paid",
@@ -239,6 +276,52 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //           price: "$price"
 //         }
 //       }
+//     ];
+
+//     const totalItems = await this.membershipOrderRepo.aggregate([
+//       { $match: { paymentStatus: "paid", createdAt: { $gte: start, $lte: end } } },
+//       { $group: { _id: null, count: { $sum: 1 } } }
+//     ]).then(result => result[0]?.count || 0);
+
+//     if (page && limit) {
+//       aggregation.push({ $skip: (page - 1) * limit });
+//       aggregation.push({ $limit: limit });
+//     }
+
+//     const items = await this.membershipOrderRepo.aggregate<IAdminMembershipReportItem>(aggregation);
+
+//     return { items, totalItems };
+//   }
+
+//   async getTopSellingCourses(limit = 3): Promise<{ courseName: string; salesCount: number }[]> {
+//     return await this.orderRepo.aggregate([
+//       { $match: { status: "SUCCESS" } },
+//       { $unwind: "$courses" },
+//       {
+//         $lookup: {
+//           from: "courses",
+//           localField: "courses",
+//           foreignField: "_id",
+//           as: "courseDetails"
+//         }
+//       },
+//       { $unwind: "$courseDetails" },
+//       {
+//         $group: {
+//           _id: "$courseDetails._id",
+//           courseName: { $first: "$courseDetails.courseName" },
+//           salesCount: { $sum: 1 }
+//         }
+//       },
+//       { $sort: { salesCount: -1 } },
+//       { $limit: limit },
+//       {
+//         $project: {
+//           _id: 0,
+//           courseName: 1,
+//           salesCount: 1
+//         }
+//       }
 //     ]);
 //   }
 
@@ -257,8 +340,8 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //       { $unwind: "$courseDetails" },
 //       {
 //         $lookup: {
-//           from: "categories", // Collection name for CategoryModel
-//           localField: "courseDetails.category", // Assuming courseDetails.category is the _id of the category
+//           from: "categories",
+//           localField: "courseDetails.category",
 //           foreignField: "_id",
 //           as: "categoryDetails"
 //         }
@@ -266,8 +349,8 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //       { $unwind: "$categoryDetails" },
 //       {
 //         $group: {
-//           _id: "$courseDetails.category", // Group by category _id
-//           categoryName: { $first: "$categoryDetails.categoryName" }, // Get categoryName from categoryDetails
+//           _id: "$courseDetails.category",
+//           categoryName: { $first: "$categoryDetails.categoryName" },
 //           salesCount: { $sum: 1 }
 //         }
 //       },
@@ -276,14 +359,21 @@ import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../t
 //       {
 //         $project: {
 //           _id: 0,
-//           categoryName: 1 // Return only categoryName
+//           categoryName: 1
 //         }
 //       }
 //     ]);
 //   }
-
 // }
 
+
+import { IAdminDashboardRepository } from "../interfaces/IAdminDashboardRepository";
+import { CourseRepository } from "../CourseRepository";
+import { OrderRepository } from "../OrderRepository";
+import { InstructorMembershipOrder } from "../InstructorMemberShirpOrderRepository";
+import IInstructorRepository from "../interfaces/IInstructorRepository";
+import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../../types/dashboardTypes";
+import { PipelineStage } from "mongoose"; // Use Mongoose's PipelineStage
 
 export class AdminDashboardRepository implements IAdminDashboardRepository {
   constructor(
@@ -374,7 +464,10 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
     type: "daily" | "weekly" | "monthly" | "custom";
     startDate?: Date;
     endDate?: Date;
-  }): Promise<IAdminCourseSalesReportItem[]> {
+  }, page?: number, limit?: number): Promise<{
+    items: IAdminCourseSalesReportItem[];
+    totalItems: number;
+  }> {
     const now = new Date();
     let start: Date;
     let end: Date = now;
@@ -406,7 +499,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
         throw new Error("Invalid filter type");
     }
 
-    return await this.orderRepo.aggregate<IAdminCourseSalesReportItem>([
+    const aggregation: PipelineStage[] = [
       {
         $match: {
           status: "SUCCESS",
@@ -435,24 +528,57 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
       },
       { $unwind: "$instructor" },
       {
+        $group: {
+          _id: "$_id",
+          orderId: { $first: "$_id" },
+          date: { $first: "$createdAt" },
+          courses: {
+            $push: {
+              courseName: "$courseDetails.courseName",
+              instructorName: "$instructor.username",
+              coursePrice: "$courseDetails.price",
+              adminShare: { $multiply: ["$courseDetails.price", 0.10] }
+            }
+          },
+          totalPrice: { $sum: "$courseDetails.price" },
+          totalAdminShare: { $sum: { $multiply: ["$courseDetails.price", 0.10] } }
+        }
+      },
+      {
         $project: {
           _id: 0,
-          orderId: "$_id",
-          date: "$createdAt",
-          courseName: "$courseDetails.courseName",
-          instructorName: "$instructor.username",
-          coursePrice: "$amount",
-          adminShare: { $multiply: ["$amount", 0.10] }
+          orderId: 1,
+          date: 1,
+          courses: 1,
+          totalPrice: 1,
+          totalAdminShare: 1
         }
       }
-    ]);
+    ];
+
+    const totalItems = await this.orderRepo.aggregate([
+      { $match: { status: "SUCCESS", createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, count: { $sum: 1 } } }
+    ]).then(result => result[0]?.count || 0);
+
+    if (page && limit) {
+      aggregation.push({ $skip: (page - 1) * limit });
+      aggregation.push({ $limit: limit });
+    }
+
+    const items = await this.orderRepo.aggregate<IAdminCourseSalesReportItem>(aggregation);
+
+    return { items, totalItems };
   }
 
   async getMembershipSalesReportFiltered(filter: {
     type: "daily" | "weekly" | "monthly" | "custom";
     startDate?: Date;
     endDate?: Date;
-  }): Promise<IAdminMembershipReportItem[]> {
+  }, page?: number, limit?: number): Promise<{
+    items: IAdminMembershipReportItem[];
+    totalItems: number;
+  }> {
     const now = new Date();
     let start: Date;
     let end: Date = now;
@@ -484,7 +610,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
         throw new Error("Invalid filter type");
     }
 
-    return await this.membershipOrderRepo.aggregate<IAdminMembershipReportItem>([
+    const aggregation: PipelineStage[] = [
       {
         $match: {
           paymentStatus: "paid",
@@ -519,7 +645,21 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
           price: "$price"
         }
       }
-    ]);
+    ];
+
+    const totalItems = await this.membershipOrderRepo.aggregate([
+      { $match: { paymentStatus: "paid", createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, count: { $sum: 1 } } }
+    ]).then(result => result[0]?.count || 0);
+
+    if (page && limit) {
+      aggregation.push({ $skip: (page - 1) * limit });
+      aggregation.push({ $limit: limit });
+    }
+
+    const items = await this.membershipOrderRepo.aggregate<IAdminMembershipReportItem>(aggregation);
+
+    return { items, totalItems };
   }
 
   async getTopSellingCourses(limit = 3): Promise<{ courseName: string; salesCount: number }[]> {

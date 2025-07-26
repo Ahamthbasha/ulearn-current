@@ -112,12 +112,26 @@ router.get(
   adminCourseController.getAllCourses.bind(adminCourseController)
 );
 
+router.get(
+  "/courses/:courseId",
+  authenticateToken,
+  isAdmin,
+  adminCourseController.getCourseDetails.bind(adminCourseController)
+)
+
 router.patch(
   "/courses/:courseId/listing",
   authenticateToken,
   isAdmin,
   adminCourseController.updateListingStatus.bind(adminCourseController)
 );
+
+router.patch(
+  "/courses/:courseId/verifyCourse",
+  authenticateToken,
+  isAdmin,
+  adminCourseController.toggleVerificationStatus.bind(adminCourseController)
+)
 
 // wallet related routes
 

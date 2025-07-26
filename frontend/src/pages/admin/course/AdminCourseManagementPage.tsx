@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTable, {
   type Column,
   type ActionButton,
@@ -7,7 +8,7 @@ import {
   getAllCourses,
   listUnListCourse,
 } from "../../../api/action/AdminActionApi";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
@@ -24,13 +25,13 @@ const AdminCourseManagementPage = () => {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(1);
+  const [limit] = useState(10); // You can adjust this
   const [totalPages, setTotalPages] = useState(1);
 
-  const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(
-    null
-  );
+  const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -60,8 +61,12 @@ const AdminCourseManagementPage = () => {
         `Course ${updated.data.isListed ? "listed" : "unlisted"} successfully`
       );
       fetchCourses();
-    } catch (err) {
-      toast.error("Failed to toggle listing");
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Failed to toggle listing");
+      }
     } finally {
       setIsModalOpen(false);
       setSelectedCourse(null);
@@ -108,6 +113,13 @@ const AdminCourseManagementPage = () => {
         record.isListed
           ? "bg-red-500 hover:bg-red-600 text-white"
           : "bg-green-500 hover:bg-green-600 text-white",
+    },
+    {
+      key: "viewDetails",
+      label: "View",
+      icon: () => <Info size={18} />,
+      onClick: (record) => navigate(`/admin/courses/${record._id}`),
+      className: "bg-blue-500 hover:bg-blue-600 text-white",
     },
   ];
 

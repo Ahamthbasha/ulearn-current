@@ -250,6 +250,8 @@ export const toggleCategoryStatus = async (id: string): Promise<any> => {
   }
 };
 
+//course
+
 export const getAllCourses = async (search = "", page = 1, limit = 10) => {
   try {
     const response = await API.get(`${AdminRoutersEndPoints.adminGetCourses}`, {
@@ -260,6 +262,15 @@ export const getAllCourses = async (search = "", page = 1, limit = 10) => {
     throw error;
   }
 };
+
+export const getCourseDetails = async(courseId:string) => {
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminGetCourseDetail}/${courseId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 export const listUnListCourse = async (courseId: string) => {
   try {
@@ -274,6 +285,15 @@ export const listUnListCourse = async (courseId: string) => {
     throw error;
   }
 };
+
+export const verifyCourse = async(courseId:string)=>{
+  try {
+    const response = await API.patch(`${AdminRoutersEndPoints.adminVerifyCourse}/${courseId}/verifyCourse`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // wallet page
 
@@ -483,31 +503,57 @@ export const getDashboard = async() => {
   }
 }
 
-export const getCourseReport = async (filter: ReportFilter) => {
+export const getCourseReport = async (
+  filter: ReportFilter, 
+  page: number = 1, 
+  limit: number = 10
+) => {
   try {
     const params = new URLSearchParams();
 
     params.append("type", filter.type);
-    if (filter.startDate) params.append("startDate", filter.startDate.toISOString());
-    if (filter.endDate) params.append("endDate", filter.endDate.toISOString());
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    
+    if (filter.startDate) {
+      params.append("startDate", filter.startDate.toISOString());
+    }
+    if (filter.endDate) {
+      params.append("endDate", filter.endDate.toISOString());
+    }
 
-    const response = await API.get(`${AdminRoutersEndPoints.adminCourseReport}?${params.toString()}`);
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminCourseReport}?${params.toString()}`
+    );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-// 🟢 Membership Report
-export const getMembershipCourseReport = async (filter: ReportFilter) => {
+// 🟢 Membership Report with Pagination
+export const getMembershipCourseReport = async (
+  filter: ReportFilter, 
+  page: number = 1, 
+  limit: number = 10
+) => {
   try {
     const params = new URLSearchParams();
 
     params.append("type", filter.type);
-    if (filter.startDate) params.append("startDate", filter.startDate.toISOString());
-    if (filter.endDate) params.append("endDate", filter.endDate.toISOString());
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    
+    if (filter.startDate) {
+      params.append("startDate", filter.startDate.toISOString());
+    }
+    if (filter.endDate) {
+      params.append("endDate", filter.endDate.toISOString());
+    }
 
-    const response = await API.get(`${AdminRoutersEndPoints.adminMembershipReport}?${params.toString()}`);
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminMembershipReport}?${params.toString()}`
+    );
     return response.data;
   } catch (error) {
     throw error;

@@ -24,10 +24,23 @@ export interface IMonthlySales {
 export interface IAdminCourseSalesReportItem {
   orderId: string;
   date: Date;
+  courses: {
+    courseName: string;
+    coursePrice: number;
+    adminShare: number;
+    instructorName: string;
+  }[];
+  totalPrice:number;
+  totalAdminShare: number;
+}
+
+export interface IAdminCourseSalesReportItemFlattened {
+  orderId: string;
+  date: Date;
   courseName: string;
   coursePrice: number;
   adminShare: number;
-  instructorName:string
+  instructorName: string;
 }
 
 export interface IAdminMembershipReportItem {
@@ -59,3 +72,22 @@ export interface IStudentSlotReportItem {
   price: number;
   totalPrice: number;
 }
+
+
+// types/aggregationTypes.ts
+export type AggregationPipelineStage = {
+  $match?: { [key: string]: any };
+  $unwind?: string | { path: string; preserveNullAndEmptyArrays?: boolean };
+  $lookup?: {
+    from: string;
+    localField: string;
+    foreignField: string;
+    as: string;
+  };
+  $group?: { [key: string]: any };
+  $project?: { [key: string]: any };
+  $sort?: { [key: string]: any };
+  $skip?: number;
+  $limit?: number;
+  // Add other stages as needed (e.g., $facet, $out, etc.)
+};

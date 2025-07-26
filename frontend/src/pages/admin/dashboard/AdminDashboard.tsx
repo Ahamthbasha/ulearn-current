@@ -25,6 +25,7 @@ import {
   DollarSign,
 } from "lucide-react";
 
+// Interfaces
 interface SalesData {
   month: number;
   year: number;
@@ -58,13 +59,18 @@ interface ReportFilter {
   endDate?: Date;
 }
 
+// Updated to match the grouped structure from the backend
 interface CourseReportRow {
   orderId: string;
-  courseName: string;
-  instructorName: string;
-  coursePrice: number;
-  adminShare: number;
   date: Date;
+  courses: {
+    courseName: string;
+    instructorName: string;
+    coursePrice: number;
+    adminShare: number;
+  }[];
+  totalPrice: number;
+  totalAdminShare: number;
 }
 
 interface MembershipReportRow {
@@ -74,6 +80,8 @@ interface MembershipReportRow {
   price: number;
   date: Date;
 }
+
+
 
 const monthNames = [
   "Jan",
@@ -91,13 +99,9 @@ const monthNames = [
 ];
 
 const AdminDashboard = () => {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
-  );
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [courseReport, setCourseReport] = useState<CourseReportRow[]>([]);
-  const [membershipReport, setMembershipReport] = useState<
-    MembershipReportRow[]
-  >([]);
+  const [membershipReport, setMembershipReport] = useState<MembershipReportRow[]>([]);
   const [courseReportTotals, setCourseReportTotals] = useState<{
     totalAdminShare: number;
   }>({ totalAdminShare: 0 });
@@ -106,6 +110,8 @@ const AdminDashboard = () => {
     totalSales: number;
   }>({ totalRevenue: 0, totalSales: 0 });
   const [filter, setFilter] = useState<ReportFilter>({ type: "monthly" });
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [reportLoading, setReportLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
@@ -114,12 +120,12 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<"course" | "membership">("course");
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
+  const limit = 5; // Fixed limit for pagination
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       const response = await getDashboard();
-      console.log(response);
       setDashboardData(response.data);
       setError(null);
     } catch (err) {
@@ -145,13 +151,14 @@ const AdminDashboard = () => {
       };
 
       const [courseRes, membershipRes] = await Promise.all([
-        getCourseReport(reportFilter),
-        getMembershipCourseReport(reportFilter),
+        getCourseReport(reportFilter, currentPage, limit),
+        getMembershipCourseReport(reportFilter, currentPage, limit),
       ]);
 
       if (courseRes.success) {
         setCourseReport(courseRes.data || []);
         setCourseReportTotals({ totalAdminShare: courseRes.adminShare || 0 });
+        setTotalPages(Math.ceil(courseRes.totalItems / limit));
       } else {
         throw new Error("Invalid course report response");
       }
@@ -162,6 +169,7 @@ const AdminDashboard = () => {
           totalRevenue: membershipRes.totalRevenue || 0,
           totalSales: membershipRes.totalSales || 0,
         });
+        setTotalPages(Math.ceil(membershipRes.totalItems / limit));
       } else {
         throw new Error("Invalid membership report response");
       }
@@ -202,14 +210,28 @@ const AdminDashboard = () => {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      generateReports(); // Re-fetch reports with the new page
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (showReports) {
+      generateReports();
+    }
+  }, [currentPage]); // Re-fetch when page changes
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = e.target.value as ReportFilter["type"];
     setFilter({ type: selected });
     setShowReports(false);
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const formatGraphData = (sales: SalesData[]) =>
@@ -430,7 +452,7 @@ const AdminDashboard = () => {
                   type="date"
                   className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  onChange={(e) => setCustomEndDate(e.target.value)} // Fixed typo
                 />
               </div>
             </>
@@ -484,7 +506,14 @@ const AdminDashboard = () => {
               <div className="text-right">
                 <p className="text-sm text-blue-600">Generated on</p>
                 <p className="font-semibold text-blue-900">
-                  {new Date().toLocaleDateString("en-GB")}
+                  {new Date().toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
                 </p>
               </div>
             </div>
@@ -562,56 +591,95 @@ const AdminDashboard = () => {
                             Order ID
                           </th>
                           <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
-                            Course
+                            Date
+                          </th>
+                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                            Course Name
                           </th>
                           <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
                             Instructor
                           </th>
                           <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
-                            Price
+                            Course Price
+                          </th>
+                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                            Total Price
                           </th>
                           <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
                             Admin Share
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
-                            Date
-                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {courseReport.map((row, idx) => (
-                          <tr
-                            key={idx}
-                            className="hover:bg-gray-50 transition-colors"
-                          >
-                            <td className="px-4 py-3 border border-gray-200 font-mono text-sm">
-                              {row.orderId}
-                            </td>
-                            <td className="px-4 py-3 border border-gray-200 font-medium">
-                              {row.courseName}
-                            </td>
-                            <td className="px-4 py-3 border border-gray-200 text-gray-600">
-                              {row.instructorName}
-                            </td>
-                            <td className="px-4 py-3 border border-gray-200 font-semibold text-green-600">
-                              ₹{row.coursePrice.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 border border-gray-200 font-semibold text-blue-600">
-                              ₹{row.adminShare.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 border border-gray-200 text-gray-600">
-                              {new Date(row.date)
-                                .toLocaleDateString("en-GB")
-                                .replace(/\//g, "-")}
-                            </td>
-                          </tr>
-                        ))}
+                        {courseReport.map((order) =>
+                          order.courses.map((course, courseIdx) => (
+                            <tr
+                              key={`${order.orderId}-${courseIdx}`}
+                              className={
+                                courseIdx === order.courses.length - 1
+                                  ? "bg-gray-100"
+                                  : "hover:bg-gray-50 transition-colors"
+                              }
+                            >
+                              <td className="px-4 py-3 border border-gray-200 font-mono text-sm">
+                                {courseIdx === 0 ? order.orderId : ""}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-200 text-gray-600">
+                                {courseIdx === 0
+                                  ? new Date(order.date)
+                                      .toLocaleDateString("en-GB")
+                                      .replace(/\//g, "-")
+                                  : ""}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-200 font-medium">
+                                {course.courseName}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-200 text-gray-600">
+                                {course.instructorName}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-200 font-semibold text-green-600">
+                                ₹{course.coursePrice.toLocaleString()}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-200 font-semibold text-blue-600">
+                                {courseIdx === order.courses.length - 1
+                                  ? `₹${order.totalPrice.toLocaleString()}`
+                                  : ""}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-200 font-semibold text-blue-600">
+                                {courseIdx === order.courses.length - 1
+                                  ? `₹${order.totalAdminShare.toLocaleString()}`
+                                  : ""}
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
 
+                  {/* Pagination Controls */}
+                  <div className="flex justify-center items-center space-x-4 mt-4">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+
                   {/* Course Report Totals */}
-                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mt-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -696,8 +764,29 @@ const AdminDashboard = () => {
                     </table>
                   </div>
 
+                  {/* Pagination Controls */}
+                  <div className="flex justify-center items-center space-x-4 mt-4">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+
                   {/* Membership Report Totals */}
-                  <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
+                  <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 mt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
@@ -707,8 +796,7 @@ const AdminDashboard = () => {
                           </span>
                         </div>
                         <p className="text-xl font-bold text-green-900">
-                          ₹
-                          {membershipReportTotals.totalRevenue.toLocaleString()}
+                          ₹{membershipReportTotals.totalRevenue.toLocaleString()}
                         </p>
                       </div>
                       <div className="flex items-center justify-between">

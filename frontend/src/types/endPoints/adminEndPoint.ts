@@ -18,7 +18,9 @@ const AdminRoutersEndPoints = {
 
   //course
   adminGetCourses: "/api/admin/courses",
+  adminGetCourseDetail : "/api/admin/courses",
   adminToggleList: "/api/admin/courses",
+  adminVerifyCourse: "/api/admin/courses",
 
   //wallet
   adminGetWallet: "/api/admin/wallet",

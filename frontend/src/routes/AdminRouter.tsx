@@ -24,6 +24,7 @@ import Orders from "../pages/admin/purchaseHistory/Orders";
 import MembershipOrderDetail from "../pages/admin/purchaseHistory/MembershipOrderDetail";
 import NotFound from "../components/common/NotFound";
 import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
+import AdminCourseDetailPage from "../pages/admin/course/AdminCourseDetailPage";
 
 //wallet
 
@@ -62,6 +63,7 @@ const AdminRouter = () => {
 
           {/* Course Routes */}
           <Route path="courses" element={<AdminCourseManagementPage />} />
+          <Route path="courses/:courseId" element={<AdminCourseDetailPage/>}/>
 
           {/* wallet  */}
           <Route path="wallet" element={<AdminWalletPage />} />

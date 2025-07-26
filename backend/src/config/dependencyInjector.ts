@@ -238,9 +238,14 @@ import { AdminCourseService } from "../services/adminServices/AdminCourseService
 
 import { IAdminCourseController } from "../controllers/adminControllers/interface/IAdminCourseController";
 import { AdminCourseController } from "../controllers/adminControllers/adminCourseController";
+import { ChapterDetailRepository } from "../repositories/ChapterRepository";
+import { QuizDetailRepository } from "../repositories/QuizRepository";
+
+
 
 const adminCourseRepository: IAdminCourseRepository =
-  new AdminCourseRepository();
+  new AdminCourseRepository(new ChapterDetailRepository(),new QuizDetailRepository)
+  
 
 const adminCourseService: IAdminCourseService = new AdminCourseService(
   adminCourseRepository

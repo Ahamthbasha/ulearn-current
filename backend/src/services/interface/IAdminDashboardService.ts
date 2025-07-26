@@ -1,3 +1,5 @@
+import { IAdminCourseSalesReportItem } from "../../types/dashboardTypes";
+
 export interface IAdminDashboardService {
   getDashboardMetrics(): Promise<{
     instructorCount: number;
@@ -10,34 +12,33 @@ export interface IAdminDashboardService {
   }>;
 
   getCourseSalesReport(filter: {
-  type: "daily" | "weekly" | "monthly" | "custom";
-  startDate?: Date;
-  endDate?: Date;
-}): Promise<{
-  items: {
-    orderId: string;
-    date: Date;
-    courseName: string;
-    coursePrice: number;
-    adminShare: number;
-    instructorName: string;
-  }[];
-  totalAdminShare: number;
-}>;
+    type: "daily" | "weekly" | "monthly" | "custom";
+    startDate?: Date;
+    endDate?: Date;
+  }, page?: number, limit?: number): Promise<{
+    items: IAdminCourseSalesReportItem[];
+    totalAdminShare: number;
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }>;
 
-getMembershipSalesReport(filter: {
-  type: "daily" | "weekly" | "monthly" | "custom";
-  startDate?: Date;
-  endDate?: Date;
-}): Promise<{
-  items: {
-    orderId: string;
-    planName: string;
-    instructorName: string;
-    date: Date;
-    price: number;
-  }[];
-  totalRevenue: number;
-  totalSales: number;
-}>;
+  getMembershipSalesReport(filter: {
+    type: "daily" | "weekly" | "monthly" | "custom";
+    startDate?: Date;
+    endDate?: Date;
+  }, page?: number, limit?: number): Promise<{
+    items: {
+      orderId: string;
+      planName: string;
+      instructorName: string;
+      date: Date;
+      price: number;
+    }[];
+    totalRevenue: number;
+    totalSales: number;
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }>;
 }

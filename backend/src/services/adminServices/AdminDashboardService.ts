@@ -1,5 +1,6 @@
 import { IAdminDashboardService } from "../interface/IAdminDashboardService";
 import { IAdminDashboardRepository } from "../../repositories/interfaces/IAdminDashboardRepository";
+import { IAdminCourseSalesReportItem } from "../../types/dashboardTypes";
 
 export class AdminDashboardService implements IAdminDashboardService {
   constructor(private readonly dashboardRepo: IAdminDashboardRepository) {}
@@ -41,43 +42,76 @@ export class AdminDashboardService implements IAdminDashboardService {
   }
 
   async getCourseSalesReport(filter: {
-  type: "daily" | "weekly" | "monthly" | "custom";
-  startDate?: Date;
-  endDate?: Date;
-}): Promise<{
-  items: {
-    orderId: string;
-    date: Date;
-    courseName: string;
-    coursePrice: number;
-    adminShare: number;
-    instructorName: string;
-  }[];
-  totalAdminShare: number;
-}> {
-  const items = await this.dashboardRepo.getCourseSalesReportFiltered(filter);
-  const totalAdminShare = items.reduce((acc, item) => acc + item.adminShare, 0);
-  return {
-    items,
-    totalAdminShare,
-  };
-}
+    type: "daily" | "weekly" | "monthly" | "custom";
+    startDate?: Date;
+    endDate?: Date;
+  }, page?: number, limit?: number): Promise<{
+    items: IAdminCourseSalesReportItem[];
+    totalAdminShare: number;
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
+    const { items, totalItems } = await this.dashboardRepo.getCourseSalesReportFiltered(filter, page, limit);
+    
+    // FIX 1: Calculate totalAdminShare from all items, not just current page
+    // For pagination, we need to get total admin share for the entire dataset
+    const allItemsForTotal = await this.dashboardRepo.getCourseSalesReportFiltered(filter); // No pagination for total calculation
+    const totalAdminShare = allItemsForTotal.items.reduce((acc, item) => acc + (item.totalAdminShare || 0), 0);
+    
+    // FIX 2: Handle case when no pagination parameters provided
+    const calculatedLimit = limit || 10; // Default limit
+    const calculatedPage = page || 1; // Default page
+    const totalPages = Math.ceil(totalItems / calculatedLimit);
 
- 
+    return {
+      items,
+      totalAdminShare,
+      totalItems,
+      totalPages,
+      currentPage: calculatedPage,
+    };
+  }
 
-async getMembershipSalesReport(filter: {
-  type: "daily" | "weekly" | "monthly" | "custom";
-  startDate?: Date;
-  endDate?: Date;
-}) {
-  const items = await this.dashboardRepo.getMembershipSalesReportFiltered(filter);
-  const totalRevenue = items.reduce((acc, item) => acc + item.price, 0);
-  const totalSales = items.length;
+  async getMembershipSalesReport(filter: {
+    type: "daily" | "weekly" | "monthly" | "custom";
+    startDate?: Date;
+    endDate?: Date;
+  }, page?: number, limit?: number): Promise<{
+    items: {
+      orderId: string;
+      planName: string;
+      instructorName: string;
+      date: Date;
+      price: number;
+    }[];
+    totalRevenue: number;
+    totalSales: number;
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
+    const { items, totalItems } = await this.dashboardRepo.getMembershipSalesReportFiltered(filter, page, limit);
+    
+    // FIX 3: Calculate totalRevenue from all items, not just current page
+    // For pagination, we need to get total revenue for the entire dataset
+    const allItemsForTotal = await this.dashboardRepo.getMembershipSalesReportFiltered(filter); // No pagination for total calculation
+    const totalRevenue = allItemsForTotal.items.reduce((acc, item) => acc + item.price, 0);
+    
+    // FIX 4: totalSales should be totalItems, not current page items length
+    const totalSales = totalItems; // Total number of sales across all pages
+    
+    const calculatedLimit = limit || 10; // Default limit
+    const calculatedPage = page || 1; // Default page
+    const totalPages = Math.ceil(totalItems / calculatedLimit);
 
-  return {
-    items,
-    totalRevenue,
-    totalSales,
-  };
-}
+    return {
+      items,
+      totalRevenue,
+      totalSales,
+      totalItems,
+      totalPages,
+      currentPage: calculatedPage,
+    };
+  }
 }
