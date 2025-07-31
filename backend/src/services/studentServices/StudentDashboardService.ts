@@ -51,6 +51,8 @@ export class StudentDashboardService implements IStudentDashboardService {
       type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
       startDate?: string;
       endDate?: string;
+      page?: number;
+      limit?: number;
     }
   ): Promise<IStudentCourseReportItem[]> {
     return this.dashboardRepo.getCourseReport(userId, filter);
@@ -62,6 +64,8 @@ export class StudentDashboardService implements IStudentDashboardService {
       type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
       startDate?: string;
       endDate?: string;
+      page?: number;
+      limit?: number;
     }
   ): Promise<IStudentSlotReportItem[]> {
     return this.dashboardRepo.getSlotReport(userId, filter);

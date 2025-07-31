@@ -9,12 +9,14 @@ import { useDispatch } from "react-redux";
 import {
   instructorGetProfile,
   instructorUpdatePassword,
+  instructorUpdateBankDetail,
 } from "../../../api/action/InstructorActionApi";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
 
 const InstructorProfilePage = () => {
   const [profile, setProfile] = useState<any>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showBankForm, setShowBankForm] = useState(false);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -67,6 +69,12 @@ const InstructorProfilePage = () => {
             >
               {showPasswordForm ? "Cancel Password Change" : "Change Password"}
             </button>
+            <button
+              onClick={() => setShowBankForm(!showBankForm)}
+              className="text-blue-600 text-sm underline"
+            >
+              {showBankForm ? "Cancel Bank Details Update" : "Update Bank Details"}
+            </button>
           </div>
         }
       >
@@ -104,6 +112,10 @@ const InstructorProfilePage = () => {
           </p>
           <p>
             <strong>Mentor:</strong> {profile.isMentor ? "Yes" : "No"}
+          </p>
+          <p>
+            <strong>Bank Status:</strong>{" "}
+            {profile.bankAccount?.accountNumber ? "Linked" : "Not Linked"}
           </p>
         </div>
       </Card>
@@ -185,8 +197,88 @@ const InstructorProfilePage = () => {
           </Formik>
         </div>
       )}
+
+      {showBankForm && (
+        <div className="w-full max-w-xl mt-6 bg-white p-6 rounded shadow">
+          <h2 className="text-lg font-semibold mb-4">🏦 Update Bank Details</h2>
+          <Formik
+            initialValues={{
+              accountHolderName: "",
+              accountNumber: "",
+              ifscCode: "",
+              bankName: "",
+            }}
+            validationSchema={Yup.object({
+              accountHolderName: Yup.string()
+                .required("Account holder name is required")
+                .matches(/^[a-zA-Z\s]+$/, "Only letters and spaces are allowed"),
+              accountNumber: Yup.string()
+                .required("Account number is required")
+                .matches(/^\d{9,18}$/, "Account number must be 9-18 digits"),
+              ifscCode: Yup.string()
+                .required("IFSC code is required")
+                .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code format"),
+              bankName: Yup.string()
+                .required("Bank name is required")
+                .matches(/^[a-zA-Z\s]+$/, "Only letters and spaces are allowed"),
+            })}
+            onSubmit={async (values, { resetForm }) => {
+              try {
+                const res = await instructorUpdateBankDetail(values);
+
+                if (res.success) {
+                  toast.success("Bank details updated successfully");
+                  setProfile(res.data); // Update profile with new bank details
+                  resetForm();
+                  setShowBankForm(false);
+                } else {
+                  toast.error(res.message || "Bank details update failed");
+                }
+              } catch (error) {
+                toast.error("Something went wrong");
+              }
+            }}
+          >
+            <Form className="space-y-4">
+              <InputField
+                name="accountHolderName"
+                type="text"
+                label="Account Holder Name"
+                placeholder="Enter account holder name"
+              />
+              <InputField
+                name="accountNumber"
+                type="text"
+                label="Account Number"
+                placeholder="Enter account number"
+              />
+              <InputField
+                name="ifscCode"
+                type="text"
+                label="IFSC Code"
+                placeholder="Enter IFSC code"
+              />
+              <InputField
+                name="bankName"
+                type="text"
+                label="Bank Name"
+                placeholder="Enter bank name"
+              />
+              <div className="text-right">
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Update Bank Details
+                </button>
+              </div>
+            </Form>
+          </Formik>
+        </div>
+      )}
     </div>
   );
 };
 
 export default InstructorProfilePage;
+

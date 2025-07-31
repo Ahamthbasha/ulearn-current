@@ -15,6 +15,7 @@ import {
   instructorMembershipOrderController,
   instructorSlotController,
   instructorSlotBookingController,
+  instructorWithdrawalController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 
@@ -115,6 +116,13 @@ router.put(
   isInstructor,
   instructorProfileController.updatePassword.bind(instructorProfileController)
 );
+
+router.post(
+  "/profile/updateBank",
+  authenticateToken,
+  isInstructor,
+  instructorProfileController.updateBankAccount.bind(instructorProfileController)
+)
 
 //categoryfetch
 
@@ -334,15 +342,19 @@ router.get(
   "/dashboard/specificCourse/:courseId/revenueReport",
   authenticateToken,
   isInstructor,
-  specificCourseDashboardController.getCourseRevenueReport.bind(specificCourseDashboardController)
-)
+  specificCourseDashboardController.getCourseRevenueReport.bind(
+    specificCourseDashboardController
+  )
+);
 
 router.get(
   "/dashboard/specificCourse/:courseId/exportRevenueReport",
   authenticateToken,
   isInstructor,
-  specificCourseDashboardController.exportCourseRevenueReport.bind(specificCourseDashboardController)
-)
+  specificCourseDashboardController.exportCourseRevenueReport.bind(
+    specificCourseDashboardController
+  )
+);
 
 //wallet related routes
 
@@ -393,6 +405,34 @@ router.post(
   isInstructor,
   instructorWalletPaymentController.verifyPayment.bind(
     instructorWalletPaymentController
+  )
+);
+
+//////// Instructor withdrawal Request /////////////////
+
+router.post(
+  "/withdrawalRequest",
+  authenticateToken,
+  isInstructor,
+  instructorWithdrawalController.createWithdrawalRequest.bind(
+    instructorWithdrawalController
+  )
+);
+
+router.get(
+  "/withdrawalRequests",
+  authenticateToken,
+  isInstructor,
+  instructorWithdrawalController.getWithdrawalRequestsWithPagination.bind(
+    instructorWithdrawalController
+  )
+);
+
+router.patch(
+  "/withdrawalRequest/:requestId/retry",
+  isInstructor,
+  instructorWithdrawalController.retryWithdrawalRequest.bind(
+    instructorWithdrawalController
   )
 );
 
@@ -521,8 +561,10 @@ router.get(
   "/slotBooking/:slotId",
   authenticateToken,
   isInstructor,
-  instructorSlotBookingController.getBookingDetail.bind(instructorSlotBookingController)
-)
+  instructorSlotBookingController.getBookingDetail.bind(
+    instructorSlotBookingController
+  )
+);
 
 const instructorRoutes = router;
 

@@ -9,7 +9,7 @@ import {
   // Image,
   CreditCard,
   Crown,
-  // BadgePercent,
+  BadgePercent,
   ShieldCheck,
   ShoppingCart,
   LogOut,
@@ -40,7 +40,7 @@ const AdminLayout = () => {
     { name: "Order Management", icon: <ShoppingCart />, path: "orders" },
     { name: "Wallet", icon: <CreditCard />, path: "wallet" },
     { name: "Membership", icon: <Crown />, path: "membership" },
-    // { name: "Coupon", icon: <BadgePercent />, path: "coupon" },
+    { name: "Withdrawal", icon: <BadgePercent />, path: "withdrawal" },
   ];
 
   const handleLogout = async () => {

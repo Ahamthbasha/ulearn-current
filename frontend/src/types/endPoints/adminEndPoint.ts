@@ -32,6 +32,12 @@ const AdminRoutersEndPoints = {
   adminCreateOrderForWalletCredit: "/api/admin/wallet/payment/createOrder",
   adminVerifyPayment: "/api/admin/wallet/payment/verify",
 
+  //withdrawal
+  adminGetAllWithdrawalRequests : "/api/admin/allWithdrawalRequests",
+  adminWithdrawalPending : "/api/admin/withdrawalRequestPending",
+  adminWithdrawalApprove : "/api/admin/withdrawalRequestApprove",
+  adminWithdrawalReject : "/api/admin/withdrawalRequestReject",
+  adminGetRequestDetails : "/api/admin/withdrawalRequest",
   //membership
 
   adminAddMembershipPlan : '/api/admin/membershipPlan',

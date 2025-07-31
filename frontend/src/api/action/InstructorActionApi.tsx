@@ -7,6 +7,7 @@ import {
 } from "../../types/interfaces/IQuiz";
 
 import { type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesParam";
+import type { IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
 
 //verification api call
 
@@ -58,7 +59,6 @@ export const instructorGetProfile = async () => {
     );
 
     console.log("instructor profile data response", response.data);
-
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
@@ -81,7 +81,6 @@ export const instructorUpdateProfile = async (
     );
 
     console.log("instructor updateprofile response", response.data);
-
     return response.data;
   } catch (error) {
     throw error;
@@ -99,7 +98,6 @@ export const instructorUpdatePassword = async (data: any): Promise<any> => {
     );
 
     console.log("instructor password updation data", response.data);
-
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
@@ -107,6 +105,15 @@ export const instructorUpdatePassword = async (data: any): Promise<any> => {
     }
   }
 };
+
+export const instructorUpdateBankDetail = async(data:any)=>{
+  try {
+    const response = await API.post(`${InstructorRouterEndPoints.instructorUpdateBankDetail}`,data)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 //FETCH CATEGORY
 
@@ -446,13 +453,11 @@ export const publishCourse = async (courseId: string) => {
 };
 
 //dashboard
-
 export const getDashboard = async () => {
   try {
     const response = await API.get(
       InstructorRouterEndPoints.instructorGetDashboard
     );
-
     return response.data.data;
   } catch (error) {
     throw error;
@@ -461,11 +466,17 @@ export const getDashboard = async () => {
 
 export const getRevenueDashboard = async (
   range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+  page: number,
+  limit: number,
   startDate?: string,
   endDate?: string
 ) => {
   try {
-    const queryParams = new URLSearchParams({ range });
+    const queryParams = new URLSearchParams({
+      range,
+      page: page.toString(),
+      limit: limit.toString(),
+    });
 
     if (range === "custom" && startDate && endDate) {
       queryParams.append("startDate", startDate);
@@ -473,9 +484,8 @@ export const getRevenueDashboard = async (
     }
 
     const endpoint = InstructorRouterEndPoints.instructorGetDashboardReport;
-
     const response = await API.get(`${endpoint}?${queryParams.toString()}`);
-    return response.data;
+    return response.data; // Returns { success: true, data: any[], total: number }
   } catch (error) {
     throw error;
   }
@@ -498,7 +508,7 @@ export const exportRevenueReport = async (
       "/api/instructor/dashboard/reportRevenueExport",
       {
         params,
-        responseType: "blob", // ⬅ Important to handle file streams
+        responseType: "blob", // Important to handle file streams
       }
     );
 
@@ -520,7 +530,7 @@ export const specificCourseDashboard = async (courseId: string) => {
       `${InstructorRouterEndPoints.instructorSpecificCourse}/${courseId}`
     );
 
-    console.log('specific course',response.data)
+    console.log('specific course', response.data);
 
     return response.data;
   } catch (error) {
@@ -532,11 +542,15 @@ export const specificCourseReport = async (
   courseId: string,
   range: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  page: number = 1,
+  limit: number = 5
 ) => {
   try {
     const queryParams = new URLSearchParams();
     queryParams.append('range', range);
+    queryParams.append('page', page.toString());
+    queryParams.append('limit', limit.toString());
     if (range === 'custom') {
       if (startDate) queryParams.append('startDate', startDate);
       if (endDate) queryParams.append('endDate', endDate);
@@ -546,7 +560,9 @@ export const specificCourseReport = async (
       `${InstructorRouterEndPoints.instructorSpecificCourseReport}/${courseId}/revenueReport?${queryParams.toString()}`
     );
 
-    return response.data;
+    console.log('specific course report response:', response); // Add logging
+
+    return response; // Return full response instead of response.data
   } catch (error) {
     throw error;
   }
@@ -589,6 +605,8 @@ export const exportSpecificCourseReport = async (
     throw error;
   }
 };
+
+
 
 // wallet page
 
@@ -686,6 +704,44 @@ export const instructorWalletTransactionHistory = async (
   }
 };
 
+// instructor withdrawal request
+
+export const instructorCreateWithdrawal = async(amount:number)=>{
+  try {
+    const response = await API.post(`${InstructorRouterEndPoints.instructorCreateWithdrawalRequest}`,{amount})
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const instructorGetWithdrawal = async (
+  page: number,
+  limit: number
+): Promise<{ transactions: IWithdrawalRequest[], currentPage: number, totalPages: number, total: number }> => {
+  try {
+    const response = await API.get(`${InstructorRouterEndPoints.instructorGetWithdrawalRequest}`, {
+      params: { page, limit },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const retryWithdrawal = async (requestId: string, amount?: number) => {
+  try {
+    const response = await API.patch(
+      `${InstructorRouterEndPoints.instructorWithdrawalRetry}/${requestId}/retry`,
+      { amount }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+//membership
 export const instructorViewMemberships = async () => {
   try {
     const response = await API.get(

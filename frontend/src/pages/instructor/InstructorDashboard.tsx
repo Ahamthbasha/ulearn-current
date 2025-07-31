@@ -11,7 +11,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { BookOpen, DollarSign, Award, Target } from "lucide-react";
+import { BookOpen, DollarSign, Award, Target, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   getDashboard,
   getRevenueDashboard,
@@ -19,21 +19,31 @@ import {
 } from "../../api/action/InstructorActionApi";
 import { type IDashboardData } from "../../types/interfaces/IdashboardTypes";
 
+// Utility function to format date as DD-MM-YYYY
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Months are 0-based
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 const InstructorDashboard = () => {
-  const [dashboardData, setDashboardData] = useState<IDashboardData | null>(
-    null
-  );
+  const [dashboardData, setDashboardData] = useState<IDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [reportRange, setReportRange] = useState<
     "daily" | "weekly" | "monthly" | "yearly" | "custom"
   >("daily");
   const [reportData, setReportData] = useState<any[]>([]);
+  const [totalRecords, setTotalRecords] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [limit] = useState<number>(5); // Matches backend default limit
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [reportLoading, setReportLoading] = useState(false);
 
-  const fetchReport = async () => {
+  const fetchReport = async (page: number = 1) => {
     if (
       reportRange === "custom" &&
       (!startDate || !endDate || new Date(startDate) > new Date(endDate))
@@ -45,10 +55,22 @@ const InstructorDashboard = () => {
     }
 
     try {
-      const data = await getRevenueDashboard(reportRange, startDate, endDate);
-      setReportData(data?.data || []);
+      setReportLoading(true);
+      const response = await getRevenueDashboard(
+        reportRange,
+        page,
+        limit,
+        startDate,
+        endDate
+      );
+      setReportData(response?.data || []);
+      setTotalRecords(response?.total || 0);
+      setCurrentPage(page);
     } catch (error) {
       console.error("Failed to fetch report:", error);
+      setError("Failed to fetch revenue report");
+    } finally {
+      setReportLoading(false);
     }
   };
 
@@ -69,6 +91,11 @@ const InstructorDashboard = () => {
 
     loadDashboard();
   }, []);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > Math.ceil(totalRecords / limit)) return;
+    fetchReport(newPage);
+  };
 
   if (loading) {
     return (
@@ -209,7 +236,6 @@ const InstructorDashboard = () => {
         </div>
 
         {/* Revenue Report Generator */}
-        {/* Revenue Report Generator */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Generate Revenue Report
@@ -217,7 +243,10 @@ const InstructorDashboard = () => {
           <div className="flex flex-wrap gap-4 items-end">
             <select
               value={reportRange}
-              onChange={(e) => setReportRange(e.target.value as any)}
+              onChange={(e) => {
+                setReportRange(e.target.value as any);
+                setCurrentPage(1); // Reset to page 1 on range change
+              }}
               className="border rounded px-3 py-2"
             >
               <option value="daily">Daily</option>
@@ -233,37 +262,39 @@ const InstructorDashboard = () => {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  max={new Date().toISOString().split("T")[0]} // ✅ max today
+                  max={new Date().toISOString().split("T")[0]}
                   className="border rounded px-3 py-2"
                 />
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  max={new Date().toISOString().split("T")[0]} // ✅ max today
+                  max={new Date().toISOString().split("T")[0]}
                   className="border rounded px-3 py-2"
                 />
               </>
             )}
 
             <button
-              onClick={fetchReport}
+              onClick={() => fetchReport(1)}
               disabled={
-                reportRange === "custom" &&
-                (!startDate ||
-                  !endDate ||
-                  new Date(startDate) > new Date(endDate))
+                reportLoading ||
+                (reportRange === "custom" &&
+                  (!startDate ||
+                    !endDate ||
+                    new Date(startDate) > new Date(endDate)))
               }
               className={`${
-                reportRange === "custom" &&
-                (!startDate ||
-                  !endDate ||
-                  new Date(startDate) > new Date(endDate))
+                reportLoading ||
+                (reportRange === "custom" &&
+                  (!startDate ||
+                    !endDate ||
+                    new Date(startDate) > new Date(endDate)))
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-emerald-600 hover:bg-emerald-700"
               } text-white px-4 py-2 rounded transition`}
             >
-              Create Report
+              {reportLoading ? "Loading..." : "Create Report"}
             </button>
           </div>
 
@@ -318,8 +349,7 @@ const InstructorDashboard = () => {
                         }
                       >
                     >((acc, curr) => {
-                      const orderId = curr._id.toString();
-
+                      const orderId = curr.orderId.toString();
                       if (!acc[orderId]) {
                         acc[orderId] = {
                           date: curr.createdAt,
@@ -328,20 +358,16 @@ const InstructorDashboard = () => {
                           totalInstructorEarning: 0,
                         };
                       }
-
                       acc[orderId].courses.push(curr.courseName);
                       acc[orderId].totalPrice += curr.coursePrice;
                       acc[orderId].totalInstructorEarning +=
                         curr.instructorEarning;
-
                       return acc;
                     }, {})
                   ).map(([orderId, data], idx) => (
                     <tr key={idx} className="border-t">
                       <td className="px-4 py-2">#{orderId}</td>
-                      <td className="px-4 py-2">
-                        {new Date(data.date).toLocaleDateString()}
-                      </td>
+                      <td className="px-4 py-2">{formatDate(data.date)}</td>
                       <td className="px-4 py-2">{data.courses.join(", ")}</td>
                       <td className="px-4 py-2">
                         ₹{data.totalPrice.toFixed(2)}
@@ -352,7 +378,6 @@ const InstructorDashboard = () => {
                     </tr>
                   ))}
                 </tbody>
-
                 <tfoot>
                   <tr className="bg-gray-100 font-semibold">
                     <td colSpan={4} className="px-4 py-2 text-right">
@@ -363,7 +388,7 @@ const InstructorDashboard = () => {
                       {(
                         Object.values(
                           reportData.reduce((acc, curr) => {
-                            const orderId = curr._id.toString();
+                            const orderId = curr.orderId.toString();
                             acc[orderId] = acc[orderId] || 0;
                             acc[orderId] += curr.instructorEarning;
                             return acc;
@@ -376,10 +401,38 @@ const InstructorDashboard = () => {
                   </tr>
                 </tfoot>
               </table>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1 || reportLoading}
+                    className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="text-sm font-medium">
+                    Page {currentPage} of {Math.ceil(totalRecords / limit)}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={
+                      currentPage >= Math.ceil(totalRecords / limit) ||
+                      reportLoading
+                    }
+                    className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <p className="text-gray-500 mt-4">
-              No data available. Please generate a report.
+              {reportLoading
+                ? "Loading report..."
+                : "No data available. Please generate a report."}
             </p>
           )}
         </div>

@@ -57,10 +57,10 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 const start = async () => {
   try {
     await connectDB(); // Connect to MongoDB
-    console.log("✅ Database connected successfully");
+    console.log(" Database connected successfully");
     
     startMembershipExpiryJob(); // Start CRON job
-    console.log("✅ Membership expiry job started");
+    console.log(" Membership expiry job started");
 
     const httpServer = createServer(app); // Create raw HTTP server
 
@@ -77,16 +77,16 @@ const start = async () => {
 
     // Initialize Socket.IO with the created server
     await initializeSocketIO(io);
-    console.log("✅ Socket.IO initialized successfully");
+    console.log(" Socket.IO initialized successfully");
 
     httpServer.listen(port, () => {
-      console.log(`🚀 Server is running on port ${port}`);
-      console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
-      console.log(`🔌 Socket.IO is ready for connections`);
+      console.log(` Server is running on port ${port}`);
+      console.log(` Frontend URL: ${process.env.FRONTEND_URL}`);
+      console.log(` Socket.IO is ready for connections`);
     });
 
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error(" Failed to start server:", error);
     process.exit(1);
   }
 };

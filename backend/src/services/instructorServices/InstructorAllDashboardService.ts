@@ -28,10 +28,12 @@ export class InstructorAllCourseDashboardService implements IInstructorAllCourse
   async getDetailedRevenueReport(
   instructorId: Types.ObjectId,
   range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+  page: number,
+  limit: number,
   startDate?: Date,
   endDate?: Date
-): Promise<any[]> {
-  return this.dashboardRepo.getDetailedRevenueReport(instructorId, range, startDate, endDate);
+): Promise<{ data: any[]; total: number }> {
+  return this.dashboardRepo.getDetailedRevenueReport(instructorId, range, page, limit, startDate, endDate);
 }
 
 

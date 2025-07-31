@@ -102,7 +102,7 @@ export const generateStudentSlotReportExcel = async (
     "",
     "",
     "",
-    "Total Revenue",
+    "Total Expenses",
     report.reduce((sum, item) => sum + Number(item.price), 0),
   ]);
 
@@ -195,7 +195,7 @@ export async function generateStudentCourseReportPdf(
   drawRow(totalRow1, y, 30, { isTotal: true });
   y += 30;
 
-  const totalRow2 = ["", "", "Total Revenue:", `Rs. ${total.toFixed(2)}`]; // Changed to "Rs. [total]"
+  const totalRow2 = ["", "", "Total Expenses:", `Rs. ${total.toFixed(2)}`]; // Changed to "Rs. [total]"
   drawRow(totalRow2, y, 30, { isTotal: true });
 
   doc.end();

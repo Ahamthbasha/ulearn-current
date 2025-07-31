@@ -25,6 +25,8 @@ import MembershipOrderDetail from "../pages/admin/purchaseHistory/MembershipOrde
 import NotFound from "../components/common/NotFound";
 import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
 import AdminCourseDetailPage from "../pages/admin/course/AdminCourseDetailPage";
+import Withdrawal from "../pages/admin/withdrawal/Withdrawal";
+import WithdrawalDetailsPage from "../pages/admin/withdrawal/WithdrawalDetails";
 
 //wallet
 
@@ -78,6 +80,10 @@ const AdminRouter = () => {
           <Route path="membershipPurchase/:txnId" element={<MembershipOrderDetail/>}/>
 
           <Route path="dashboard" element={<AdminDashboard/>}/>
+
+          {/* withdrawal request */}
+          <Route path="withdrawal" element={<Withdrawal/>}/>
+          <Route path="withdrawals/:requestId" element={<WithdrawalDetailsPage/>}/>
         </Route>
       </Route>
       <Route path="*" element={<NotFound/>}/>

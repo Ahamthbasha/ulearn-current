@@ -11,3 +11,5 @@ export interface IInstructorProfileRepository {
     hashedPassword: string
   ): Promise<IInstructor | null>;
 }
+
+

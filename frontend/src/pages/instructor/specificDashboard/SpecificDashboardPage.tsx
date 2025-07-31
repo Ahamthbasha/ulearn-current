@@ -15,7 +15,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { DollarSign, Users, Tag, BookOpen } from "lucide-react";
+import { DollarSign, Users, Tag, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 
@@ -31,6 +31,7 @@ interface ReportItem {
   purchaseDate: string;
   coursePrice: number;
   instructorRevenue: number;
+  totalEnrollments: number;
 }
 
 const monthMap = [
@@ -56,6 +57,9 @@ const SpecificDashboardPage = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [reportLoading, setReportLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState({ pdf: false, excel: false });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [limit] = useState(5); // Default items per page
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -81,7 +85,7 @@ const SpecificDashboardPage = () => {
     fetchData();
   }, [courseId]);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (page: number = 1) => {
     try {
       if (!courseId) return;
 
@@ -90,20 +94,20 @@ const SpecificDashboardPage = () => {
           toast.error("Please select both start and end dates.");
           return;
         }
-        
+
         // Validate dates
         const today = new Date().toISOString().split('T')[0];
-        
+
         if (startDate > today) {
           toast.error("Start date cannot be in the future.");
           return;
         }
-        
+
         if (endDate > today) {
           toast.error("End date cannot be in the future.");
           return;
         }
-        
+
         if (startDate > endDate) {
           toast.error("Start date cannot be later than end date.");
           return;
@@ -111,19 +115,49 @@ const SpecificDashboardPage = () => {
       }
 
       setReportLoading(true);
-      const response = await specificCourseReport(courseId, filter, startDate, endDate);
-      
-      // Extract data from response
-      const reportItems = response.data || [];
+      const response = await specificCourseReport(courseId, filter, startDate, endDate, page, limit);
+
+      // Detailed logging for debugging
+      console.log("Raw Response:", JSON.stringify(response, null, 2));
+      console.log("Response Data:", JSON.stringify(response.data, null, 2));
+
+      // Check response structure
+      if (!response || !response.data) {
+        throw new Error("Invalid response from server");
+      }
+
+      let reportItems: ReportItem[];
+      let total: number;
+
+      // Handle both possible response structures
+      if (Array.isArray(response.data)) {
+        // Backward compatibility: response.data is ReportItem[]
+        reportItems = response.data;
+        total = reportItems.length;
+      } else {
+        // Expected structure: { success: boolean, data: ReportItem[], total: number }
+        const { success, data, total: responseTotal, message } = response.data;
+        if (!success) {
+          throw new Error(message || "Server returned an error");
+        }
+        if (!Array.isArray(data)) {
+          throw new Error("Report data is not an array");
+        }
+        reportItems = data;
+        total = responseTotal || data.length;
+      }
+
       setReportData(reportItems);
-      
+      setTotalRecords(total);
+      setCurrentPage(page);
+
       // Calculate total revenue from the report data
       const calculatedTotalRevenue = reportItems.reduce(
-        (sum: number, item: ReportItem) => sum + item.instructorRevenue, 
+        (sum: number, item: ReportItem) => sum + item.instructorRevenue,
         0
       );
       setTotalRevenue(calculatedTotalRevenue);
-      
+
       if (reportItems.length === 0) {
         toast.info("No data found for the selected period.");
       } else {
@@ -131,7 +165,7 @@ const SpecificDashboardPage = () => {
       }
     } catch (error) {
       console.error("Report generation error:", error);
-      toast.error("Failed to generate report");
+      toast.error(error instanceof Error ? error.message : "Failed to generate report");
     } finally {
       setReportLoading(false);
     }
@@ -155,6 +189,11 @@ const SpecificDashboardPage = () => {
     } finally {
       setExportLoading((prev) => ({ ...prev, [format]: false }));
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > Math.ceil(totalRecords / limit)) return;
+    handleGenerateReport(newPage);
   };
 
   if (loading) {
@@ -259,7 +298,10 @@ const SpecificDashboardPage = () => {
           <div className="flex flex-wrap gap-4 items-center mb-6">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value as typeof filter)}
+              onChange={(e) => {
+                setFilter(e.target.value as typeof filter);
+                setCurrentPage(1); // Reset to page 1 on filter change
+              }}
               className="border px-3 py-2 rounded-md"
               disabled={reportLoading}
             >
@@ -293,7 +335,7 @@ const SpecificDashboardPage = () => {
             )}
 
             <button
-              onClick={handleGenerateReport}
+              onClick={() => handleGenerateReport(1)}
               disabled={reportLoading}
               className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
             >
@@ -351,18 +393,39 @@ const SpecificDashboardPage = () => {
                       <td className="p-3 text-green-600">₹{item.instructorRevenue.toLocaleString()}</td>
                     </tr>
                   ))}
-
                   <tr className="bg-gray-100 font-semibold">
                     <td colSpan={4} className="p-3 text-right">Total Instructor Revenue</td>
                     <td className="p-3 text-green-700">₹{totalRevenue.toLocaleString()}</td>
                   </tr>
-
                   <tr className="bg-gray-100 font-semibold">
                     <td colSpan={4} className="p-3 text-right">Total Enrollments</td>
                     <td className="p-3 text-green-700">{dashboard?.enrollments || 0}</td>
                   </tr>
                 </tbody>
               </table>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center justify-between mt-4 px-3">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1 || reportLoading}
+                    className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="text-sm font-medium">
+                    Page {currentPage} of {Math.ceil(totalRecords / limit)}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= Math.ceil(totalRecords / limit) || reportLoading}
+                    className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

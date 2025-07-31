@@ -9,6 +9,7 @@ import {
   adminMembershipController,
   adminMembershipOrderController,
   adminDashboardController,
+  adminWithdrawalController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/AuthenticatedRoutes";
 
@@ -178,6 +179,36 @@ router.post(
   isAdmin,
   adminWalletPaymentController.verifyPayment.bind(adminWalletPaymentController)
 );
+
+//withdrawal request from admin//
+
+router.get(
+  "/allWithdrawalRequests",
+  authenticateToken,
+  isAdmin,
+  adminWithdrawalController.getAllWithdrawalRequests.bind(adminWithdrawalController)
+)
+
+router.get(
+  "/withdrawalRequest/:requestId",
+  authenticateToken,
+  isAdmin,
+  adminWithdrawalController.getWithdrawalRequestById.bind(adminWithdrawalController)
+)
+
+router.post(
+  "/withdrawalRequestApprove",
+  authenticateToken,
+  isAdmin,
+  adminWithdrawalController.approveWithdrawalRequest.bind(adminWithdrawalController)
+)
+
+router.post(
+  "/withdrawalRequestReject",
+  authenticateToken,
+  isAdmin,
+  adminWithdrawalController.rejectWithdrawalRequest.bind(adminWithdrawalController)
+)
 
 //member management route
 

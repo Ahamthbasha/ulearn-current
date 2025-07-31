@@ -3,6 +3,7 @@ import { API } from "../../service/axios";
 import AdminRoutersEndPoints from "../../types/endPoints/adminEndPoint";
 import { type IMembershipPayload } from "../../types/interfaces/IMembershipPayload";
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
+import { type IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
 
 export const getAllUser = async (
@@ -382,6 +383,68 @@ export const adminWalletTransactionHistory = async (
         params: { page, limit },
       }
     );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+//admin withdrawal status change
+export const adminGetAllWithdrawalRequests = async (
+  page: number,
+  limit: number
+): Promise<{
+  transactions: IWithdrawalRequest[];
+  currentPage: number;
+  totalPages: number;
+  total: number;
+}> => {
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminGetAllWithdrawalRequests}`, {
+      params: { page, limit },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch withdrawal requests");
+  }
+};
+
+export const adminGetWithdrawalRequestById = async(requestId:string)=>{
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminGetRequestDetails}/${requestId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const adminPendingWithdrawal = async () => {
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminWithdrawalPending}`);
+    return response.data.data; // Extract the data array from the response
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const adminApproveWithdrawal = async (requestId: string, remarks?: string) => {
+  try {
+    const response = await API.post(`${AdminRoutersEndPoints.adminWithdrawalApprove}`, {
+      requestId,
+      remarks
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const adminRejectWithdrawal = async (requestId: string, remarks?: string) => {
+  try {
+    const response = await API.post(`${AdminRoutersEndPoints.adminWithdrawalReject}`, {
+      requestId,
+      remarks
+    });
     return response.data;
   } catch (error) {
     throw error;

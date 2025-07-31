@@ -4,6 +4,8 @@ import { JwtService } from '../utils/jwt';
 dotenv.config();
 
 import { Server, Socket } from "socket.io";
+//server - socket.io server instance
+//socket - individual client connection
 import studentCollection from "../models/userModel";
 import instructorCollection from "../models/instructorModel";
 
@@ -21,6 +23,7 @@ interface DecodedToken {
   [key: string]: any;
 }
 
+// it follows a singleton pattern.instance hold the single instance of the socket Manager.
 class SocketManager {
   private static instance: SocketManager;
   private onlineUsers: Map<string, OnlineUser> = new Map();
@@ -72,6 +75,10 @@ class SocketManager {
     });
   }
 }
+
+
+
+//initialize the socket.io server
 
 async function initializeSocketIO(io: Server) {
   console.log("Initializing Socket.IO");
@@ -127,7 +134,7 @@ async function initializeSocketIO(io: Server) {
       socket.data.role
     );
 
-    // Emit user online status
+    // Emit user online status.It announcing the user's online status with their email and role
     socket.broadcast.emit("user:online", {
       email: socket.data.email,
       role: socket.data.role
@@ -217,51 +224,6 @@ async function initializeSocketIO(io: Server) {
       }
     });
 
-    // Get online users (useful for showing available instructors/students)
-    socket.on("get:online:users", () => {
-      const onlineUsers = socketManager.getAllOnlineUsers();
-      socket.emit("online:users", onlineUsers);
-    });
-
-    // Get online instructors (for students to see available instructors)
-    socket.on("get:online:instructors", () => {
-      const onlineUsers = socketManager.getAllOnlineUsers();
-      const onlineInstructors = onlineUsers.filter(user => user.role === "instructor");
-      socket.emit("online:instructors", onlineInstructors);
-    });
-
-    // Get online students (for instructors to see available students)
-    socket.on("get:online:students", () => {
-      const onlineUsers = socketManager.getAllOnlineUsers();
-      const onlineStudents = onlineUsers.filter(user => user.role === "Student");
-      socket.emit("online:students", onlineStudents);
-    });
-
-    // Handle typing indicators for chat
-    socket.on("typing:start", (data) => {
-      const { to } = data;
-      const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
-      
-      if (recipientSocketId) {
-        io.to(recipientSocketId.socketId).emit("user:typing", {
-          from: socket.data.email,
-          fromRole: socket.data.role
-        });
-      }
-    });
-
-    socket.on("typing:stop", (data) => {
-      const { to } = data;
-      const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
-      
-      if (recipientSocketId) {
-        io.to(recipientSocketId.socketId).emit("user:stopped:typing", {
-          from: socket.data.email,
-          fromRole: socket.data.role
-        });
-      }
-    });
-  
     // Handle disconnection
     socket.on("disconnect", () => {
       console.log(`${socket.data.role} disconnected: ${socket.id}, Email: ${socket.data.email}`);
@@ -283,9 +245,7 @@ function extractToken(socket: Socket): string {
   // Check for different access tokens based on role
   const token = 
     cookies.accessToken || 
-    socket.handshake.auth?.token || 
-    cookies.accessToken ||  // Student token
-    cookies.accessToken;    // Instructor token
+    socket.handshake.auth?.token
   
   if (!token) {
     throw new Error("No authentication token provided");

@@ -21,6 +21,8 @@ export interface IStudentDashboardService {
       type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
       startDate?: string;
       endDate?: string;
+      page?: number;
+      limit?: number;
     }
   ): Promise<IStudentCourseReportItem[]>;
 
@@ -30,6 +32,8 @@ export interface IStudentDashboardService {
       type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
       startDate?: string;
       endDate?: string;
+      page?: number;
+      limit?: number;
     }
   ): Promise<IStudentSlotReportItem[]>;
 }

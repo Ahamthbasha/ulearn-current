@@ -23,6 +23,7 @@ import {
   Search,
   TrendingUp,
   DollarSign,
+  AlertCircle,
 } from "lucide-react";
 
 // Interfaces
@@ -81,8 +82,6 @@ interface MembershipReportRow {
   date: Date;
 }
 
-
-
 const monthNames = [
   "Jan",
   "Feb",
@@ -110,8 +109,10 @@ const AdminDashboard = () => {
     totalSales: number;
   }>({ totalRevenue: 0, totalSales: 0 });
   const [filter, setFilter] = useState<ReportFilter>({ type: "monthly" });
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
+  const [courseCurrentPage, setCourseCurrentPage] = useState<number>(1);
+  const [courseTotalPages, setCourseTotalPages] = useState<number>(1);
+  const [membershipCurrentPage, setMembershipCurrentPage] = useState<number>(1);
+  const [membershipTotalPages, setMembershipTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [reportLoading, setReportLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
@@ -120,7 +121,89 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<"course" | "membership">("course");
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
-  const limit = 5; // Fixed limit for pagination
+  const [dateValidationError, setDateValidationError] = useState<string>("");
+  const limit = 1; // Fixed limit for pagination
+
+  // Get today's date in YYYY-MM-DD format
+  const getTodayString = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // Date validation functions
+  const validateDates = (startDate: string, endDate: string): string => {
+    if (!startDate || !endDate) {
+      return "Both start date and end date are required";
+    }
+
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Set time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    // Check if end date is in the future
+    if (end > today) {
+      return "End date cannot be in the future";
+    }
+
+    // Check if start date is in the future
+    if (start > today) {
+      return "Start date cannot be in the future";
+    }
+
+    // Check if start date is after end date
+    if (start > end) {
+      return "Start date cannot be after end date";
+    }
+
+    // Check if date range is too large (optional - you can adjust this)
+    const daysDifference = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDifference > 365) {
+      return "Date range cannot exceed 365 days";
+    }
+
+    return "";
+  };
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    setCustomStartDate(newStartDate);
+    
+    if (newStartDate && customEndDate) {
+      const validationError = validateDates(newStartDate, customEndDate);
+      setDateValidationError(validationError);
+    } else {
+      setDateValidationError("");
+    }
+    setShowReports(false);
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndDate = e.target.value;
+    setCustomEndDate(newEndDate);
+    
+    if (customStartDate && newEndDate) {
+      const validationError = validateDates(customStartDate, newEndDate);
+      setDateValidationError(validationError);
+    } else {
+      setDateValidationError("");
+    }
+    setShowReports(false);
+  };
+
+  const isGenerateButtonDisabled = () => {
+    if (reportLoading) return true;
+    
+    if (filter.type === "custom") {
+      return !customStartDate || !customEndDate || !!dateValidationError;
+    }
+    
+    return false;
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -136,10 +219,9 @@ const AdminDashboard = () => {
     }
   };
 
-  const generateReports = async () => {
+  const generateCourseReport = async (page: number = courseCurrentPage) => {
     try {
       setReportLoading(true);
-
       const reportFilter = {
         ...filter,
         ...(filter.type === "custom" && customStartDate && customEndDate
@@ -150,18 +232,37 @@ const AdminDashboard = () => {
           : {}),
       };
 
-      const [courseRes, membershipRes] = await Promise.all([
-        getCourseReport(reportFilter, currentPage, limit),
-        getMembershipCourseReport(reportFilter, currentPage, limit),
-      ]);
+      const courseRes = await getCourseReport(reportFilter, page, limit);
 
       if (courseRes.success) {
         setCourseReport(courseRes.data || []);
         setCourseReportTotals({ totalAdminShare: courseRes.adminShare || 0 });
-        setTotalPages(Math.ceil(courseRes.totalItems / limit));
+        setCourseTotalPages(Math.ceil(courseRes.totalItems / limit));
       } else {
         throw new Error("Invalid course report response");
       }
+    } catch (err) {
+      console.error("Failed to generate course report:", err);
+      setError("Failed to generate course report");
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const generateMembershipReport = async (page: number = membershipCurrentPage) => {
+    try {
+      setReportLoading(true);
+      const reportFilter = {
+        ...filter,
+        ...(filter.type === "custom" && customStartDate && customEndDate
+          ? {
+              startDate: new Date(customStartDate),
+              endDate: new Date(customEndDate),
+            }
+          : {}),
+      };
+
+      const membershipRes = await getMembershipCourseReport(reportFilter, page, limit);
 
       if (membershipRes.success) {
         setMembershipReport(membershipRes.data || []);
@@ -169,11 +270,25 @@ const AdminDashboard = () => {
           totalRevenue: membershipRes.totalRevenue || 0,
           totalSales: membershipRes.totalSales || 0,
         });
-        setTotalPages(Math.ceil(membershipRes.totalItems / limit));
+        setMembershipTotalPages(Math.ceil(membershipRes.totalItems / limit));
       } else {
         throw new Error("Invalid membership report response");
       }
+    } catch (err) {
+      console.error("Failed to generate membership report:", err);
+      setError("Failed to generate membership report");
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
+  const generateReports = async () => {
+    try {
+      setReportLoading(true);
+      await Promise.all([
+        generateCourseReport(courseCurrentPage),
+        generateMembershipReport(membershipCurrentPage),
+      ]);
       setShowReports(true);
     } catch (err) {
       console.error("Failed to generate reports:", err);
@@ -210,10 +325,17 @@ const AdminDashboard = () => {
     }
   };
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-      generateReports(); // Re-fetch reports with the new page
+  const handleCoursePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= courseTotalPages) {
+      setCourseCurrentPage(newPage);
+      generateCourseReport(newPage);
+    }
+  };
+
+  const handleMembershipPageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= membershipTotalPages) {
+      setMembershipCurrentPage(newPage);
+      generateMembershipReport(newPage);
     }
   };
 
@@ -221,17 +343,19 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  useEffect(() => {
-    if (showReports) {
-      generateReports();
-    }
-  }, [currentPage]); // Re-fetch when page changes
-
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = e.target.value as ReportFilter["type"];
     setFilter({ type: selected });
     setShowReports(false);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCourseCurrentPage(1);
+    setMembershipCurrentPage(1);
+    
+    // Reset custom dates and validation errors when switching away from custom
+    if (selected !== "custom") {
+      setCustomStartDate("");
+      setCustomEndDate("");
+      setDateValidationError("");
+    }
   };
 
   const formatGraphData = (sales: SalesData[]) =>
@@ -413,71 +537,101 @@ const AdminDashboard = () => {
         </div>
 
         {/* Filter Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Calendar className="inline h-4 w-4 mr-1" />
-              Report Type
-            </label>
-            <select
-              className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={filter.type}
-              onChange={handleFilterChange}
-            >
-              <option value="daily">Daily Report</option>
-              <option value="weekly">Weekly Report</option>
-              <option value="monthly">Monthly Report</option>
-              <option value="custom">Custom Range</option>
-            </select>
+        <div className="p-4 bg-gray-50 rounded-lg mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Calendar className="inline h-4 w-4 mr-1" />
+                Report Type
+              </label>
+              <select
+                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={filter.type}
+                onChange={handleFilterChange}
+              >
+                <option value="daily">Daily Report</option>
+                <option value="weekly">Weekly Report</option>
+                <option value="monthly">Monthly Report</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            {filter.type === "custom" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    className={`w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      dateValidationError ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    value={customStartDate}
+                    onChange={handleStartDateChange}
+                    max={getTodayString()}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    className={`w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      dateValidationError ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    value={customEndDate}
+                    onChange={handleEndDateChange}
+                    max={getTodayString()}
+                    min={customStartDate || undefined}
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="flex items-end">
+              <button
+                onClick={generateReports}
+                disabled={isGenerateButtonDisabled()}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+              >
+                {reportLoading ? (
+                  <RefreshCw className="animate-spin h-4 w-4" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                <span>
+                  {reportLoading ? "Generating..." : "Generate Reports"}
+                </span>
+              </button>
+            </div>
           </div>
 
-          {filter.type === "custom" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  className="w-full border border-gray-200 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)} // Fixed typo
-                />
-              </div>
-            </>
+          {/* Date Validation Error */}
+          {dateValidationError && (
+            <div className="flex items-center space-x-2 text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">{dateValidationError}</span>
+            </div>
           )}
 
-          <div className="flex items-end">
-            <button
-              onClick={generateReports}
-              disabled={
-                reportLoading ||
-                (filter.type === "custom" &&
-                  (!customStartDate || !customEndDate))
-              }
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
-            >
-              {reportLoading ? (
-                <RefreshCw className="animate-spin h-4 w-4" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              <span>
-                {reportLoading ? "Generating..." : "Generate Reports"}
-              </span>
-            </button>
-          </div>
+          {/* Date Selection Helper Text */}
+          {filter.type === "custom" && !dateValidationError && (
+            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-md border border-blue-200">
+              <div className="flex items-start space-x-2">
+                <Calendar className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-800 mb-1">Date Selection Guidelines:</p>
+                  <ul className="text-blue-700 space-y-1">
+                    <li>• End date must be today or earlier</li>
+                    <li>• Start date must be before or equal to end date</li>
+                    <li>• Maximum date range: 365 days</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Report Status */}
@@ -657,21 +811,21 @@ const AdminDashboard = () => {
                     </table>
                   </div>
 
-                  {/* Pagination Controls */}
+                  {/* Course Pagination Controls */}
                   <div className="flex justify-center items-center space-x-4 mt-4">
                     <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={() => handleCoursePageChange(courseCurrentPage - 1)}
+                      disabled={courseCurrentPage === 1}
                       className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
                     <span>
-                      Page {currentPage} of {totalPages}
+                      Page {courseCurrentPage} of {courseTotalPages}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={() => handleCoursePageChange(courseCurrentPage + 1)}
+                      disabled={courseCurrentPage === courseTotalPages}
                       className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       Next
@@ -764,21 +918,21 @@ const AdminDashboard = () => {
                     </table>
                   </div>
 
-                  {/* Pagination Controls */}
+                  {/* Membership Pagination Controls */}
                   <div className="flex justify-center items-center space-x-4 mt-4">
                     <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      onClick={() => handleMembershipPageChange(membershipCurrentPage - 1)}
+                      disabled={membershipCurrentPage === 1}
                       className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
                     <span>
-                      Page {currentPage} of {totalPages}
+                      Page {membershipCurrentPage} of {membershipTotalPages}
                     </span>
                     <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      onClick={() => handleMembershipPageChange(membershipCurrentPage + 1)}
+                      disabled={membershipCurrentPage === membershipTotalPages}
                       className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       Next

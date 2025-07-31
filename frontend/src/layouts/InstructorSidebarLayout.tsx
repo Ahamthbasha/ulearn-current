@@ -10,8 +10,6 @@ const navItems = [
   { name: "Create Course", path: "/instructor/createCourse", icon: "📚" },
   { name: "My Courses", path: "/instructor/courses", icon: "📖" },
   { name: "Slots", path: "/instructor/slots", icon: "📅" },
-  { name: "Meetings", path: "/instructor/meetings", icon: "🎥" },
-  { name: "Students", path: "/instructor/students", icon: "👥" },
   { name: "Wallet", path: "/instructor/wallet", icon: "💵" },
   { name: "Settings", path: "/instructor/profile", icon: "⚙️" },
   { name: "Memberships", path: "/instructor/membership", icon: "🏅" },

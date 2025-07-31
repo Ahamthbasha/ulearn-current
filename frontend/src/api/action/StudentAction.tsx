@@ -583,6 +583,7 @@ export const courseReport = async (filter: {
   type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
   startDate?: string;
   endDate?: string;
+  page?: number;
 }) => {
   try {
     const response = await API.get(`${UserRouterEndpoints.userCourseReport}`, {
@@ -590,6 +591,8 @@ export const courseReport = async (filter: {
         filter: filter.type,
         startDate: filter.startDate,
         endDate: filter.endDate,
+        page: filter.page,
+        limit: 5, // Fixed limit of 5
       },
     });
     return response.data;
@@ -602,6 +605,7 @@ export const slotReport = async (filter: {
   type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
   startDate?: string;
   endDate?: string;
+  page?: number;
 }) => {
   try {
     const response = await API.get(`${UserRouterEndpoints.userSlotReport}`, {
@@ -609,6 +613,8 @@ export const slotReport = async (filter: {
         filter: filter.type,
         startDate: filter.startDate,
         endDate: filter.endDate,
+        page: filter.page,
+        limit: 5, // Fixed limit of 5
       },
     });
     return response.data;
@@ -617,27 +623,112 @@ export const slotReport = async (filter: {
   }
 };
 
+// export const exportCourseReport = async (
+//   format: "pdf" | "excel",
+//   filter?: {
+//     type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+//     startDate?: string;
+//     endDate?: string;
+//     page?: number;
+//   }
+// ) => {
+//   try {
+//     const response = await API.get(UserRouterEndpoints.userExportCourseReport, {
+//       params: {
+//         format,
+//         filter: filter?.type,
+//         startDate: filter?.startDate,
+//         endDate: filter?.endDate,
+//         page: filter?.page,
+//         limit: 5, // Fixed limit of 5
+//       },
+//       responseType: "blob",
+//     });
+
+//     const filename =
+//       format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
+//     const blob = new Blob([response.data], {
+//       type:
+//         format === "pdf"
+//           ? "application/pdf"
+//           : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+//     });
+//     fileDownload(blob, filename);
+//   } catch (error) {
+//     console.error("Error exporting course report:", error);
+//     throw error;
+//   }
+// };
+
+// export const exportSlotReport = async (
+//   format: "pdf" | "excel",
+//   filter?: {
+//     type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+//     startDate?: string;
+//     endDate?: string;
+//     page?: number;
+//   }
+// ) => {
+//   try {
+//     const response = await API.get(UserRouterEndpoints.userExportSlotReport, {
+//       params: {
+//         format,
+//         filter: filter?.type,
+//         startDate: filter?.startDate,
+//         endDate: filter?.endDate,
+//         page: filter?.page,
+//         limit: 5, // Fixed limit of 5
+//       },
+//       responseType: "blob",
+//     });
+
+//     const filename = format === "pdf" ? "slot-report.pdf" : "slot-report.xlsx";
+//     const blob = new Blob([response.data], {
+//       type:
+//         format === "pdf"
+//           ? "application/pdf"
+//           : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+//     });
+//     fileDownload(blob, filename);
+//   } catch (error) {
+//     console.error("Error exporting slot report:", error);
+//     throw error;
+//   }
+// };
+
+
+
 export const exportCourseReport = async (
   format: "pdf" | "excel",
   filter?: {
     type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
     startDate?: string;
     endDate?: string;
-  }
+    page?: number;
+  },
+  customStartDate?: string, // Add these parameters
+  customEndDate?: string
 ) => {
   try {
+    const params: any = {
+      format,
+      filter: filter?.type || "custom",
+      page: filter?.page,
+      limit: 5,
+    };
+
+    // Include startDate and endDate for custom filter
+    if (filter?.type === "custom" && customStartDate && customEndDate) {
+      params.startDate = new Date(customStartDate).toISOString().split("T")[0];
+      params.endDate = new Date(customEndDate).toISOString().split("T")[0];
+    }
+
     const response = await API.get(UserRouterEndpoints.userExportCourseReport, {
-      params: {
-        format,
-        filter: filter?.type,
-        startDate: filter?.startDate,
-        endDate: filter?.endDate,
-      },
+      params,
       responseType: "blob",
     });
 
-    const filename =
-      format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
+    const filename = format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
     const blob = new Blob([response.data], {
       type:
         format === "pdf"
@@ -657,16 +748,27 @@ export const exportSlotReport = async (
     type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
     startDate?: string;
     endDate?: string;
-  }
+    page?: number;
+  },
+  customStartDate?: string, // Add these parameters
+  customEndDate?: string
 ) => {
   try {
+    const params: any = {
+      format,
+      filter: filter?.type || "custom",
+      page: filter?.page,
+      limit: 5,
+    };
+
+    // Include startDate and endDate for custom filter
+    if (filter?.type === "custom" && customStartDate && customEndDate) {
+      params.startDate = new Date(customStartDate).toISOString().split("T")[0];
+      params.endDate = new Date(customEndDate).toISOString().split("T")[0];
+    }
+
     const response = await API.get(UserRouterEndpoints.userExportSlotReport, {
-      params: {
-        format,
-        filter: filter?.type,
-        startDate: filter?.startDate,
-        endDate: filter?.endDate,
-      },
+      params,
       responseType: "blob",
     });
 

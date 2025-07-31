@@ -59,83 +59,179 @@ export class InstructorAllCourseDashboardController
     }
   }
 
+  // async getDetailedRevenueReport(
+  //   req: AuthenticatedRequest,
+  //   res: Response
+  // ): Promise<void> {
+  //   try {
+  //     const instructorId = req.user?.id;
+  //     if (!instructorId) {
+  //       res.status(401).json({ success: false, message: "Unauthorized" });
+  //       return;
+  //     }
+
+  //     const { range, startDate, endDate } = req.query;
+  //     const allowed = ["daily", "weekly", "monthly", "yearly", "custom"];
+  //     if (!range || !allowed.includes(range as string)) {
+  //       res
+  //         .status(400)
+  //         .json({ success: false, message: "Invalid or missing range" });
+  //       return;
+  //     }
+
+  //     const start = startDate ? new Date(startDate as string) : undefined;
+  //     const end = endDate ? new Date(endDate as string) : undefined;
+
+  //     const data = await this.service.getDetailedRevenueReport(
+  //       new Types.ObjectId(instructorId),
+  //       range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
+  //       start,
+  //       end
+  //     );
+
+  //     console.log("report data", data);
+
+  //     res.status(200).json({ success: true, data });
+  //   } catch (error) {
+  //     console.error("Detailed revenue report error:", error);
+  //     res
+  //       .status(500)
+  //       .json({ success: false, message: "Internal Server Error" });
+  //   }
+  // }
+
+  // async exportRevenueReport(
+  //   req: AuthenticatedRequest,
+  //   res: Response
+  // ): Promise<void> {
+  //   try {
+  //     const instructorId = req.user?.id;
+  //     const { range, startDate, endDate, format } = req.query;
+
+  //     if (
+  //       !instructorId ||
+  //       !range ||
+  //       !["pdf", "excel"].includes(format as string)
+  //     ) {
+  //       res
+  //         .status(400)
+  //         .json({ success: false, message: "Missing or invalid parameters" });
+  //       return;
+  //     }
+
+  //     const data = await this.service.getDetailedRevenueReport(
+  //       new Types.ObjectId(instructorId),
+  //       range as any,
+  //       startDate ? new Date(startDate as string) : undefined,
+  //       endDate ? new Date(endDate as string) : undefined
+  //     );
+
+  //     if (format === "excel") {
+  //       return generateExcelReport(data, res);
+  //     } else {
+  //       return generatePdfReport(data, res);
+  //     }
+  //   } catch (err) {
+  //     console.error("Export Error:", err);
+  //     res
+  //       .status(500)
+  //       .json({ success: false, message: "Internal Server Error" });
+  //   }
+  // }
+
   async getDetailedRevenueReport(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
-      const instructorId = req.user?.id;
-      if (!instructorId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
-        return;
-      }
-
-      const { range, startDate, endDate } = req.query;
-      const allowed = ["daily", "weekly", "monthly", "yearly", "custom"];
-      if (!range || !allowed.includes(range as string)) {
-        res
-          .status(400)
-          .json({ success: false, message: "Invalid or missing range" });
-        return;
-      }
-
-      const start = startDate ? new Date(startDate as string) : undefined;
-      const end = endDate ? new Date(endDate as string) : undefined;
-
-      const data = await this.service.getDetailedRevenueReport(
-        new Types.ObjectId(instructorId),
-        range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
-        start,
-        end
-      );
-
-      console.log("report data", data);
-
-      res.status(200).json({ success: true, data });
-    } catch (error) {
-      console.error("Detailed revenue report error:", error);
-      res
-        .status(500)
-        .json({ success: false, message: "Internal Server Error" });
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  try {
+    const instructorId = req.user?.id;
+    if (!instructorId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
     }
-  }
 
-  async exportRevenueReport(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
-      const instructorId = req.user?.id;
-      const { range, startDate, endDate, format } = req.query;
-
-      if (
-        !instructorId ||
-        !range ||
-        !["pdf", "excel"].includes(format as string)
-      ) {
-        res
-          .status(400)
-          .json({ success: false, message: "Missing or invalid parameters" });
-        return;
-      }
-
-      const data = await this.service.getDetailedRevenueReport(
-        new Types.ObjectId(instructorId),
-        range as any,
-        startDate ? new Date(startDate as string) : undefined,
-        endDate ? new Date(endDate as string) : undefined
-      );
-
-      if (format === "excel") {
-        return generateExcelReport(data, res);
-      } else {
-        return generatePdfReport(data, res);
-      }
-    } catch (err) {
-      console.error("Export Error:", err);
+    const { range, startDate, endDate, page = "1", limit = "5" } = req.query;
+    const allowed = ["daily", "weekly", "monthly", "yearly", "custom"];
+    if (!range || !allowed.includes(range as string)) {
       res
-        .status(500)
-        .json({ success: false, message: "Internal Server Error" });
+        .status(400)
+        .json({ success: false, message: "Invalid or missing range" });
+      return;
     }
+
+    const start = startDate ? new Date(startDate as string) : undefined;
+    const end = endDate ? new Date(endDate as string) : undefined;
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+
+    if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
+      res
+        .status(400)
+        .json({ success: false, message: "Invalid page or limit" });
+      return;
+    }
+
+    const { data, total } = await this.service.getDetailedRevenueReport(
+      new Types.ObjectId(instructorId),
+      range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
+      pageNum,
+      limitNum,
+      start,
+      end
+    );
+
+    console.log("report data", data);
+
+    res.status(200).json({ success: true, data, total });
+  } catch (error) {
+    console.error("Detailed revenue report error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Internal Server Error" });
   }
+}
+
+async exportRevenueReport(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  try {
+    const instructorId = req.user?.id;
+    const { range, startDate, endDate, format } = req.query;
+
+    if (
+      !instructorId ||
+      !range ||
+      !["pdf", "excel"].includes(format as string)
+    ) {
+      res
+        .status(400)
+        .json({ success: false, message: "Missing or invalid parameters" });
+      return;
+    }
+
+    // Fetch all data without pagination
+    const { data } = await this.service.getDetailedRevenueReport(
+      new Types.ObjectId(instructorId),
+      range as any,
+      1, // Use page 1 with a large limit to get all data
+      10000, // Arbitrary large limit to fetch all records
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? new Date(endDate as string) : undefined
+    );
+
+    if (format === "excel") {
+      return generateExcelReport(data, res);
+    } else {
+      return generatePdfReport(data, res);
+    }
+  } catch (err) {
+    console.error("Export Error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Internal Server Error" });
+  }
+}
+
+
 }

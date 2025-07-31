@@ -1,10 +1,11 @@
+import { Types } from "mongoose";
 import { IInstructorCourseSpecificDashboardRepository } from "../interfaces/IInstructorSpecificCourseDashboardRepository";
 import { IPaymentRepository } from "../interfaces/IPaymentRepository";
 import { IEnrollmentRepository } from "../interfaces/IEnrollmentRepository";
 import { ICourseRepository } from "../interfaces/ICourseRepository";
 import { IOrderRepository } from "../interfaces/IOrderRepository";
-import {Types} from "mongoose"
-import {INSTRUCTOR_REVENUE_SHARE} from "../../utils/constants"
+import { INSTRUCTOR_REVENUE_SHARE } from "../../utils/constants";
+
 export class InstructorSpecificCourseDashboardRepository
   implements IInstructorCourseSpecificDashboardRepository
 {
@@ -84,18 +85,21 @@ export class InstructorSpecificCourseDashboardRepository
   async getCourseRevenueReport(
     courseId: Types.ObjectId,
     range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+    page: number,
+    limit: number,
     startDate?: Date,
     endDate?: Date
-  ): Promise<
-    {
+  ): Promise<{
+    data: {
       orderId: string;
       courseName: string;
       purchaseDate: Date;
       coursePrice: number;
       instructorRevenue: number;
-      totalEnrollments : number
-    }[]
-  > {
+      totalEnrollments: number;
+    }[];
+    total: number;
+  }> {
     const now = new Date();
     let start: Date;
     let end: Date;
@@ -136,12 +140,37 @@ export class InstructorSpecificCourseDashboardRepository
         throw new Error("Invalid range");
     }
 
-    const payments = await this.paymentRepo.findAll({
-      status: "SUCCESS",
-      createdAt: { $gte: start, $lte: end },
-    });
+    // Use aggregation to get precise total count of payments with matching courseId
+    const totalPipeline = [
+      { $match: { status: "SUCCESS", createdAt: { $gte: start, $lte: end } } },
+      {
+        $lookup: {
+          from: "orders",
+          localField: "orderId",
+          foreignField: "_id",
+          as: "order",
+        },
+      },
+      { $unwind: "$order" },
+      { $match: { "order.courses": courseId } },
+      { $count: "total" },
+    ];
 
-    const enrollments = await this.getCourseEnrollmentCount(courseId); 
+    const totalResult = await this.paymentRepo.aggregate(totalPipeline);
+    const total = totalResult[0]?.total || 0;
+
+    // Get paginated payments
+    const { data: payments } = await this.paymentRepo.paginate(
+      {
+        status: "SUCCESS",
+        createdAt: { $gte: start, $lte: end },
+      },
+      page,
+      limit,
+      { createdAt: -1 }
+    );
+
+    const enrollments = await this.getCourseEnrollmentCount(courseId);
 
     const results = [];
 
@@ -160,10 +189,15 @@ export class InstructorSpecificCourseDashboardRepository
         purchaseDate: payment.createdAt,
         coursePrice: course.price,
         instructorRevenue: course.price * INSTRUCTOR_REVENUE_SHARE,
-        totalEnrollments:enrollments
+        totalEnrollments: enrollments,
       });
     }
 
-    return results;
+    console.log("specific dashboard report",results)
+
+    return {
+      data: results,
+      total,
+    };
   }
 }

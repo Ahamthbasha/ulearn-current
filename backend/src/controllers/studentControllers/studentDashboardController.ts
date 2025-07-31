@@ -1,4 +1,4 @@
-import { Response } from "express";
+import {  Response } from "express";
 import { IStudentDashboardController } from "./interfaces/IStudentDashboardController";
 import { IStudentDashboardService } from "../../services/interface/IStudentDashboardService";
 import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
@@ -50,13 +50,17 @@ export class StudentDashboardController implements IStudentDashboardController {
         return;
       }
 
-      const { filter, startDate: s, endDate: e } = req.query;
+      const { filter, startDate: s, endDate: e, page, limit } = req.query;
       const filterType = (filter as ReportFilter) || "custom";
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = parseInt(limit as string) || 10;
 
       const reports = await this.dashboardService.getCourseReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
+        page: pageNum,
+        limit: limitNum,
       });
 
       res.json({ success: true, data: reports });
@@ -74,13 +78,17 @@ export class StudentDashboardController implements IStudentDashboardController {
         return;
       }
 
-      const { filter, startDate: s, endDate: e } = req.query;
+      const { filter, startDate: s, endDate: e, page, limit } = req.query;
       const filterType = (filter as ReportFilter) || "custom";
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = parseInt(limit as string) || 10;
 
       const reports = await this.dashboardService.getSlotReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
+        page: pageNum,
+        limit: limitNum,
       });
 
       res.json({ success: true, data: reports });
@@ -98,14 +106,18 @@ export class StudentDashboardController implements IStudentDashboardController {
         return;
       }
 
-      const { filter, startDate: s, endDate: e, format } = req.query;
+      const { filter, startDate: s, endDate: e, format, page, limit } = req.query;
       const filterType = (filter as ReportFilter) || "custom";
       const exportFormat = (format as string)?.toLowerCase() || "excel";
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = parseInt(limit as string) || 10;
 
       const reports = await this.dashboardService.getCourseReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
+        page: pageNum,
+        limit: limitNum,
       });
 
       if (exportFormat === "pdf") {
@@ -134,14 +146,18 @@ export class StudentDashboardController implements IStudentDashboardController {
         return;
       }
 
-      const { filter, startDate: s, endDate: e, format } = req.query;
+      const { filter, startDate: s, endDate: e, format, page, limit } = req.query;
       const filterType = (filter as ReportFilter) || "custom";
       const exportFormat = (format as string)?.toLowerCase() || "excel";
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = parseInt(limit as string) || 10;
 
       const reports = await this.dashboardService.getSlotReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
+        page: pageNum,
+        limit: limitNum,
       });
 
       if (exportFormat === "pdf") {

@@ -151,4 +151,46 @@ export class InstructorProfileController
       });
     }
   }
+
+  async updateBankAccount(req: Request, res: Response): Promise<void> {
+    try {
+      const token = req.cookies["accessToken"];
+      const decoded = await this.jwt.verifyToken(token);
+      const userId = decoded.id;
+
+      const { accountHolderName, accountNumber, ifscCode, bankName } = req.body;
+
+      console.log(req.body)
+
+      const bankAccountData = {
+        bankAccount: {
+          ...(accountHolderName && { accountHolderName }),
+          ...(accountNumber && { accountNumber }),
+          ...(ifscCode && { ifscCode }),
+          ...(bankName && { bankName }),
+        },
+      };
+
+      const updated = await this.service.updateProfile(userId, bankAccountData);
+
+      if (!updated) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: InstructorErrorMessages.BANK_ACCOUNT_UPDATE_FAILED,
+        });
+        return;
+      }
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: InstructorSuccessMessages.BANK_ACCOUNT_UPDATED,
+        data: updated,
+      });
+    } catch (err) {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: InstructorErrorMessages.INTERNAL_SERVER_ERROR,
+      });
+    }
+  }
 }

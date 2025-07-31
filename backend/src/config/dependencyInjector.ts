@@ -790,6 +790,63 @@ const studentDashboardService : IStudentDashboardService = new StudentDashboardS
 
 const studentDashboardController : IStudentDashboardController = new StudentDashboardController(studentDashboardService)
 
+// instructor WithDrawal Request
+
+import { IWithdrawalRequestRepository } from "../repositories/interfaces/IWithdrawalRequestRepository";
+import { WithdrawalRequestRepository } from "../repositories/withdrawalRequestRepository";
+
+import { IWithdrawalRequestService } from "../services/interface/IWithdrawalRequestService";
+import { WithdrawalRequestService } from "../services/withdrawalRequestService";
+
+import { IInstructorWithdrawalController } from "../controllers/instructorController/interfaces/IInstructorWithdrawalController";
+import { InstructorWithdrawalController } from "../controllers/instructorController/instructorWithdrawalController";
+
+
+const withdrawalRepo : IWithdrawalRequestRepository = new WithdrawalRequestRepository()
+
+const withdrawalService : IWithdrawalRequestService = new WithdrawalRequestService(withdrawalRepo,walletService,instructorRepository)
+
+const instructorWithdrawalController : IInstructorWithdrawalController = new InstructorWithdrawalController(withdrawalService)
+
+
+//admin withdrawal request
+
+import { IAdminWithdrawalController } from "../controllers/adminControllers/interface/IAdminWithdrawalController";
+import { AdminWithdrawalController } from "../controllers/adminControllers/adminWithdrawalController";
+
+const adminWithdrawalController : IAdminWithdrawalController = new AdminWithdrawalController(withdrawalService)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -886,4 +943,10 @@ export {
 
   //student dashboard controller
   studentDashboardController,
+
+  //instructor withdrawal controller
+  instructorWithdrawalController,
+
+  //admin withdrawal controller
+  adminWithdrawalController,
 };

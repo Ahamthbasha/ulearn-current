@@ -223,3 +223,6 @@ const InstructorProfileEditPage = () => {
 };
 
 export default InstructorProfileEditPage;
+
+
+

@@ -28,3 +28,11 @@ export class InstructorProfileRepository
     return await this.updateOne({ email }, { password: hashedPassword });
   }
 }
+
+
+
+
+
+
+
+

@@ -14,6 +14,8 @@ export const AdminSuccessMessages = {
 };
 
 export const InstructorSuccessMessages = {
+  //bank
+  BANK_ACCOUNT_UPDATED:"bank account details updated successfully",
   // Auth & Signup
   SIGNUP_SUCCESS: "Signup successful, OTP sent to email.",
   OTP_SENT: "OTP has been sent to your email successfully!",
@@ -89,7 +91,10 @@ export const InstructorErrorMessages = {
 
   PASSWORD_UPDATE_FAILED:"password updation failed",
   OTP_EXPIRED : "otp is expired.Request new One",
-  OTP_NOT_FOUND:"otp is not found"
+  OTP_NOT_FOUND:"otp is not found",
+
+  //bank 
+  BANK_ACCOUNT_UPDATE_FAILED:"bank account updation failed",
 };
 
 export const StudentErrorMessages = {

@@ -1,5 +1,4 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose";
-
 export interface IInstructorDTO {
   username: string;
   email: string;
@@ -7,7 +6,7 @@ export interface IInstructorDTO {
 }
 
 export interface IInstructor extends Document {
-  _id: ObjectId;
+  _id: ObjectId ;
   username: string;
   email: string;
   password: string;
@@ -21,6 +20,12 @@ export interface IInstructor extends Document {
   expertise?: string[];
   membershipExpiryDate?: Date;
   membershipPlanId?: mongoose.Types.ObjectId;
+  bankAccount?: {
+    accountHolderName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    bankName?: string;
+  };
 }
 
 const instructorSchema: Schema<IInstructor> = new Schema(
@@ -68,7 +73,7 @@ const instructorSchema: Schema<IInstructor> = new Schema(
     membershipPlanId: {
       type: Schema.Types.ObjectId,
       ref: "MembershipPlan",
-      required:false
+      required: false,
     },
     skills: {
       type: [String],
@@ -77,6 +82,12 @@ const instructorSchema: Schema<IInstructor> = new Schema(
     expertise: {
       type: [String],
       default: [],
+    },
+    bankAccount: {
+      accountHolderName: { type: String, required: false },
+      accountNumber: { type: String, required: false },
+      ifscCode: { type: String, required: false },
+      bankName: { type: String, required: false },
     },
   },
   { timestamps: true }

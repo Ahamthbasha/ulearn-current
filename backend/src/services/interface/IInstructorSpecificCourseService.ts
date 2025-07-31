@@ -1,4 +1,4 @@
-import {Types} from "mongoose"
+import { Types } from "mongoose";
 
 export interface IInstructorSpecificCourseDashboardService {
   getCourseDashboard(courseId: Types.ObjectId): Promise<{
@@ -11,14 +11,19 @@ export interface IInstructorSpecificCourseDashboardService {
   getCourseRevenueReport(
     courseId: Types.ObjectId,
     range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+    page: number,
+    limit: number,
     startDate?: Date,
     endDate?: Date
   ): Promise<{
-    orderId: string;
-    courseName: string;
-    purchaseDate: Date;
-    coursePrice: number;
-    instructorRevenue: number;
-    totalEnrollments:number;
-  }[]>;
+    data: {
+      orderId: string;
+      courseName: string;
+      purchaseDate: Date;
+      coursePrice: number;
+      instructorRevenue: number;
+      totalEnrollments: number;
+    }[];
+    total: number;
+  }>;
 }
