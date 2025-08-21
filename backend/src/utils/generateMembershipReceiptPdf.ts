@@ -1,10 +1,8 @@
 import PDFDocument from "pdfkit";
-import { IInstructorMembershipOrder } from "../models/instructorMembershipOrderModel";
-import { IInstructor } from "../models/instructorModel";
-import { IMembershipPlan } from "../models/membershipPlanModel";
+import { InstructorMembershipOrderDTO } from "../models/instructorMembershipOrderModel";
 
 export async function generateMembershipReceiptPdf(
-  order: IInstructorMembershipOrder
+  order: InstructorMembershipOrderDTO
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -17,9 +15,6 @@ export async function generateMembershipReceiptPdf(
     doc.on("data", buffers.push.bind(buffers));
     doc.on("end", () => resolve(Buffer.concat(buffers)));
     doc.on("error", reject);
-
-    const instructor = order.instructorId as unknown as IInstructor;
-    const plan = order.membershipPlanId as unknown as IMembershipPlan;
 
     // Colors
     const primaryColor = "#2563eb"; // Blue
@@ -116,8 +111,8 @@ export async function generateMembershipReceiptPdf(
 
     doc
       .font("Helvetica")
-      .text(instructor.username, 130, currentY + 12)
-      .text(instructor.email, 130, currentY + 28)
+      .text(order.instructor.name, 130, currentY + 12)
+      .text(order.instructor.email, 130, currentY + 28)
       .text(
         new Date(order.createdAt).toLocaleDateString("en-IN"),
         130,
@@ -140,7 +135,7 @@ export async function generateMembershipReceiptPdf(
       .fillColor("white")
       .fontSize(14)
       .font("Helvetica-Bold")
-      .text(plan.name, 0, currentY + 8, {
+      .text(order.membershipPlan.name, 0, currentY + 8, {
         align: "center",
         width: doc.page.width,
       });
@@ -149,7 +144,7 @@ export async function generateMembershipReceiptPdf(
 
     // Plan details grid - more compact
     const detailsData = [
-      { label: "Duration", value: `${plan.durationInDays} days` },
+      { label: "Duration", value: `${order.membershipPlan.durationInDays} days` },
       {
         label: "Start Date",
         value: new Date(order.startDate).toLocaleDateString("en-IN"),
@@ -160,7 +155,7 @@ export async function generateMembershipReceiptPdf(
       },
       {
         label: "Description",
-        value: plan.description || "Standard membership plan",
+        value: order.membershipPlan.description || "Standard membership plan",
       },
     ];
 
@@ -179,7 +174,72 @@ export async function generateMembershipReceiptPdf(
         .text(item.value, 150, y + 6, { width: doc.page.width - 190 });
     });
 
-    currentY += detailsData.length * 22 + 20;
+    currentY += detailsData.length * 22 + 30;
+
+    // === MEMBERSHIP BENEFITS ===
+    doc
+      .fillColor(primaryColor)
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text("MEMBERSHIP BENEFITS", 40, currentY);
+
+    currentY += 20;
+
+    // Benefits container
+    const benefitsContainerHeight = 120; // Adjust based on your needs
+    doc
+      .rect(40, currentY, doc.page.width - 80, benefitsContainerHeight)
+      .fill("#f0f9ff")
+      .stroke("#bfdbfe");
+
+    // Benefits header
+    doc
+      .fillColor(primaryColor)
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text("Your membership includes:", 50, currentY + 15);
+
+    // Default benefits if not provided in membershipPlan
+    const defaultBenefits = [
+      "Unlimited access to all courses",
+      "Priority customer support",
+      "Download course materials",
+      "Certificate of completion",
+      "Access to exclusive content",
+      "Community forum participation"
+    ];
+
+    // Use benefits from membershipPlan if available, otherwise use defaults
+    const benefits = order.membershipPlan.benefits || defaultBenefits;
+
+    // Display benefits with bullet points
+    benefits.slice(0, 6).forEach((benefit: string, index: number) => {
+      const benefitY = currentY + 35 + (index * 12);
+      
+      // Bullet point
+      doc
+        .fillColor(successColor)
+        .fontSize(8)
+        .text("●", 55, benefitY);
+      
+      // Benefit text
+      doc
+        .fillColor(textColor)
+        .fontSize(9)
+        .font("Helvetica")
+        .text(benefit, 70, benefitY, { width: doc.page.width - 120 });
+    });
+
+    // If there are more than 6 benefits, show count
+    if (benefits.length > 6) {
+      doc
+        .fillColor(primaryColor)
+        .fontSize(8)
+        .font("Helvetica-Oblique")
+        .text(`And ${benefits.length - 6} more benefits...`, 70, currentY + 107);
+    }
+
+    currentY += benefitsContainerHeight + 20;
 
     // === PAYMENT SUMMARY ===
     doc

@@ -1,4 +1,4 @@
-import { IStudentInstructorListingRepository } from "../interfaces/IStudentInstructorListingRepository";
+import { IStudentInstructorListingRepository } from "./interface/IStudentInstructorListingRepository"; 
 import InstructorModel, { IInstructor } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
 import { PipelineStage } from "mongoose";

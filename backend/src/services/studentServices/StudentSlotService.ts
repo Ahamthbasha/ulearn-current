@@ -1,15 +1,15 @@
 import { ISlot } from "../../models/slotModel";
-import { IStudentSlotRepository } from "../../repositories/interfaces/IStudentSlotRepository";
-import { IStudentSlotService } from "../interface/IStudentSlotService";
+import { IStudentSlotRepository } from "../../repositories/studentRepository/interface/IStudentSlotRepository"; 
+import { IStudentSlotService } from "./interface/IStudentSlotService"; 
 
 export class StudentSlotService implements IStudentSlotService {
-  private slotRepo: IStudentSlotRepository;
+  private _slotRepo: IStudentSlotRepository;
 
   constructor(repo: IStudentSlotRepository) {
-    this.slotRepo = repo;
+    this._slotRepo = repo;
   }
 
   async getAvailableSlots(instructorId: string): Promise<ISlot[]> {
-    return await this.slotRepo.getAvailableSlotsByInstructorId(instructorId);
+    return await this._slotRepo.getAvailableSlotsByInstructorId(instructorId);
   }
 }

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IInstructorChapterController } from "./interfaces/IInstructorChapterController";
-import { IInstructorChapterService } from "../../services/interface/IInstructorChapterService";
+import { IInstructorChapterService } from "../../services/instructorServices/interface/IInstructorChapterService"; 
 import { StatusCode } from "../../utils/enums";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
@@ -12,9 +12,9 @@ import {
 export class InstructorChapterController
   implements IInstructorChapterController
 {
-  private chapterService: IInstructorChapterService;
+  private _chapterService: IInstructorChapterService;
   constructor(chapterService: IInstructorChapterService) {
-    this.chapterService = chapterService;
+    this._chapterService = chapterService;
   }
 
   async createChapter(
@@ -25,7 +25,7 @@ export class InstructorChapterController
     try {
       const { chapterTitle, chapterNumber, description, courseId } = req.body;
 
-      const existing = await this.chapterService.findByTitleOrNumberAndCourseId(
+      const existing = await this._chapterService.findByTitleOrNumberAndCourseId(
         courseId,
         chapterTitle,
         Number(chapterNumber)
@@ -44,7 +44,6 @@ export class InstructorChapterController
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
       const videoFile = files["video"]?.[0];
-      const captionsFile = files["captions"]?.[0];
 
       if (!videoFile) {
         res
@@ -65,28 +64,15 @@ export class InstructorChapterController
         "chapters/videos"
       );
 
-      let captionsUrl: string | undefined;
-      if (captionsFile) {
-        captionsUrl = await uploadToS3Bucket(
-          {
-            originalname: captionsFile.originalname,
-            buffer: captionsFile.buffer,
-            mimetype: captionsFile.mimetype,
-          },
-          "chapters/captions"
-        );
-      }
-
       const chapterDTO = {
         chapterTitle,
         chapterNumber: Number(chapterNumber),
         courseId,
         description,
         videoUrl,
-        captionsUrl,
       };
 
-      const chapter = await this.chapterService.createChapter(chapterDTO);
+      const chapter = await this._chapterService.createChapter(chapterDTO);
       res
         .status(StatusCode.CREATED)
         .json({
@@ -118,7 +104,7 @@ export class InstructorChapterController
         }),
       };
 
-      const { data, total } = await this.chapterService.paginateChapters(
+      const result = await this._chapterService.paginateChapters(
         filter,
         Number(page),
         Number(limit)
@@ -126,8 +112,8 @@ export class InstructorChapterController
 
       res.status(StatusCode.OK).json({
         success: true,
-        data,
-        total,
+        data: result.data,
+        total: result.total,
         message: ChapterSuccessMessages.CHAPTER_RETRIEVED,
       });
     } catch (error) {
@@ -145,7 +131,7 @@ export class InstructorChapterController
       const { chapterTitle, chapterNumber, description } = req.body;
 
       // ✅ Step 1: Get original chapter (to get courseId)
-      const originalChapter = await this.chapterService.getChapterById(
+      const originalChapter = await this._chapterService.getChapterById(
         chapterId
       );
       if (!originalChapter) {
@@ -161,7 +147,7 @@ export class InstructorChapterController
       const courseId = originalChapter.courseId.toString();
 
       // ✅ Step 2: Check for duplicate title or number in same course (excluding self)
-      const existing = await this.chapterService.findByTitleOrNumberAndCourseId(
+      const existing = await this._chapterService.findByTitleOrNumberAndCourseId(
         courseId,
         chapterTitle,
         Number(chapterNumber)
@@ -181,10 +167,8 @@ export class InstructorChapterController
       // ✅ Step 3: Handle file uploads (same as your current logic)
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       let videoUrl: string | undefined;
-      let captionsUrl: string | undefined;
 
       const videoFile = files?.["video"]?.[0];
-      const captionsFile = files?.["captions"]?.[0];
 
       if (videoFile) {
         videoUrl = await uploadToS3Bucket(
@@ -197,17 +181,6 @@ export class InstructorChapterController
         );
       }
 
-      if (captionsFile) {
-        captionsUrl = await uploadToS3Bucket(
-          {
-            originalname: captionsFile.originalname,
-            buffer: captionsFile.buffer,
-            mimetype: captionsFile.mimetype,
-          },
-          "chapters/captions"
-        );
-      }
-
       // ✅ Step 4: Update chapter
       const updatedChapterData: any = {
         chapterTitle,
@@ -215,9 +188,8 @@ export class InstructorChapterController
         description,
       };
       if (videoUrl) updatedChapterData.videoUrl = videoUrl;
-      if (captionsUrl) updatedChapterData.captionsUrl = captionsUrl;
 
-      const updated = await this.chapterService.updateChapter(
+      const updated = await this._chapterService.updateChapter(
         chapterId,
         updatedChapterData
       );
@@ -249,7 +221,7 @@ export class InstructorChapterController
   ): Promise<void> {
     try {
       const { chapterId } = req.params;
-      const deleted = await this.chapterService.deleteChapter(chapterId);
+      const deleted = await this._chapterService.deleteChapter(chapterId);
       if (!deleted) {
         res
           .status(StatusCode.NOT_FOUND)
@@ -277,7 +249,7 @@ export class InstructorChapterController
   ): Promise<void> {
     try {
       const { chapterId } = req.params;
-      const chapter = await this.chapterService.getChapterById(chapterId);
+      const chapter = await this._chapterService.getChapterById(chapterId);
 
       if (!chapter) {
         res
@@ -291,14 +263,9 @@ export class InstructorChapterController
 
       // Generate pre-signed URLs if files exist
       let videoPresignedUrl = null;
-      let captionsPresignedUrl = null;
 
       if (chapter.videoUrl) {
         videoPresignedUrl = await getPresignedUrl(chapter.videoUrl);
-      }
-
-      if (chapter.captionsUrl) {
-        captionsPresignedUrl = await getPresignedUrl(chapter.captionsUrl);
       }
 
       res.status(StatusCode.OK).json({
@@ -306,7 +273,6 @@ export class InstructorChapterController
         data: {
           ...chapter.toObject(),
           videoPresignedUrl,
-          captionsPresignedUrl,
         },
       });
     } catch (error) {

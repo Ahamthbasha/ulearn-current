@@ -1,19 +1,19 @@
 import { Response } from "express";
 import { IStudentEnrollmentController } from "./interfaces/IStudentEnrollmentController";
-import { IStudentEnrollmentService } from "../../services/interface/IStudentEnrollmentService";
+import { IStudentEnrollmentService } from "../../services/studentServices/interface/IStudentEnrollmentService"; 
 import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { Types } from "mongoose";
-import { EnrolledErrorMessage } from "../../utils/constants";
+import { EnrolledErrorMessage, StudentErrorMessages, StudentSuccessMessages } from "../../utils/constants";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
 export class StudentEnrollmentController
   implements IStudentEnrollmentController
 {
-  private enrollmentService: IStudentEnrollmentService;
+  private _enrollmentService: IStudentEnrollmentService;
 
   constructor(enrollmentService: IStudentEnrollmentService) {
-    this.enrollmentService = enrollmentService;
+    this._enrollmentService = enrollmentService;
   }
 
   async getAllEnrolledCourses(
@@ -22,7 +22,7 @@ export class StudentEnrollmentController
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
-      const courses = await this.enrollmentService.getAllEnrolledCourses(
+      const courses = await this._enrollmentService.getAllEnrolledCourses(
         userId
       );
 
@@ -53,7 +53,7 @@ export class StudentEnrollmentController
       const courseId = new Types.ObjectId(req.params.courseId);
 
       const enrollment =
-        await this.enrollmentService.getEnrollmentCourseWithDetails(
+        await this._enrollmentService.getEnrollmentCourseWithDetails(
           userId,
           courseId
         );
@@ -61,7 +61,7 @@ export class StudentEnrollmentController
       if (!enrollment) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Enrollment not found",
+          message: StudentErrorMessages.STUDENT_ENROLLMENT_NOT_FOUND,
         });
         return;
       }
@@ -107,7 +107,7 @@ export class StudentEnrollmentController
       const userId = new Types.ObjectId(req.user?.id);
       const { courseId, chapterId } = req.body;
 
-      const updatedEnrollment = await this.enrollmentService.completeChapter(
+      const updatedEnrollment = await this._enrollmentService.completeChapter(
         userId,
         new Types.ObjectId(courseId),
         new Types.ObjectId(chapterId)
@@ -115,7 +115,7 @@ export class StudentEnrollmentController
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: "Chapter marked as completed",
+        message: StudentSuccessMessages.CHAPTER_COMPLETED,
         enrollment: updatedEnrollment,
       });
     } catch (error) {
@@ -142,14 +142,14 @@ export class StudentEnrollmentController
       ) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Missing quiz result data",
+          message: StudentErrorMessages.QUIZ_DATA_MISSING,
         });
         return;
       }
 
       const scorePercentage = (correctAnswers / totalQuestions) * 100;
 
-      const enrollment = await this.enrollmentService.submitQuizResult(
+      const enrollment = await this._enrollmentService.submitQuizResult(
         userId,
         new Types.ObjectId(courseId),
         {
@@ -162,14 +162,14 @@ export class StudentEnrollmentController
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: "Quiz result submitted",
+        message: StudentSuccessMessages.QUIZ_RESULT_SUBMITTED,
         enrollment,
       });
     } catch (error) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to submit quiz result",
+        message: StudentErrorMessages.FAILED_TO_SUBMIT_QUIZ_RESULT,
       });
     }
   }
@@ -182,7 +182,7 @@ export class StudentEnrollmentController
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
 
-      const allCompleted = await this.enrollmentService.areAllChaptersCompleted(
+      const allCompleted = await this._enrollmentService.areAllChaptersCompleted(
         userId,
         courseId
       );
@@ -192,7 +192,7 @@ export class StudentEnrollmentController
       console.log(err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to check chapter completion",
+        message: StudentErrorMessages.FAILED_TO_CHECK_CHAPTER_COMPLETION,
       });
     }
   }
@@ -206,7 +206,7 @@ export class StudentEnrollmentController
       const courseId = new Types.ObjectId(req.params.courseId);
 
       const enrollment =
-        await this.enrollmentService.getEnrollmentCourseWithDetails(
+        await this._enrollmentService.getEnrollmentCourseWithDetails(
           userId,
           courseId
         );
@@ -218,7 +218,7 @@ export class StudentEnrollmentController
       ) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Certificate not available yet",
+          message: StudentErrorMessages.CERTIFICATE_NOT_AVAILABLE,
         });
         return;
       }
@@ -235,7 +235,7 @@ export class StudentEnrollmentController
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch certificate",
+        message: StudentErrorMessages.FAILED_TO_FETCH_CERTIFICATE,
       });
     }
   }

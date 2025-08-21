@@ -4,7 +4,7 @@ import {
   IChapter,
 } from "../../models/chapterModel";
 import { GenericRepository } from "../genericRepository";
-import { IInstructorChapterRepository } from "../interfaces/IInstructorChapterRepository";
+import { IInstructorChapterRepository } from "./interface/IInstructorChapterRepository"; 
 
 export class InstructorChapterRepository
   extends GenericRepository<IChapter>

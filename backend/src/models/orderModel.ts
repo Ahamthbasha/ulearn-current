@@ -4,7 +4,7 @@ import { Schema, model, Document, Types } from "mongoose";
 export interface IOrder extends Document {
   _id:Types.ObjectId,
   userId: Types.ObjectId ;
-  courses: Types.ObjectId[] ;
+  courses: Types.ObjectId[];
   amount: number;
   status: "PENDING" | "SUCCESS" | "FAILED";
   gateway: "razorpay" | "stripe";

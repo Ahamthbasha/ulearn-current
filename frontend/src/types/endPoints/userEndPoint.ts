@@ -25,7 +25,7 @@ const UserRouterEndpoints = {
   userCheckCourseExistInWishlist: "/api/student/check",
 
   //checkout
-  userInitiateCheckout: "/api/student/checkout",
+  userInitiateCheckout: "/api/student/checkout", 
   userCompleteCheckout: "/api/student/complete",
 
   //enroll

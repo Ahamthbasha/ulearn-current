@@ -1,15 +1,19 @@
 import { IStudentSlotBookingController } from "./interfaces/IStudentSlotBookingController";
-import { IStudentSlotBookingService } from "../../services/interface/IStudentSlotBookingService";
+import { IStudentSlotBookingService } from "../../services/studentServices/interface/IStudentSlotBookingService"; 
 import { Response } from "express";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { PopulatedBooking } from "../../types/PopulatedBooking";
 import { generateSlotReceiptPdf } from "../../utils/generateSlotReceiptPdf";
+import { StudentErrorMessages } from "../../utils/constants";
 
 export class StudentSlotBookingController
   implements IStudentSlotBookingController
 {
-  constructor(private bookingService: IStudentSlotBookingService) {}
+  private _bookingService : IStudentSlotBookingService
+  constructor(bookingService: IStudentSlotBookingService) {
+    this._bookingService = bookingService
+  }
 
   async initiateCheckout(
     req: AuthenticatedRequest,
@@ -20,7 +24,7 @@ export class StudentSlotBookingController
       const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
 
-      const result = await this.bookingService.initiateCheckout(
+      const result = await this._bookingService.initiateCheckout(
         slotId,
         studentId
       );
@@ -42,7 +46,7 @@ export class StudentSlotBookingController
       if (!slotId || !razorpay_payment_id)
         throw new Error("Missing payment details");
 
-      const booking = await this.bookingService.verifyPayment(
+      const booking = await this._bookingService.verifyPayment(
         slotId,
         studentId,
         razorpay_payment_id
@@ -62,7 +66,7 @@ export class StudentSlotBookingController
       const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
 
-      const booking = await this.bookingService.bookViaWallet(
+      const booking = await this._bookingService.bookViaWallet(
         slotId,
         studentId
       );
@@ -85,15 +89,21 @@ export class StudentSlotBookingController
 
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const searchQuery = req.query.search as string;
 
       const result =
-        await this.bookingService.getStudentBookingHistoryPaginated(
+        await this._bookingService.getStudentBookingHistoryPaginated(
           studentId,
           page,
-          limit
+          limit,
+          searchQuery
         );
 
-      res.status(StatusCode.OK).json({ success: true, ...result });
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: result.data,
+        total: result.total
+      });
     } catch (err: any) {
       console.error("getBookingHistory error:", err);
       res
@@ -110,17 +120,18 @@ export class StudentSlotBookingController
       const bookingId = req.params.bookingId;
       if (!bookingId) throw new Error("Booking ID is required");
 
-      const booking = await this.bookingService.getStudentBookingById(
+      const bookingDetail = await this._bookingService.getStudentBookingDetail(
         bookingId
       );
-      if (!booking) {
+      
+      if (!bookingDetail) {
         res
           .status(StatusCode.NOT_FOUND)
-          .json({ success: false, message: "Booking not found" });
+          .json({ success: false, message: StudentErrorMessages.BOOKING_NOT_FOUND });
         return;
       }
 
-      res.status(StatusCode.OK).json({ success: true, data: booking });
+      res.status(StatusCode.OK).json({ success: true, data: bookingDetail });
     } catch (err: any) {
       console.error("getBookingDetail error:", err);
       res
@@ -137,7 +148,7 @@ export class StudentSlotBookingController
       const bookingId = req.params.bookingId;
       if (!bookingId) throw new Error("Booking ID is required");
 
-      const booking = await this.bookingService.getStudentBookingById(
+      const booking = await this._bookingService.getStudentBookingById(
         bookingId
       );
       if (
@@ -161,7 +172,7 @@ export class StudentSlotBookingController
       console.error("downloadReceipt error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || "Failed to generate receipt",
+        message: err.message || StudentErrorMessages.FAILED_TO_GENERATE_RECEIPT,
       });
     }
   }

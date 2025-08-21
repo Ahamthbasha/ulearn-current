@@ -1,22 +1,23 @@
 import { Types } from "mongoose";
-import { IInstructorCourseSpecificDashboardRepository } from "../../repositories/interfaces/IInstructorSpecificCourseDashboardRepository";
-import { IInstructorSpecificCourseDashboardService } from "../interface/IInstructorSpecificCourseService";
+import { IInstructorCourseSpecificDashboardRepository } from "../../repositories/instructorRepository/interface/IInstructorSpecificCourseDashboardRepository"; 
+import { IInstructorSpecificCourseDashboardService } from "./interface/IInstructorSpecificCourseService"; 
 
 export class InstructorSpecificCourseDashboardService
   implements IInstructorSpecificCourseDashboardService
 {
-  constructor(
-    private dashboardRepository: IInstructorCourseSpecificDashboardRepository
-  ) {}
+  private _dashboardRepository: IInstructorCourseSpecificDashboardRepository
+  constructor(dashboardRepository: IInstructorCourseSpecificDashboardRepository) {
+    this._dashboardRepository = dashboardRepository
+  }
 
   async getCourseDashboard(courseId: Types.ObjectId) {
     const [revenue, enrollments, category, monthlyPerformance, fullPrice] =
       await Promise.all([
-        this.dashboardRepository.getCourseRevenue(courseId),
-        this.dashboardRepository.getCourseEnrollmentCount(courseId),
-        this.dashboardRepository.getCourseCategory(courseId),
-        this.dashboardRepository.getMonthlyPerformance(courseId),
-        this.dashboardRepository.getCoursePrice(courseId),
+        this._dashboardRepository.getCourseRevenue(courseId),
+        this._dashboardRepository.getCourseEnrollmentCount(courseId),
+        this._dashboardRepository.getCourseCategory(courseId),
+        this._dashboardRepository.getMonthlyPerformance(courseId),
+        this._dashboardRepository.getCoursePrice(courseId),
       ]);
 
     return { fullPrice, revenue, enrollments, category, monthlyPerformance };
@@ -30,7 +31,7 @@ export class InstructorSpecificCourseDashboardService
     startDate?: Date,
     endDate?: Date
   ) {
-    return this.dashboardRepository.getCourseRevenueReport(
+    return this._dashboardRepository.getCourseRevenueReport(
       courseId,
       range,
       page,

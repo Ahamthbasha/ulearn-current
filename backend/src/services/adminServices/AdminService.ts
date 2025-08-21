@@ -1,46 +1,62 @@
-import { IAdminService } from "../interface/IAdminService";
+import { IAdminService } from "./interface/IAdminService";
 import { IAdmin } from "../../models/adminModel";
-import { IAdminRepository } from "../../repositories/interfaces/IAdminRepository";
+import { IAdminRepository } from "../../repositories/adminRepository/interface/IAdminRepository";
 import { IInstructor } from "../../models/instructorModel";
 import { IUser } from "../../models/userModel";
-export class AdminService implements IAdminService{
-    private adminRepository : IAdminRepository
+import { toUserListDTOs } from "../../mappers/adminMapper/userListMapper";
+import { mapInstructorsToDTO } from "../../mappers/adminMapper/instructorListMapper";
+import { UserListDTO } from "../../dto/adminDTO/userListDTO";
+import { InstructorDTO } from "../../dto/adminDTO/instructorListDTO";
+import { BlockUpdate } from "../../types/adminTypes/adminTypes"; 
 
-    constructor(adminRepository : IAdminRepository){
-        this.adminRepository = adminRepository
-    }
+export class AdminService implements IAdminService {
+  private _adminRepository: IAdminRepository;
 
-    async getAdminData(email: string): Promise<IAdmin | null> {
-        return await this.adminRepository.getAdmin(email)
-    }
+  constructor(adminRepository: IAdminRepository) {
+    this._adminRepository = adminRepository;
+  }
 
-    async createAdmin(adminData: IAdmin): Promise<IAdmin | null> {
-        return await this.adminRepository.createAdmin(adminData)
-    }
+  async getAdminData(email: string): Promise<IAdmin | null> {
+    return await this._adminRepository.getAdmin(email);
+  }
 
-    async getAllUsers(page:number,limit:number,search:string): Promise<{users:IUser[];total:number}> {
-        return await this.adminRepository.getAllUsers(page,limit,search)
-    }
+  async createAdmin(adminData: IAdmin): Promise<IAdmin | null> {
+    return await this._adminRepository.createAdmin(adminData);
+  }
 
-    async getAllInstructors(page:number,limit:number,search:string): Promise<{instructors:IInstructor[];total:number}> {
-        return await this.adminRepository.getAllInstructors(page,limit,search)
-    }
+  async getAllUsers(
+    page: number,
+    limit: number,
+    search: string
+  ): Promise<{ users: UserListDTO[]; total: number }> {
+    const { users, total } = await this._adminRepository.getAllUsers(page, limit, search);
+    const userDTOs = toUserListDTOs(users);   // ✅ mapping in service
+    return { users: userDTOs, total };
+  }
 
-//specified data based on email
-    async getUserData(email: string): Promise<IUser | null> {
-        return this.adminRepository.getUserData(email)
-    }
+  async getAllInstructors(
+    page: number,
+    limit: number,
+    search: string
+  ): Promise<{ instructors: InstructorDTO[]; total: number }> {
+    const { instructors, total } = await this._adminRepository.getAllInstructors(page, limit, search);
+    const instructorDTOs = mapInstructorsToDTO(instructors);  // ✅ mapping in service
+    return { instructors: instructorDTOs, total };
+  }
 
-    async getInstructorData(email: string): Promise<IInstructor | null> {
-        return await this.adminRepository.getInstructorData(email)
-    }
+  async getUserData(email: string): Promise<IUser | null> {
+    return this._adminRepository.getUserData(email);
+  }
 
-//block or unblock
-    async updateProfile(email: string, data: any): Promise<any> {
-        return await this.adminRepository.updateProfile(email,data)
-    }
+  async getInstructorData(email: string): Promise<IInstructor | null> {
+    return await this._adminRepository.getInstructorData(email);
+  }
 
-    async updateInstructorProfile(email: string, data: any): Promise<any> {
-        return await this.adminRepository.updateInstructorProfile(email,data)
-    }
+  async updateProfile(email: string, data: BlockUpdate): Promise<IUser|null> {
+    return await this._adminRepository.updateProfile(email, data);
+  }
+
+  async updateInstructorProfile(email: string, data: BlockUpdate): Promise<IInstructor|null> {
+    return await this._adminRepository.updateInstructorProfile(email, data);
+  }
 }

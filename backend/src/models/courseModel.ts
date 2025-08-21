@@ -5,10 +5,6 @@ interface IDemoVideo {
   url: string;
 }
 
-interface IFullVideo {
-  chapterId: Types.ObjectId;
-}
-
 export interface ICourse extends Document {
   _id: Types.ObjectId & { toString(): string };
   courseName: string;
@@ -17,7 +13,6 @@ export interface ICourse extends Document {
   quizId: Types.ObjectId;
   description: string;
   demoVideo: IDemoVideo;
-  fullVideo?: IFullVideo[];
   price: number;
   level: string;
   duration: string;
@@ -54,11 +49,6 @@ const CourseSchema = new Schema<ICourse>(
     },
     description: { type: String, required: true },
     demoVideo: demoVideoSchema,
-    fullVideo: [
-      {
-        chapterId: { type: Schema.Types.ObjectId, ref: "Chapter" },
-      },
-    ],
     price: { type: Number, required: true },
     level: { type: String, required: true },
     duration: { type: String, required: true },

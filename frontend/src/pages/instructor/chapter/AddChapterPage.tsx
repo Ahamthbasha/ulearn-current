@@ -9,6 +9,7 @@ import InputField from "../../../components/common/InputField";
 import { createChapter } from "../../../api/action/InstructorActionApi";
 import { Button } from "../../../components/common/Button";
 import { Loader2 } from "lucide-react";
+
 const textOnlyRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
 const chapterSchema = Yup.object().shape({
@@ -53,7 +54,6 @@ const AddChapterPage = () => {
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [captionFile, setCaptionFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,31 +65,14 @@ const AddChapterPage = () => {
 
     if (!isVideo) {
       toast.error("Only video files are allowed.");
-
-      // Reset the file input manually
-      e.target.value = ""; // ⬅️ Clear the input
+      e.target.value = "";
       setVideoFile(null);
       setVideoPreview(null);
       return;
     }
 
-    // All good
     setVideoFile(file);
     setVideoPreview(URL.createObjectURL(file));
-  };
-
-  const handleCaptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!["vtt", "srt"].includes(ext || "")) {
-      toast.error("Only .vtt or .srt files are allowed.");
-      setCaptionFile(null);
-      return;
-    }
-
-    setCaptionFile(file);
   };
 
   const handleSubmit = async (values: any) => {
@@ -109,10 +92,8 @@ const AddChapterPage = () => {
       formData.append("chapterNumber", String(values.chapterNumber));
       formData.append("courseId", courseId);
       formData.append("video", videoFile);
-      if (captionFile) formData.append("captions", captionFile);
 
       const res = await createChapter(courseId, formData);
-      console.log("response from res", res);
       toast.success(res?.data?.message);
       navigate(`/instructor/course/${courseId}/chapters`);
     } catch (error: any) {
@@ -125,11 +106,7 @@ const AddChapterPage = () => {
 
   return (
     <div className="px-4 py-6">
-      <Card
-        title="Add Chapter"
-        padded
-        className="bg-white shadow-sm rounded-lg"
-      >
+      <Card title="Add Chapter" padded className="bg-white shadow-sm rounded-lg">
         <Formik
           initialValues={{
             chapterTitle: "",
@@ -173,19 +150,6 @@ const AddChapterPage = () => {
                   />
                 </div>
               )}
-
-              {/* Caption File Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Caption File (optional)
-                </label>
-                <input
-                  type="file"
-                  accept=".vtt,.srt"
-                  onChange={handleCaptionsChange}
-                  className="w-full px-4 py-2 mt-1 border rounded bg-gray-100"
-                />
-              </div>
 
               {/* Submit Button with Spinner */}
               <Button type="submit" disabled={loading}>

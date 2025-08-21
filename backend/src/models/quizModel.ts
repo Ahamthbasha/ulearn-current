@@ -13,6 +13,7 @@ const QuestionSchema = new Schema<IQuestions>({
 });
 
 export interface IQuiz extends Document {
+  _id:Types.ObjectId;
   courseId: Types.ObjectId; // ✅ Use `Types.ObjectId`
   questions: Types.DocumentArray<IQuestions>;
 }

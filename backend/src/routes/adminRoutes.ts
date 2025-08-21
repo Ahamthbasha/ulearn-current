@@ -11,7 +11,7 @@ import {
   adminDashboardController,
   adminWithdrawalController,
 } from "../config/dependencyInjector";
-import authenticateToken from "../middlewares/AuthenticatedRoutes";
+import authenticateToken from "../middlewares/authenticatedRoutes";
 
 import { isAdmin} from "../middlewares/roleAuth";
 

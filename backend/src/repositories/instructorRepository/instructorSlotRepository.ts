@@ -1,4 +1,4 @@
-import { IInstructorSlotRepository } from "../interfaces/IInstructorSlotRepository";
+import { IInstructorSlotRepository } from "./interface/IInstructorSlotRepository"; 
 import SlotModel, { ISlot } from "../../models/slotModel";
 import { Types } from "mongoose";
 import { GenericRepository } from "../genericRepository";

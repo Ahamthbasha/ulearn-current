@@ -76,10 +76,8 @@ export const instructorUpdateProfile = async (
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       }
     );
-
     console.log("instructor updateprofile response", response.data);
     return response.data;
   } catch (error) {
@@ -90,13 +88,7 @@ export const instructorUpdateProfile = async (
 export const instructorUpdatePassword = async (data: any): Promise<any> => {
   try {
     const response = await API.put(
-      InstructorRouterEndPoints.instructorUpdatePassword,
-      data,
-      {
-        withCredentials: true,
-      }
-    );
-
+      InstructorRouterEndPoints.instructorUpdatePassword,data);
     console.log("instructor password updation data", response.data);
     return response.data;
   } catch (error: any) {
@@ -816,14 +808,15 @@ export const purchaseMembershipWithWallet = async (planId: string) => {
   }
 };
 
-export const membershipPurchaseHistory = async (page = 1, limit = 10) => {
+export const membershipPurchaseHistory = async (page = 1, limit = 10, search="") => {
   try {
     const response = await API.get(
       InstructorRouterEndPoints.instructorMembershipPurchaseHistory,
       {
-        params: { page, limit },
+        params: { page, limit, search },
       }
     );
+    console.log(response.data)
     return response.data;
   } catch (error) {
     throw error;

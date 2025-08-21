@@ -1,17 +1,18 @@
 import { Request, Response } from "express";
-import { IInstructorVerificationService } from "../../services/interface/IInstructorVerificationService";
+import { IInstructorVerificationService } from "../../services/instructorServices/interface/IInstructorVerificationService"; 
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
 import { StatusCode } from "../../utils/enums";
 import {
+  INSTRUCTOR_ERROR_MESSAGE,
+  INSTRUCTOR_SUCCESS_MESSAGE,
   VerificationErrorMessages,
   VerificationSuccessMessages,
 } from "../../utils/constants";
 
 export class InstructorVerificationController {
-  private verificationService: IInstructorVerificationService;
-
+  private _verificationService: IInstructorVerificationService;
   constructor(verificationService: IInstructorVerificationService) {
-    this.verificationService = verificationService;
+    this._verificationService = verificationService;
   }
 
   async submitRequest(req: Request, res: Response): Promise<void> {
@@ -37,7 +38,7 @@ export class InstructorVerificationController {
         return;
       }
 
-      const existingRequest = await this.verificationService.getRequestByEmail(
+      const existingRequest = await this._verificationService.getRequestByEmail(
         email
       );
 
@@ -53,7 +54,7 @@ export class InstructorVerificationController {
         if (currentStatus === "pending") {
           res.status(StatusCode.BAD_REQUEST).send({
             success: false,
-            message: "Verification already submitted and under review.",
+            message: INSTRUCTOR_ERROR_MESSAGE.VERIFICATION_ALREADY_SUBMITTED,
           });
           return;
         }
@@ -61,13 +62,13 @@ export class InstructorVerificationController {
         if (currentStatus === "approved") {
           res.status(StatusCode.BAD_REQUEST).send({
             success: false,
-            message: "You are already verified.",
+            message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ALREADY_VERIFIED,
           });
           return;
         }
 
         // ✅ If rejected → allow re-verification (update the request)
-        const updatedRequest = await this.verificationService.reverifyRequest(
+        const updatedRequest = await this._verificationService.reverifyRequest(
           name,
           email,
           degreeCertificateUrl,
@@ -76,14 +77,14 @@ export class InstructorVerificationController {
 
         res.status(StatusCode.OK).send({
           success: true,
-          message: "Reverification submitted successfully.",
+          message: INSTRUCTOR_SUCCESS_MESSAGE.REVIFICATION_SUBMITTED,
           data: updatedRequest,
         });
         return;
       }
 
       // 🔰 First-time submission
-      const newRequest = await this.verificationService.sendVerifyRequest(
+      const newRequest = await this._verificationService.sendVerifyRequest(
         name,
         email,
         degreeCertificateUrl,
@@ -107,7 +108,7 @@ export class InstructorVerificationController {
   async getRequestByEmail(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.params;
-      const result = await this.verificationService.getRequestByEmail(email);
+      const result = await this._verificationService.getRequestByEmail(email);
 
       res.status(StatusCode.OK).json({
         success: true,

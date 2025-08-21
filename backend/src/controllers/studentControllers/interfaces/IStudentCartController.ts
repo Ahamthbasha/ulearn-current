@@ -1,8 +1,9 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthenticatedRequest } from "../../../middlewares/authenticatedRoutes";
 
 export interface IStudentCartController {
-  getCart(req: Request, res: Response): Promise<void>;
-  addToCart(req: Request, res: Response): Promise<void>;
-  removeFromCart(req: Request, res: Response): Promise<void>;
-  clearCart(req: Request, res: Response): Promise<void>;
+  getCart(req: AuthenticatedRequest, res: Response): Promise<void>;
+  addToCart(req: AuthenticatedRequest, res: Response): Promise<void>;
+  removeFromCart(req: AuthenticatedRequest, res: Response): Promise<void>;
+  clearCart(req: AuthenticatedRequest, res: Response): Promise<void>;
 }

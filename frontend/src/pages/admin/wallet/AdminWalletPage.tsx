@@ -173,8 +173,16 @@ export default function AdminWalletPage() {
                     </td>
                     <td className="py-3 px-4">{txn.description}</td>
                     <td className="py-3 px-4 text-gray-500">
-                      {new Date(txn.date).toLocaleString()}
-                    </td>
+  {new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(txn.date))}
+</td>
+
                   </tr>
                 ))
               ) : (

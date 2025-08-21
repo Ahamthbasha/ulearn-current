@@ -11,6 +11,18 @@ export interface IInstructorMembershipOrder extends Document {
   createdAt: Date;
 }
 
+export interface InstructorPopulated{
+  username:string;
+  email:string;
+}
+
+export interface MembershipPlanPopulated {
+  name: string;
+  durationInDays: number;
+  description?: string;
+  benefits?: string[];
+}
+
 export interface InstructorMembershipOrderDTO {
   instructor: {
     name: string;
@@ -19,6 +31,8 @@ export interface InstructorMembershipOrderDTO {
   membershipPlan: {
     name: string;
     durationInDays: number;
+    description?:string;
+    benefits?:string[];
   };
   price: number;
   paymentStatus: "pending" | "paid" | "failed";
@@ -27,6 +41,15 @@ export interface InstructorMembershipOrderDTO {
   txnId: string;
   createdAt: Date;
 }
+
+export interface InstructorMembershipOrderListDTO {
+  orderId: string;
+  planName: string;
+  amount: number;
+  status: "pending" | "paid" | "failed";
+  purchaseDate: Date;
+}
+
 
 
 const InstructorMembershipOrderSchema = new Schema<IInstructorMembershipOrder>(

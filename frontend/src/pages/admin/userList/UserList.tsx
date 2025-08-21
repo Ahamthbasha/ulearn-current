@@ -1,5 +1,5 @@
 // UserList.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { UserX, UserCheck, Users } from "lucide-react";
 import DataTable, {
   type Column,
@@ -8,6 +8,7 @@ import DataTable, {
 import { getAllUser, blockUser } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { useDebounce } from "../../../hooks/UseDebounce";
 
 interface User {
   id: string;
@@ -30,11 +31,13 @@ const UserList: React.FC = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const fetchUsers = async () => {
+  const debouncedSearch = useDebounce(search, 500);
+
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllUser(page, limit, search);
+      const data = await getAllUser(page, limit, debouncedSearch);
 
       if (!data || !Array.isArray(data.users)) {
         throw new Error("Invalid user data received");
@@ -42,13 +45,11 @@ const UserList: React.FC = () => {
 
       const formattedUsers: User[] = data.users.map((user: any) => ({
         id: user._id,
-        username: user.username || "N/A",
+        username: user.name || "N/A",
         email: user.email || "N/A",
-        status: user.isBlocked ? "Blocked" : "Active",
-        created: user.createdAt
-          ? new Date(user.createdAt).toLocaleDateString("en-GB")
-          : "N/A",
-        isBlocked: user.isBlocked || false,
+        status: user.status ? "Blocked" : "Active",
+        created: user.createdAt || "N/A",
+        isBlocked: user.status,
       }));
 
       setUsers(formattedUsers);
@@ -60,11 +61,11 @@ const UserList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, debouncedSearch]);
 
   useEffect(() => {
     fetchUsers();
-  }, [page, limit, search]);
+  }, [fetchUsers]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -79,9 +80,25 @@ const UserList: React.FC = () => {
     if (!selectedUser) return;
 
     try {
+      // Optimistic update
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email === selectedUser.email
+            ? {
+                ...u,
+                status: u.status === "Blocked" ? "Active" : "Blocked",
+                isBlocked: !u.isBlocked,
+              }
+            : u
+        )
+      );
+
       const response = await blockUser(selectedUser.email);
+
       if (response.success) {
         toast.success(response.message);
+      } else {
+        // Revert optimistic update
         setUsers((prev) =>
           prev.map((u) =>
             u.email === selectedUser.email
@@ -93,10 +110,21 @@ const UserList: React.FC = () => {
               : u
           )
         );
-      } else {
         toast.error(response.message);
       }
     } catch (error: any) {
+      // Revert on error
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email === selectedUser.email
+            ? {
+                ...u,
+                status: u.status === "Blocked" ? "Active" : "Blocked",
+                isBlocked: !u.isBlocked,
+              }
+            : u
+        )
+      );
       toast.error(error.message || "Error occurred while blocking user");
     } finally {
       setConfirmModalOpen(false);
@@ -121,8 +149,8 @@ const UserList: React.FC = () => {
       },
       className: (user) =>
         user.status === "Blocked"
-          ? "bg-red-500 hover:bg-red-600 text-white"
-          : "bg-green-500 hover:bg-green-600 text-white",
+          ? "bg-red-500 hover:bg-red-600 text-white" // 🔴 red when user is blocked
+          : "bg-green-500 hover:bg-green-600 text-white", // 🟢 green when user is active
     },
   ];
 

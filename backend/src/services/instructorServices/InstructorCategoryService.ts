@@ -1,15 +1,15 @@
-import { IInstructorCategoryService } from "../interface/IInstructorCategoryService";
-import { IInstructorCategoryRepository } from "../../repositories/interfaces/IInstructorCategoryRepository";
+import { IInstructorCategoryService } from "./interface/IInstructorCategoryService"; 
+import { IInstructorCategoryRepository } from "../../repositories/instructorRepository/interface/IInstructorCategoryRepository"; 
 import { ICategoryModel } from "../../models/categoryModel";
 
 export class InstructorCategoryService implements IInstructorCategoryService {
-  private categoryRepo: IInstructorCategoryRepository;
+  private _categoryRepo: IInstructorCategoryRepository;
 
   constructor(categoryRepo: IInstructorCategoryRepository) {
-    this.categoryRepo = categoryRepo;
+    this._categoryRepo = categoryRepo;
   }
 
   async fetchActiveCategories(): Promise<ICategoryModel[]> {
-    return await this.categoryRepo.getListedCategories();
+    return await this._categoryRepo.getListedCategories();
   }
 }

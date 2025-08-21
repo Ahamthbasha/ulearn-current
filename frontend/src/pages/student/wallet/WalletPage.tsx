@@ -33,6 +33,23 @@ export default function WalletPage() {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 5;
 
+  // Date formatting function
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const formattedHours = hours.toString().padStart(2, '0');
+    
+    return `${day}-${month}-${year} ${formattedHours}:${minutes} ${ampm}`;
+  };
+
   const fetchWallet = async () => {
     try {
       const data = await getWallet();
@@ -169,7 +186,7 @@ export default function WalletPage() {
                     </td>
                     <td className="py-3 px-4">{txn.description}</td>
                     <td className="py-3 px-4 text-gray-500">
-                      {new Date(txn.date).toLocaleString()}
+                      {formatDate(txn.date)}
                     </td>
                   </tr>
                 ))

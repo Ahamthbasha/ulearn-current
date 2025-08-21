@@ -1,6 +1,6 @@
 import { CourseModel, ICourse } from "../../models/courseModel";
 import { GenericRepository } from "../genericRepository";
-import { IInstructorCourseRepository } from "../interfaces/IInstructorCourseRepository";
+import { IInstructorCourseRepository } from "./interface/IInstructorCourseRepository"; 
 
 export class InstructorCourseRepository
   extends GenericRepository<ICourse>

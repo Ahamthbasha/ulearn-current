@@ -1,7 +1,7 @@
 import {  Response } from "express";
 import { IStudentDashboardController } from "./interfaces/IStudentDashboardController";
-import { IStudentDashboardService } from "../../services/interface/IStudentDashboardService";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { IStudentDashboardService } from "../../services/studentServices/interface/IStudentDashboardService"; 
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { ReportFilter } from "../../utils/reportFilterUtils";
 import {
@@ -10,26 +10,27 @@ import {
   generateStudentSlotReportExcel,
   generateStudentSlotReportPdf,
 } from "../../utils/studentReportGenerator";
+import { StudentErrorMessages } from "../../utils/constants";
 
 export class StudentDashboardController implements IStudentDashboardController {
-  private dashboardService: IStudentDashboardService;
+  private _dashboardService: IStudentDashboardService;
 
   constructor(dashboardService: IStudentDashboardService) {
-    this.dashboardService = dashboardService;
+    this._dashboardService = dashboardService;
   }
 
   async getDashboardData(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: StudentErrorMessages.STUDENT_UNAUTHORIZED });
         return;
       }
 
-      const dashboardData = await this.dashboardService.getStudentDashboardData(userId);
-      const monthlyPerformance = await this.dashboardService.getMonthlyPerformance(userId);
+      const dashboardData = await this._dashboardService.getStudentDashboardData(userId);
+      const monthlyPerformance = await this._dashboardService.getMonthlyPerformance(userId);
 
-      res.status(200).json({
+      res.status(StatusCode.OK).json({
         success: true,
         data: {
           ...dashboardData,
@@ -38,7 +39,7 @@ export class StudentDashboardController implements IStudentDashboardController {
         },
       });
     } catch (err: any) {
-      res.status(500).json({ success: false, message: err.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: err.message });
     }
   }
 
@@ -46,7 +47,7 @@ export class StudentDashboardController implements IStudentDashboardController {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: StudentErrorMessages.STUDENT_UNAUTHORIZED });
         return;
       }
 
@@ -55,7 +56,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       const pageNum = parseInt(page as string) || 1;
       const limitNum = parseInt(limit as string) || 10;
 
-      const reports = await this.dashboardService.getCourseReport(userId, {
+      const reports = await this._dashboardService.getCourseReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
@@ -66,7 +67,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       res.json({ success: true, data: reports });
     } catch (error) {
       console.error("Error getting course report:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: StudentErrorMessages.SERVER_ERROR});
     }
   }
 
@@ -74,7 +75,7 @@ export class StudentDashboardController implements IStudentDashboardController {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: StudentErrorMessages.STUDENT_UNAUTHORIZED });
         return;
       }
 
@@ -83,7 +84,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       const pageNum = parseInt(page as string) || 1;
       const limitNum = parseInt(limit as string) || 10;
 
-      const reports = await this.dashboardService.getSlotReport(userId, {
+      const reports = await this._dashboardService.getSlotReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
@@ -94,7 +95,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       res.json({ success: true, data: reports });
     } catch (error) {
       console.error("Error getting slot report:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: StudentErrorMessages.SERVER_ERROR });
     }
   }
 
@@ -102,7 +103,7 @@ export class StudentDashboardController implements IStudentDashboardController {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: StudentErrorMessages.NOT_FOUND_STUDENT });
         return;
       }
 
@@ -112,7 +113,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       const pageNum = parseInt(page as string) || 1;
       const limitNum = parseInt(limit as string) || 10;
 
-      const reports = await this.dashboardService.getCourseReport(userId, {
+      const reports = await this._dashboardService.getCourseReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
@@ -134,7 +135,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       }
     } catch (error) {
       console.error("Error exporting course report:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: StudentErrorMessages.SERVER_ERROR });
     }
   }
 
@@ -142,7 +143,7 @@ export class StudentDashboardController implements IStudentDashboardController {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ message: StudentErrorMessages.STUDENT_UNAUTHORIZED });
         return;
       }
 
@@ -152,7 +153,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       const pageNum = parseInt(page as string) || 1;
       const limitNum = parseInt(limit as string) || 10;
 
-      const reports = await this.dashboardService.getSlotReport(userId, {
+      const reports = await this._dashboardService.getSlotReport(userId, {
         type: filterType,
         startDate: s as string,
         endDate: e as string,
@@ -174,7 +175,7 @@ export class StudentDashboardController implements IStudentDashboardController {
       }
     } catch (error) {
       console.error("Error exporting slot report:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: StudentErrorMessages.SERVER_ERROR });
     }
   }
 }

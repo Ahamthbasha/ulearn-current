@@ -1,17 +1,20 @@
-
 export interface IWithdrawalRequest {
-  _id: string;
-  instructorId: string ;
+  _id?: string;
+  instructorName: string;
+  date: string;
   amount: number;
-  bankAccount: {
-    accountHolderName: string;
-    accountNumber: string;
-    ifscCode: string;
-    bankName: string;
-  };
+  status: "pending" | "approved" | "rejected";
+  remarks?: string;
+}
+
+
+
+export interface WithdrawalRequestDto {
+  requestId: string;
+  instructorName: string;
+  instructorEmail: string;
+  amount: number;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
-  updatedAt: string;
-  adminId?: string;
-  remarks?: string;
+  bankAccount: string;
 }

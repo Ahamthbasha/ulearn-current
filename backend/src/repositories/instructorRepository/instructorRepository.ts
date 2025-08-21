@@ -3,7 +3,7 @@ import InstructorModel, {
   IInstructorDTO,
 } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
-import IInstructorRepository from "../interfaces/IInstructorRepository";
+import IInstructorRepository from "./interface/IInstructorRepository"; 
 import { InstructorErrorMessages } from "../../utils/constants";
 import bcrypt from "bcryptjs";
 export default class InstructorRepository
@@ -74,6 +74,7 @@ export default class InstructorRepository
   ): Promise<IInstructor | null> {
     return await this.updateOne({ email }, data);
   }
+  
   //enroll
   async findById(id: string): Promise<IInstructor | null> {
     return await super.findById(id);

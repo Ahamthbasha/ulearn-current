@@ -1,22 +1,24 @@
 import { Response } from "express";
 import { Types } from "mongoose";
 import { IInstructorAllDashboardController } from "./interfaces/IInstructorAllDashboardController";
-import { IInstructorAllCourseDashboardService } from "../../services/interface/IInstructorAllDashboardService";
-import { AuthenticatedRequest } from "src/middlewares/AuthenticatedRoutes";
-import { getPresignedUrl } from "../../utils/getPresignedUrl"; // ✅ Adjust path as needed
-import { ITopSellingCourse } from "../../types/dashboardTypes";
+import { IInstructorAllCourseDashboardService } from "../../services/instructorServices/interface/IInstructorAllDashboardService"; 
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
+import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { ITopSellingCourse } from "../../interface/instructorInterface/IInstructorInterface";
 import {
   generateExcelReport,
   generatePdfReport,
 } from "../../utils/reportGenerator";
+import { StatusCode } from "../../utils/enums";
+import { INSTRUCTOR_ERROR_MESSAGE, SERVER_ERROR } from "../../utils/constants";
 
 export class InstructorAllCourseDashboardController
   implements IInstructorAllDashboardController
 {
-  private service: IInstructorAllCourseDashboardService;
+  private _allDashboardService: IInstructorAllCourseDashboardService;
 
-  constructor(service: IInstructorAllCourseDashboardService) {
-    this.service = service;
+  constructor(allDashboardService: IInstructorAllCourseDashboardService) {
+    this._allDashboardService = allDashboardService;
   }
 
   async getDashboard(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -24,19 +26,22 @@ export class InstructorAllCourseDashboardController
       const instructorId = req.user?.id;
 
       if (!instructorId) {
-        res.status(401).json({ success: false, message: "Unauthorized" });
+        res.status(StatusCode.UNAUTHORIZED).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED 
+        });
         return;
       }
 
       const instructorObjectId = new Types.ObjectId(instructorId);
-      const data = await this.service.getInstructorDashboard(
+      const data = await this._allDashboardService.getInstructorDashboard(
         instructorObjectId
       );
 
-      // ✅ Override thumbnail URLs with pre-signed URLs
+      // Generate pre-signed URLs for thumbnails
       const topCoursesWithUrls = await Promise.all(
         data.topCourses.map(async (course: ITopSellingCourse) => {
-          const signedUrl = await getPresignedUrl(course.thumbnailUrl); // Replace with actual method
+          const signedUrl = await getPresignedUrl(course.thumbnailUrl);
           return {
             ...course,
             thumbnailUrl: signedUrl,
@@ -44,194 +49,154 @@ export class InstructorAllCourseDashboardController
         })
       );
 
-      // ✅ Replace original with signed version
+      // Return updated data with signed URLs
       const updatedData = {
         ...data,
         topCourses: topCoursesWithUrls,
       };
 
-      res.status(200).json({ success: true, data: updatedData });
+      res.status(StatusCode.OK).json({ 
+        success: true, 
+        data: updatedData 
+      });
     } catch (error: unknown) {
       console.error("Dashboard Error:", error);
-      res
-        .status(500)
-        .json({ success: false, message: "Internal Server Error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ 
+        success: false, 
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR 
+      });
     }
   }
-
-  // async getDetailedRevenueReport(
-  //   req: AuthenticatedRequest,
-  //   res: Response
-  // ): Promise<void> {
-  //   try {
-  //     const instructorId = req.user?.id;
-  //     if (!instructorId) {
-  //       res.status(401).json({ success: false, message: "Unauthorized" });
-  //       return;
-  //     }
-
-  //     const { range, startDate, endDate } = req.query;
-  //     const allowed = ["daily", "weekly", "monthly", "yearly", "custom"];
-  //     if (!range || !allowed.includes(range as string)) {
-  //       res
-  //         .status(400)
-  //         .json({ success: false, message: "Invalid or missing range" });
-  //       return;
-  //     }
-
-  //     const start = startDate ? new Date(startDate as string) : undefined;
-  //     const end = endDate ? new Date(endDate as string) : undefined;
-
-  //     const data = await this.service.getDetailedRevenueReport(
-  //       new Types.ObjectId(instructorId),
-  //       range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
-  //       start,
-  //       end
-  //     );
-
-  //     console.log("report data", data);
-
-  //     res.status(200).json({ success: true, data });
-  //   } catch (error) {
-  //     console.error("Detailed revenue report error:", error);
-  //     res
-  //       .status(500)
-  //       .json({ success: false, message: "Internal Server Error" });
-  //   }
-  // }
-
-  // async exportRevenueReport(
-  //   req: AuthenticatedRequest,
-  //   res: Response
-  // ): Promise<void> {
-  //   try {
-  //     const instructorId = req.user?.id;
-  //     const { range, startDate, endDate, format } = req.query;
-
-  //     if (
-  //       !instructorId ||
-  //       !range ||
-  //       !["pdf", "excel"].includes(format as string)
-  //     ) {
-  //       res
-  //         .status(400)
-  //         .json({ success: false, message: "Missing or invalid parameters" });
-  //       return;
-  //     }
-
-  //     const data = await this.service.getDetailedRevenueReport(
-  //       new Types.ObjectId(instructorId),
-  //       range as any,
-  //       startDate ? new Date(startDate as string) : undefined,
-  //       endDate ? new Date(endDate as string) : undefined
-  //     );
-
-  //     if (format === "excel") {
-  //       return generateExcelReport(data, res);
-  //     } else {
-  //       return generatePdfReport(data, res);
-  //     }
-  //   } catch (err) {
-  //     console.error("Export Error:", err);
-  //     res
-  //       .status(500)
-  //       .json({ success: false, message: "Internal Server Error" });
-  //   }
-  // }
 
   async getDetailedRevenueReport(
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> {
-  try {
-    const instructorId = req.user?.id;
-    if (!instructorId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
+    try {
+      const instructorId = req.user?.id;
+      
+      if (!instructorId) {
+        res.status(StatusCode.UNAUTHORIZED).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED 
+        });
+        return;
+      }
+
+      const { range, startDate, endDate, page = "1", limit = "5" } = req.query;
+      const allowedRanges = ["daily", "weekly", "monthly", "yearly", "custom"];
+      
+      if (!range || !allowedRanges.includes(range as string)) {
+        res.status(StatusCode.BAD_REQUEST).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE 
+        });
+        return;
+      }
+
+      const start = startDate ? new Date(startDate as string) : undefined;
+      const end = endDate ? new Date(endDate as string) : undefined;
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+
+      if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
+        res.status(StatusCode.BAD_REQUEST).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_PAGE_LIMIT 
+        });
+        return;
+      }
+
+      const result = await this._allDashboardService.getDetailedRevenueReport(
+        new Types.ObjectId(instructorId),
+        range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
+        pageNum,
+        limitNum,
+        start,
+        end
+      );
+
+      res.status(StatusCode.OK).json({ 
+        success: true, 
+        data: result.data, 
+        total: result.total,
+        currentPage: pageNum,
+        totalPages: Math.ceil(result.total / limitNum),
+        limit: limitNum
+      });
+    } catch (error: unknown) {
+      console.error("Detailed revenue report error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ 
+        success: false, 
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR 
+      });
     }
-
-    const { range, startDate, endDate, page = "1", limit = "5" } = req.query;
-    const allowed = ["daily", "weekly", "monthly", "yearly", "custom"];
-    if (!range || !allowed.includes(range as string)) {
-      res
-        .status(400)
-        .json({ success: false, message: "Invalid or missing range" });
-      return;
-    }
-
-    const start = startDate ? new Date(startDate as string) : undefined;
-    const end = endDate ? new Date(endDate as string) : undefined;
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
-
-    if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
-      res
-        .status(400)
-        .json({ success: false, message: "Invalid page or limit" });
-      return;
-    }
-
-    const { data, total } = await this.service.getDetailedRevenueReport(
-      new Types.ObjectId(instructorId),
-      range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
-      pageNum,
-      limitNum,
-      start,
-      end
-    );
-
-    console.log("report data", data);
-
-    res.status(200).json({ success: true, data, total });
-  } catch (error) {
-    console.error("Detailed revenue report error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal Server Error" });
   }
-}
 
-async exportRevenueReport(
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> {
-  try {
-    const instructorId = req.user?.id;
-    const { range, startDate, endDate, format } = req.query;
+  async exportRevenueReport(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
+    try {
+      const instructorId = req.user?.id;
+      const { range, startDate, endDate, format } = req.query;
 
-    if (
-      !instructorId ||
-      !range ||
-      !["pdf", "excel"].includes(format as string)
-    ) {
-      res
-        .status(400)
-        .json({ success: false, message: "Missing or invalid parameters" });
-      return;
+      if (!instructorId) {
+        res.status(StatusCode.UNAUTHORIZED).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED 
+        });
+        return;
+      }
+
+      const allowedRanges = ["daily", "weekly", "monthly", "yearly", "custom"];
+      const allowedFormats = ["pdf", "excel"];
+
+      if (!range || !allowedRanges.includes(range as string)) {
+        res.status(StatusCode.BAD_REQUEST).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE 
+        });
+        return;
+      }
+
+      if (!format || !allowedFormats.includes(format as string)) {
+        res.status(StatusCode.BAD_REQUEST).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_FORMAT 
+        });
+        return;
+      }
+
+      // Fetch all data without pagination for export
+      const result = await this._allDashboardService.getDetailedRevenueReport(
+        new Types.ObjectId(instructorId),
+        range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
+        1, // Start from page 1
+        10000, // Large limit to get all records
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+
+      if (result.data.length === 0) {
+        res.status(StatusCode.NOT_FOUND).json({ 
+          success: false, 
+          message: INSTRUCTOR_ERROR_MESSAGE.NO_DATA_FOUND 
+        });
+        return;
+      }
+
+      if (format === "excel") {
+        return generateExcelReport(result.data, res);
+      } else {
+        return generatePdfReport(result.data, res);
+      }
+    } catch (error: unknown) {
+      console.error("Export Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ 
+        success: false, 
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR 
+      });
     }
-
-    // Fetch all data without pagination
-    const { data } = await this.service.getDetailedRevenueReport(
-      new Types.ObjectId(instructorId),
-      range as any,
-      1, // Use page 1 with a large limit to get all data
-      10000, // Arbitrary large limit to fetch all records
-      startDate ? new Date(startDate as string) : undefined,
-      endDate ? new Date(endDate as string) : undefined
-    );
-
-    if (format === "excel") {
-      return generateExcelReport(data, res);
-    } else {
-      return generatePdfReport(data, res);
-    }
-  } catch (err) {
-    console.error("Export Error:", err);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal Server Error" });
   }
-}
-
-
 }

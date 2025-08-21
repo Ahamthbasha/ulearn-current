@@ -1,15 +1,16 @@
 import { IStudentInstructorListingController } from "./interfaces/IStudentInstructorListingController";
-import { IStudentInstructorListingService } from "../../services/interface/IStudentInstructorListingService";
+import { IStudentInstructorListingService } from "../../services/studentServices/interface/IStudentInstructorListingService"; 
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/enums";
+import { StudentErrorMessages } from "../../utils/constants";
 
 export class StudentInstructorListingController
   implements IStudentInstructorListingController
 {
-  private instructorListingService: IStudentInstructorListingService;
+  private _instructorListingService: IStudentInstructorListingService;
 
-  constructor(service: IStudentInstructorListingService) {
-    this.instructorListingService = service;
+  constructor(instructorListingService: IStudentInstructorListingService) {
+    this._instructorListingService = instructorListingService
   }
 
   async listMentors(req: Request, res: Response): Promise<void> {
@@ -21,7 +22,7 @@ export class StudentInstructorListingController
       const skill = req.query.skill as string | undefined;
       const expertise = req.query.expertise as string | undefined;
 
-      const result = await this.instructorListingService.getPaginatedMentors(
+      const result = await this._instructorListingService.getPaginatedMentors(
         page,
         limit,
         search,
@@ -35,7 +36,7 @@ export class StudentInstructorListingController
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch instructors",
+        message: StudentErrorMessages.FAILED_TO_LIST_INSTRUCTOR,
       });
     }
   }
@@ -43,14 +44,14 @@ export class StudentInstructorListingController
   async getMentorById(req: Request, res: Response): Promise<void> {
     try {
       const { instructorId } = req.params;
-      const mentor = await this.instructorListingService.getMentorById(
+      const mentor = await this._instructorListingService.getMentorById(
         instructorId
       );
 
       if (!mentor) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Instructor not found",
+          message: StudentErrorMessages.INSTRUCTOR_NOT_FOUND,
         });
         return;
       }
@@ -59,21 +60,21 @@ export class StudentInstructorListingController
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch instructor details",
+        message: StudentErrorMessages.FAILED_TO_FETCH_INSTRUCTOR_DETAIL,
       });
     }
   }
 
   async getAvailableFilters(_req: Request, res: Response): Promise<void> {
     try {
-      const filters = await this.instructorListingService.getAvailableFilters();
+      const filters = await this._instructorListingService.getAvailableFilters();
       console.log("filters", filters);
       res.status(StatusCode.OK).json({ success: true, ...filters });
     } catch (error) {
       console.log(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch filter options",
+        message: StudentErrorMessages.FAILED_TO_FETCH_FILTER_OPTION,
       });
     }
   }

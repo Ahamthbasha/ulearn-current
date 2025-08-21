@@ -1,6 +1,6 @@
-import * as cookie from 'cookie';
+import * as cookie from "cookie";
 import dotenv from "dotenv";
-import { JwtService } from '../utils/jwt';
+import { JwtService } from "../utils/jwt";
 dotenv.config();
 
 import { Server, Socket } from "socket.io";
@@ -40,7 +40,12 @@ class SocketManager {
     return SocketManager.instance;
   }
 
-  public addUser(id: string, userId: string, socketId: string, role?: string): void {
+  public addUser(
+    id: string,
+    userId: string,
+    socketId: string,
+    role?: string
+  ): void {
     this.onlineUsers.set(userId, {
       id,
       userId,
@@ -76,8 +81,6 @@ class SocketManager {
   }
 }
 
-
-
 //initialize the socket.io server
 
 async function initializeSocketIO(io: Server) {
@@ -88,30 +91,34 @@ async function initializeSocketIO(io: Server) {
   io.use(async (socket: Socket, next) => {
     try {
       const token = extractToken(socket);
-      const jwtService = new JwtService()
+      const jwtService = new JwtService();
       const JWT_SECRET = process.env.JWT_SECRET || "MYLIFEMYRULE";
       if (!JWT_SECRET) {
         throw new Error("JWT Secret not configured");
       }
-  
-      const decodedToken = await jwtService.verifyToken(token) as DecodedToken;
+
+      const decodedToken = (await jwtService.verifyToken(
+        token
+      )) as DecodedToken;
       if (!decodedToken?.email || !decodedToken?.role) {
         throw new Error("Invalid or malformed token");
       }
-  
+
       let entity;
       if (decodedToken.role === "student") {
         entity = await studentCollection.findOne({ email: decodedToken.email });
       } else if (decodedToken.role === "instructor") {
-        entity = await instructorCollection.findOne({ email: decodedToken.email });
+        entity = await instructorCollection.findOne({
+          email: decodedToken.email,
+        });
       } else {
         throw new Error("Invalid role in token");
       }
-  
+
       if (!entity) {
         throw new Error("Entity not found");
       }
-  
+
       socket.data.entity = entity;
       socket.data.email = decodedToken.email;
       socket.data.role = decodedToken.role;
@@ -121,15 +128,17 @@ async function initializeSocketIO(io: Server) {
       next(new Error(error.message || "Authentication failed"));
     }
   });
-  
+
   // Main connection handler
   io.on("connection", (socket) => {
-    console.log(`${socket.data.role} connected: ${socket.id}, Email: ${socket.data.email}`);
-    
+    console.log(
+      `${socket.data.role} connected: ${socket.id}, Email: ${socket.data.email}`
+    );
+
     // Add user to online users
     socketManager.addUser(
-      String(socket.data.entity._id), 
-      socket.data.entity.email, 
+      String(socket.data.entity._id),
+      socket.data.entity.email,
       socket.id,
       socket.data.role
     );
@@ -137,74 +146,76 @@ async function initializeSocketIO(io: Server) {
     // Emit user online status.It announcing the user's online status with their email and role
     socket.broadcast.emit("user:online", {
       email: socket.data.email,
-      role: socket.data.role
+      role: socket.data.role,
     });
-  
+
     // Initiate outgoing call
     socket.on("outgoing:call", (data) => {
       const { to, fromOffer } = data;
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
-      
+
       if (!recipientSocketId) {
-        socket.emit("call:error", { 
-          message: `User ${to} is not online`, 
-          code: "USER_OFFLINE" 
+        socket.emit("call:error", {
+          message: `User ${to} is not online`,
+          code: "USER_OFFLINE",
         });
         return;
       }
-  
+
       // Log the call initiation
-      console.log(`${socket.data.role} (${socket.data.email}) initiating call to ${to}`);
-  
+      console.log(
+        `${socket.data.role} (${socket.data.email}) initiating call to ${to}`
+      );
+
       // Send incoming call to recipient
-      io.to(recipientSocketId.socketId).emit("incoming:call", { 
-        from: socket.data.email,  // Send caller's email
+      io.to(recipientSocketId.socketId).emit("incoming:call", {
+        from: socket.data.email, // Send caller's email
         fromRole: socket.data.role, // Send caller's role
-        offer: fromOffer, 
-        userEmail: recipientSocketId.userId 
+        offer: fromOffer,
+        userEmail: recipientSocketId.userId,
       });
     });
-  
+
     // Handle call acceptance
     socket.on("call:accepted", (data) => {
       const { to, answer } = data;
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
-      
+
       if (recipientSocketId) {
         console.log(`Call accepted between ${socket.data.email} and ${to}`);
-        
-        io.to(recipientSocketId.socketId).emit("incoming:answer", { 
-          from: socket.data.email,  // Send caller's email
+
+        io.to(recipientSocketId.socketId).emit("incoming:answer", {
+          from: socket.data.email, // Send caller's email
           fromRole: socket.data.role, // Send caller's role
-          answer 
+          answer,
         });
       }
     });
-  
+
     // Handle ICE candidate exchange
     socket.on("ice:candidate", (data) => {
       const { to, candidate } = data;
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
-      
+
       if (recipientSocketId) {
-        io.to(recipientSocketId.socketId).emit("ice:candidate", { 
-          from: socket.data.email,  // Send sender's email
-          candidate 
+        io.to(recipientSocketId.socketId).emit("ice:candidate", {
+          from: socket.data.email, // Send sender's email
+          candidate,
         });
       }
     });
-  
+
     // Handle call termination
     socket.on("end:call", (data) => {
       const { to } = data;
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
-      
+
       if (recipientSocketId) {
         console.log(`Call ended between ${socket.data.email} and ${to}`);
-        
-        io.to(recipientSocketId.socketId).emit("call:ended", { 
-          from: socket.data.email,  // Send terminator's email
-          fromRole: socket.data.role // Send terminator's role
+
+        io.to(recipientSocketId.socketId).emit("call:ended", {
+          from: socket.data.email, // Send terminator's email
+          fromRole: socket.data.role, // Send terminator's role
         });
       }
     });
@@ -213,44 +224,44 @@ async function initializeSocketIO(io: Server) {
     socket.on("call:rejected", (data) => {
       const { to } = data;
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
-      
+
       if (recipientSocketId) {
         console.log(`Call rejected by ${socket.data.email} from ${to}`);
-        
-        io.to(recipientSocketId.socketId).emit("call:rejected", { 
+
+        io.to(recipientSocketId.socketId).emit("call:rejected", {
           from: socket.data.email,
-          fromRole: socket.data.role
+          fromRole: socket.data.role,
         });
       }
     });
 
     // Handle disconnection
     socket.on("disconnect", () => {
-      console.log(`${socket.data.role} disconnected: ${socket.id}, Email: ${socket.data.email}`);
+      console.log(
+        `${socket.data.role} disconnected: ${socket.id}, Email: ${socket.data.email}`
+      );
       socketManager.removeUser(socket.data.entity.email);
-      
+
       // Emit user offline status
       socket.broadcast.emit("user:offline", {
         email: socket.data.email,
-        role: socket.data.role
+        role: socket.data.role,
       });
     });
   });
 }
-  
+
 // Token extraction utility
 function extractToken(socket: Socket): string {
   const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
-  
+
   // Check for different access tokens based on role
-  const token = 
-    cookies.accessToken || 
-    socket.handshake.auth?.token
-  
+  const token = cookies.accessToken || socket.handshake.auth?.token;
+
   if (!token) {
     throw new Error("No authentication token provided");
   }
   return token;
 }
-  
+
 export { initializeSocketIO, SocketManager };

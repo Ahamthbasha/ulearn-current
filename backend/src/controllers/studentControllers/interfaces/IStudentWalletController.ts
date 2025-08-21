@@ -1,4 +1,4 @@
-import { AuthenticatedRequest } from "../../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../../middlewares/authenticatedRoutes";
 import {Response} from "express"
 
 export interface IStudentWalletController {

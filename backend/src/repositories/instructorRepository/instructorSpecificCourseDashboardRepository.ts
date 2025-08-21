@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { IInstructorCourseSpecificDashboardRepository } from "../interfaces/IInstructorSpecificCourseDashboardRepository";
+import { IInstructorCourseSpecificDashboardRepository } from "./interface/IInstructorSpecificCourseDashboardRepository";
 import { IPaymentRepository } from "../interfaces/IPaymentRepository";
 import { IEnrollmentRepository } from "../interfaces/IEnrollmentRepository";
 import { ICourseRepository } from "../interfaces/ICourseRepository";
@@ -9,24 +9,33 @@ import { INSTRUCTOR_REVENUE_SHARE } from "../../utils/constants";
 export class InstructorSpecificCourseDashboardRepository
   implements IInstructorCourseSpecificDashboardRepository
 {
+  private _paymentRepo: IPaymentRepository;
+  private _enrollmentRepo: IEnrollmentRepository;
+  private _courseRepo: ICourseRepository;
+  private _orderRepo: IOrderRepository;
   constructor(
-    private paymentRepo: IPaymentRepository,
-    private enrollmentRepo: IEnrollmentRepository,
-    private courseRepo: ICourseRepository,
-    private orderRepo: IOrderRepository
-  ) {}
+    paymentRepo: IPaymentRepository,
+    enrollmentRepo: IEnrollmentRepository,
+    courseRepo: ICourseRepository,
+    orderRepo: IOrderRepository
+  ) {
+    this._paymentRepo = paymentRepo;
+    this._enrollmentRepo = enrollmentRepo;
+    this._courseRepo = courseRepo;
+    this._orderRepo = orderRepo;
+  }
 
   async getCourseRevenue(courseId: Types.ObjectId): Promise<number> {
-    const payments = await this.paymentRepo.findAll({ status: "SUCCESS" });
+    const payments = await this._paymentRepo.findAll({ status: "SUCCESS" });
     let totalRevenue = 0;
 
     for (const payment of payments || []) {
-      const order = await this.orderRepo.findById(
+      const order = await this._orderRepo.findById(
         (payment.orderId as Types.ObjectId).toString()
       );
       if (!order || !order.courses.includes(courseId)) continue;
 
-      const course = await this.courseRepo.findById(courseId.toString());
+      const course = await this._courseRepo.findById(courseId.toString());
       if (!course) continue;
 
       totalRevenue += course.price * INSTRUCTOR_REVENUE_SHARE;
@@ -36,15 +45,18 @@ export class InstructorSpecificCourseDashboardRepository
   }
 
   async getCourseEnrollmentCount(courseId: Types.ObjectId): Promise<number> {
-    const enrollments = await this.enrollmentRepo.findAll({ courseId });
+    const enrollments = await this._enrollmentRepo.findAll({ courseId });
     return enrollments?.length || 0;
   }
 
   async getCourseCategory(courseId: Types.ObjectId): Promise<string | null> {
-    const course = await this.courseRepo.findByIdWithPopulate(courseId.toString(), {
-      path: "category",
-      select: "categoryName",
-    });
+    const course = await this._courseRepo.findByIdWithPopulate(
+      courseId.toString(),
+      {
+        path: "category",
+        select: "categoryName",
+      }
+    );
 
     return course?.category && "categoryName" in course.category
       ? (course.category as { categoryName: string }).categoryName
@@ -54,21 +66,24 @@ export class InstructorSpecificCourseDashboardRepository
   async getMonthlyPerformance(
     courseId: Types.ObjectId
   ): Promise<{ month: number; year: number; totalSales: number }[]> {
-    const payments = await this.paymentRepo.findAll({ status: "SUCCESS" });
+    const payments = await this._paymentRepo.findAll({ status: "SUCCESS" });
     const monthlyMap = new Map<string, number>();
 
     for (const payment of payments || []) {
-      const order = await this.orderRepo.findById(
+      const order = await this._orderRepo.findById(
         (payment.orderId as Types.ObjectId).toString()
       );
       if (!order || !order.courses.includes(courseId)) continue;
 
-      const course = await this.courseRepo.findById(courseId.toString());
+      const course = await this._courseRepo.findById(courseId.toString());
       if (!course) continue;
 
       const date = payment.createdAt;
       const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-      monthlyMap.set(key, (monthlyMap.get(key) || 0) + course.price * INSTRUCTOR_REVENUE_SHARE);
+      monthlyMap.set(
+        key,
+        (monthlyMap.get(key) || 0) + course.price * INSTRUCTOR_REVENUE_SHARE
+      );
     }
 
     return Array.from(monthlyMap.entries()).map(([key, totalSales]) => {
@@ -78,7 +93,7 @@ export class InstructorSpecificCourseDashboardRepository
   }
 
   async getCoursePrice(courseId: Types.ObjectId): Promise<number> {
-    const course = await this.courseRepo.findById(courseId.toString());
+    const course = await this._courseRepo.findById(courseId.toString());
     return course?.price || 0;
   }
 
@@ -106,8 +121,24 @@ export class InstructorSpecificCourseDashboardRepository
 
     switch (range) {
       case "daily":
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          0,
+          0,
+          0,
+          0
+        );
+        end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59,
+          999
+        );
         break;
       case "weekly":
         start = new Date(now);
@@ -119,7 +150,15 @@ export class InstructorSpecificCourseDashboardRepository
         break;
       case "monthly":
         start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        end = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999
+        );
         break;
       case "yearly":
         start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
@@ -156,11 +195,11 @@ export class InstructorSpecificCourseDashboardRepository
       { $count: "total" },
     ];
 
-    const totalResult = await this.paymentRepo.aggregate(totalPipeline);
+    const totalResult = await this._paymentRepo.aggregate(totalPipeline);
     const total = totalResult[0]?.total || 0;
 
     // Get paginated payments
-    const { data: payments } = await this.paymentRepo.paginate(
+    const { data: payments } = await this._paymentRepo.paginate(
       {
         status: "SUCCESS",
         createdAt: { $gte: start, $lte: end },
@@ -175,12 +214,12 @@ export class InstructorSpecificCourseDashboardRepository
     const results = [];
 
     for (const payment of payments || []) {
-      const order = await this.orderRepo.findById(
+      const order = await this._orderRepo.findById(
         (payment.orderId as Types.ObjectId).toString()
       );
       if (!order || !order.courses.includes(courseId)) continue;
 
-      const course = await this.courseRepo.findById(courseId.toString());
+      const course = await this._courseRepo.findById(courseId.toString());
       if (!course) continue;
 
       results.push({
@@ -193,7 +232,7 @@ export class InstructorSpecificCourseDashboardRepository
       });
     }
 
-    console.log("specific dashboard report",results)
+    console.log("specific dashboard report", results);
 
     return {
       data: results,

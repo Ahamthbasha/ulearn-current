@@ -1,24 +1,28 @@
 import { Response } from "express";
 import { IWalletPaymentService } from "../../services/interface/IWalletPaymentService";
 import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IInstructorWalletPaymentController } from "./interfaces/IInstructorWalletPaymentController";
+import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
 
 export class InstructorWalletPaymentController
   implements IInstructorWalletPaymentController
 {
-  constructor(private walletPaymentService: IWalletPaymentService) {}
+  private _walletPaymentService: IWalletPaymentService
+  constructor(walletPaymentService: IWalletPaymentService) {
+    this._walletPaymentService = walletPaymentService
+  }
 
   async createOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { amount } = req.body;
-      const order = await this.walletPaymentService.createOrder(amount);
+      const order = await this._walletPaymentService.createOrder(amount);
       res.status(StatusCode.OK).json({ success: true, order });
     } catch (error) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to create Razorpay order",
+        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_CREATE_RAZORPAY_ORDER,
       });
     }
   }
@@ -36,19 +40,19 @@ export class InstructorWalletPaymentController
       if (!userId) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Instructor ID not found",
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ID_NOT_FOUND,
         });
         return;
       }
 
-      const wallet = await this.walletPaymentService.verifyAndCreditWallet({
+      const wallet = await this._walletPaymentService.verifyAndCreditWallet({
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id,
         signature: razorpay_signature,
         amount,
         userId,
-        role: "instructor", // 👈 specific to instructor
-        onModel: "Instructor", // 👈 specific to instructor
+        role: "instructor", 
+        onModel: "Instructor", 
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
@@ -56,7 +60,7 @@ export class InstructorWalletPaymentController
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || "Payment verification failed",
+        message: error.message || INSTRUCTOR_ERROR_MESSAGE.PAYMENT_VERIFICATION_FAILED,
       });
     }
   }

@@ -1,31 +1,44 @@
-import { IAdminCourseService } from "../interface/IAdminCourseService";
-import { IAdminCourseRepository } from "../../repositories/interfaces/IAdminCourseRepository";
-import { ICourse } from "../../models/courseModel";
-import { IChapter } from "../../models/chapterModel";
-import { IQuiz } from "../../models/quizModel";
+import { IAdminCourseService } from "./interface/IAdminCourseService"; 
+import { IAdminCourseRepository } from "../../repositories/adminRepository/interface/IAdminCourseRepository"; 
+
+import { ICourseDTO } from "../../dto/adminDTO/courseListDTO";
+import { CourseDetailsResponseDTO } from "../../dto/adminDTO/courseDetailDTO";
+import { mapCoursesToDTO} from "../../mappers/adminMapper/courseListMapper";
+import { mapCourseDetailsResponseToDTO,mapCourseDetailsToDTO } from "../../mappers/adminMapper/courseDetailMapper";
+
 
 export class AdminCourseService implements IAdminCourseService {
-  constructor(private readonly courseRepository: IAdminCourseRepository) {}
+  private _courseRepository: IAdminCourseRepository;
 
-  async fetchAllCourses(search = "", page = 1, limit = 10): Promise<{ data: ICourse[]; total: number }> {
-    return await this.courseRepository.getAllCourses(search, page, limit);
+  constructor(courseRepository: IAdminCourseRepository) {
+    this._courseRepository = courseRepository;
   }
 
-  async getCourseDetails(courseId: string): Promise<{
-  course: ICourse | null;
-  chapters: IChapter[];
-  quiz: IQuiz | null;
-}> {
-  return await this.courseRepository.getCourseDetails(courseId);
-}
-
-
-  async toggleCourseListing(courseId: string): Promise<ICourse | null> {
-    return await this.courseRepository.toggleListingStatus(courseId);
+  async fetchAllCourses(
+    search = "",
+    page = 1,
+    limit = 10
+  ): Promise<{ data: ICourseDTO[]; total: number }> {
+    const { data, total } = await this._courseRepository.getAllCourses(search, page, limit);
+    const mapped = mapCoursesToDTO(data);
+    return { data: mapped, total };
   }
 
-  async toggleCourseVerification(courseId: string): Promise<ICourse | null> {
-  return await this.courseRepository.toggleVerificationStatus(courseId);
-}
+  async getCourseDetails(courseId: string): Promise<CourseDetailsResponseDTO | null> {
+    const { course, chapters, quiz } = await this._courseRepository.getCourseDetails(courseId);
 
+    if (!course) return null;
+
+    return mapCourseDetailsResponseToDTO(course, chapters, quiz);
+  }
+
+  async toggleCourseListing(courseId: string): Promise<ICourseDTO | null> {
+    const updatedCourse = await this._courseRepository.toggleListingStatus(courseId);
+    return updatedCourse ? mapCourseDetailsToDTO(updatedCourse) : null;
+  }
+
+  async toggleCourseVerification(courseId: string): Promise<ICourseDTO | null> {
+    const updatedCourse = await this._courseRepository.toggleVerificationStatus(courseId);
+    return updatedCourse ? mapCourseDetailsToDTO(updatedCourse) : null;
+  }
 }

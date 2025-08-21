@@ -22,6 +22,13 @@ interface CourseCardProps {
   categoryName?: string;
 }
 
+interface CartItem {
+  courseId: string;
+  courseName: string;
+  thumbnailUrl: string;
+  price: number;
+}
+
 const CourseCard: React.FC<CourseCardProps> = ({
   id,
   title,
@@ -41,7 +48,10 @@ const CourseCard: React.FC<CourseCardProps> = ({
     const fetchStatuses = async () => {
       try {
         const cartRes = await getCart();
-        const existsInCart = cartRes?.data?.courses?.some((c: any) => c._id === id);
+        // Updated to match the new cart response structure
+        const existsInCart = cartRes?.data && Array.isArray(cartRes.data) 
+          ? cartRes.data.some((course: CartItem) => course.courseId === id)
+          : false;
         setIsInCart(existsInCart);
 
         const wishRes = await courseAlreadyExistInWishlist(id);

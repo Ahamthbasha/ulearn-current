@@ -2,25 +2,26 @@ import { Response } from "express";
 import { Types } from "mongoose";
 import { IWalletService } from "../../services/interface/IWalletService";
 import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IInstructorWalletController } from "./interfaces/IInstructorWalletController";
+import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
 
 export class InstructorWalletController implements IInstructorWalletController {
-  private walletService: IWalletService;
+  private _walletService: IWalletService;
   constructor(walletService: IWalletService) {
-    this.walletService = walletService;
+    this._walletService = walletService;
   }
 
   async getWallet(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
-      const wallet = await this.walletService.getWallet(ownerId);
+      const wallet = await this._walletService.getWallet(ownerId);
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch wallet",
+        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_WALLET,
       });
     }
   }
@@ -29,7 +30,7 @@ export class InstructorWalletController implements IInstructorWalletController {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
       const { amount, description, txnId } = req.body;
-      const wallet = await this.walletService.creditWallet(
+      const wallet = await this._walletService.creditWallet(
         ownerId,
         amount,
         description,
@@ -40,7 +41,7 @@ export class InstructorWalletController implements IInstructorWalletController {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to credit wallet",
+        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_CREDIT_WALLET,
       });
     }
   }
@@ -49,7 +50,7 @@ export class InstructorWalletController implements IInstructorWalletController {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
       const { amount, description, txnId } = req.body;
-      const wallet = await this.walletService.debitWallet(
+      const wallet = await this._walletService.debitWallet(
         ownerId,
         amount,
         description,
@@ -59,7 +60,7 @@ export class InstructorWalletController implements IInstructorWalletController {
       if (!wallet) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Insufficient balance or wallet not found",
+          message: INSTRUCTOR_ERROR_MESSAGE.INSUFFICIENT_BALANCE_OR_WALLET_NOT_FOUND,
         });
         return;
       }
@@ -69,7 +70,7 @@ export class InstructorWalletController implements IInstructorWalletController {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to debit wallet",
+        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_DEBIT_WALLET,
       });
     }
   }
@@ -84,7 +85,7 @@ export class InstructorWalletController implements IInstructorWalletController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       const { transactions, total } =
-        await this.walletService.getPaginatedTransactions(ownerId, page, limit);
+        await this._walletService.getPaginatedTransactions(ownerId, page, limit);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -99,7 +100,7 @@ export class InstructorWalletController implements IInstructorWalletController {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch transaction history",
+        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_TRANSACTION_HISTORY,
       });
     }
   }

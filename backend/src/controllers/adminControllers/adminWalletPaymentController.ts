@@ -1,29 +1,30 @@
 import { Response } from "express";
 import { IWalletPaymentService } from "../../services/interface/IWalletPaymentService";
-import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { Model, Roles, StatusCode } from "../../utils/enums";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IAdminWalletPaymentController } from "./interface/IAdminWalletPaymentController";
+import { AdminErrorMessages } from "../../utils/constants";
 
 export class AdminWalletPaymentController
   implements IAdminWalletPaymentController
 {
-  private walletPaymentService: IWalletPaymentService;
+  private _walletPaymentService: IWalletPaymentService;
   constructor(walletPaymentService: IWalletPaymentService) {
-    this.walletPaymentService = walletPaymentService;
+    this._walletPaymentService = walletPaymentService;
   }
 
   async createOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { amount } = req.body;
 
-      const order = await this.walletPaymentService.createOrder(amount);
+      const order = await this._walletPaymentService.createOrder(amount);
 
       res.status(StatusCode.OK).json({ success: true, order });
     } catch (error) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to create Razorpay order",
+        message: AdminErrorMessages.ADMIN_FAILED_TO_ADD_RAZORPAY,
       });
     }
   }
@@ -41,19 +42,19 @@ export class AdminWalletPaymentController
       if (!userId) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Admin ID not found",
+          message: AdminErrorMessages.ADMIN_NOT_FOUND,
         });
         return;
       }
 
-      const wallet = await this.walletPaymentService.verifyAndCreditWallet({
+      const wallet = await this._walletPaymentService.verifyAndCreditWallet({
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id,
         signature: razorpay_signature,
         amount,
         userId,
-        role: "admin", // ✅ Hardcoded for Admin
-        onModel: "Admin", // ✅ Hardcoded for Admin
+        role: Roles.ADMIN, 
+        onModel:Model.ADMIN, 
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
@@ -61,7 +62,7 @@ export class AdminWalletPaymentController
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || "Payment verification failed",
+        message: error.message || AdminErrorMessages.ADMIN_PAYMENT_VERIFICATION_FAILED,
       });
     }
   }

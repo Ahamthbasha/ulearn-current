@@ -1,12 +1,12 @@
-import { IStudentDashboardService } from "../interface/IStudentDashboardService";
-import { IStudentDashboardRepository } from "../../repositories/interfaces/IStudentDashboardRepository";
+import { IStudentDashboardService } from "./interface/IStudentDashboardService"; 
+import { IStudentDashboardRepository } from "../../repositories/studentRepository/interface/IStudentDashboardRepository"; 
 import { IStudentCourseReportItem, IStudentSlotReportItem } from "../../types/dashboardTypes";
 
 export class StudentDashboardService implements IStudentDashboardService {
-  private dashboardRepo: IStudentDashboardRepository;
+  private _dashboardRepo: IStudentDashboardRepository;
 
   constructor(dashboardRepo: IStudentDashboardRepository) {
-    this.dashboardRepo = dashboardRepo;
+    this._dashboardRepo = dashboardRepo;
   }
 
   async getStudentDashboardData(userId: string) {
@@ -18,12 +18,12 @@ export class StudentDashboardService implements IStudentDashboardService {
       totalSlotBookings,
       totalSlotBookingCost
     ] = await Promise.all([
-      this.dashboardRepo.getTotalCoursesPurchased(userId),
-      this.dashboardRepo.getTotalCoursesCompleted(userId),
-      this.dashboardRepo.getTotalCoursesNotCompleted(userId),
-      this.dashboardRepo.getTotalCoursePurchaseCost(userId),
-      this.dashboardRepo.getTotalSlotBookings(userId),
-      this.dashboardRepo.getTotalSlotBookingCost(userId),
+      this._dashboardRepo.getTotalCoursesPurchased(userId),
+      this._dashboardRepo.getTotalCoursesCompleted(userId),
+      this._dashboardRepo.getTotalCoursesNotCompleted(userId),
+      this._dashboardRepo.getTotalCoursePurchaseCost(userId),
+      this._dashboardRepo.getTotalSlotBookings(userId),
+      this._dashboardRepo.getTotalSlotBookingCost(userId),
     ]);
 
     return {
@@ -38,8 +38,8 @@ export class StudentDashboardService implements IStudentDashboardService {
 
   async getMonthlyPerformance(userId: string) {
     const [coursePerformance, slotPerformance] = await Promise.all([
-      this.dashboardRepo.getMonthlyCoursePerformance(userId),
-      this.dashboardRepo.getMonthlySlotBookingPerformance(userId)
+      this._dashboardRepo.getMonthlyCoursePerformance(userId),
+      this._dashboardRepo.getMonthlySlotBookingPerformance(userId)
     ]);
 
     return { coursePerformance, slotPerformance };
@@ -55,7 +55,7 @@ export class StudentDashboardService implements IStudentDashboardService {
       limit?: number;
     }
   ): Promise<IStudentCourseReportItem[]> {
-    return this.dashboardRepo.getCourseReport(userId, filter);
+    return this._dashboardRepo.getCourseReport(userId, filter);
   }
 
   async getSlotReport(
@@ -68,6 +68,6 @@ export class StudentDashboardService implements IStudentDashboardService {
       limit?: number;
     }
   ): Promise<IStudentSlotReportItem[]> {
-    return this.dashboardRepo.getSlotReport(userId, filter);
+    return this._dashboardRepo.getSlotReport(userId, filter);
   }
 }

@@ -1,4 +1,4 @@
-import { IInstructorMembershipRepository } from "../interfaces/IInstructorMembershipRepository";
+import { IInstructorMembershipRepository } from "./interface/IInstructorMembershipRepository"; 
 import {
   IMembershipPlan,
   MembershipPlanModel,

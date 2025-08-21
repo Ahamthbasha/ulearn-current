@@ -13,7 +13,6 @@ import {
   updateChapter,
 } from "../../../api/action/InstructorActionApi";
 
-const BUCKET_BASE_URL = "https://your-s3-bucket.s3.amazonaws.com"; // Replace with your actual base URL
 
 const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
@@ -57,9 +56,7 @@ const EditChapterPage = () => {
   });
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [captionFile, setCaptionFile] = useState<File | null>(null);
   const [existingVideoUrl, setExistingVideoUrl] = useState<string>("");
-  const [existingCaptionsUrl, setExistingCaptionsUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -76,10 +73,6 @@ const EditChapterPage = () => {
 
         if (data.videoPresignedUrl) {
           setExistingVideoUrl(data.videoPresignedUrl);
-        }
-
-        if (data.captionsUrl) {
-          setExistingCaptionsUrl(`${BUCKET_BASE_URL}/${data.captionsUrl}`);
         }
       } catch {
         toast.error("Failed to load chapter");
@@ -118,13 +111,6 @@ const EditChapterPage = () => {
       }
     }
 
-    if (captionFile) {
-      const ext = captionFile.name.split(".").pop()?.toLowerCase();
-      if (!["vtt", "srt"].includes(ext || "")) {
-        return toast.error("Only .vtt or .srt files allowed for captions");
-      }
-    }
-
     try {
       setLoading(true);
       const formData = new FormData();
@@ -133,7 +119,6 @@ const EditChapterPage = () => {
       formData.append("chapterNumber", String(values.chapterNumber));
       formData.append("courseId", courseId);
       if (videoFile) formData.append("video", videoFile);
-      if (captionFile) formData.append("captions", captionFile);
 
       await updateChapter(courseId, chapterId, formData);
       toast.success("Chapter updated successfully");
@@ -180,6 +165,7 @@ const EditChapterPage = () => {
                   <video
                     src={existingVideoUrl}
                     controls
+                    muted = {false}
                     className="w-full h-64 my-2 rounded"
                   />
                 )}
@@ -187,29 +173,6 @@ const EditChapterPage = () => {
                   type="file"
                   accept="video/*"
                   onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-2 border rounded bg-gray-100"
-                />
-              </div>
-
-              {/* Caption File Section */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Existing Captions
-                </label>
-                {existingCaptionsUrl && (
-                  <a
-                    href={existingCaptionsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline block mb-2"
-                  >
-                    View current captions
-                  </a>
-                )}
-                <input
-                  type="file"
-                  accept=".vtt,.srt"
-                  onChange={(e) => setCaptionFile(e.target.files?.[0] || null)}
                   className="w-full px-4 py-2 border rounded bg-gray-100"
                 />
               </div>
@@ -233,3 +196,55 @@ const EditChapterPage = () => {
 };
 
 export default EditChapterPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

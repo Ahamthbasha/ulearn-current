@@ -4,10 +4,11 @@ import { OtpGenerate } from "../../utils/otpGenerator";
 import { JwtService } from "../../utils/jwt";
 
 import IInstructorController from "./interfaces/IInstructorController";
-import IInstructorService from "../../services/interface/IInstructorService";
+import IInstructorService from "../../services/instructorServices/interface/IInstructorService"; 
 import IOtpServices from "../../services/interface/IOtpService";
 
 import {
+  INSTRUCTOR_ERROR_MESSAGE,
   InstructorErrorMessages,
   InstructorSuccessMessages,
 } from "../../utils/constants";
@@ -15,18 +16,18 @@ import {
 import { Roles, StatusCode } from "../../utils/enums";
 import { SendEmail } from "../../utils/sendOtpEmail";
 export class InstructorController implements IInstructorController {
-  private instructorService: IInstructorService;
-  private otpService: IOtpServices;
-  private otpGenerator: OtpGenerate;
-  private jwt: JwtService;
-  private emailSender: SendEmail;
+  private _instructorService: IInstructorService;
+  private _otpService: IOtpServices;
+  private _otpGenerator: OtpGenerate;
+  private _jwt: JwtService;
+  private _emailSender: SendEmail;
 
   constructor(instructorService: IInstructorService, otpService: IOtpServices) {
-    this.instructorService = instructorService;
-    this.otpService = otpService;
-    this.otpGenerator = new OtpGenerate();
-    this.jwt = new JwtService();
-    this.emailSender = new SendEmail();
+    this._instructorService = instructorService;
+    this._otpService = otpService;
+    this._otpGenerator = new OtpGenerate();
+    this._jwt = new JwtService();
+    this._emailSender = new SendEmail();
   }
 
   public async signUp(req: Request, res: Response): Promise<void> {
@@ -37,7 +38,7 @@ export class InstructorController implements IInstructorController {
       const hashedPassword = await bcrypt.hash(password, saltRound);
       password = hashedPassword;
 
-      const ExistingInstructor = await this.instructorService.findByEmail(
+      const ExistingInstructor = await this._instructorService.findByEmail(
         email
       );
 
@@ -49,9 +50,9 @@ export class InstructorController implements IInstructorController {
         });
         return;
       } else {
-        const otp = await this.otpGenerator.createOtpDigit();
-        await this.otpService.createOtp(email, otp);
-        await this.emailSender.sentEmailVerification("Instructor", email, otp);
+        const otp = await this._otpGenerator.createOtpDigit();
+        await this._otpService.createOtp(email, otp);
+        await this._emailSender.sentEmailVerification("Instructor", email, otp);
         const JWT = new JwtService();
         const token = await JWT.createToken({
           email,
@@ -76,9 +77,9 @@ export class InstructorController implements IInstructorController {
     try {
       let { email } = req.body;
 
-      const otp = await this.otpGenerator.createOtpDigit();
-      await this.otpService.createOtp(email, otp);
-      await this.emailSender.sentEmailVerification("Instructor", email, otp);
+      const otp = await this._otpGenerator.createOtpDigit();
+      await this._otpService.createOtp(email, otp);
+      await this._emailSender.sentEmailVerification("Instructor", email, otp);
       res.status(StatusCode.OK).json({
         success: true,
         message: InstructorSuccessMessages.OTP_SENT,
@@ -97,18 +98,18 @@ export class InstructorController implements IInstructorController {
       if (typeof token != "string") {
         throw new Error();
       }
-      const decode = await this.jwt.verifyToken(token);
+      const decode = await this._jwt.verifyToken(token);
 
       if (!decode) {
         throw new Error(InstructorErrorMessages.TOKEN_INVALID);
       }
-      const resultOtp = await this.otpService.findOtp(decode.email);
+      const resultOtp = await this._otpService.findOtp(decode.email);
       console.log(resultOtp);
       console.log(resultOtp?.otp, "<>", otp);
       if (resultOtp?.otp === otp) {
-        const user = await this.instructorService.createUser(decode);
+        const user = await this._instructorService.createUser(decode);
         if (user) {
-          await this.otpService.deleteOtp(user.email);
+          await this._otpService.deleteOtp(user.email);
 
           res.status(StatusCode.CREATED).json({
             success: true,
@@ -134,7 +135,7 @@ export class InstructorController implements IInstructorController {
       const { email, password } = req.body;
 
       // Check if the instructor exists in the database
-      const instructor = await this.instructorService.findByEmail(email);
+      const instructor = await this._instructorService.findByEmail(email);
 
       if (!instructor) {
         res.json({
@@ -166,21 +167,20 @@ export class InstructorController implements IInstructorController {
       let role = instructor.role;
       let id = instructor._id;
 
-      const accesstoken = await this.jwt.accessToken({ email, role, id });
-      const refreshToken = await this.jwt.refreshToken({ email, role, id });
-
-      const isProd = process.env.NODE_ENV === "production";
+      const accesstoken = await this._jwt.accessToken({ email, role, id });
+      const refreshToken = await this._jwt.refreshToken({ email, role, id });
+      
       res
         .status(StatusCode.OK)
         .cookie("accessToken", accesstoken, {
           httpOnly: true,
-          sameSite: isProd ? "none" : "lax",
-          secure: isProd,
+          sameSite: "none",
+          secure: true,
         })
         .cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          sameSite: isProd ? "none" : "lax",
-          secure: isProd,
+          sameSite: "none" ,
+          secure: true,
         })
 
         .send({
@@ -212,12 +212,12 @@ export class InstructorController implements IInstructorController {
     try {
       let { email } = req.body;
 
-      let existingUser = await this.instructorService.findByEmail(email);
+      let existingUser = await this._instructorService.findByEmail(email);
 
       if (existingUser) {
-        const otp = await this.otpGenerator.createOtpDigit();
-        await this.otpService.createOtp(email, otp);
-        await this.emailSender.sentEmailVerification("instructor", email, otp);
+        const otp = await this._otpGenerator.createOtpDigit();
+        await this._otpService.createOtp(email, otp);
+        await this._emailSender.sentEmailVerification("instructor", email, otp);
         res.send({
           success: true,
           message: InstructorSuccessMessages.REDIERCTING_OTP_PAGE,
@@ -237,11 +237,11 @@ export class InstructorController implements IInstructorController {
   async verifyResetOtp(req: Request, res: Response): Promise<void> {
     try {
       const { email, otp } = req.body;
-      const resultOtp = await this.otpService.findOtp(email);
+      const resultOtp = await this._otpService.findOtp(email);
       console.log(resultOtp?.otp, "<>", otp);
 
       if (resultOtp?.otp == otp) {
-        let token = await this.jwt.createToken({ email });
+        let token = await this._jwt.createToken({ email });
 
         res.status(StatusCode.OK).cookie("forgotToken", token).json({
           success: true,
@@ -262,9 +262,9 @@ export class InstructorController implements IInstructorController {
     try {
       let { email } = req.body;
 
-      const otp = await this.otpGenerator.createOtpDigit();
-      await this.otpService.createOtp(email, otp);
-      await this.emailSender.sentEmailVerification("instructor", email, otp);
+      const otp = await this._otpGenerator.createOtpDigit();
+      await this._otpService.createOtp(email, otp);
+      await this._emailSender.sentEmailVerification("instructor", email, otp);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -283,13 +283,13 @@ export class InstructorController implements IInstructorController {
 
       const token = req.cookies.forgotToken;
 
-      let data = await this.jwt.verifyToken(token);
+      let data = await this._jwt.verifyToken(token);
 
       if (!data) {
         throw new Error(InstructorErrorMessages.TOKEN_INVALID);
       }
 
-      const passwordReset = await this.instructorService.resetPassword(
+      const passwordReset = await this._instructorService.resetPassword(
         data.email,
         hashedPassword
       );
@@ -309,12 +309,12 @@ export class InstructorController implements IInstructorController {
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
     try {
       const { name, email } = req.body;
-      const existingInstructor = await this.instructorService.findByEmail(
+      const existingInstructor = await this._instructorService.findByEmail(
         email
       );
 
       if (!existingInstructor) {
-        const instructor = await this.instructorService.googleLogin(
+        const instructor = await this._instructorService.googleLogin(
           name,
           email
         );
@@ -322,13 +322,19 @@ export class InstructorController implements IInstructorController {
         if (instructor) {
           const role = instructor.role;
           const id = instructor._id;
-          const accessToken = await this.jwt.accessToken({ email, id, role });
-          const refreshToken = await this.jwt.refreshToken({ email, id, role });
+          const accessToken = await this._jwt.accessToken({ email, id, role });
+          const refreshToken = await this._jwt.refreshToken({ email, id, role });
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true })
-            .cookie("refreshToken", refreshToken, { httpOnly: true })
+            .cookie("accessToken", accessToken, { httpOnly: true,
+              secure:true,
+              sameSite:"none"
+             })
+            .cookie("refreshToken", refreshToken, { httpOnly: true ,
+              secure:true,
+              sameSite:"none"
+            })
             .json({
               success: true,
               message: InstructorSuccessMessages.GOOGLE_LOGIN_SUCCESS,
@@ -339,15 +345,15 @@ export class InstructorController implements IInstructorController {
         if (!existingInstructor.isBlocked) {
           const role = existingInstructor.role;
           const id = existingInstructor._id;
-          const accessToken = await this.jwt.accessToken({ email, id, role });
-          const refreshToken = await this.jwt.refreshToken({ email, id, role });
+          const accessToken = await this._jwt.accessToken({ email, id, role });
+          const refreshToken = await this._jwt.refreshToken({ email, id, role });
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true })
-            .cookie("refreshToken", refreshToken, { httpOnly: true })
+            .cookie("accessToken", accessToken, { httpOnly: true,sameSite:"none",secure:true})
+            .cookie("refreshToken", refreshToken, { httpOnly: true,sameSite:"none",secure:true})
             .json({
-              sucess: true,
+              success: true,
               message: InstructorSuccessMessages.GOOGLE_LOGIN_SUCCESS,
               instructor: existingInstructor,
             });
@@ -361,7 +367,7 @@ export class InstructorController implements IInstructorController {
   async statusCheck(req: Request, res: Response): Promise<void> {
     try {
       const token = req.cookies.accessToken;
-      const decoded = await this.jwt.verifyToken(token);
+      const decoded = await this._jwt.verifyToken(token);
 
       if (!decoded?.email) {
         res
@@ -370,7 +376,7 @@ export class InstructorController implements IInstructorController {
         return;
       }
 
-      const instructor = await this.instructorService.findByEmail(
+      const instructor = await this._instructorService.findByEmail(
         decoded.email
       );
 
@@ -390,7 +396,7 @@ export class InstructorController implements IInstructorController {
     } catch (err) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Status check failed",
+        message: INSTRUCTOR_ERROR_MESSAGE.BLOCK_CHECK,
       });
     }
   }

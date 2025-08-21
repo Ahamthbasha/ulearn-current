@@ -6,10 +6,14 @@ import { Formik, Form, Field } from "formik";
 
 import PasswordField from "../../../components/common/PasswordField";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
-import { login } from "../../../api/auth/InstructorAuthentication";
+import { login, googleLogin } from "../../../api/auth/InstructorAuthentication";
 import type { Login } from "../../../types/LoginTypes";
 
 import { getVerificationRequestByemail } from "../../../api/action/InstructorActionApi";
+
+// Google OAuth
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 // ✅ Improved validation
 const loginSchema = Yup.object().shape({
@@ -36,39 +40,6 @@ const LoginPage = () => {
     isBlocked: false,
   };
 
-  // const onSubmit = async (data: Login) => {
-  //   try {
-  //     const response = await login({ email: data.email, password: data.password, role: data.role });
-  //     const user = response.user;
-
-  //     if (user) {
-  //       localStorage.setItem('instructor', JSON.stringify(user));
-  //       toast.success(response?.message);
-
-  //       dispatch(setInstructor({
-  //         userId: user._id,
-  //         name: user.username,
-  //         email: user.email,
-  //         role: user.role,
-  //         isBlocked: user.isBlocked,
-  //         profilePicture: user.profilePicture
-  //       }));
-
-  //       if(user.isVerified){
-  //         navigate('/instructor/dashboard')
-  //       }else{
-  //         navigate("/instructor/verification");
-  //       }
-
-  //     } else {
-  //       toast.error(response?.message || "Login failed");
-  //     }
-  //   } catch (error) {
-  //     console.error("Login error:", error);
-  //     toast.error("Login failed. Please try again.");
-  //   }
-  // };
-
   const onSubmit = async (data: Login) => {
     try {
       const response = await login({
@@ -77,7 +48,6 @@ const LoginPage = () => {
         role: data.role,
       });
       const user = response.user;
-      console.log("user data", user);
       if (user) {
         localStorage.setItem("instructor", JSON.stringify(user));
         toast.success(response?.message);
@@ -97,10 +67,7 @@ const LoginPage = () => {
         if (user.isVerified) {
           navigate("/instructor/dashboard");
         } else {
-          // Check if the instructor already submitted a verification request
           const verifyStatus = await getVerificationRequestByemail(user.email);
-
-          console.log("verificationStatus Data", verifyStatus);
 
           if (verifyStatus?.data?.status) {
             navigate(`/instructor/verificationStatus/${user.email}`);
@@ -114,6 +81,54 @@ const LoginPage = () => {
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please try again.");
+    }
+  };
+
+  // ✅ Google login handler
+  const handleGoogleLogin = async (credentialResponse: any) => {
+    try {
+      const decoded: any = jwtDecode(credentialResponse.credential);
+
+      const response = await googleLogin({
+        name: decoded.name,
+        email: decoded.email,
+        password: decoded.sub,
+        profilePicture: decoded.picture,
+        mobileNumber: decoded.phoneNumber,
+      });
+
+      const instructor = response?.instructor;
+
+      if (instructor) {
+        dispatch(
+          setInstructor({
+            userId: instructor._id,
+            name: instructor.name,
+            email: instructor.email,
+            role: instructor.role,
+            isBlocked: instructor.isBlocked,
+            profilePicture: instructor.profilePicture,
+            isVerified: instructor.isVerified,
+          })
+        );
+        localStorage.setItem("instructor", JSON.stringify(instructor));
+        toast.success(response.message || "Logged in with Google!");
+
+        if (instructor.isVerified) {
+          navigate("/instructor/dashboard");
+        } else {
+          const verifyStatus = await getVerificationRequestByemail(instructor.email);
+          if (verifyStatus?.data?.status) {
+            navigate(`/instructor/verificationStatus/${instructor.email}`);
+          } else {
+            navigate("/instructor/verification");
+          }
+        }
+      } else {
+        toast.error(response.message || "Google login failed");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Google login failed");
     }
   };
 
@@ -168,6 +183,21 @@ const LoginPage = () => {
             </Form>
           )}
         </Formik>
+
+        {/* Google Login Section */}
+        <div className="mt-6">
+          <p className="text-center text-sm text-gray-500 mb-2">
+            Or login with Google
+          </p>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => toast.error("Google Login Failed")}
+              />
+            </div>
+          </GoogleOAuthProvider>
+        </div>
       </div>
     </div>
   );

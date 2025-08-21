@@ -55,27 +55,32 @@ const CourseEditPage = () => {
     validationSchema: Yup.object({
       courseName: Yup.string()
         .trim()
+        .min(6, "Course name must be at least 6 characters")
+        .max(30, "Course name must not exceed 20 characters")
         .matches(
-          /^[A-Za-z ]{6,}$/,
-          "Minimum 6 letters. Only letters and spaces allowed"
+          /^[A-Za-z ]{6,30}$/,
+          "Only letters and spaces allowed, 6-20 characters"
+        )
+        .test("not-only-spaces", "Course name cannot be just spaces", (value) =>
+          Boolean(value && value.trim().replace(/\s/g, "").length >= 6)
         )
         .required("Course name is required"),
 
       description: Yup.string()
         .trim()
         .min(10, "Description must be at least 10 characters")
-        .max(300, "Description must not exceed 300 characters")
+        .max(50, "Description must not exceed 50 characters")
         .matches(
-          /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{20,}$/,
-          "Description must include meaningful text, not just numbers or symbols"
+          /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{10,50}$/,
+          "Description must include meaningful text, not just symbols or numbers"
         )
         .test(
-          "not-just-symbols-or-digits",
-          "Description must contain meaningful text (at least 5 letters)",
+          "not-repetitive-symbols",
+          "Description must contain letters or meaningful words",
           (value) => {
             if (!value) return false;
-            const alphaCount = (value.match(/[A-Za-z]/g) || []).length;
-            return alphaCount >= 5;
+            const stripped = value.replace(/[\s\d\W_]+/g, "");
+            return stripped.length >= 5; // At least 5 letters
           }
         )
         .required("Description is required"),
@@ -83,16 +88,28 @@ const CourseEditPage = () => {
       category: Yup.string().required("Category is required"),
 
       price: Yup.number()
-        .typeError("Must be a number")
-        .positive("Price must be greater than 0")
+        .typeError("Price must be a number")
+        .positive("Price must be greater than zero")
+        .min(1, "Price must be at least ₹1")
+        .max(999999, "Price cannot exceed ₹9,99,999")
+        .test("decimal-places", "Price can have maximum 2 decimal places", (value) => {
+          if (!value) return true;
+          const decimalPlaces = value.toString().split('.')[1];
+          return !decimalPlaces || decimalPlaces.length <= 2;
+        })
         .required("Price is required"),
 
       duration: Yup.string()
         .matches(/^[1-9][0-9]*$/, "Duration must be a positive number")
+        .test("duration-range", "Duration must be between 1-999 hours", (value) => {
+          if (!value) return false;
+          const num = parseInt(value);
+          return num >= 1 && num <= 999;
+        })
         .required("Duration is required"),
 
       level: Yup.string()
-        .oneOf(["beginner", "intermediate", "advanced"], "Invalid level")
+        .oneOf(["Beginner", "Intermediate", "Advanced"], "Invalid level")
         .required("Level is required"),
     }),
     onSubmit: async (values) => {
@@ -129,21 +146,34 @@ const CourseEditPage = () => {
         ]);
 
         const course = courseRes?.data;
+        const categories = categoryRes || [];
+
+        // Find the category ID by matching the categoryName
+        const matchingCategory = categories.find(
+          (cat) => cat.categoryName === course.categoryName
+        );
+
+        // Normalize level value to match validation schema
+        const normalizeLevel = (level: string) => {
+          if (!level) return "";
+          const normalized = level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
+          return ["Beginner", "Intermediate", "Advanced"].includes(normalized) ? normalized : "";
+        };
 
         formik.setValues({
           courseName: course.courseName || "",
           description: course.description || "",
-          category: course.category?._id || "",
+          category: matchingCategory?._id || "",
           price: course.price || "",
           duration: course.duration || "",
-          level: (course.level || "").toLowerCase(),
+          level: normalizeLevel(course.level || ""),
           thumbnail: null,
           demoVideo: null,
         });
 
         setExistingThumbnailUrl(course.thumbnailSignedUrl || null);
-        setExistingDemoVideoUrl(course.demoVideo?.urlSigned || null);
-        setCategories(categoryRes || []);
+        setExistingDemoVideoUrl(course.demoVideoUrlSigned || null);
+        setCategories(categories);
         setInitialLoading(false);
       } catch (err) {
         toast.error("Failed to load course");
@@ -219,7 +249,9 @@ const CourseEditPage = () => {
             onBlur={formik.handleBlur}
             className="w-full px-4 py-2 rounded-lg bg-gray-100 border-2 focus:outline-none focus:border-blue-500"
           >
-            <option value="">Select Category</option>
+            <option value="" disabled>
+              Select Category
+            </option>
             {categories.map((cat) => (
               <option key={cat._id} value={cat._id}>
                 {cat.categoryName}
@@ -240,12 +272,15 @@ const CourseEditPage = () => {
             name="level"
             value={formik.values.level}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             className="w-full px-4 py-2 rounded-lg bg-gray-100 border-2 focus:outline-none focus:border-blue-500"
           >
-            <option value="">Select Level</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
+            <option value="" disabled>
+              Select Level
+            </option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
           </select>
           {formik.touched.level && formik.errors.level && (
             <p className="text-red-500 text-sm">{formik.errors.level}</p>

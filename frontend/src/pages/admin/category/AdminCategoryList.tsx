@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Pencil, ShieldX, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DataTable, {
@@ -9,7 +9,8 @@ import {
   getAllCategories,
   toggleCategoryStatus,
 } from "../../../api/action/AdminActionApi";
-import ConfirmationModal from "../../../components/common/ConfirmationModal"; // ✅ Import it
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { useDebounce } from "../../../hooks/UseDebounce"; 
 
 const AdminCategoryListPage = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -18,7 +19,7 @@ const AdminCategoryListPage = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(5); // ✅ Adjusted limit
+  const [limit] = useState(5);
   const [total, setTotal] = useState(0);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -26,10 +27,14 @@ const AdminCategoryListPage = () => {
 
   const navigate = useNavigate();
 
-  const fetchCategories = async () => {
+  // ✅ Use debounced search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // ✅ Memoize fetchCategories to prevent unnecessary re-renders
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAllCategories(currentPage, limit, searchTerm);
+      const response = await getAllCategories(currentPage, limit, debouncedSearchTerm);
       if (!response || !Array.isArray(response.data))
         throw new Error("Invalid category data received");
       setCategories(response.data);
@@ -40,24 +45,50 @@ const AdminCategoryListPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, limit, debouncedSearchTerm]);
 
+  // ✅ Effect depends on fetchCategories function
   useEffect(() => {
     fetchCategories();
-  }, [currentPage, searchTerm]);
+  }, [fetchCategories]);
 
   const openModalForToggle = (record: any) => {
     setSelectedCategory(record);
     setModalOpen(true);
   };
 
+  // ✅ Optimized toggle handler with local state update
   const handleConfirmToggle = async () => {
     if (selectedCategory) {
       try {
+        // ✅ Optimistic update - Update UI immediately
+        setCategories(prev => 
+          prev.map(category => 
+            category._id === selectedCategory._id 
+              ? { ...category, isListed: !category.isListed }
+              : category
+          )
+        );
+
         await toggleCategoryStatus(selectedCategory._id);
-        fetchCategories();
+        
+        // ✅ Optional: Refresh data to ensure consistency
+        // fetchCategories();
+        
       } catch (error) {
-        console.error(error);
+        console.error("Toggle failed:", error);
+        
+        // ✅ Revert optimistic update on error
+        setCategories(prev => 
+          prev.map(category => 
+            category._id === selectedCategory._id 
+              ? { ...category, isListed: !category.isListed }
+              : category
+          )
+        );
+        
+        // ✅ Show error message if needed
+        setError("Failed to update category status");
       } finally {
         setModalOpen(false);
         setSelectedCategory(null);
@@ -121,7 +152,7 @@ const AdminCategoryListPage = () => {
       label: (record) => (record.isListed ? "Unlist" : "List"),
       icon: (record) =>
         record.isListed ? <ShieldX size={16} /> : <ShieldCheck size={16} />,
-      onClick: openModalForToggle, // ✅ Trigger modal instead
+      onClick: openModalForToggle,
       className: (record) =>
         record.isListed
           ? "bg-red-500 hover:bg-red-600 text-white"
@@ -159,7 +190,6 @@ const AdminCategoryListPage = () => {
         }
       />
 
-      {/* ✅ Confirmation Modal */}
       <ConfirmationModal
         isOpen={modalOpen}
         title="Confirm Action"

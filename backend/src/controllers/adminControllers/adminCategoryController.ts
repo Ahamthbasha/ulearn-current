@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import { IAdminCategoryController } from "../adminControllers/interface/IAdminCategoryController";
-import { IAdminCategoryService } from "../../services/interface/IAdminCategoryService";
+import { IAdminCategoryService } from "../../services/adminServices/interface/IAdminCategoryService"; 
 import {
+  AdminErrorMessages,
+  AdminSuccessMessages,
   CategoryErrorMsg,
   CategorySuccessMsg,
   GeneralServerErrorMsg,
@@ -9,15 +11,15 @@ import {
 import { StatusCode } from "../../utils/enums";
 import { ICategoryModel } from "../../models/categoryModel";
 export class AdminCategoryContoller implements IAdminCategoryController {
-  private categoryService: IAdminCategoryService;
+  private _categoryService: IAdminCategoryService;
   constructor(categoryService: IAdminCategoryService) {
-    this.categoryService = categoryService;
+    this._categoryService = categoryService;
   }
 
   async addCategory(req: Request, res: Response): Promise<void> {
     try {
       const { categoryName } = req.body;
-      const existingCategory = await this.categoryService.findCategoryByName(
+      const existingCategory = await this._categoryService.findCategoryByName(
         categoryName
       );
       if (existingCategory) {
@@ -27,7 +29,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
         return;
       }
 
-      const createdCategory = await this.categoryService.addCategory(
+      const createdCategory = await this._categoryService.addCategory(
         categoryName
       );
       if (createdCategory) {
@@ -53,7 +55,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
     try {
       const { categoryName, id } = req.body;
 
-      const existingCategory = (await this.categoryService.findCategoryByName(
+      const existingCategory = (await this._categoryService.findCategoryByName(
         categoryName
       )) as ICategoryModel | null;
 
@@ -65,7 +67,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
         return;
       }
 
-      const updatedCategory = await this.categoryService.updateCategory(
+      const updatedCategory = await this._categoryService.updateCategory(
         id,
         categoryName
       );
@@ -98,7 +100,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
       const search = (req.query.search as string) || "";
 
       const { data, total } =
-        await this.categoryService.getAllCategoriesPaginated(
+        await this._categoryService.getAllCategoriesPaginated(
           page,
           limit,
           search
@@ -106,7 +108,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: "Categories fetched successfully",
+        message: AdminSuccessMessages.ADMIN_CATEGROY_FETCHED,
         data,
         total,
         page,
@@ -116,7 +118,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message:
-          error.message || "Something went wrong while fetching categories",
+          error.message || AdminErrorMessages.ADMIN_CATEGORY_FETCHEDERROR,
       });
     }
   }
@@ -124,7 +126,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
   async listOrUnlistCategory(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const response = await this.categoryService.listOrUnlistCategory(id);
+      const response = await this._categoryService.listOrUnlistCategory(id);
 
       if (!response)
         throw new Error(GeneralServerErrorMsg.INTERNAL_SERVER_ERROR);
@@ -143,7 +145,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
   async findCategoryById(req: Request, res: Response): Promise<void> {
     try {
       const { categoryId } = req.params;
-      const response = await this.categoryService.findCategoryById(categoryId);
+      const response = await this._categoryService.findCategoryById(categoryId);
 
       if (!response)
         throw new Error(GeneralServerErrorMsg.INTERNAL_SERVER_ERROR);

@@ -69,7 +69,6 @@ export const courseDetail = async (courseId: string) => {
     const response = await API.get(
       `${UserRouterEndpoints.userCourseDetail}/${courseId}`
     );
-
     return response.data;
   } catch (error) {
     throw error;
@@ -201,6 +200,58 @@ export const courseAlreadyExistInWishlist = async (courseId: string) => {
 
 //checkout actions
 
+
+// export const initiateCheckout = async (
+//   courseIds: string[],
+//   totalAmount: number,
+//   paymentMethod: "razorpay" | "wallet"
+// ) => {
+//   try {
+//     const response = await API.post(UserRouterEndpoints.userInitiateCheckout, {
+//       courseIds,
+//       totalAmount,
+//       paymentMethod,
+//     });
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const checkoutCompleted = async ({
+//   orderId,
+//   paymentId,
+//   method,
+//   amount,
+// }: {
+//   orderId: string;
+//   paymentId: string;
+//   method: string;
+//   amount: number;
+// }) => {
+//   try {
+//     const response = await API.post(UserRouterEndpoints.userCompleteCheckout, {
+//       orderId,
+//       paymentId,
+//       method,
+//       amount,
+//     });
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+
+
+
+
+
+
+// Updated checkout actions with session management
+
+
+
 export const initiateCheckout = async (
   courseIds: string[],
   totalAmount: number,
@@ -241,6 +292,12 @@ export const checkoutCompleted = async ({
     throw error;
   }
 };
+
+
+
+
+
+
 
 //boughted courses actions
 
@@ -396,10 +453,10 @@ export const walletTransactionHistory = async (
   }
 };
 
-export const allOrder = async (page: number = 1, limit: number = 5) => {
+export const allOrder = async (page: number = 1, limit: number = 5,search:string= "") => {
   try {
     const response = await API.get(UserRouterEndpoints.userGetOrders, {
-      params: { page, limit },
+      params: { page, limit, search },
     });
     return response.data; // should return { orders, total }
   } catch (error) {
@@ -533,16 +590,37 @@ export const bookSlotViaWallet = async (slotId: string) => {
   }
 };
 
-export const bookingHistory = async (page = 1, limit = 5) => {
+// export const bookingHistory = async (page = 1, limit = 5) => {
+//   try {
+//     const response = await API.get(
+//       `${UserRouterEndpoints.userGetSlotBookingHistory}?page=${page}&limit=${limit}`
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+export const bookingHistory = async (page = 1, limit = 5, searchQuery = '') => {
   try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    if (searchQuery && searchQuery.trim()) {
+      params.append('search', searchQuery.trim());
+    }
+    
     const response = await API.get(
-      `${UserRouterEndpoints.userGetSlotBookingHistory}?page=${page}&limit=${limit}`
+      `${UserRouterEndpoints.userGetSlotBookingHistory}?${params.toString()}`
     );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
+
 
 export const bookingDetail = async (bookingId: string) => {
   try {

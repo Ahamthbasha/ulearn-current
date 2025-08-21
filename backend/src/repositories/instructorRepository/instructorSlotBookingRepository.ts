@@ -1,5 +1,5 @@
 import { BookingModel, IBooking } from "../../models/bookingModel";
-import { IInstructorSlotBookingRepository } from "../interfaces/IInstructorSlotBookingRepository";
+import { IInstructorSlotBookingRepository } from "./interface/IInstructorSlotBookingRepository"; 
 import { Types } from "mongoose";
 
 export class InstructorSlotBookingRepository implements IInstructorSlotBookingRepository {

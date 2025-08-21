@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Pencil, Trash2, Plus, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DataTable, {
@@ -12,6 +12,7 @@ import {
   toggleMembershipStatus,
 } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
+import { useDebounce } from "../../../hooks/UseDebounce"; // Import the debounce hook
 
 interface IMembershipPlan {
   _id: string;
@@ -28,7 +29,7 @@ const MembershipPlanPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(1);
+  const [limit] = useState(2);
   const [total, setTotal] = useState(0);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -39,13 +40,16 @@ const MembershipPlanPage = () => {
 
   const navigate = useNavigate();
 
-  const fetchPlans = async () => {
+  // ✅ Add debounced search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300); // 300ms delay
+
+  const fetchPlans = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getAllMembership({
         page: currentPage,
         limit,
-        search: searchTerm,
+        search: debouncedSearchTerm,
       });
       console.log(response);
       setPlans(response.plans || []);
@@ -59,15 +63,16 @@ const MembershipPlanPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, limit, debouncedSearchTerm]); // ✅ Use debouncedSearchTerm instead of searchTerm
 
+  // ✅ Effect depends on fetchPlans function
   useEffect(() => {
     fetchPlans();
-  }, [currentPage, searchTerm]);
+  }, [fetchPlans]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handlePageChange = (page: number) => {
@@ -92,13 +97,27 @@ const MembershipPlanPage = () => {
     setToggleModalOpen(true);
   };
 
+  // ✅ Optimized delete handler with optimistic updates
   const handleConfirmDelete = async () => {
     if (!selectedPlan) return;
+
     try {
+      // ✅ Optimistic update - Remove from UI immediately
+      const planToDelete = selectedPlan._id;
+      setPlans(prev => prev.filter(plan => plan._id !== planToDelete));
+      
+      // ✅ Update total count
+      setTotal(prev => prev - 1);
+
       await deleteMembership(selectedPlan._id);
       toast.success("Membership plan deleted");
-      fetchPlans();
+      
+      // ✅ Optional: Refresh to ensure consistency (remove if not needed)
+      // fetchPlans();
+      
     } catch (err: any) {
+      // ✅ Revert optimistic update on error
+      fetchPlans(); // Refetch to restore the deleted item
       toast.error(
         err?.response?.data?.message || "Failed to delete membership plan"
       );
@@ -108,17 +127,39 @@ const MembershipPlanPage = () => {
     }
   };
 
+  // ✅ Optimized toggle handler with optimistic updates
   const handleConfirmToggle = async () => {
     if (!selectedPlan) return;
+
     try {
+      // ✅ Optimistic update - Update UI immediately
+      setPlans(prev =>
+        prev.map(plan =>
+          plan._id === selectedPlan._id
+            ? { ...plan, isActive: !plan.isActive }
+            : plan
+        )
+      );
+
       await toggleMembershipStatus(selectedPlan._id);
       toast.success(
         `Plan ${
           selectedPlan.isActive ? "deactivated" : "activated"
         } successfully`
       );
-      fetchPlans();
+      
+      // ✅ Optional: Refresh to ensure consistency (remove if not needed)
+      // fetchPlans();
+      
     } catch (err: any) {
+      // ✅ Revert optimistic update on error
+      setPlans(prev =>
+        prev.map(plan =>
+          plan._id === selectedPlan._id
+            ? { ...plan, isActive: !plan.isActive }
+            : plan
+        )
+      );
       toast.error(
         err?.response?.data?.message || "Failed to update plan status"
       );
@@ -206,7 +247,7 @@ const MembershipPlanPage = () => {
         onRetry={fetchPlans}
         emptyStateTitle="No Membership Plans Found"
         emptyStateDescription="Create a membership plan to get started."
-        searchValue={searchTerm}
+        searchValue={searchTerm} // ✅ Keep original searchTerm for immediate UI update
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search plans..."
         pagination={{

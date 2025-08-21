@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { IStudentProfileService } from "../../services/interface/IStudentProfileService";
+import { IStudentProfileService } from "../../services/studentServices/interface/IStudentProfileService"; 
 import { IStudentProfileController } from "./interfaces/IStudentProfileController";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
 import { StatusCode } from "../../utils/enums";
@@ -7,15 +7,14 @@ import {
   StudentSuccessMessages,
   StudentErrorMessages,
 } from "../../utils/constants";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import bcrypt from "bcrypt";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 
 export class StudentProfileController implements IStudentProfileController {
-  private studentProfileService: IStudentProfileService;
+  private _studentProfileService: IStudentProfileService;
 
   constructor(studentProfileService: IStudentProfileService) {
-    this.studentProfileService = studentProfileService;
+    this._studentProfileService = studentProfileService;
   }
 
   // ✅ GET PROFILE
@@ -32,9 +31,10 @@ export class StudentProfileController implements IStudentProfileController {
         });
         return;
       }
-      const student = await this.studentProfileService.getProfile(email);
 
-      if (!student) {
+      const studentDTO = await this._studentProfileService.getProfile(email);
+
+      if (!studentDTO) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
           message: StudentErrorMessages.STUDENT_NOT_FOUND,
@@ -42,17 +42,10 @@ export class StudentProfileController implements IStudentProfileController {
         return;
       }
 
-      const profilePicUrl = student.profilePicUrl
-        ? await getPresignedUrl(student.profilePicUrl)
-        : undefined;
-
       res.status(StatusCode.OK).json({
         success: true,
         message: StudentSuccessMessages.PROFILE_FETCHED,
-        data: {
-          ...student.toObject(),
-          profilePicUrl,
-        },
+        data: studentDTO,
       });
     } catch (error) {
       console.error("getProfile error:", error);
@@ -70,7 +63,6 @@ export class StudentProfileController implements IStudentProfileController {
   ): Promise<void> {
     try {
       const userId = req.user?.id;
-
       if (!userId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
@@ -78,6 +70,7 @@ export class StudentProfileController implements IStudentProfileController {
         });
         return;
       }
+
       const { username, skills, expertise, currentStatus } = req.body;
 
       let profilePicUrl;
@@ -96,12 +89,12 @@ export class StudentProfileController implements IStudentProfileController {
         ...(profilePicUrl && { profilePicUrl }),
       };
 
-      const updatedStudent = await this.studentProfileService.updateProfile(
+      const updatedDTO = await this._studentProfileService.updateProfile(
         userId,
         updateData
       );
 
-      if (!updatedStudent) {
+      if (!updatedDTO) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: StudentErrorMessages.PROFILE_UPDATE_FAILED,
@@ -112,7 +105,7 @@ export class StudentProfileController implements IStudentProfileController {
       res.status(StatusCode.OK).json({
         success: true,
         message: StudentSuccessMessages.PROFILE_UPDATED,
-        data: updatedStudent,
+        data: updatedDTO,
       });
     } catch (error) {
       console.error("updateProfile error:", error);
@@ -137,9 +130,9 @@ export class StudentProfileController implements IStudentProfileController {
         });
         return;
       }
-      const { currentPassword, newPassword } = req.body;
 
-      const student = await this.studentProfileService.getProfile(email);
+      const { currentPassword, newPassword } = req.body;
+      const student = await this._studentProfileService.getUserByEmail(email);
 
       if (!student) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -159,7 +152,7 @@ export class StudentProfileController implements IStudentProfileController {
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      const isUpdated = await this.studentProfileService.updatePassword(
+      const isUpdated = await this._studentProfileService.updatePassword(
         email,
         hashedPassword
       );

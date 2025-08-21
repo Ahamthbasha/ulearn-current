@@ -1,9 +1,12 @@
-import { IAdminDashboardService } from "../interface/IAdminDashboardService";
-import { IAdminDashboardRepository } from "../../repositories/interfaces/IAdminDashboardRepository";
+import { IAdminDashboardService } from "./interface/IAdminDashboardService"; 
+import { IAdminDashboardRepository } from "../../repositories/adminRepository/interface/IAdminDashboardRepository"; 
 import { IAdminCourseSalesReportItem } from "../../types/dashboardTypes";
 
 export class AdminDashboardService implements IAdminDashboardService {
-  constructor(private readonly dashboardRepo: IAdminDashboardRepository) {}
+  private _dashboardRepo: IAdminDashboardRepository
+  constructor(dashboardRepo: IAdminDashboardRepository) {
+    this._dashboardRepo = dashboardRepo
+  }
 
   async getDashboardMetrics() {
     const [
@@ -17,15 +20,15 @@ export class AdminDashboardService implements IAdminDashboardService {
       topCourses,
       topCategories
     ] = await Promise.all([
-      this.dashboardRepo.getInstructorCount(),
-      this.dashboardRepo.getMentorCount(),
-      this.dashboardRepo.getCourseCount(),
-      this.dashboardRepo.getTotalCourseRevenue(),
-      this.dashboardRepo.getTotalMembershipRevenue(),
-      this.dashboardRepo.getMonthlyCourseSales(),
-      this.dashboardRepo.getMonthlyMembershipSales(),
-      this.dashboardRepo.getTopSellingCourses(),
-      this.dashboardRepo.getTopSellingCategories()
+      this._dashboardRepo.getInstructorCount(),
+      this._dashboardRepo.getMentorCount(),
+      this._dashboardRepo.getCourseCount(),
+      this._dashboardRepo.getTotalCourseRevenue(),
+      this._dashboardRepo.getTotalMembershipRevenue(),
+      this._dashboardRepo.getMonthlyCourseSales(),
+      this._dashboardRepo.getMonthlyMembershipSales(),
+      this._dashboardRepo.getTopSellingCourses(),
+      this._dashboardRepo.getTopSellingCategories()
     ]);
 
     return {
@@ -52,11 +55,11 @@ export class AdminDashboardService implements IAdminDashboardService {
     totalPages: number;
     currentPage: number;
   }> {
-    const { items, totalItems } = await this.dashboardRepo.getCourseSalesReportFiltered(filter, page, limit);
+    const { items, totalItems } = await this._dashboardRepo.getCourseSalesReportFiltered(filter, page, limit);
     
     // FIX 1: Calculate totalAdminShare from all items, not just current page
     // For pagination, we need to get total admin share for the entire dataset
-    const allItemsForTotal = await this.dashboardRepo.getCourseSalesReportFiltered(filter); // No pagination for total calculation
+    const allItemsForTotal = await this._dashboardRepo.getCourseSalesReportFiltered(filter); // No pagination for total calculation
     const totalAdminShare = allItemsForTotal.items.reduce((acc, item) => acc + (item.totalAdminShare || 0), 0);
     
     // FIX 2: Handle case when no pagination parameters provided
@@ -91,11 +94,11 @@ export class AdminDashboardService implements IAdminDashboardService {
     totalPages: number;
     currentPage: number;
   }> {
-    const { items, totalItems } = await this.dashboardRepo.getMembershipSalesReportFiltered(filter, page, limit);
+    const { items, totalItems } = await this._dashboardRepo.getMembershipSalesReportFiltered(filter, page, limit);
     
     // FIX 3: Calculate totalRevenue from all items, not just current page
     // For pagination, we need to get total revenue for the entire dataset
-    const allItemsForTotal = await this.dashboardRepo.getMembershipSalesReportFiltered(filter); // No pagination for total calculation
+    const allItemsForTotal = await this._dashboardRepo.getMembershipSalesReportFiltered(filter); // No pagination for total calculation
     const totalRevenue = allItemsForTotal.items.reduce((acc, item) => acc + item.price, 0);
     
     // FIX 4: totalSales should be totalItems, not current page items length

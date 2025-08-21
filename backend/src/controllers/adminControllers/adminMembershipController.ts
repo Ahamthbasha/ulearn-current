@@ -1,19 +1,19 @@
 import { Request, Response } from "express";
 import { IAdminMembershipController } from "./interface/IAdminMembershipController";
-import { IAdminMembershipService } from "../../services/interface/IAdminMembershipService";
-import { MembershipMessages } from "../../utils/constants";
+import { IAdminMembershipService } from "../../services/adminServices/interface/IAdminMembershipService"; 
+import { AdminErrorMessages, AdminSuccessMessages, MembershipMessages } from "../../utils/constants";
 import { StatusCode } from "../../utils/enums";
 
 export class AdminMembershipController implements IAdminMembershipController {
-  private membershipService: IAdminMembershipService;
+  private _membershipService: IAdminMembershipService;
 
   constructor(membershipService: IAdminMembershipService) {
-    this.membershipService = membershipService;
+    this._membershipService = membershipService;
   }
 
   async createPlan(req: Request, res: Response): Promise<void> {
     try {
-      const plan = await this.membershipService.createPlan(req.body);
+      const plan = await this._membershipService.createPlan(req.body);
       res.status(StatusCode.CREATED).json({
         message: MembershipMessages.CREATE_SUCCESS,
         plan,
@@ -29,7 +29,7 @@ export class AdminMembershipController implements IAdminMembershipController {
   async updatePlan(req: Request, res: Response): Promise<void> {
     try {
       const { membershipId } = req.params;
-      const updated = await this.membershipService.updatePlan(
+      const updated = await this._membershipService.updatePlan(
         membershipId,
         req.body
       );
@@ -54,7 +54,7 @@ export class AdminMembershipController implements IAdminMembershipController {
   async deletePlan(req: Request, res: Response): Promise<void> {
     try {
       const { membershipId } = req.params;
-      const deleted = await this.membershipService.deletePlan(membershipId);
+      const deleted = await this._membershipService.deletePlan(membershipId);
 
       if (!deleted) {
         res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
@@ -73,7 +73,7 @@ export class AdminMembershipController implements IAdminMembershipController {
   async getPlanById(req: Request, res: Response): Promise<void> {
     try {
       const { membershipId } = req.params;
-      const plan = await this.membershipService.getPlanById(membershipId);
+      const plan = await this._membershipService.getPlanById(membershipId);
 
       if (!plan) {
         res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
@@ -101,7 +101,7 @@ export class AdminMembershipController implements IAdminMembershipController {
           ? { name: { $regex: new RegExp(search, "i") } }
           : {};
 
-      const { data, total } = await this.membershipService.paginatePlans(
+      const { data, total } = await this._membershipService.paginatePlans(
         filter,
         Number(page),
         Number(limit)
@@ -125,7 +125,7 @@ export class AdminMembershipController implements IAdminMembershipController {
   async toggleStatus(req: Request, res: Response): Promise<void> {
     try {
       const { membershipId } = req.params;
-      const updated = await this.membershipService.toggleStatus(membershipId);
+      const updated = await this._membershipService.toggleStatus(membershipId);
 
       if (!updated) {
         res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
@@ -133,12 +133,12 @@ export class AdminMembershipController implements IAdminMembershipController {
       }
 
       res.json({
-        message: "Membership plan status updated successfully.",
+        message: AdminSuccessMessages.ADMIN_MEMBERSHIP_UPDATED,
         plan: updated,
       });
     } catch (error) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        message: "Failed to update membership plan status.",
+        message: AdminErrorMessages.ADMIN_MEMBERSHIP_UPDATE_ERROR,
         error: (error as Error).message || "Unknown error",
       });
     }

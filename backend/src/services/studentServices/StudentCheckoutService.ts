@@ -1,5 +1,5 @@
-import { IStudentCheckoutService } from "../interface/IStudentCheckoutService";
-import { IStudentCheckoutRepository } from "../../repositories/interfaces/IStudentCheckoutRepository";
+import { IStudentCheckoutService } from "./interface/IStudentCheckoutService"; 
+import { IStudentCheckoutRepository } from "../../repositories/studentRepository/interface/IStudentCheckoutRepository"; 
 import { IStudentCartRepository } from "../../repositories/interfaces/IStudentCartRepository";
 import { IWalletService } from "../interface/IWalletService";
 import { razorpay } from "../../utils/razorpay";
@@ -9,11 +9,14 @@ import { IPayment } from "../../models/paymentModel";
 import { IEnrollment } from "../../models/enrollmentModel";
 
 export class StudentCheckoutService implements IStudentCheckoutService {
-  constructor(
-    private readonly checkoutRepo: IStudentCheckoutRepository,
-    private readonly cartRepo: IStudentCartRepository,
-    private readonly walletService: IWalletService
-  ) {}
+    private _checkoutRepo: IStudentCheckoutRepository
+    private _cartRepo: IStudentCartRepository
+    private _walletService: IWalletService
+  constructor(checkoutRepo: IStudentCheckoutRepository,cartRepo: IStudentCartRepository,walletService: IWalletService){
+    this._checkoutRepo = checkoutRepo
+    this._cartRepo = cartRepo
+    this._walletService = walletService
+  }
 
   async initiateCheckout(
     userId: Types.ObjectId,
@@ -21,33 +24,33 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     totalAmount: number,
     paymentMethod: "wallet" | "razorpay"
   ): Promise<IOrder> {
-    const enrolledCourseIds = await this.checkoutRepo.getEnrolledCourseIds(userId);
+    const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(userId);
     const alreadyEnrolled = courseIds.filter((cid) =>
       enrolledCourseIds.some((eid) => eid.equals(cid))
     );
 
     if (alreadyEnrolled.length > 0) {
-      const names = await this.checkoutRepo.getCourseNamesByIds(alreadyEnrolled);
+      const names = await this._checkoutRepo.getCourseNamesByIds(alreadyEnrolled);
       throw new Error(`Remove ${names.join(", ")} from cart, already enrolled.`);
     }
 
     if (paymentMethod === "wallet") {
-      const wallet = await this.walletService.getWallet(userId);
+      const wallet = await this._walletService.getWallet(userId);
       if (!wallet || wallet.balance < totalAmount) {
         throw new Error("Insufficient wallet balance");
       }
 
-      const order = await this.checkoutRepo.createOrder(
+      const order = await this._checkoutRepo.createOrder(
         userId,
         courseIds,
         totalAmount,
         "wallet_txn_" + Date.now()
       ) as IOrder;
 
-      await this.walletService.debitWallet(userId, totalAmount, "Course Purchase", order._id.toString());
-      await this.checkoutRepo.updateOrderStatus(order._id, "SUCCESS");
+      await this._walletService.debitWallet(userId, totalAmount, "Course Purchase", order._id.toString());
+      await this._checkoutRepo.updateOrderStatus(order._id, "SUCCESS");
 
-      await this.checkoutRepo.savePayment({
+      await this._checkoutRepo.savePayment({
         orderId: order._id,
         userId,
         paymentId: order._id.toString(),
@@ -56,10 +59,10 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         status: "SUCCESS",
       });
 
-      await this.checkoutRepo.createEnrollments(userId, courseIds);
+      await this._checkoutRepo.createEnrollments(userId, courseIds);
 
       // ✅ Revenue split logic for wallet payments
-      const courseRepo = this.checkoutRepo.getCourseRepo();
+      const courseRepo = this._checkoutRepo.getCourseRepo();
       const txnId = order._id.toString();
 
       for (const courseId of courseIds) {
@@ -70,23 +73,23 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         const instructorShare = (course.price * 90) / 100;
         const adminShare = (course.price * 10) / 100;
 
-        let instructorWallet = await this.walletService.getWallet(instructorId);
+        let instructorWallet = await this._walletService.getWallet(instructorId);
         if (!instructorWallet) {
-          instructorWallet = await this.walletService.initializeWallet(
+          instructorWallet = await this._walletService.initializeWallet(
             instructorId,
             "Instructor",
             "instructor"
           );
         }
 
-        await this.walletService.creditWallet(
+        await this._walletService.creditWallet(
           instructorId,
           instructorShare,
           `Revenue for ${course.courseName}`,
           txnId
         );
 
-        await this.walletService.creditAdminWalletByEmail(
+        await this._walletService.creditAdminWalletByEmail(
           process.env.ADMINEMAIL!,
           adminShare,
           `Admin share for ${course.courseName}`,
@@ -94,7 +97,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         );
       }
 
-      await this.cartRepo.clear(userId);
+      await this._cartRepo.clear(userId);
 
       return order;
     }
@@ -106,78 +109,102 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       receipt: `receipt_order_${Date.now()}`,
     });
 
-    return this.checkoutRepo.createOrder(userId, courseIds, totalAmount, razorpayOrder.id);
+    return this._checkoutRepo.createOrder(userId, courseIds, totalAmount, razorpayOrder.id);
   }
 
-  async verifyAndCompleteCheckout(
-    orderId: Types.ObjectId,
-    paymentId: string,
-    method: string,
-    amount: number
-  ): Promise<{
-    order: IOrder;
-    payment: IPayment;
-    enrollments: IEnrollment[];
-  }> {
-    const updatedOrder = await this.checkoutRepo.updateOrderStatus(orderId, "SUCCESS");
-    if (!updatedOrder) throw new Error("Order not found or could not be updated");
+async verifyAndCompleteCheckout(
+  orderId: Types.ObjectId,
+  paymentId: string,
+  method: string,
+  amount: number
+): Promise<{
+  order: IOrder;
+  payment: IPayment;
+  enrollments: IEnrollment[];
+}> {
+  const order = await this._checkoutRepo.getOrderById(orderId);
 
-    const payment = await this.checkoutRepo.savePayment({
-      orderId,
-      userId: updatedOrder.userId,
-      paymentId,
-      method,
-      amount,
-      status: "SUCCESS",
-    });
+  if (!order) {
+    throw new Error("Order not found");
+  }
 
-    const enrollments = await this.checkoutRepo.createEnrollments(
-      updatedOrder.userId,
-      updatedOrder.courses
-    );
+  // 🚫 Prevent double payment
+  if (order.status === "SUCCESS") {
+    throw new Error("Order already processed");
+  }
+  if (order.status === "FAILED") {
+    throw new Error("Order failed earlier, please create a new order");
+  }
 
-    // 💸 Revenue split logic
-    const courseRepo = this.checkoutRepo.getCourseRepo();
-    const txnId = orderId.toString();
+  // ✅ NEW: Check if user is already enrolled (prevent double enrollment)
+  const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(order.userId);
+  const alreadyEnrolled = order.courses.filter((courseId) =>
+    enrolledCourseIds.some((eid) => eid.equals(courseId))
+  );
 
-    for (const courseId of updatedOrder.courses) {
-      const course = await courseRepo.findById(courseId.toString());
-      if (!course || !course.instructorId) continue;
+  if (alreadyEnrolled.length > 0) {
+    // Mark order as failed and don't process payment
+    await this._checkoutRepo.updateOrderStatus(orderId, "FAILED");
+    const names = await this._checkoutRepo.getCourseNamesByIds(alreadyEnrolled);
+    throw new Error(`Payment cancelled: Already enrolled in ${names.join(", ")}`);
+  }
 
-      const instructorId = new Types.ObjectId(course.instructorId);
-      const instructorShare = (course.price * 90) / 100;
-      const adminShare = (course.price * 10) / 100;
+  // ✅ Now proceed with payment verification
+  const updatedOrder = await this._checkoutRepo.updateOrderStatus(orderId, "SUCCESS");
+  if (!updatedOrder) throw new Error("Order not found or could not be updated");
 
-      let instructorWallet = await this.walletService.getWallet(instructorId);
-      if (!instructorWallet) {
-        instructorWallet = await this.walletService.initializeWallet(
-          instructorId,
-          "Instructor",
-          "instructor"
-        );
-      }
+  const payment = await this._checkoutRepo.savePayment({
+    orderId,
+    userId: updatedOrder.userId,
+    paymentId,
+    method,
+    amount,
+    status: "SUCCESS",
+  });
 
-      await this.walletService.creditWallet(
+  const enrollments = await this._checkoutRepo.createEnrollments(
+    updatedOrder.userId,
+    updatedOrder.courses
+  );
+
+  // Revenue split logic remains the same...
+  const courseRepo = this._checkoutRepo.getCourseRepo();
+  const txnId = orderId.toString();
+
+  for (const courseId of updatedOrder.courses) {
+    const course = await courseRepo.findById(courseId.toString());
+    if (!course || !course.instructorId) continue;
+
+    const instructorId = new Types.ObjectId(course.instructorId);
+    const instructorShare = (course.price * 90) / 100;
+    const adminShare = (course.price * 10) / 100;
+
+    let instructorWallet = await this._walletService.getWallet(instructorId);
+    if (!instructorWallet) {
+      instructorWallet = await this._walletService.initializeWallet(
         instructorId,
-        instructorShare,
-        `Revenue for ${course.courseName}`,
-        txnId
-      );
-
-      await this.walletService.creditAdminWalletByEmail(
-        process.env.ADMINEMAIL!,
-        adminShare,
-        `Admin share for ${course.courseName}`,
-        txnId
+        "Instructor",
+        "instructor"
       );
     }
 
-    await this.cartRepo.clear(updatedOrder.userId);
+    await this._walletService.creditWallet(
+      instructorId,
+      instructorShare,
+      `Revenue for ${course.courseName}`,
+      txnId
+    );
 
-    return {
-      order: updatedOrder,
-      payment,
-      enrollments,
-    };
+    await this._walletService.creditAdminWalletByEmail(
+      process.env.ADMINEMAIL!,
+      adminShare,
+      `Admin share for ${course.courseName}`,
+      txnId
+    );
   }
+
+  await this._cartRepo.clear(updatedOrder.userId);
+  return { order: updatedOrder, payment, enrollments };
 }
+}
+

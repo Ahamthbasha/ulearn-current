@@ -5,12 +5,49 @@ export const AdminErrorMessages = {
   ADMIN_CREATION_FAILED: "Failed to create admin account.",
   ADMIN_DATA_ERROR: "Error processing admin data.",
   INTERNAL_SERVER_ERROR: "Internal server error.",
+  ADMINSIDE_COURSE_NOTFOUND : "Course not found",
+  ADMIN_COURSE_UNLIST : "Course unlisted successfully",
+  ADMIN_COURSE_NOTVERIFIED : "Course unverified and unlisted",
+  ADMIN_CATEGORY_FETCHEDERROR:"Something went wrong while fetching categories",
+  ADMIN_DASHBOARD_FILTER_ERROR:"Invalid type parameter",
+  ADMIN_PAGENO_INVALID:"Invalid page number",
+  ADMIN_PAGENOLIMIT_INVALID:"Invalid limit number",
+  ADMIN_INVALID_FORMAT_PARAMETER:"Invalid format parameter",
+  ADMIN_MEMBERSHIP_UPDATE_ERROR:"Failed to update membership plan status.",
+  ADMIN_VERIFICATION_FETCH_ERROR : "Something went wrong while fetching verification requests",
+  ADMIN_VERIFICATION_REQUEST_NOT_FOUND:"Verification request not found.",
+  ADMIN_VERIFICATION_REJECTION : "Rejection reason is required.",
+  ADMIN_INVALID_REQUEST_STATUS:"Invalid request status",
+  ADMIN_FAILED_TO_FETCH_WALLET:"Failed to fetch wallet",
+  ADMIN_FAILED_TO_CREDIT_WALLET:"Failed to credit wallet",
+  ADMIN_INSUFFICIENT_BALANCE_WALLET_NOT_FOUND:"Insufficient balance or wallet not found",
+  ADMIN_FAILED_TO_DEBIT_WALLET:"Failed to debit wallet",
+  ADMIN_FAILED_TO_FETCH_TRANSACTIONS:"Failed to fetch transactions",
+  ADMIN_FAILED_TO_ADD_RAZORPAY:"Failed to create Razorpay order",
+  ADMIN_PAYMENT_VERIFICATION_FAILED:"Payment verification failed",
+  ADMIN_NOT_FOUND:"Admin ID not found",
+  ADMIN_PAGENO_VALIDATION:"Page number must be greater than 0",
+  ADMIN_LIMIT_VALIDATION:"Limit must be between 1 and 100",
+  ADMIN_FAILED_FETCH_WITHDRAWAL_REQUEST:"Failed to fetch withdrawal requests",
+  ADMIN_FAILED_TO_APPROVE_WITHDRAWAL:"Failed to approve withdrawal request",
+  ADMIN_FAILED_TO_REJECT_WITHDRAWAL:"Failed to reject withdrawal request",
+  ADMIN_INVALID_ID_FORMAT:"Invalid request ID format",
+  ADMIN_WITHDRAWAL_REQUEST_NOTFOUND:"Withdrawal request not found",
+  ADMIN_FAILED_TO_FETCH_WITHDRAWAL_REQUEST:"Failed to fetch withdrawal request",
 };
+
 export const AdminSuccessMessages = {
+  ADMIN_APPROVE_WITHDRAWAL:"Withdrawal request approved successfully",
+  ADMIN_REJECT_WITHDRAWAL:"Withdrawal request rejected successfully",
   LOGIN_SUCCESS: "Welcome Admin",
   LOGOUT_SUCCESS: "Logout successful.",
   ADMIN_CREATED: "Admin account created successfully.",
   ADMIN_DATA_RETRIEVED: "Admin data retrieved successfully.",
+  ADMIN_COURSE_LISTED:"Course listed successfully",
+  ADMIN_VERIFIED_COURSE : "Course verified and listed successfully",
+  ADMIN_CATEGROY_FETCHED:"Categories fetched successfully",
+  ADMIN_MEMBERSHIP_UPDATED:"Membership plan status updated successfully.",
+  ADMIN_FETCHED_VERIFICATION_REQUEST:"Verification requests fetched successfully",
 };
 
 export const InstructorSuccessMessages = {
@@ -113,7 +150,41 @@ export const StudentErrorMessages = {
   PASSWORD_UPDATE_FAILED:"your password updation is failed",
   CURRENT_PASSWORD_INCORRECT:"your current password you entered is wrong",
   ACCESS_TOKEN_MISSING:'Access token missing',
+  ACCOUNT_BLOCKED:"Your login has been declined. Your account is blocked.",
   OTP_EXPIRED: "OTP expired. Please request a new one.",
+  NOT_FOUND_STUDENT:"Student not found", 
+  STATUS_CHECK_FAILED:"Status check failed",
+  COURSE_FETCH_FAILED:"Failed to fetch courses",
+  COURSE_DEATILFETCH_FAILED:"FAILED TO FETCH COURSE DETAILS",
+  SERVER_ERROR:"internal server error",
+  STUDENT_UNAUTHORIZED:"Unauthorized",
+  STUDENT_ENROLLMENT_NOT_FOUND:"Enrollment not found",
+  QUIZ_DATA_MISSING:"Missing quiz result data",
+  FAILED_TO_SUBMIT_QUIZ_RESULT:"Failed to submit quiz result",
+  FAILED_TO_CHECK_CHAPTER_COMPLETION:"Failed to check chapter completion",
+  CERTIFICATE_NOT_AVAILABLE:"Certificate not available yet",
+  FAILED_TO_FETCH_CERTIFICATE:"Failed to fetch certificate",
+  FAILED_TO_LIST_INSTRUCTOR:"Failed to fetch instructors",
+  INSTRUCTOR_NOT_FOUND:"Instructor not found",
+  FAILED_TO_FETCH_INSTRUCTOR_DETAIL:"Failed to fetch instructor details",
+  FAILED_TO_FETCH_FILTER_OPTION:"Failed to fetch filter options",
+  FAILED_TO_FETCH_ORDER_HISTORY:"Failed to fetch order history",
+  ORDER_NOT_FOUND:"Order not found",
+  FAILED_TO_FETCH_ORDER_DETAILS:"Failed to fetch order details",
+  FAILED_TO_DOWNLOAD_INVOICE:"Failed to download invoice",
+  BOOKING_NOT_FOUND:"Booking not found",
+  FAILED_TO_GENERATE_RECEIPT:"Failed to generate receipt",
+  FAILED_TO_FETCH_SLOTS:"Failed to fetch available slots",
+  FAILED_TO_FETCH_WALLET:"Failed to fetch wallet",
+  FAILED_TO_CREDIT_WALLET:"Failed to credit wallet",
+  FAILED_TO_DEBIT_WALLET:"Failed to debit wallet",
+  FAILED_TO_FETCH_TRANSACTIONS:"Failed to fetch transactions",
+  INSUFFICIENT_BALANCE_OR_WALLET_NOT_FOUND:"Insufficient balance or wallet not found",
+  FAILED_TO_CREATE_RAZORPAY_ORDER:"Failed to create Razorpay order",
+  PAYMENT_VERIFICATION_FAILED:"Payment verification failed",
+  USERID_NOT_FOUND:"User ID not found",
+  INVALID_TOKEN : "Invalid token",
+
 };
 
 export const StudentSuccessMessages = {
@@ -132,6 +203,16 @@ export const StudentSuccessMessages = {
   PROFILE_FETCHED: "your profile fecthed successfully",
   PROFILE_UPDATED : "your profile is updated successfully",
   PASSWORD_UPDATED : "your password is successfully updated",
+
+  CHAPTER_COMPLETED:"Chapter marked as completed",
+  QUIZ_RESULT_SUBMITTED:"Quiz result submitted",
+
+  COURSES_FETCHED: "Courses fetched successfully",
+  COURSE_DETAILS_FETCHED: "Course details fetched successfully",
+
+  ORDER_HISTORY_FETCHED: "Order history fetched successfully",
+  ORDER_DETAILS_FETCHED: "Order details fetched successfully",
+  INVOICE_GENERATED: "Invoice generated successfully",
 };
 
 export const OtpResponses={
@@ -258,7 +339,7 @@ export const CategorySuccessMsg = {
   export const CategoryErrorMsg = {
     CATEGORY_EXISTS: "Category already exists!",
     CATEGORY_NOT_UPDATED: "Category not updated!",
-
+    CATEGORY_FAILED_TO_FETCH:"Failed to fetch categories",
     CATEGORY_NOT_FOUND: "Category not found!",
     CATEGORY_NOT_CREATED: "Could not create category!",
     CATEGORY_NOT_FETCHED: "Could not fetch categories!",
@@ -421,3 +502,57 @@ export const ResponseMessages = {
 
 
 export const INSTRUCTOR_REVENUE_SHARE = 0.9
+
+
+export const INSTRUCTOR_ERROR_MESSAGE = {
+  INSTRUCTOR_UNAUTHORIZED : "Unauthorized",
+  INVALID_RANGE : "Invalid or missing range",
+  INVALID_PAGE_LIMIT : "Invalid page or limit",
+  INVALID_PARAMETERS : "Missing or invalid parameters",
+  BLOCK_CHECK : "Status check failed",
+  COURSE_ALREADY_CREATED : "You have already created a course with this name.",
+  COURSE_ALREADY_WITH_THIS_NAME :"You have already created another course with this name.",
+  PUBLISH_COURSE_CONDITION : "Course must have at least one chapter and one quiz question to be published",
+ FAILED_TO_PURCHASE_HISTORY : "Failed to fetch purchase history",
+ DATA_MISSING : "Missing data",
+ ORDER_NOT_FOUND : "Order not found",
+ FAILED_TO_FETCH_ORDER:"Failed to fetch order",
+ TXNID_NOT_FOUND : "Missing txnId or user not authenticated",
+ FAILED_TO_GENERATE_RECEIPT : "Failed to generate receipt",
+ QUIZ_NOT_FOUND : "Quiz not found",
+ INVALID_COURSE_ID:"Invalid Course ID",
+ INVALID_RANGE_TYPE:"Invalid or missing range type",
+ FAILED_TO_FETCH_COURSE_REVENUE_REPORT :"Failed to fetch course revenue report",
+ COURSE_ID_INVALID:"Invalid Course ID",
+ FORMAT_ERROR : "Format must be either 'pdf' or 'excel'",
+ FAILED_TO_EXPORT_REVENUE_REPORT:"Failed to export revenue report",
+ VERIFICATION_ALREADY_SUBMITTED:"Verification already submitted and under review.",
+ INSTRUCTOR_ALREADY_VERIFIED:"You are already verified.",
+ FAILED_TO_FETCH_WALLET:"Failed to fetch wallet",
+ FAILED_TO_CREDIT_WALLET:"Failed to credit wallet",
+ INSUFFICIENT_BALANCE_OR_WALLET_NOT_FOUND : "Insufficient balance or wallet not found",
+ FAILED_TO_DEBIT_WALLET:"Failed to debit wallet",
+ FAILED_TO_FETCH_TRANSACTION_HISTORY:"Failed to fetch transaction history",
+ FAILED_TO_CREATE_RAZORPAY_ORDER : "Failed to create Razorpay order",
+ INSTRUCTOR_ID_NOT_FOUND:"Instructor ID not found",
+ PAYMENT_VERIFICATION_FAILED:"Payment verification failed",
+ FAILED_TO_CREATE_WITHDRAWAL_REQUEST:'Failed to create withdrawal request',
+ FAILED_TO_FETCH_WITHDRAWAL_REQUEST:"Failed to fetch withdrawal requests",
+ FAILED_TO_RETRY_WITHDRAWAL_REQUEST:'Failed to retry withdrawal request',
+  INVALID_FORMAT: "Invalid export format. Allowed formats: pdf, excel",
+  NO_DATA_FOUND: "No data found for the specified date range"
+}
+
+export const INSTRUCTOR_SUCCESS_MESSAGE = {
+  COURSE_PUBLISHED : "Course published successfully",
+  REVIFICATION_SUBMITTED : "Reverification submitted successfully.",
+  WITHDRAWAL_REQUEST_CREATED : 'Withdrawal request created successfully',
+  WITHDRAWAL_REQUEST_RETRIED_SUCCESSFULLY :'Withdrawal request retried successfully',
+
+}
+
+export const SERVER_ERROR = {
+  INTERNAL_SERVER_ERROR : "internal server error"
+}
+
+

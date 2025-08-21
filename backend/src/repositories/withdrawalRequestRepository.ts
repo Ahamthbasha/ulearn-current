@@ -84,10 +84,43 @@ export class WithdrawalRequestRepository
   async getAllRequestsWithPagination(
     options: IPaginationOptions
   ): Promise<{ transactions: IWithdrawalRequest[]; total: number }> {
-    const { page, limit } = options;
+    const { page, limit, search } = options;
 
     // Define the aggregation pipeline
     const aggregationPipeline: PipelineStage[] = [
+      // First, lookup instructor details
+      {
+        $lookup: {
+          from: "instructors",
+          localField: "instructorId",
+          foreignField: "_id",
+          as: "instructor",
+        },
+      },
+      {
+        $unwind: {
+          path: "$instructor",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+
+    // Add search match stage after lookup if search is provided
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      aggregationPipeline.push({
+        $match: {
+          $or: [
+            { "instructor.username": searchRegex },
+            { "instructor.email": searchRegex },
+            { "bankAccount.accountHolderName": searchRegex },
+          ],
+        },
+      });
+    }
+
+    // Add sorting and field additions
+    aggregationPipeline.push(
       {
         $addFields: {
           statusOrder: {
@@ -102,23 +135,18 @@ export class WithdrawalRequestRepository
           },
         },
       },
-      { $sort: { statusOrder: 1, createdAt: -1 } },
+      { $sort: { statusOrder: 1, createdAt: -1 } }
+    );
+
+    // Get total count for pagination (before skip/limit)
+    const countPipeline = [...aggregationPipeline, { $count: "total" }];
+    const countResult = await WithdrawalRequestModel.aggregate(countPipeline).exec();
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Add pagination
+    aggregationPipeline.push(
       { $skip: (page - 1) * limit },
       { $limit: limit },
-      {
-        $lookup: {
-          from: "instructors", // Replace with your actual collection name for instructors
-          localField: "instructorId",
-          foreignField: "_id",
-          as: "instructor",
-        },
-      },
-      {
-        $unwind: {
-          path: "$instructor",
-          preserveNullAndEmptyArrays: true, // Handle cases where instructorId has no match
-        },
-      },
       {
         $project: {
           // Withdrawal request fields
@@ -138,11 +166,10 @@ export class WithdrawalRequestRepository
             email: "$instructor.email",
           },
         },
-      },
-    ];
+      }
+    );
 
     const result = await WithdrawalRequestModel.aggregate(aggregationPipeline).exec();
-    const total = await WithdrawalRequestModel.countDocuments();
 
     return { transactions: result || [], total };
   }

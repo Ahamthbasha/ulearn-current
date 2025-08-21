@@ -1,6 +1,7 @@
 import mongoose, { Document} from "mongoose";
-
+import {Types} from 'mongoose'
 export interface IVerificationModel extends Document {
+  _id:Types.ObjectId;
   username: string;
   email: string;
   resumeUrl: string;

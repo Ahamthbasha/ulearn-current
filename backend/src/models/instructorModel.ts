@@ -5,6 +5,21 @@ export interface IInstructorDTO {
   password: string;
 }
 
+export interface InstructorProfileDTO {
+  _id:ObjectId;
+  instructorName: string;
+  email: string;
+  role:string;
+  isBlocked:boolean;
+  skills?: string[];
+  expertise?: string[];
+  status: boolean; // isVerified
+  mentor: boolean; // isMentor
+  bankAccountLinked: boolean;
+  profilePicUrl?: string;
+}
+
+
 export interface IInstructor extends Document {
   _id: ObjectId ;
   username: string;
@@ -26,6 +41,8 @@ export interface IInstructor extends Document {
     ifscCode?: string;
     bankName?: string;
   };
+  createdAt:Date;
+  updatedAt:Date;
 }
 
 const instructorSchema: Schema<IInstructor> = new Schema(

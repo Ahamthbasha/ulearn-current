@@ -4,22 +4,23 @@ import CourseCard from "../components/StudentComponents/CourseCard";
 import Banner from "../components/Banner";
 import { useNavigate } from "react-router-dom";
 
-interface CourseResponse {
-  course: {
-    _id: string;
-    courseName: string;
-    description: string;
-    price: number;
-    duration: string;
-    level: string;
-    thumbnailUrl: string;
-  };
+interface Course {
+  courseId: string;
+  courseName: string;
+  instructorName: string;
+  categoryName: string;
+  thumbnailUrl: string;
+  demoVideoUrl: string;
   chapterCount: number;
   quizQuestionCount: number;
+  duration: string;
+  description: string;
+  level: string;
+  price: number;
 }
 
 const LandingPage = () => {
-  const [courses, setCourses] = useState<CourseResponse[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -27,7 +28,8 @@ const LandingPage = () => {
     const fetchCourses = async () => {
       try {
         const response = await allCourses();
-        setCourses(response.data);
+        // The API response already has the correct structure
+        setCourses(response.data || []);
       } catch (error) {
         console.error("Error fetching courses", error);
       } finally {
@@ -54,22 +56,23 @@ const LandingPage = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {courses.slice(0, 8).map(({ course }) => (
+              {courses.slice(0, 8).map((course) => (
                 <CourseCard
-                  key={course._id}
-                  id={course._id}
+                  key={course.courseId}
+                  id={course.courseId}
                   title={course.courseName}
                   description={course.description}
                   price={course.price}
                   duration={course.duration}
                   level={course.level}
                   thumbnailUrl={course.thumbnailUrl}
+                  categoryName={course.categoryName}
                 />
               ))}
             </div>
 
             {/* Browse More Button */}
-            {courses.length > 1 && (
+            {courses.length > 8 && (
               <div className="text-center mt-10">
                 <button
                   onClick={() => navigate("/user/courses")}

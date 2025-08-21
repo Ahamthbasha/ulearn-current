@@ -8,16 +8,18 @@ import {
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-interface Course {
-  _id: string;
+interface WishlistItem {
+  courseId: string;
   courseName: string;
   thumbnailUrl: string;
   price: number;
 }
 
-interface WishlistItem {
-  _id: string;
-  courseId: Course | null;
+interface CartItem {
+  courseId: string;
+  courseName: string;
+  thumbnailUrl: string;
+  price: number;
 }
 
 const WishlistPage = () => {
@@ -33,10 +35,9 @@ const WishlistPage = () => {
   const fetchWishlist = async () => {
     try {
       const response = await getWishlist();
-      const validItems = response.data.filter(
-        (item: WishlistItem) => item.courseId !== null
-      );
-      setWishlist(validItems);
+      if (response?.data) {
+        setWishlist(response.data);
+      }
     } catch (error) {
       toast.error("Failed to fetch wishlist");
     }
@@ -45,8 +46,9 @@ const WishlistPage = () => {
   const fetchCartItems = async () => {
     try {
       const cart = await getCart();
-      if (cart?.data?.courses) {
-        const ids = cart.data.courses.map((c: any) => c._id);
+      if (cart?.data && Array.isArray(cart.data)) {
+        // Extract courseIds from the cart data array
+        const ids = cart.data.map((course: CartItem) => course.courseId);
         setCartCourseIds(ids);
       }
     } catch (error) {
@@ -58,7 +60,7 @@ const WishlistPage = () => {
     try {
       await addToCart(courseId);
       toast.success("Added to cart");
-      fetchCartItems();
+      fetchCartItems(); // Refresh cart items to update the UI
     } catch (error) {
       toast.error("Failed to add to cart");
     }
@@ -68,7 +70,7 @@ const WishlistPage = () => {
     try {
       await removeFromWishlist(courseId);
       toast.success("Removed from wishlist");
-      fetchWishlist();
+      fetchWishlist(); // Refresh wishlist to update the UI
     } catch (error) {
       toast.error("Failed to remove from wishlist");
     }
@@ -101,12 +103,11 @@ const WishlistPage = () => {
               </tr>
             </thead>
             <tbody>
-              {wishlist.map((item) => {
-                const course = item.courseId!;
-                const isInCart = cartCourseIds.includes(course._id);
+              {wishlist.map((course) => {
+                const isInCart = cartCourseIds.includes(course.courseId);
 
                 return (
-                  <tr key={course._id} className="hover:bg-gray-50">
+                  <tr key={course.courseId} className="hover:bg-gray-50">
                     <td className="p-3 border">
                       <img
                         src={course.thumbnailUrl}
@@ -128,7 +129,7 @@ const WishlistPage = () => {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleAddToCart(course._id)}
+                          onClick={() => handleAddToCart(course.courseId)}
                           className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm"
                         >
                           Add to Cart
@@ -137,8 +138,8 @@ const WishlistPage = () => {
                     </td>
                     <td className="p-3 border">
                       <button
-                        onClick={() => handleRemoveFromWishlist(course._id)}
-                        className="px-3 py-1 rounded bg-gray-300 text-black text-sm"
+                        onClick={() => handleRemoveFromWishlist(course.courseId)}
+                        className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white text-sm"
                       >
                         Remove
                       </button>

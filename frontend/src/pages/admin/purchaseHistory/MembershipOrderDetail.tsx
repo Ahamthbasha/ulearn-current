@@ -12,6 +12,8 @@ interface Instructor {
 interface MembershipPlan {
   name: string;
   durationInDays: number;
+  description: string;
+  benefits: string[];
 }
 
 interface MembershipOrder {
@@ -68,25 +70,39 @@ const MembershipOrderDetail: React.FC = () => {
             <div className="text-center py-8 text-gray-500">Loading...</div>
           ) : order ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700">
+              {/* Instructor */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Instructor</h3>
                 <p>{order.instructor.name}</p>
                 <p className="text-gray-500">{order.instructor.email}</p>
               </div>
 
+              {/* Plan */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Plan</h3>
                 <p>{order.membershipPlan.name}</p>
                 <p className="text-gray-500">
                   {order.membershipPlan.durationInDays} days
                 </p>
+                <p className="mt-1 text-gray-600 italic">
+                  {order.membershipPlan.description}
+                </p>
+                {order.membershipPlan.benefits.length > 0 && (
+                  <ul className="mt-1 list-disc list-inside text-gray-600">
+                    {order.membershipPlan.benefits.map((benefit, idx) => (
+                      <li key={idx}>{benefit}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
+              {/* Price */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Price</h3>
                 <p>₹{order.price}</p>
               </div>
 
+              {/* Payment Status */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">
                   Payment Status
@@ -104,16 +120,19 @@ const MembershipOrderDetail: React.FC = () => {
                 </span>
               </div>
 
+              {/* Start Date */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Start Date</h3>
                 <p>{new Date(order.startDate).toLocaleDateString()}</p>
               </div>
 
+              {/* End Date */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">End Date</h3>
                 <p>{new Date(order.endDate).toLocaleDateString()}</p>
               </div>
 
+              {/* Transaction ID */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">
                   Transaction ID
@@ -121,9 +140,20 @@ const MembershipOrderDetail: React.FC = () => {
                 <p>{order.txnId}</p>
               </div>
 
+              {/* Created At */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Created At</h3>
-                <p>{new Date(order.createdAt).toLocaleString()}</p>
+                <p>
+  {new Date(order.createdAt).toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  })}
+</p>
+
               </div>
             </div>
           ) : (

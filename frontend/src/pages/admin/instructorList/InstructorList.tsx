@@ -10,6 +10,7 @@ import {
 import { UserX, UserCheck, Users } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { useDebounce } from "../../../hooks/UseDebounce";
 
 interface Instructors {
   id: string;
@@ -25,7 +26,7 @@ const InstructorList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(2);
+  const [limit] = useState(5);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
@@ -34,28 +35,30 @@ const InstructorList: React.FC = () => {
   const [selectedInstructor, setSelectedInstructor] =
     useState<Instructors | null>(null);
 
+  // ✅ Add debounced search term
+  const debouncedSearch = useDebounce(search, 500);
+
   const fetchUsers = useCallback(async () => {
-    console.log("🔄 Fetching instructors with:", { page, limit, search });
+    console.log("🔄 Fetching instructors with:", { page, limit, search: debouncedSearch });
     try {
       setLoading(true);
       setError(null);
-      const response = await getAllInstructor(page, limit, search);
+      const response = await getAllInstructor(page, limit, debouncedSearch);
       console.log("✅ instructorList.tsx:=>", response);
 
       if (!response || !Array.isArray(response.instructors)) {
         throw new Error("Invalid instructor data received");
       }
 
+      // ✅ Updated mapping to match new backend response structure
       const formattedUsers: Instructors[] = response.instructors.map(
         (user: any) => ({
-          id: user._id,
-          username: user.username || "N/A",
+          id: user.id, // Changed from user._id to user.id
+          username: user.name || "N/A", // Changed from user.username to user.name
           email: user.email || "N/A",
-          status: user.isBlocked ? "Blocked" : "Active",
-          created: user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString("en-GB")
-            : "N/A",
-          isBlocked: user.isBlocked || false,
+          status: user.status ? "Blocked" : "Active", // Changed logic: status=true means blocked
+          created: user.createdAt || "N/A", // Backend already provides formatted date
+          isBlocked: user.status || false, // status=true means blocked
         })
       );
 
@@ -68,19 +71,36 @@ const InstructorList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, search]);
+  }, [page, limit, debouncedSearch]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
+  // ✅ Optimized block/unblock handler with optimistic updates
   const handleConfirm = async () => {
     if (!selectedInstructor) return;
 
     try {
+      // ✅ Optimistic update - Update UI immediately
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email === selectedInstructor.email
+            ? {
+                ...u,
+                status: u.status === "Blocked" ? "Active" : "Blocked",
+                isBlocked: !u.isBlocked,
+              }
+            : u
+        )
+      );
+
       const response = await blockInstructor(selectedInstructor.email);
+      
       if (response.success) {
         toast.success(response.message);
+      } else {
+        // ✅ Revert optimistic update on failure
         setUsers((prev) =>
           prev.map((u) =>
             u.email === selectedInstructor.email
@@ -92,10 +112,21 @@ const InstructorList: React.FC = () => {
               : u
           )
         );
-      } else {
         toast.error(response.message);
       }
     } catch (error: any) {
+      // ✅ Revert optimistic update on error
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email === selectedInstructor.email
+            ? {
+                ...u,
+                status: u.status === "Blocked" ? "Active" : "Blocked",
+                isBlocked: !u.isBlocked,
+              }
+            : u
+        )
+      );
       toast.error(error.message || "Error occurred while blocking instructor");
     } finally {
       setConfirmModalOpen(false);
@@ -114,7 +145,7 @@ const InstructorList: React.FC = () => {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(1);
+    setPage(1); // Reset to first page when searching
   };
 
   const columns: Column<Instructors>[] = [

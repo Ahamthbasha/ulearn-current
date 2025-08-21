@@ -1,4 +1,4 @@
-import { IStudentDashboardRepository } from "../interfaces/IStudentDashboardRepository";
+import { IStudentDashboardRepository } from "./interface/IStudentDashboardRepository"; 
 import { EnrollmentRepository } from "../EnrollmentRepository";
 import { BookingRepository } from "../BookingRepository";
 import { OrderRepository } from "../OrderRepository";
@@ -7,40 +7,40 @@ import { IStudentCourseReportItem, IStudentSlotReportItem } from "../../types/da
 import { getDateRange, ReportFilter } from "../../utils/reportFilterUtils";
 
 export class StudentDashboardRepository implements IStudentDashboardRepository {
-  private enrollmentRepo: EnrollmentRepository;
-  private bookingRepo: BookingRepository;
-  private orderRepo: OrderRepository;
+  private _enrollmentRepo: EnrollmentRepository;
+  private _bookingRepo: BookingRepository;
+  private _orderRepo: OrderRepository;
 
   constructor(
     enrollmentRepo: EnrollmentRepository,
     bookingRepo: BookingRepository,
     orderRepo: OrderRepository
   ) {
-    this.enrollmentRepo = enrollmentRepo;
-    this.bookingRepo = bookingRepo;
-    this.orderRepo = orderRepo;
+    this._enrollmentRepo = enrollmentRepo;
+    this._bookingRepo = bookingRepo;
+    this._orderRepo = orderRepo;
   }
 
   async getTotalCoursesPurchased(userId: string): Promise<number> {
-    return this.enrollmentRepo.countDocuments({ userId: new mongoose.Types.ObjectId(userId) });
+    return this._enrollmentRepo.countDocuments({ userId: new mongoose.Types.ObjectId(userId) });
   }
 
   async getTotalCoursesCompleted(userId: string): Promise<number> {
-    return this.enrollmentRepo.countDocuments({
+    return this._enrollmentRepo.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
       completionStatus: "COMPLETED",
     });
   }
 
   async getTotalCoursesNotCompleted(userId: string): Promise<number> {
-    return this.enrollmentRepo.countDocuments({
+    return this._enrollmentRepo.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
       completionStatus: { $in: ["NOT_STARTED", "IN_PROGRESS"] },
     });
   }
 
   async getTotalCoursePurchaseCost(userId: string): Promise<number> {
-    const enrollments = await this.enrollmentRepo.find(
+    const enrollments = await this._enrollmentRepo.find(
       { userId: new mongoose.Types.ObjectId(userId) },
       { path: "courseId", select: "price" }
     );
@@ -48,7 +48,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   }
 
   async getTotalSlotBookings(userId: string): Promise<number> {
-    return this.bookingRepo.countDocuments({
+    return this._bookingRepo.countDocuments({
       studentId: new mongoose.Types.ObjectId(userId),
       status: "confirmed",
       paymentStatus: "paid",
@@ -56,7 +56,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   }
 
   async getTotalSlotBookingCost(userId: string): Promise<number> {
-    const bookings = await this.bookingRepo.find(
+    const bookings = await this._bookingRepo.find(
       {
         studentId: new mongoose.Types.ObjectId(userId),
         status: "confirmed",
@@ -68,7 +68,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   }
 
   async getMonthlyCoursePerformance(userId: string) {
-    return this.enrollmentRepo.aggregate([
+    return this._enrollmentRepo.aggregate([
       { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       {
         $lookup: {
@@ -103,7 +103,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   }
 
   async getMonthlySlotBookingPerformance(userId: string) {
-    return this.bookingRepo.aggregate([
+    return this._bookingRepo.aggregate([
       {
         $match: {
           studentId: new mongoose.Types.ObjectId(userId),
@@ -158,7 +158,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     const limit = filter.limit || 10;
     const skip = (page - 1) * limit;
 
-    const orders = await this.orderRepo.aggregate([
+    const orders = await this._orderRepo.aggregate([
       {
         $match: {
           userId: new mongoose.Types.ObjectId(userId),
@@ -225,7 +225,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     const limit = filter.limit || 10;
     const skip = (page - 1) * limit;
 
-    const bookings = await this.bookingRepo.aggregate([
+    const bookings = await this._bookingRepo.aggregate([
       {
         $match: {
           studentId: new mongoose.Types.ObjectId(userId),

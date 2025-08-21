@@ -1,7 +1,7 @@
 import { IVerificationModel } from "../../models/verificationModel";
 import { GenericRepository } from "../genericRepository";
 import VerificationModel from "../../models/verificationModel";
-import { IInstructorVerificationRepository } from "../interfaces/IInstructorVerifcationRepository";
+import { IInstructorVerificationRepository } from "./interface/IInstructorVerifcationRepository"; 
 
 export class InstructorVerificationRepository
   extends GenericRepository<IVerificationModel>

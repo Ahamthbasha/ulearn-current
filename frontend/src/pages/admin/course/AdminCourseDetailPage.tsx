@@ -4,25 +4,30 @@ import {
   getCourseDetails,
   verifyCourse,
 } from "../../../api/action/AdminActionApi";
-import { ArrowLeft, CheckCircle, Clock, DollarSign, BarChart3, Eye, Globe, Shield,  PlayCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, DollarSign, BarChart3, Eye, Globe, Shield, PlayCircle } from "lucide-react";
 
-interface Chapter {
-  _id: string;
-  chapterTitle: string;
-  description: string;
-  videoUrl: string;
+interface Question {
+  questionId: string;
+  questionText: string;
+  options: string[];
+  correctAnswer: string;
 }
 
 interface Quiz {
-  _id: string;
-  questions: {
-    questionText: string;
-    correctAnswer: string;
-  }[];
+  quizId: string;
+  questions: Question[];
+}
+
+interface Chapter {
+  chapterId: string;
+  chapterTitle: string;
+  chapterDescription: string;
+  chapterNumber?: number;
+  videoUrl: string;
 }
 
 interface Course {
-  _id: string;
+  courseId: string;
   courseName: string;
   description: string;
   price: number;
@@ -31,17 +36,21 @@ interface Course {
   isListed: boolean;
   isPublished: boolean;
   isVerified: boolean;
-  demoVideo?: { url: string };
-  thumbnailUrl?: string;
+  demoVideo: string;
+  thumbnailUrl: string;
+}
+
+interface CourseDetailsResponse {
+  course: Course;
+  chapters: Chapter[];
+  quiz: Quiz | null;
 }
 
 const AdminCourseDetailPage = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
-  const [course, setCourse] = useState<Course | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [courseData, setCourseData] = useState<CourseDetailsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState<boolean>(false);
@@ -51,10 +60,8 @@ const AdminCourseDetailPage = () => {
     try {
       const response = await getCourseDetails(courseId!);
       console.log(response);
-      if (response?.data?.course) {
-        setCourse(response.data.course);
-        setChapters(response.data.chapters || []);
-        setQuiz(response.data.quiz || null);
+      if (response?.data) {
+        setCourseData(response.data);
       } else {
         setError("Course not found.");
       }
@@ -93,7 +100,7 @@ const AdminCourseDetailPage = () => {
     );
   }
 
-  if (error || !course) {
+  if (error || !courseData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white border border-red-200 rounded-2xl p-8 max-w-md text-center shadow-xl">
@@ -112,6 +119,8 @@ const AdminCourseDetailPage = () => {
       </div>
     );
   }
+
+  const { course, chapters, quiz } = courseData;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -221,7 +230,7 @@ const AdminCourseDetailPage = () => {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-blue-700">Level</p>
-                        <p className="text-2xl font-bold text-blue-900">{course.level}</p>
+                        <p className="text-2xl font-bold text-blue-900 capitalize">{course.level}</p>
                       </div>
                     </div>
                   </div>
@@ -273,7 +282,7 @@ const AdminCourseDetailPage = () => {
         </div>
 
         {/* Demo Video Section */}
-        {course.demoVideo?.url && (
+        {course.demoVideo && (
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8 mb-8">
             <div className="flex items-center space-x-3 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
@@ -287,7 +296,7 @@ const AdminCourseDetailPage = () => {
                 className="w-full h-full object-cover"
                 poster={course.thumbnailUrl}
               >
-                <source src={course.demoVideo.url} type="video/mp4" />
+                <source src={course.demoVideo} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
@@ -318,18 +327,18 @@ const AdminCourseDetailPage = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {chapters.map((chapter, index) => (
-                <div key={chapter._id} className="bg-gradient-to-r from-gray-50 to-blue-50/30 border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-blue-200">
+              {chapters.map((chapter) => (
+                <div key={chapter.chapterId} className="bg-gradient-to-r from-gray-50 to-blue-50/30 border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-blue-200">
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-lg">
-                        {index + 1}
+                        {chapter.chapterNumber || 1}
                       </div>
                     </div>
                     <div className="flex-1 space-y-4">
                       <div>
                         <h4 className="text-xl font-bold text-gray-900 mb-2">{chapter.chapterTitle}</h4>
-                        <p className="text-gray-600 leading-relaxed">{chapter.description}</p>
+                        <p className="text-gray-600 leading-relaxed">{chapter.chapterDescription}</p>
                       </div>
                       
                       {chapter.videoUrl && (
@@ -370,7 +379,7 @@ const AdminCourseDetailPage = () => {
           {quiz && quiz.questions.length > 0 ? (
             <div className="space-y-6">
               {quiz.questions.map((question, index) => (
-                <div key={index} className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 shadow-sm">
+                <div key={question.questionId} className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-6 shadow-sm">
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-shrink-0">
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-lg">
@@ -379,11 +388,33 @@ const AdminCourseDetailPage = () => {
                     </div>
                     <div className="flex-1 space-y-4">
                       <p className="text-lg font-semibold text-gray-900">{question.questionText}</p>
-                      <div className="bg-green-100 border border-green-200 rounded-xl p-4">
-                        <p className="text-green-800 font-semibold flex items-center">
-                          <span className="text-green-600 mr-2">✅</span>
-                          Correct Answer: {question.correctAnswer}
-                        </p>
+                      
+                      {/* Display all options */}
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Options:</p>
+                        {question.options.map((option, optionIndex) => (
+                          <div
+                            key={optionIndex}
+                            className={`p-3 rounded-xl border ${
+                              option === question.correctAnswer
+                                ? "bg-green-100 border-green-200 text-green-800"
+                                : "bg-gray-50 border-gray-200 text-gray-700"
+                            }`}
+                          >
+                            <div className="flex items-center">
+                              {option === question.correctAnswer && (
+                                <span className="text-green-600 mr-2">✅</span>
+                              )}
+                              <span className="font-medium mr-2">{String.fromCharCode(65 + optionIndex)}.</span>
+                              <span>{option}</span>
+                              {option === question.correctAnswer && (
+                                <span className="ml-auto text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-semibold">
+                                  Correct
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

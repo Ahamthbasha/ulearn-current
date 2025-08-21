@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../../../middlewares/AuthenticatedRoutes';
+import { AuthenticatedRequest } from '../../../middlewares/authenticatedRoutes';
 
 export interface IAdminWithdrawalController {
   getAllWithdrawalRequests(req: AuthenticatedRequest, res: Response): Promise<void>;

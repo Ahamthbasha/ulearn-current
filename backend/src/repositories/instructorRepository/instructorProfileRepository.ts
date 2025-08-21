@@ -1,4 +1,4 @@
-import { IInstructorProfileRepository } from "../interfaces/IInstructorProfileRepository";
+import { IInstructorProfileRepository } from "./interface/IInstructorProfileRepository"; 
 import InstructorModel, { IInstructor } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
 

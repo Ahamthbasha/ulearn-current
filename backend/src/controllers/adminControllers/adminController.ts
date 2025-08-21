@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { IAdminController } from "./interface/IAdminController";
-import { IAdminService } from "../../services/interface/IAdminService";
+import { IAdminService } from "../../services/adminServices/interface/IAdminService"; 
 import { JwtService } from "../../utils/jwt";
 import { config } from "dotenv";
 import { Roles, StatusCode } from "../../utils/enums";
@@ -10,14 +10,15 @@ import {
   ResponseError,
 } from "../../utils/constants";
 
+
 config();
 
 export class AdminController implements IAdminController {
-  private adminService: IAdminService;
+  private _adminService: IAdminService;
   private JWT: JwtService;
 
   constructor(adminService: IAdminService) {
-    this.adminService = adminService;
+    this._adminService = adminService;
     this.JWT = new JwtService();
   }
 
@@ -39,9 +40,9 @@ export class AdminController implements IAdminController {
         return;
       }
 
-      let admin = await this.adminService.getAdminData(email);
+      let admin = await this._adminService.getAdminData(email);
       if (!admin) {
-        admin = await this.adminService.createAdmin({ email, password });
+        admin = await this._adminService.createAdmin({ email, password });
       }
 
       const accessToken = await this.JWT.accessToken({
@@ -51,8 +52,14 @@ export class AdminController implements IAdminController {
       });
 
       res
-        .cookie("accessToken", accessToken)
-        .cookie("refreshToken", accessToken)
+       .cookie("accessToken", accessToken, { httpOnly: true,
+              secure:true,
+              sameSite:"none"
+             })
+            .cookie("refreshToken", accessToken, { httpOnly: true ,
+              secure:true,
+              sameSite:"none"
+            })
         .status(StatusCode.OK)
         .send({
           success: true,
@@ -86,44 +93,44 @@ export class AdminController implements IAdminController {
       throw error;
     }
   }
-
   async getAllUsers(req: Request, res: Response): Promise<any> {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = (req.query.search as string) || "";
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
 
-      const { users, total } = await this.adminService.getAllUsers(
-        page,
-        limit,
-        search
-      );
+    const { users, total } = await this._adminService.getAllUsers(
+      page,
+      limit,
+      search
+    );
 
-      return res.status(StatusCode.OK).json({
-        success: true,
-        message:
-          users.length > 0
-            ? ResponseError.FETCH_USER
-            : ResponseError.USER_NOT_FOUND,
-        users,
-        total,
-        page,
-        totalPages: Math.ceil(total / limit),
-      });
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: ResponseError.FETCH_ERROR,
-      });
-    }
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message:
+        users.length > 0
+          ? ResponseError.FETCH_USER
+          : ResponseError.USER_NOT_FOUND,
+      users,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: ResponseError.FETCH_ERROR,
+    });
   }
+}
+
 
   async getAllInstructors(req: Request, res: Response): Promise<any> {
     try {
       const { page = 1, limit = 10, search = "" } = req.query;
 
-      const { instructors, total } = await this.adminService.getAllInstructors(
+      const { instructors, total } = await this._adminService.getAllInstructors(
         Number(page),
         Number(limit),
         String(search)
@@ -153,7 +160,7 @@ export class AdminController implements IAdminController {
     try {
       const { email } = req.params;
 
-      const userData = await this.adminService.getUserData(email);
+      const userData = await this._adminService.getUserData(email);
 
       if (!userData) {
         return res.status(StatusCode.NOT_FOUND).json({
@@ -165,7 +172,7 @@ export class AdminController implements IAdminController {
       const emailId = userData.email;
       const isBlocked = !userData?.isBlocked;
 
-      const userStatus = await this.adminService.updateProfile(emailId, {
+      const userStatus = await this._adminService.updateProfile(emailId, {
         isBlocked,
       });
 
@@ -186,7 +193,7 @@ export class AdminController implements IAdminController {
   async blockInstructor(req: Request, res: Response): Promise<any> {
     try {
       const { email } = req.params;
-      const userData = await this.adminService.getInstructorData(email);
+      const userData = await this._adminService.getInstructorData(email);
 
       if (!userData) {
         return res.status(StatusCode.NOT_FOUND).json({
@@ -198,7 +205,7 @@ export class AdminController implements IAdminController {
       const emailId = userData.email;
       const isBlocked = !userData?.isBlocked;
 
-      const userStatus = await this.adminService.updateInstructorProfile(
+      const userStatus = await this._adminService.updateInstructorProfile(
         emailId,
         { isBlocked }
       );

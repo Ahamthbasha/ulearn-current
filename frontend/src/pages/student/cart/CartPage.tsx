@@ -3,15 +3,15 @@ import { getCart, removeFromCart } from "../../../api/action/StudentAction";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-interface Course {
-  _id: string;
+interface CartCourseDTO {
+  courseId: string;
   courseName: string;
   price: number;
   thumbnailUrl: string;
 }
 
 const CartPage = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CartCourseDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
@@ -23,7 +23,7 @@ const CartPage = () => {
     try {
       setLoading(true);
       const response = await getCart();
-      setCourses(response?.data?.courses || []);
+      setCourses(response?.data || []); // now data is the array itself
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to load cart.");
     } finally {
@@ -35,7 +35,7 @@ const CartPage = () => {
     try {
       await removeFromCart(courseId);
       toast.success("Course removed from cart");
-      setCourses((prev) => prev.filter((c) => c._id !== courseId));
+      setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
     } catch (error: any) {
       toast.error("Failed to remove course from cart");
     }
@@ -73,7 +73,7 @@ const CartPage = () => {
               </thead>
               <tbody>
                 {courses.map((course) => (
-                  <tr key={course._id} className="border-t">
+                  <tr key={course.courseId} className="border-t">
                     <td className="py-3 px-4">
                       <img
                         src={course.thumbnailUrl}
@@ -85,7 +85,7 @@ const CartPage = () => {
                     <td className="py-3 px-4 text-right">₹{course.price}</td>
                     <td className="py-3 px-4 text-right">
                       <button
-                        onClick={() => handleRemove(course._id)}
+                        onClick={() => handleRemove(course.courseId)}
                         className="text-red-600 hover:underline text-sm"
                       >
                         Remove

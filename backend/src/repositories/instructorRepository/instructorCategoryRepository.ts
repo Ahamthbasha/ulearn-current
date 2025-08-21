@@ -1,6 +1,6 @@
 import { CategoryModel, ICategoryModel } from "../../models/categoryModel";
 import { GenericRepository } from "../genericRepository";
-import { IInstructorCategoryRepository } from "../interfaces/IInstructorCategoryRepository";
+import { IInstructorCategoryRepository } from "./interface/IInstructorCategoryRepository";
 
 export class InstructorCategoryRepository
   extends GenericRepository<ICategoryModel>

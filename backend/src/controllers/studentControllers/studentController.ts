@@ -1,29 +1,30 @@
 import { Request, Response } from "express";
 import IStudentController from "./interfaces/IStudentController";
-import IStudentServices from "../../services/interface/IStudentService";
+import IStudentService from "../../services/studentServices/interface/IStudentService";
 import IOtpServices from "../../services/interface/IOtpService";
 import { OtpGenerate } from "../../utils/otpGenerator";
 import { JwtService } from "../../utils/jwt";
 import bcrypt from "bcrypt";
 import {
+  SERVER_ERROR,
   StudentErrorMessages,
   StudentSuccessMessages,
 } from "../../utils/constants";
 import { Roles, StatusCode } from "../../utils/enums";
 import { SendEmail } from "../../utils/sendOtpEmail";
 export class StudentController implements IStudentController {
-  private studentService: IStudentServices;
-  private otpService: IOtpServices;
-  private otpGenerator: OtpGenerate;
-  private JWT: JwtService;
-  private emailSender: SendEmail;
+  private _studentService: IStudentService;
+  private _otpService: IOtpServices;
+  private _otpGenerator: OtpGenerate;
+  private _JWT: JwtService;
+  private _emailSender: SendEmail;
 
-  constructor(studentService: IStudentServices, otpService: IOtpServices) {
-    this.studentService = studentService;
-    this.otpService = otpService;
-    this.otpGenerator = new OtpGenerate();
-    this.JWT = new JwtService();
-    this.emailSender = new SendEmail();
+  constructor(studentService: IStudentService, otpService: IOtpServices) {
+    this._studentService = studentService;
+    this._otpService = otpService;
+    this._otpGenerator = new OtpGenerate();
+    this._JWT = new JwtService();
+    this._emailSender = new SendEmail();
   }
 
   async studentSignUp(req: Request, res: Response): Promise<any> {
@@ -34,7 +35,7 @@ export class StudentController implements IStudentController {
       const hashedPassword = await bcrypt.hash(password, saltRound);
       password = hashedPassword;
 
-      const ExistingStudent = await this.studentService.findByEmail(email);
+      const ExistingStudent = await this._studentService.findByEmail(email);
 
       if (ExistingStudent) {
         return res.json({
@@ -43,13 +44,13 @@ export class StudentController implements IStudentController {
           user: ExistingStudent,
         });
       } else {
-        const otp = await this.otpGenerator.createOtpDigit();
+        const otp = await this._otpGenerator.createOtpDigit();
 
-        await this.otpService.createOtp(email, otp);
+        await this._otpService.createOtp(email, otp);
 
-        await this.emailSender.sentEmailVerification("Student", email, otp);
+        await this._emailSender.sentEmailVerification("Student", email, otp);
 
-        const token = await this.JWT.createToken({
+        const token = await this._JWT.createToken({
           email,
           password,
           username,
@@ -64,9 +65,9 @@ export class StudentController implements IStudentController {
       }
     } catch (error: any) {
       console.error(error);
-      return res.status(500).json({
+      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Internal Server Error",
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
         error: error.message,
       });
     }
@@ -76,9 +77,9 @@ export class StudentController implements IStudentController {
     try {
       let { email } = req.body;
 
-      const otp = await this.otpGenerator.createOtpDigit();
-      await this.otpService.createOtp(email, otp);
-      await this.emailSender.sentEmailVerification("Student", email, otp);
+      const otp = await this._otpGenerator.createOtpDigit();
+      await this._otpService.createOtp(email, otp);
+      await this._emailSender.sentEmailVerification("Student", email, otp);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -97,17 +98,17 @@ export class StudentController implements IStudentController {
       if (typeof token != "string") {
         throw new Error();
       }
-      const decode = await this.JWT.verifyToken(token);
+      const decode = await this._JWT.verifyToken(token);
       if (!decode) {
         return new Error(StudentErrorMessages.TOKEN_INVALID);
       }
-      const resultOtp = await this.otpService.findOtp(decode.email);
+      const resultOtp = await this._otpService.findOtp(decode.email);
       console.log(resultOtp?.otp, "<>", otp);
       if (resultOtp?.otp === otp) {
-        const user = await this.studentService.createUser(decode);
+        const user = await this._studentService.createUser(decode);
 
         if (user) {
-          await this.otpService.deleteOtp(user.email);
+          await this._otpService.deleteOtp(user.email);
 
           return res.status(StatusCode.CREATED).json({
             success: true,
@@ -130,7 +131,7 @@ export class StudentController implements IStudentController {
     try {
       const { email, password } = req.body;
       console.log(req.body);
-      const student = await this.studentService.findByEmail(email);
+      const student = await this._studentService.findByEmail(email);
 
       if (!student) {
         return res.status(StatusCode.NOT_FOUND).json({
@@ -143,7 +144,7 @@ export class StudentController implements IStudentController {
       if (student.isBlocked) {
         return res.status(StatusCode.FORBIDDEN).json({
           success: false,
-          message: "Your login has been declined. Your account is blocked.",
+          message: StudentErrorMessages.ACCOUNT_BLOCKED,
         });
       }
 
@@ -159,19 +160,21 @@ export class StudentController implements IStudentController {
       const role = student.role;
       const id = student.id;
 
-      const accessToken = await this.JWT.accessToken({ id, role, email });
-      const refreshToken = await this.JWT.refreshToken({ id, role, email });
+      const accessToken = await this._JWT.accessToken({ id, role, email });
+      const refreshToken = await this._JWT.refreshToken({ id, role, email });
 
       console.log("ACCESS TOKEN:", accessToken);
       console.log("REFRESH TOKEN:", refreshToken);
 
       return res
         .status(StatusCode.OK)
-        .cookie("accessToken", accessToken, { httpOnly: true })
-        .cookie("refreshToken", refreshToken, { httpOnly: true })
+        .cookie("accessToken", accessToken, { httpOnly: true,secure:true,
+              sameSite:"none" })
+        .cookie("refreshToken", refreshToken, { httpOnly: true,secure:true,
+              sameSite:"none" })
         .send({
           success: true,
-          message: "User logged in successfully",
+          message: StudentSuccessMessages.LOGIN_SUCCESS,
           user: student,
         });
     } catch (error) {
@@ -199,14 +202,14 @@ export class StudentController implements IStudentController {
     try {
       let { email } = req.body;
 
-      const existingUser = await this.studentService.findByEmail(email);
+      const existingUser = await this._studentService.findByEmail(email);
 
       if (existingUser) {
-        const otp = await this.otpGenerator.createOtpDigit();
+        const otp = await this._otpGenerator.createOtpDigit();
 
-        await this.otpService.createOtp(email, otp);
+        await this._otpService.createOtp(email, otp);
         console.log("verifyEmail otp ");
-        await this.emailSender.sentEmailVerification("Student", email, otp);
+        await this._emailSender.sentEmailVerification("Student", email, otp);
         console.log("verifyEmail otp is sended");
 
         res.send({
@@ -229,12 +232,12 @@ export class StudentController implements IStudentController {
     try {
       const { email, otp } = req.body;
 
-      const resultOtp = await this.otpService.findOtp(email);
+      const resultOtp = await this._otpService.findOtp(email);
 
       console.log(resultOtp?.otp, "==", otp);
 
       if (resultOtp?.otp === otp) {
-        let token = await this.JWT.createToken({ email });
+        let token = await this._JWT.createToken({ email });
 
         res.status(StatusCode.OK).cookie("forgotToken", token).json({
           success: true,
@@ -255,12 +258,12 @@ export class StudentController implements IStudentController {
     try {
       let { email } = req.body;
 
-      let otp = await this.otpGenerator.createOtpDigit();
-      await this.otpService.createOtp(email, otp);
+      let otp = await this._otpGenerator.createOtpDigit();
+      await this._otpService.createOtp(email, otp);
 
       console.log("forgotResendOtp controller in student");
 
-      await this.emailSender.sentEmailVerification("student", email, otp);
+      await this._emailSender.sentEmailVerification("student", email, otp);
 
       console.log("forgotResendOtp controller in student otp sended");
 
@@ -278,12 +281,12 @@ export class StudentController implements IStudentController {
       const { password } = req.body;
       const hashedPassword = await bcrypt.hash(password, 10);
       const token = req.cookies.forgotToken;
-      let data = await this.JWT.verifyToken(token);
+      let data = await this._JWT.verifyToken(token);
       if (!data) {
         throw new Error(StudentErrorMessages.TOKEN_INVALID);
       }
 
-      const passwordReset = await this.studentService.resetPassword(
+      const passwordReset = await this._studentService.resetPassword(
         data.email,
         hashedPassword
       );
@@ -302,19 +305,19 @@ export class StudentController implements IStudentController {
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
     try {
       const { name, email } = req.body;
-      const existingUser = await this.studentService.findByEmail(email);
+      const existingUser = await this._studentService.findByEmail(email);
 
       if (!existingUser) {
-        const user = await this.studentService.googleLogin(name, email);
+        const user = await this._studentService.googleLogin(name, email);
 
         if (user) {
           const role = user.role;
-          const accessToken = await this.JWT.accessToken({
+          const accessToken = await this._JWT.accessToken({
             id: user._id,
             email,
             role,
           });
-          const refreshToken = await this.JWT.refreshToken({
+          const refreshToken = await this._JWT.refreshToken({
             id: user._id,
             email,
             role,
@@ -322,8 +325,12 @@ export class StudentController implements IStudentController {
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true })
-            .cookie("refreshToken", refreshToken, { httpOnly: true })
+            .cookie("accessToken", accessToken, { httpOnly: true,
+              secure:true,
+              sameSite:"none"
+             })
+            .cookie("refreshToken", refreshToken, { httpOnly: true,secure:true,
+              sameSite:"none" })
             .json({
               success: true,
               message: StudentSuccessMessages.GOOGLE_LOGIN_SUCCESS,
@@ -334,13 +341,15 @@ export class StudentController implements IStudentController {
         if (!existingUser.isBlocked) {
           const role = existingUser.role;
           const id = existingUser._id;
-          const accessToken = await this.JWT.accessToken({ id, email, role });
-          const refreshToken = await this.JWT.refreshToken({ id, email, role });
+          const accessToken = await this._JWT.accessToken({ id, email, role });
+          const refreshToken = await this._JWT.refreshToken({ id, email, role });
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true })
-            .cookie("refreshToken", refreshToken, { httpOnly: true })
+            .cookie("accessToken", accessToken, { httpOnly: true,secure:true,
+              sameSite:"none" })
+            .cookie("refreshToken", refreshToken, { httpOnly: true,secure:true,
+              sameSite:"none"})
             .json({
               success: true,
               message: StudentSuccessMessages.GOOGLE_LOGIN_SUCCESS,
@@ -362,21 +371,22 @@ export class StudentController implements IStudentController {
   async statusCheck(req: Request, res: Response): Promise<void> {
     try {
       const token = req.cookies.accessToken;
-      const decoded = await this.JWT.verifyToken(token);
+      console.log("token",req.cookies)
+      const decoded = await this._JWT.verifyToken(token);
 
       if (!decoded?.email) {
         res
           .status(StatusCode.UNAUTHORIZED)
-          .json({ success: false, message: "Invalid token" });
+          .json({ success: false, message: StudentErrorMessages.INVALID_TOKEN });
         return;
       }
 
-      const student = await this.studentService.findByEmail(decoded.email);
+      const student = await this._studentService.findByEmail(decoded.email);
 
       if (!student) {
         res
           .status(StatusCode.NOT_FOUND)
-          .json({ success: false, message: "Student not found" });
+          .json({ success: false, message: StudentErrorMessages.NOT_FOUND_STUDENT});
         return;
       }
 
@@ -389,7 +399,7 @@ export class StudentController implements IStudentController {
     } catch (err) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Status check failed",
+        message: StudentErrorMessages.STATUS_CHECK_FAILED,
       });
     }
   }

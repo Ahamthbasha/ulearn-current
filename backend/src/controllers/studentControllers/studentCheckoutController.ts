@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { IStudentCheckoutController } from "./interfaces/IStudentCheckoutController";
-import { IStudentCheckoutService } from "../../services/interface/IStudentCheckoutService";
+import { IStudentCheckoutService } from "../../services/studentServices/interface/IStudentCheckoutService"; 
 import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import {
   CheckoutErrorMessages,
   CheckoutSuccessMessage,
@@ -10,7 +10,10 @@ import {
 import { Types } from "mongoose";
 
 export class StudentCheckoutController implements IStudentCheckoutController {
-  constructor(private readonly checkoutService: IStudentCheckoutService) {}
+  private _checkoutService: IStudentCheckoutService
+  constructor(checkoutService: IStudentCheckoutService) {
+    this._checkoutService = checkoutService
+  }
 
   async initiateCheckout(
     req: AuthenticatedRequest,
@@ -28,7 +31,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         return;
       }
 
-      const order = await this.checkoutService.initiateCheckout(
+      const order = await this._checkoutService.initiateCheckout(
         userId,
         courseIds,
         totalAmount,
@@ -65,7 +68,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
     try {
       const { orderId, paymentId, method, amount } = req.body;
 
-      const result = await this.checkoutService.verifyAndCompleteCheckout(
+      const result = await this._checkoutService.verifyAndCompleteCheckout(
         orderId,
         paymentId,
         method,

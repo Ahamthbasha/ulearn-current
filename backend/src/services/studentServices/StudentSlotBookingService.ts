@@ -1,33 +1,37 @@
-import { IStudentSlotBookingService } from "../interface/IStudentSlotBookingService";
-import { IStudentSlotBookingRepository } from "../../repositories/interfaces/IStudentSlotBookingRepository";
-import { IStudentSlotRepository } from "../../repositories/interfaces/IStudentSlotRepository";
+import { IStudentSlotBookingService } from "./interface/IStudentSlotBookingService"; 
+import { IStudentSlotBookingRepository } from "../../repositories/studentRepository/interface/IStudentSlotBookingRepository"; 
+import { IStudentSlotRepository } from "../../repositories/studentRepository/interface/IStudentSlotRepository"; 
 import { razorpay } from "../../utils/razorpay";
 import { Types } from "mongoose";
 import { IWalletService } from "../interface/IWalletService";
 import { IBooking } from "../../models/bookingModel";
-// import { ISlot } from "../../models/slotModel";
 import { IInstructor } from "../../models/instructorModel";
 import { PopulatedSlot } from "../../types/PopulatedSlot";
 import { PopulatedBooking } from "../../types/PopulatedBooking";
 import { SendEmail } from "../../utils/sendOtpEmail";
 import { format } from "date-fns";
+import { toStudentSlotBookingHistoryDTO } from "../../mappers/userMapper/studentSlotBookingMapper"; 
+import { toStudentBookingDetailDTO } from "../../mappers/userMapper/studentBookingDetailMapper"; 
+import { StudentSlotBookingHistoryDTO } from "../../dto/userDTO/StudentSlotBookingHistoryDTO";
+import { StudentBookingDetailDTO } from "../../dto/userDTO/studentBookingDetailDTO";
 
 export class StudentSlotBookingService implements IStudentSlotBookingService {
-  private readonly emailService: SendEmail;
-
-  constructor(
-    private readonly bookingRepo: IStudentSlotBookingRepository,
-    private readonly slotRepo: IStudentSlotRepository,
-    private readonly walletService: IWalletService
-  ) {
-    this.emailService = new SendEmail();
+    private _emailService: SendEmail
+    private _bookingRepo: IStudentSlotBookingRepository
+    private _slotRepo: IStudentSlotRepository
+    private _walletService: IWalletService
+  constructor(bookingRepo: IStudentSlotBookingRepository,slotRepo: IStudentSlotRepository,walletService: IWalletService) {
+    this._bookingRepo = bookingRepo;
+    this._slotRepo = slotRepo;
+    this._walletService = walletService;
+    this._emailService = new SendEmail();
   }
 
   async initiateCheckout(slotId: string, studentId: string) {
     if (!Types.ObjectId.isValid(slotId)) throw new Error("Invalid slot ID");
     if (!Types.ObjectId.isValid(studentId)) throw new Error("Invalid student ID");
 
-    const slot = await this.slotRepo.findOne(
+    const slot = await this._slotRepo.findOne(
       { _id: slotId },
       [{ path: "instructorId", select: "username email" }]
     ) as PopulatedSlot;
@@ -61,20 +65,20 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
 
     if (!razorpayPaymentId) throw new Error("Missing Razorpay payment ID");
 
-    const slot = await this.slotRepo.findById(slotId);
+    const slot = await this._slotRepo.findById(slotId);
     if (!slot) throw new Error("Slot not found");
     if (slot.isBooked) throw new Error("Slot already booked");
 
-    await this.slotRepo.update(slot._id.toString(), { isBooked: true });
+    await this._slotRepo.update(slot._id.toString(), { isBooked: true });
 
-    await this.walletService.creditWallet(
+    await this._walletService.creditWallet(
       new Types.ObjectId(slot.instructorId.toString()),
       slot.price,
       `Slot booking payment from student`,
       razorpayPaymentId
     );
 
-    const booking = await this.bookingRepo.createBooking({
+    const booking = await this._bookingRepo.createBooking({
       studentId: new Types.ObjectId(studentId),
       instructorId: slot.instructorId,
       slotId: slot._id,
@@ -83,7 +87,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
       txnId: razorpayPaymentId,
     });
 
-    const updatedBooking = await this.bookingRepo.findBookingById(booking._id.toString(), [
+    const updatedBooking = await this._bookingRepo.findBookingById(booking._id.toString(), [
       { path: "slotId" },
       { path: "instructorId", select: "username email" },
       { path: "studentId", select: "username email" },
@@ -93,7 +97,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
 
     const populated = updatedBooking as PopulatedBooking;
 
-    await this.emailService.sendSlotBookingConfirmation(
+    await this._emailService.sendSlotBookingConfirmation(
       populated.studentId.username,
       populated.studentId.email,
       populated.instructorId.username,
@@ -110,30 +114,30 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
       throw new Error("Invalid IDs");
     }
 
-    const slot = await this.slotRepo.findById(slotId);
+    const slot = await this._slotRepo.findById(slotId);
     if (!slot) throw new Error("Slot not found");
     if (slot.isBooked) throw new Error("Slot already booked");
 
     const amount = slot.price;
     const txnId = `wallet-slot-${Date.now()}`;
 
-    await this.walletService.debitWallet(
+    await this._walletService.debitWallet(
       new Types.ObjectId(studentId),
       amount,
       `Slot booking payment to instructor`,
       txnId
     );
 
-    await this.walletService.creditWallet(
+    await this._walletService.creditWallet(
       new Types.ObjectId(slot.instructorId.toString()),
       amount,
       `Slot booked by student`,
       txnId
     );
 
-    await this.slotRepo.update(slotId, { isBooked: true });
+    await this._slotRepo.update(slotId, { isBooked: true });
 
-    const booking = await this.bookingRepo.createBooking({
+    const booking = await this._bookingRepo.createBooking({
       studentId: new Types.ObjectId(studentId),
       instructorId: slot.instructorId,
       slotId: slot._id,
@@ -142,7 +146,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
       txnId,
     });
 
-    const updatedBooking = await this.bookingRepo.findBookingById(booking._id.toString(), [
+    const updatedBooking = await this._bookingRepo.findBookingById(booking._id.toString(), [
       { path: "slotId" },
       { path: "instructorId", select: "username email" },
       { path: "studentId", select: "username email" },
@@ -152,7 +156,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
 
     const populated = updatedBooking as PopulatedBooking;
 
-    await this.emailService.sendSlotBookingConfirmation(
+    await this._emailService.sendSlotBookingConfirmation(
       populated.studentId.username,
       populated.studentId.email,
       populated.instructorId.username,
@@ -164,20 +168,54 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
     return populated;
   }
 
-  async getStudentBookingHistoryPaginated(studentId: string, page: number, limit: number) {
-    return await this.bookingRepo.findAllBookingsByStudentPaginated(studentId, page, limit, [
-      { path: "slotId" },
-      { path: "instructorId", select: "username email" },
-    ]);
+  async getStudentBookingHistoryPaginated(
+    studentId: string, 
+    page: number, 
+    limit: number,
+    searchQuery?: string
+  ): Promise<{ data: StudentSlotBookingHistoryDTO[]; total: number }> {
+    const result = await this._bookingRepo.findAllBookingsByStudentPaginated(
+      studentId, 
+      page, 
+      limit, 
+      searchQuery,
+      [
+        { path: "slotId" },
+        { path: "instructorId", select: "username email" },
+      ]
+    );
+
+    // Map to DTOs in service layer
+    const mappedData = result.data.map(toStudentSlotBookingHistoryDTO);
+
+    return {
+      data: mappedData,
+      total: result.total
+    };
   }
 
   async getStudentBookingById(bookingId: string): Promise<IBooking | null> {
     if (!Types.ObjectId.isValid(bookingId)) throw new Error("Invalid booking ID");
 
-    return await this.bookingRepo.findBookingById(bookingId, [
+    return await this._bookingRepo.findBookingById(bookingId, [
       { path: "slotId" },
       { path: "instructorId", select: "username email" },
       { path: "studentId", select: "username email" },
     ]);
+  }
+
+  async getStudentBookingDetail(bookingId: string): Promise<StudentBookingDetailDTO | null> {
+    if (!Types.ObjectId.isValid(bookingId)) throw new Error("Invalid booking ID");
+
+    const booking = await this._bookingRepo.findBookingById(bookingId, [
+      { path: "slotId" },
+      { path: "instructorId", select: "username email" },
+      { path: "studentId", select: "username email" },
+    ]);
+
+    if (!booking) return null;
+
+    // Map to DTO in service layer
+    return toStudentBookingDetailDTO(booking as PopulatedBooking);
   }
 }

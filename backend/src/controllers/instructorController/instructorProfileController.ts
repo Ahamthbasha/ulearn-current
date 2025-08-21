@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import { IInstructorProfileService } from "../../services/interface/IInstructorProfileService";
+import { IInstructorProfileService } from "../../services/instructorServices/interface/IInstructorProfileService"; 
 import { IInstructorProfileController } from "./interfaces/IInstructorProfileController";
 import { JwtService } from "../../utils/jwt";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import bcrypt from "bcrypt";
 import { StatusCode } from "../../utils/enums";
 import {
@@ -14,22 +13,21 @@ import {
 export class InstructorProfileController
   implements IInstructorProfileController
 {
-  private service: IInstructorProfileService;
-  private jwt = new JwtService();
+  private _profileService: IInstructorProfileService;
+  private _jwt = new JwtService();
 
-  constructor(service: IInstructorProfileService) {
-    this.service = service;
+  constructor(profileService: IInstructorProfileService) {
+    this._profileService = profileService;
   }
 
   async getProfile(req: Request, res: Response): Promise<void> {
     try {
       const token = req.cookies["accessToken"];
+      const decoded = await this._jwt.verifyToken(token);
 
-      const decoded = await this.jwt.verifyToken(token);
+      const instructorProfile = await this._profileService.getProfile(decoded.email);
 
-      const instructor = await this.service.getProfile(decoded.email);
-
-      if (!instructor || !instructor.isVerified) {
+      if (!instructorProfile || !instructorProfile.status) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
           message: InstructorErrorMessages.UNAUTHORIZED,
@@ -37,18 +35,12 @@ export class InstructorProfileController
         return;
       }
 
-      const profilePicUrl = instructor.profilePicUrl
-        ? await getPresignedUrl(instructor.profilePicUrl)
-        : undefined;
-
       res.status(StatusCode.OK).json({
         success: true,
         message: InstructorSuccessMessages.PROFILE_FETCHED,
-        data: {
-          ...instructor.toObject(),
-          profilePicUrl,
-        },
+        data: instructorProfile
       });
+
     } catch (err) {
       res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
@@ -60,7 +52,7 @@ export class InstructorProfileController
   async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       const token = req.cookies["accessToken"];
-      const decoded = await this.jwt.verifyToken(token);
+      const decoded = await this._jwt.verifyToken(token);
       const userId = decoded.id;
 
       const { username, skills, expertise } = req.body;
@@ -77,9 +69,9 @@ export class InstructorProfileController
         ...(profilePicUrl && { profilePicUrl }),
       };
 
-      const updated = await this.service.updateProfile(userId, updateData);
+      const updatedProfile = await this._profileService.updateProfile(userId, updateData);
 
-      if (!updated) {
+      if (!updatedProfile) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: InstructorErrorMessages.PROFILE_UPDATE_FAILED,
@@ -90,7 +82,7 @@ export class InstructorProfileController
       res.status(StatusCode.OK).json({
         success: true,
         message: InstructorSuccessMessages.PROFILE_UPDATED,
-        data: updated,
+        data: updatedProfile,
       });
     } catch (err) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
@@ -103,10 +95,12 @@ export class InstructorProfileController
   async updatePassword(req: Request, res: Response): Promise<void> {
     try {
       const token = req.cookies["accessToken"];
-      const decoded = await this.jwt.verifyToken(token);
+      const decoded = await this._jwt.verifyToken(token);
       const email = decoded.email;
       const { currentPassword, newPassword } = req.body;
-      const instructor = await this.service.getProfile(email);
+
+      // Use raw data for password comparison
+      const instructor = await this._profileService.getInstructorRaw(email);
 
       if (!instructor) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -122,7 +116,7 @@ export class InstructorProfileController
       );
 
       if (!isMatch) {
-        res.status(StatusCode.UNAUTHORIZED).json({
+        res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: InstructorErrorMessages.CURRENT_PASSWORD_INCORRECT,
         });
@@ -130,7 +124,7 @@ export class InstructorProfileController
       }
 
       const hashed = await bcrypt.hash(newPassword, 10);
-      const updated = await this.service.updatePassword(email, hashed);
+      const updated = await this._profileService.updatePassword(email, hashed);
 
       if (!updated) {
         res.status(StatusCode.BAD_REQUEST).json({
@@ -155,12 +149,10 @@ export class InstructorProfileController
   async updateBankAccount(req: Request, res: Response): Promise<void> {
     try {
       const token = req.cookies["accessToken"];
-      const decoded = await this.jwt.verifyToken(token);
+      const decoded = await this._jwt.verifyToken(token);
       const userId = decoded.id;
 
       const { accountHolderName, accountNumber, ifscCode, bankName } = req.body;
-
-      console.log(req.body)
 
       const bankAccountData = {
         bankAccount: {
@@ -171,9 +163,9 @@ export class InstructorProfileController
         },
       };
 
-      const updated = await this.service.updateProfile(userId, bankAccountData);
+      const updatedProfile = await this._profileService.updateProfile(userId, bankAccountData);
 
-      if (!updated) {
+      if (!updatedProfile) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: InstructorErrorMessages.BANK_ACCOUNT_UPDATE_FAILED,
@@ -184,7 +176,7 @@ export class InstructorProfileController
       res.status(StatusCode.OK).json({
         success: true,
         message: InstructorSuccessMessages.BANK_ACCOUNT_UPDATED,
-        data: updated,
+        data: updatedProfile // Now returning the updated profile data
       });
     } catch (err) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({

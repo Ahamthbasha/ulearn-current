@@ -47,9 +47,11 @@ const CourseCreatePage = () => {
   const validationSchema = Yup.object({
     courseName: Yup.string()
       .trim()
+      .min(6, "Course name must be at least 6 characters")
+      .max(30, "Course name must not exceed 20 characters")
       .matches(
-        /^[A-Za-z ]{6,}$/,
-        "Minimum 6 letters. Only letters and spaces allowed"
+        /^[A-Za-z ]{6,30}$/,
+        "Only letters and spaces allowed, 6-20 characters"
       )
       .test("not-only-spaces", "Course name cannot be just spaces", (value) =>
         Boolean(value && value.trim().replace(/\s/g, "").length >= 6)
@@ -59,9 +61,9 @@ const CourseCreatePage = () => {
     description: Yup.string()
       .trim()
       .min(10, "Description must be at least 10 characters")
-      .max(300, "Description must not exceed 300 characters")
+      .max(50, "Description must not exceed 50 characters")
       .matches(
-        /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{20,}$/,
+        /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{10,50}$/,
         "Description must include meaningful text, not just symbols or numbers"
       )
       .test(
@@ -80,10 +82,22 @@ const CourseCreatePage = () => {
     price: Yup.number()
       .typeError("Price must be a number")
       .positive("Price must be greater than zero")
+      .min(1, "Price must be at least ₹1")
+      .max(999999, "Price cannot exceed ₹9,99,999")
+      .test("decimal-places", "Price can have maximum 2 decimal places", (value) => {
+        if (!value) return true;
+        const decimalPlaces = value.toString().split('.')[1];
+        return !decimalPlaces || decimalPlaces.length <= 2;
+      })
       .required("Price is required"),
 
     duration: Yup.string()
       .matches(/^[1-9][0-9]*$/, "Duration must be a positive number")
+      .test("duration-range", "Duration must be between 1-999 hours", (value) => {
+        if (!value) return false;
+        const num = parseInt(value);
+        return num >= 1 && num <= 999;
+      })
       .required("Duration is required"),
 
     level: Yup.string()
@@ -202,7 +216,9 @@ const CourseCreatePage = () => {
             onBlur={formik.handleBlur}
             className="w-full px-4 py-2 rounded-lg bg-gray-100 border-2 focus:outline-none focus:border-blue-500"
           >
-            <option value="">Select Category</option>
+            <option value="" disabled>
+              Select Category
+            </option>
             {categories.map((cat) => (
               <option key={cat._id} value={cat._id}>
                 {cat.categoryName}
@@ -230,7 +246,9 @@ const CourseCreatePage = () => {
             onBlur={formik.handleBlur}
             className="w-full px-4 py-2 rounded-lg bg-gray-100 border-2 focus:outline-none focus:border-blue-500"
           >
-            <option value="">Select Level</option>
+            <option value="" disabled>
+              Select Level
+            </option>
             <option value="Beginner">Beginner</option>
             <option value="Intermediate">Intermediate</option>
             <option value="Advanced">Advanced</option>

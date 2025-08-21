@@ -1,18 +1,24 @@
-import { IAdminRepository } from "../interfaces/IAdminRepository";
-import { IAdminBaseRepository } from "../interfaces/IAdminBaseRepository";
+import { IAdminRepository } from "./interface/IAdminRepository";
 import AdminModel, { IAdmin } from "../../models/adminModel";
 import { GenericRepository } from "../genericRepository";
 import { IUser } from "../../models/userModel";
 import { IInstructor } from "../../models/instructorModel";
+import { IAdminUserRepository } from "./interface/IAdminUserRepository";
+import { IAdminInstructorRepository } from "./interface/IAdminInstructorRepository";
 
 export class AdminRespository
   extends GenericRepository<IAdmin>
   implements IAdminRepository
 {
-  private adminBaseRepository: IAdminBaseRepository;
-  constructor(adminBaseRepositor: IAdminBaseRepository) {
+  private _adminUserRepository: IAdminUserRepository;
+  private _adminInstructorRepository: IAdminInstructorRepository;
+  constructor(
+    adminUserRepository: IAdminUserRepository,
+    adminInstructorRepository: IAdminInstructorRepository
+  ) {
     super(AdminModel);
-    this.adminBaseRepository = adminBaseRepositor;
+    this._adminUserRepository = adminUserRepository;
+    this._adminInstructorRepository = adminInstructorRepository;
   }
 
   async getAdmin(email: string): Promise<IAdmin | null> {
@@ -29,7 +35,7 @@ export class AdminRespository
     search: string
   ): Promise<{ users: IUser[]; total: number }> {
     try {
-      const users = await this.adminBaseRepository.getAllUsers(
+      const users = await this._adminUserRepository.getAllUsers(
         page,
         limit,
         search
@@ -46,11 +52,12 @@ export class AdminRespository
     search: string
   ): Promise<{ instructors: IInstructor[]; total: number }> {
     try {
-      const instructors = await this.adminBaseRepository.getAllInstructors(
-        page,
-        limit,
-        search
-      );
+      const instructors =
+        await this._adminInstructorRepository.getAllInstructors(
+          page,
+          limit,
+          search
+        );
       return instructors;
     } catch (error) {
       throw error;
@@ -59,7 +66,7 @@ export class AdminRespository
 
   async getUserData(email: string) {
     try {
-      const response = await this.adminBaseRepository.getUserData(email);
+      const response = await this._adminUserRepository.getUserData(email);
 
       return response;
     } catch (error) {
@@ -69,7 +76,9 @@ export class AdminRespository
 
   async getInstructorData(email: string) {
     try {
-      const response = await this.adminBaseRepository.getInstructorData(email);
+      const response = await this._adminInstructorRepository.getInstructorData(
+        email
+      );
 
       return response;
     } catch (error) {
@@ -81,7 +90,7 @@ export class AdminRespository
 
   async updateProfile(email: string, data: any): Promise<any> {
     try {
-      const response = await this.adminBaseRepository.updateProfile(
+      const response = await this._adminUserRepository.updateProfile(
         email,
         data
       );
@@ -93,10 +102,11 @@ export class AdminRespository
 
   async updateInstructorProfile(email: string, data: any): Promise<any> {
     try {
-      const response = await this.adminBaseRepository.updateInstructorProfile(
-        email,
-        data
-      );
+      const response =
+        await this._adminInstructorRepository.updateInstructorProfile(
+          email,
+          data
+        );
       return response;
     } catch (error) {
       throw error;

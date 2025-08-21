@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { QuizModel, IQuiz } from "../../models/quizModel";
-import { IInstructorQuizRepository } from "../interfaces/IInstructorQuizRepository";
+import { IInstructorQuizRepository } from "./interface/IInstructorQuizRepository";
 import { GenericRepository } from "../genericRepository";
 
 export class InstructorQuizRepository

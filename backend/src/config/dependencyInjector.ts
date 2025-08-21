@@ -1,7 +1,7 @@
-import { IStudentRepository } from "../repositories/interfaces/IStudentRepository";
+import { IStudentRepository } from "../repositories/studentRepository/interface/IStudentRepository"; 
 import { StudentRepository } from "../repositories/studentRepository/studentRepository";
-import IStudentService from "../services/interface/IStudentService";
-import { StudentServices } from "../services/studentServices/StudentService";
+import IStudentService from "../services/studentServices/interface/IStudentService"; 
+import { StudentServices } from "../services/studentServices/studentService";
 import IStudentController from "../controllers/studentControllers/interfaces/IStudentController";
 import { StudentController } from "../controllers/studentControllers/studentController";
 
@@ -11,22 +11,20 @@ import IOtpServices from "../services/interface/IOtpService";
 import { OtpService } from "../services/otpService";
 
 import IInstructorController from "../controllers/instructorController/interfaces/IInstructorController";
-import { InstructorController } from "../controllers/instructorController/InstructorController";
+import { InstructorController } from "../controllers/instructorController/instructorController";
 
-import IInstructorRepository from "../repositories/interfaces/IInstructorRepository";
+import IInstructorRepository from "../repositories/instructorRepository/interface/IInstructorRepository"; 
 import InstructorRepository from "../repositories/instructorRepository/instructorRepository";
 
-import IInstructorService from "../services/interface/IInstructorService";
-import InstructorService from "../services/instructorServices/InstructorService";
+import IInstructorService from "../services/instructorServices/interface/IInstructorService"; 
+import InstructorService from "../services/instructorServices/instructorService";
 
-import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
+import { IAdminRepository } from "../repositories/adminRepository/interface/IAdminRepository"; 
 import { AdminRespository } from "../repositories/adminRepository/adminRepository";
-import { IAdminService } from "../services/interface/IAdminService";
-import { AdminService } from "../services/adminServices/AdminService";
+import { IAdminService } from "../services/adminServices/interface/IAdminService"; 
+import { AdminService } from "../services/adminServices/adminService";
 import { IAdminController } from "../controllers/adminControllers/interface/IAdminController";
 import { AdminController } from "../controllers/adminControllers/adminController";
-import { IAdminBaseRepository } from "../repositories/interfaces/IAdminBaseRepository";
-import { AdminBaseRespository } from "../repositories/adminRepository/adminBaseRepository";
 
 const otpRepository: IOtpRepository = new OtpRepository();
 const otpService: IOtpServices = new OtpService(otpRepository);
@@ -50,18 +48,28 @@ const instructorController: IInstructorController = new InstructorController(
 
 ///////////////ADMIN REPOSITORY///////////
 
-const adminBaseRepository: IAdminBaseRepository = new AdminBaseRespository();
+import { IAdminUserRepository } from "../repositories/adminRepository/interface/IAdminUserRepository";
+import { AdmiUserRespository } from "../repositories/adminRepository/adminUserRepository";
+
+import { IAdminInstructorRepository } from "../repositories/adminRepository/interface/IAdminInstructorRepository";
+import { AdminInstructorRespository } from "../repositories/adminRepository/adminInstructorRepository";
+
+const adminUserRepository : IAdminUserRepository = new AdmiUserRespository()
+
+const adminInstructorRepository : IAdminInstructorRepository = new AdminInstructorRespository()
+
 const adminRespository: IAdminRepository = new AdminRespository(
-  adminBaseRepository
+  adminUserRepository,
+  adminInstructorRepository
 );
 const adminService: IAdminService = new AdminService(adminRespository);
 const adminController: IAdminController = new AdminController(adminService);
 
 //////////////////////admin verification //////////////////////////////////////////
-import { IAdminVerificationRepository } from "../repositories/interfaces/IAdminVerificationRepository";
+import { IAdminVerificationRepository } from "../repositories/adminRepository/interface/IAdminVerificationRepository"; 
 import { AdminVerificationRepository } from "../repositories/adminRepository/adminVerificationRepository";
-import { IAdminVerificationService } from "../services/interface/IAdminVerificationService";
-import { AdminVerificationService } from "../services/adminServices/AdminVerificationService";
+import { IAdminVerificationService } from "../services/adminServices/interface/IAdminVerificationService"; 
+import { AdminVerificationService } from "../services/adminServices/adminVerificationService"; 
 import IAdminVerificationController from "../controllers/adminControllers/interface/IAdminVerificationController";
 import { AdminVerificationController } from "../controllers/adminControllers/adminVerificationController";
 
@@ -74,10 +82,10 @@ const adminVerificationController: IAdminVerificationController =
 
 /////////////////////////Instructor verification/////////////////////////////////////
 
-import { IInstructorVerificationRepository } from "../repositories/interfaces/IInstructorVerifcationRepository";
+import { IInstructorVerificationRepository } from "../repositories/instructorRepository/interface/IInstructorVerifcationRepository"; 
 import { InstructorVerificationRepository } from "../repositories/instructorRepository/instructorVerificationRepository";
-import { IInstructorVerificationService } from "../services/interface/IInstructorVerificationService";
-import { InstructorVerificationService } from "../services/instructorServices/InstructorVerificationService";
+import { IInstructorVerificationService } from "../services/instructorServices/interface/IInstructorVerificationService"; 
+import { InstructorVerificationService } from "../services/instructorServices/instructorVerificationService";
 import IInstructorVerificationController from "../controllers/instructorController/interfaces/IInstructorVerificationController";
 import { InstructorVerificationController } from "../controllers/instructorController/instructorVerificationController";
 
@@ -93,9 +101,9 @@ const instructorVerificationController: IInstructorVerificationController =
 ///////////////////////student profile controller/////////////////////////////////////////////////
 
 import { studentProfileRepository } from "../repositories/studentRepository/studentProfileRepository";
-import { IStudentProfileRepository } from "../repositories/interfaces/IStudentProfileRepository";
-import { IStudentProfileService } from "../services/interface/IStudentProfileService";
-import { StudentProfileService } from "../services/studentServices/StudentProfileService";
+import { IStudentProfileRepository } from "../repositories/studentRepository/interface/IStudentProfileRepository"; 
+import { IStudentProfileService } from "../services/studentServices/interface/IStudentProfileService"; 
+import { StudentProfileService } from "../services/studentServices/studentProfileService";
 import { IStudentProfileController } from "../controllers/studentControllers/interfaces/IStudentProfileController";
 import { StudentProfileController } from "../controllers/studentControllers/studentProfileController";
 
@@ -109,10 +117,10 @@ const studentProfileController: IStudentProfileController =
 
 ////////////////////////INSTRUCTOR PROFILE MANAGEMENT/////////////////////////////////////////////////
 
-import { IInstructorProfileRepository } from "../repositories/interfaces/IInstructorProfileRepository";
+import { IInstructorProfileRepository } from "../repositories/instructorRepository/interface/IInstructorProfileRepository"; 
 import { InstructorProfileRepository } from "../repositories/instructorRepository/instructorProfileRepository";
-import { IInstructorProfileService } from "../services/interface/IInstructorProfileService";
-import { InstructorProfileService } from "../services/instructorServices/InstructorProfileService";
+import { IInstructorProfileService } from "../services/instructorServices/interface/IInstructorProfileService"; 
+import { InstructorProfileService } from "../services/instructorServices/instructorProfileService";
 import { IInstructorProfileController } from "../controllers/instructorController/interfaces/IInstructorProfileController";
 import { InstructorProfileController } from "../controllers/instructorController/instructorProfileController";
 
@@ -125,11 +133,11 @@ const instructorProfileController: IInstructorProfileController =
 
 //////////////////////ADMIN CATEGORY CONTROLLER////////////////////////////////////////
 
-import { IAdminCategoryRepository } from "../repositories/interfaces/IAdminCategoryRepository";
+import { IAdminCategoryRepository } from "../repositories/adminRepository/interface/IAdminCategoryRepository"; 
 import { AdminCategoryRepository } from "../repositories/adminRepository/adminCateogyRepository";
 
-import { IAdminCategoryService } from "../services/interface/IAdminCategoryService";
-import { AdminCategoryService } from "../services/adminServices/AdminCategoryService";
+import { IAdminCategoryService } from "../services/adminServices/interface/IAdminCategoryService"; 
+import { AdminCategoryService } from "../services/adminServices/adminCategoryService"; 
 
 import { IAdminCategoryController } from "../controllers/adminControllers/interface/IAdminCategoryController";
 import { AdminCategoryContoller } from "../controllers/adminControllers/adminCategoryController";
@@ -144,11 +152,11 @@ const adminCategoryController: IAdminCategoryController =
 
 ///////////////////////INSTRUCTROR CATEGORY FETCH/////////////////////////////////////
 
-import { IInstructorCategoryRepository } from "../repositories/interfaces/IInstructorCategoryRepository";
+import { IInstructorCategoryRepository } from "../repositories/instructorRepository/interface/IInstructorCategoryRepository"; 
 import { InstructorCategoryRepository } from "../repositories/instructorRepository/instructorCategoryRepository";
 
-import { IInstructorCategoryService } from "../services/interface/IInstructorCategoryService";
-import { InstructorCategoryService } from "../services/instructorServices/InstructorCategoryService";
+import { IInstructorCategoryService } from "../services/instructorServices/interface/IInstructorCategoryService"; 
+import { InstructorCategoryService } from "../services/instructorServices/instructorCategoryService";
 
 import { IInstructorCategoryController } from "../controllers/instructorController/interfaces/IInstructorCategoryController";
 
@@ -165,11 +173,11 @@ const instructorCategoryController: IInstructorCategoryController =
 
 ///////////////////////INSTRUCTOR CHAPTER CONTROLLER/////////////////////////////////////
 
-import { IInstructorChapterRepository } from "../repositories/interfaces/IInstructorChapterRepository";
+import { IInstructorChapterRepository } from "../repositories/instructorRepository/interface/IInstructorChapterRepository"; 
 import { InstructorChapterRepository } from "../repositories/instructorRepository/instructorChapterRepository";
 
-import { IInstructorChapterService } from "../services/interface/IInstructorChapterService";
-import { InstructorChapterService } from "../services/instructorServices/InstructorChapterService";
+import { IInstructorChapterService } from "../services/instructorServices/interface/IInstructorChapterService"; 
+import { InstructorChapterService } from "../services/instructorServices/instructorChapterService";
 
 import { IInstructorChapterController } from "../controllers/instructorController/interfaces/IInstructorChapterController";
 import { InstructorChapterController } from "../controllers/instructorController/instructorChapterController";
@@ -185,11 +193,11 @@ const instructorChapterController: IInstructorChapterController =
 
 /////////////////////////INSTRUCTOR QUIZ CONTROLLER////////////////////////////////////////////////////////////////////////////////////////////
 
-import { IInstructorQuizRepository } from "../repositories/interfaces/IInstructorQuizRepository";
+import { IInstructorQuizRepository } from "../repositories/instructorRepository/interface/IInstructorQuizRepository"; 
 import { InstructorQuizRepository } from "../repositories/instructorRepository/instructorQuizRepository";
 
-import { IInstructorQuizService } from "../services/interface/IInstructorQuizService";
-import { InstructorQuizService } from "../services/instructorServices/InstructorQuizService";
+import { IInstructorQuizService } from "../services/instructorServices/interface/IInstructorQuizService"; 
+import { InstructorQuizService } from "../services/instructorServices/instructorQuizService";
 
 import { IInstructorQuizController } from "../controllers/instructorController/interfaces/IInstructorQuizController";
 import { InstructorQuizController } from "../controllers/instructorController/instructorQuizController";
@@ -206,14 +214,14 @@ const instructorQuizController: IInstructorQuizController =
 
 //////////////////////INSTRUCTOR COURSE MANAGEMENT///////////////////////////////////////
 
-import { IInstructorCourseRepository } from "../repositories/interfaces/IInstructorCourseRepository";
+import { IInstructorCourseRepository } from "../repositories/instructorRepository/interface/IInstructorCourseRepository"; 
 import { InstructorCourseRepository } from "../repositories/instructorRepository/instructorCourseRepository";
 
-import { IInstructorCourseService } from "../services/interface/IInstructorCourseService";
-import { InstructorCourseService } from "../services/instructorServices/InstructorCourseService";
+import { IInstructorCourseService } from "../services/instructorServices/interface/IInstructorCourseService"; 
+import { InstructorCourseService } from "../services/instructorServices/instructorCourseService";
 
 import { IInstructorCourseController } from "../controllers/instructorController/interfaces/IInstructorCourseController";
-import { InstructorCourseController } from "../controllers/instructorController/InstructorCourseController";
+import { InstructorCourseController } from "../controllers/instructorController/instructorCourseController";
 
 const instructorCourseRepository: IInstructorCourseRepository =
   new InstructorCourseRepository();
@@ -230,11 +238,11 @@ const instructorCourseController: IInstructorCourseController =
 
 ////////////////////////ADMIN COURSE CONTROLLER/////////////////////////////////////////////////////////////////////////////////////////////
 
-import { IAdminCourseRepository } from "../repositories/interfaces/IAdminCourseRepository";
+import { IAdminCourseRepository } from "../repositories/adminRepository/interface/IAdminCourseRepository"; 
 import { AdminCourseRepository } from "../repositories/adminRepository/adminCourseRepository";
 
-import { IAdminCourseService } from "../services/interface/IAdminCourseService";
-import { AdminCourseService } from "../services/adminServices/AdminCourseService";
+import { IAdminCourseService } from "../services/adminServices/interface/IAdminCourseService"; 
+import { AdminCourseService } from "../services/adminServices/adminCourseService"; 
 
 import { IAdminCourseController } from "../controllers/adminControllers/interface/IAdminCourseController";
 import { AdminCourseController } from "../controllers/adminControllers/adminCourseController";
@@ -263,11 +271,11 @@ import { ChapterReadOnlyRepository } from "../repositories/studentRepository/cha
 import { IQuizReadOnlyRepository } from "../repositories/interfaces/IQuizReadOnlyRepository";
 import { QuizReadOnlyRepository } from "../repositories/studentRepository/quizReadOnlyRepository";
 
-import { IStudentCourseRepository } from "../repositories/interfaces/IStudentCourseRepository";
+import { IStudentCourseRepository } from "../repositories/studentRepository/interface/IStudentCourseRepository";
 import { StudentCourseRepository } from "../repositories/studentRepository/studentCourseRepository";
 
-import { IStudentCourseService } from "../services/interface/IStudentCourseService";
-import { StudentCourseService } from "../services/studentServices/StudentCourseService";
+import { IStudentCourseService } from "../services/studentServices/interface/IStudentCourseService";
+import { StudentCourseService } from "../services/studentServices/studentCourseService";
 
 import { IStudentCourseController } from "../controllers/studentControllers/interfaces/IStudentCourseController";
 import { StudentCourseController } from "../controllers/studentControllers/studentCourseController";
@@ -295,7 +303,7 @@ const studentCourseController: IStudentCourseController =
 import { ICategoryReadOnlyRepository } from "../repositories/interfaces/ICategoryReadOnlyRepository";
 import { CategoryReadOnlyRepository } from "../repositories/studentRepository/CategoryReadOnlyRepository";
 import { ICategoryReadOnlyService } from "../services/interface/ICategoryReadOnlyService";
-import { CategoryReadOnlyService } from "../services/studentServices/CategoryReadOnlyService";
+import { CategoryReadOnlyService } from "../services/studentServices/categoryReadOnlyService";
 import { ICategoryReadOnlyController } from "../controllers/studentControllers/interfaces/ICategoryReadOnlyController";
 import { CategoryReadOnlyController } from "../controllers/studentControllers/CategoryReadOnlyController";
 
@@ -313,8 +321,8 @@ const categoryReadOnlyController: ICategoryReadOnlyController =
 import { IStudentCartRepository } from "../repositories/interfaces/IStudentCartRepository";
 import { StudentCartRepository } from "../repositories/studentRepository/studentCartRepository";
 
-import { IStudentCartService } from "../services/interface/IStudentCartService";
-import { StudentCartService } from "../services/studentServices/StudentCartService";
+import { IStudentCartService } from "../services/studentServices/interface/IStudentCartService"; 
+import { StudentCartService } from "../services/studentServices/studentCartService";
 
 import { IStudentCartController } from "../controllers/studentControllers/interfaces/IStudentCartController";
 import { StudentCartController } from "../controllers/studentControllers/studentCartController";
@@ -332,11 +340,11 @@ const studentCartController: IStudentCartController = new StudentCartController(
 
 ///////////////////////STUDENT WISHLIST MANAGEMENT//////////////////////////////////////////////////////////////////////////////////////////////
 
-import { IStudentWishlistRepository } from "../repositories/interfaces/IStudentWishlistRepository";
+import { IStudentWishlistRepository } from "../repositories/studentRepository/interface/IStudentWishlistRepository"; 
 import { StudentWishlistRepository } from "../repositories/studentRepository/studentWishlistRepository";
 
-import { IStudentWishlistService } from "../services/interface/IStudentWishlistService";
-import { StudentWishlistService } from "../services/studentServices/StudentWishlistService";
+import { IStudentWishlistService } from "../services/studentServices/interface/IStudentWishlistService"; 
+import { StudentWishlistService } from "../services/studentServices/studentWishlistService";
 
 import { IStudentWishlistController } from "../controllers/studentControllers/interfaces/IStudentWishlistController";
 import { StudentWishlistController } from "../controllers/studentControllers/studentWishlistController";
@@ -350,11 +358,11 @@ const studentWishlistController: IStudentWishlistController =
 
 /////////STUDENT CHECKOUT MANAGEMENT///////////////////
 
-import { IStudentCheckoutRepository } from "../repositories/interfaces/IStudentCheckoutRepository";
+import { IStudentCheckoutRepository } from "../repositories/studentRepository/interface/IStudentCheckoutRepository"; 
 import { StudentCheckoutRepository } from "../repositories/studentRepository/studentCheckoutRepository";
 
-import { IStudentCheckoutService } from "../services/interface/IStudentCheckoutService";
-import { StudentCheckoutService } from "../services/studentServices/StudentCheckoutService";
+import { IStudentCheckoutService } from "../services/studentServices/interface/IStudentCheckoutService"; 
+import { StudentCheckoutService } from "../services/studentServices/studentCheckoutService";
 
 import { IStudentCheckoutController } from "../controllers/studentControllers/interfaces/IStudentCheckoutController";
 import { StudentCheckoutController } from "../controllers/studentControllers/studentCheckoutController";
@@ -396,11 +404,11 @@ const studentCheckoutController: IStudentCheckoutController =
 
 ////////////////////////DASHBOARD MANAGEMENT///////////////////////////////////
 
-import { IInstructorAllCourseDashboardRepository } from "../repositories/interfaces/IInstructorAllCourseDashboardRepository";
+import { IInstructorAllCourseDashboardRepository } from "../repositories/instructorRepository/interface/IInstructorAllCourseDashboardRepository"; 
 import { InstructorAllCourseDashboardRepository } from "../repositories/instructorRepository/instructorAllCourseDashboardRepository";
 
-import { IInstructorAllCourseDashboardService } from "../services/interface/IInstructorAllDashboardService";
-import { InstructorAllCourseDashboardService } from "../services/instructorServices/InstructorAllDashboardService";
+import { IInstructorAllCourseDashboardService } from "../services/instructorServices/interface/IInstructorAllDashboardService"; 
+import { InstructorAllCourseDashboardService } from "../services/instructorServices/instructorAllDashboardService";
 
 import { IInstructorAllDashboardController } from "../controllers/instructorController/interfaces/IInstructorAllDashboardController";
 import { InstructorAllCourseDashboardController } from "../controllers/instructorController/instructorAllDashboardController";
@@ -426,11 +434,11 @@ const instructorDashboardController: IInstructorAllDashboardController =
 
 /////////////////////////INSTRUCTOR SPECIFIC COURSE DASHBOARD/////////////////////////////////////////////////////////////////////////////////////////////
 
-import { IInstructorCourseSpecificDashboardRepository } from "../repositories/interfaces/IInstructorSpecificCourseDashboardRepository";
+import { IInstructorCourseSpecificDashboardRepository } from "../repositories/instructorRepository/interface/IInstructorSpecificCourseDashboardRepository"; 
 import { InstructorSpecificCourseDashboardRepository } from "../repositories/instructorRepository/instructorSpecificCourseDashboardRepository";
 
-import { IInstructorSpecificCourseDashboardService } from "../services/interface/IInstructorSpecificCourseService";
-import { InstructorSpecificCourseDashboardService } from "../services/instructorServices/InstructorSpecificCourseService";
+import { IInstructorSpecificCourseDashboardService } from "../services/instructorServices/interface/IInstructorSpecificCourseService"; 
+import { InstructorSpecificCourseDashboardService } from "../services/instructorServices/instructorSpecificCourseService";
 
 import { IInstructorCourseSpecificDashboardController } from "../controllers/instructorController/interfaces/IInstructorSpecificCourseController";
 import { InstructorSpecificCourseDashboardController } from "../controllers/instructorController/instructorSpecificCourseController";
@@ -455,11 +463,11 @@ const specificCourseDashboardController: IInstructorCourseSpecificDashboardContr
 
 ///////////////////////////////////////////////////////////
 
-import { IStudentEnrollmentRepository } from "../repositories/interfaces/IStudentEnrollmentRepository";
+import { IStudentEnrollmentRepository } from "../repositories/studentRepository/interface/IStudentEnrollmentRepository";
 import { StudentEnrollmentRepository } from "../repositories/studentRepository/studentEnrollementRepository";
 
-import { IStudentEnrollmentService } from "../services/interface/IStudentEnrollmentService";
-import { StudentEnrollmentService } from "../services/studentServices/StudentEnrollmentService";
+import { IStudentEnrollmentService } from "../services/studentServices/interface/IStudentEnrollmentService"; 
+import { StudentEnrollmentService } from "../services/studentServices/studentEnrollmentService";
 
 import { IStudentEnrollmentController } from "../controllers/studentControllers/interfaces/IStudentEnrollmentController";
 import { StudentEnrollmentController } from "../controllers/studentControllers/studentEnrollmentController";
@@ -534,11 +542,11 @@ const adminWalletPaymentController: IAdminWalletPaymentController =
 
 ////student order history management/////////////
 
-import { IStudentOrderRepository } from "../repositories/interfaces/IStudentOrderRepository";
+import { IStudentOrderRepository } from "../repositories/studentRepository/interface/IStudentOrderRepository"; 
 import { StudentOrderRepository } from "../repositories/studentRepository/studentOrderRepository";
 
-import { IStudentOrderService } from "../services/interface/IStudentOrderService";
-import { StudentOrderService } from "../services/studentServices/StudentOrderService";
+import { IStudentOrderService } from "../services/studentServices/interface/IStudentOrderService"; 
+import { StudentOrderService } from "../services/studentServices/studentOrderService";
 
 import { IStudentOrderController } from "../controllers/studentControllers/interfaces/IStudentOrderController";
 import { StudentOrderController } from "../controllers/studentControllers/studentOrderController";
@@ -555,10 +563,10 @@ const studentOrderController: IStudentOrderController =
 
 /////////ADMIN MEMEBERSHIP MANAGEMENT///////////////////////////////////////////
 
-import { IAdminMembershipRepository } from "../repositories/interfaces/IAdminMembershipRepository";
+import { IAdminMembershipRepository } from "../repositories/adminRepository/interface/IAdminMembershipRepository"; 
 import { AdminMembershipRepository } from "../repositories/adminRepository/adminMembershipRepository";
-import { IAdminMembershipService } from "../services/interface/IAdminMembershipService";
-import { AdminMembershipService } from "../services/adminServices/AdminMembershipService";
+import { IAdminMembershipService } from "../services/adminServices/interface/IAdminMembershipService"; 
+import { AdminMembershipService } from "../services/adminServices/adminMembershipService"; 
 import { IAdminMembershipController } from "../controllers/adminControllers/interface/IAdminMembershipController";
 import { AdminMembershipController } from "../controllers/adminControllers/adminMembershipController";
 
@@ -573,11 +581,11 @@ const adminMembershipController: IAdminMembershipController =
 
 ////////////instructor membership page/////////////////////////////////////////////
 
-import { IInstructorMembershipRepository } from "../repositories/interfaces/IInstructorMembershipRepository";
+import { IInstructorMembershipRepository } from "../repositories/instructorRepository/interface/IInstructorMembershipRepository"; 
 import { InstructorMembershipRepository } from "../repositories/instructorRepository/instructorMembershipRepository";
 
-import { IInstructorMembershipService } from "../services/interface/IInstructorMembershipService";
-import { InstructorMembershipService } from "../services/instructorServices/InstructorMembershipService";
+import { IInstructorMembershipService } from "../services/instructorServices/interface/IInstructorMembershipService"; 
+import { InstructorMembershipService } from "../services/instructorServices/instructorMembershipService";
 
 import { IInstructorMembershipController } from "../controllers/instructorController/interfaces/IInstructorMembershipController";
 import { InstructorMembershipController } from "../controllers/instructorController/instructorMembershipController";
@@ -596,11 +604,11 @@ const instructorMembershipController: IInstructorMembershipController =
 
 //buying membership or instructor checkout
 
-import { IInstructorMembershipOrderRepository } from "../repositories/interfaces/IInstructorMembershipOrderRepository";
+import { IInstructorMembershipOrderRepository } from "../repositories/instructorRepository/interface/IInstructorMembershipOrderRepository"; 
 import { InstructorMembershipOrderRepository } from "../repositories/instructorRepository/instructorMembershipOrderRepository";
 
-import { IInstructorMembershipOrderService } from "../services/interface/IInstructorMembershipOrderService";
-import { InstructorMembershipOrderService } from "../services/instructorServices/InstructorMembershipOrderService";
+import { IInstructorMembershipOrderService } from "../services/instructorServices/interface/IInstructorMembershipOrderService"; 
+import { InstructorMembershipOrderService } from "../services/instructorServices/instructorMembershipOrderService";
 
 import { IInstructorMembershipOrderController } from "../controllers/instructorController/interfaces/IInstructorMembershipOrderController";
 import { InstructorMembershipOrderController } from "../controllers/instructorController/instructorMembershipOrderController";
@@ -630,11 +638,11 @@ const instructorMembershipOrderController: IInstructorMembershipOrderController 
 
 /////////////////////ADMIN MEMBERSHIP ORDER MANAGEMENT/////////////////////////////////////
 
-import { IAdminMembershipOrderRepository } from "../repositories/interfaces/IAdminMembershipOrderRepository";
+import { IAdminMembershipOrderRepository } from "../repositories/adminRepository/interface/IAdminMembershipOrderRepository"; 
 import { AdminMembershipOrderRepository } from "../repositories/adminRepository/adminMembershipOrderRepository";
 
-import { IAdminMembershipOrderService } from "../services/interface/IAdminMembershipOrderService";
-import { AdminMembershipOrderService } from "../services/adminServices/AdminMembershipOrderService";
+import { IAdminMembershipOrderService } from "../services/adminServices/interface/IAdminMembershipOrderService"; 
+import { AdminMembershipOrderService } from "../services/adminServices/adminMembershipOrderService"; 
 
 import { IAdminMembershipOrderController } from "../controllers/adminControllers/interface/IAdminMembershipOrderController";
 import { AdminMembershipOrderController } from "../controllers/adminControllers/adminMembershipOrderController";
@@ -650,11 +658,11 @@ const adminMembershipOrderController: IAdminMembershipOrderController =
 
 ///////////////SLOT MANAGEMENT////////////////////////////
 
-import { IInstructorSlotRepository } from "../repositories/interfaces/IInstructorSlotRepository";
+import { IInstructorSlotRepository } from "../repositories/instructorRepository/interface/IInstructorSlotRepository"; 
 import { InstructorSlotRepository } from "../repositories/instructorRepository/instructorSlotRepository";
 
-import { IInstructorSlotService } from "../services/interface/IInstructorSlotService";
-import { InstructorSlotService } from "../services/instructorServices/InstructorSlotService";
+import { IInstructorSlotService } from "../services/instructorServices/interface/IInstructorSlotService"; 
+import { InstructorSlotService } from "../services/instructorServices/instructorSlotService";
 
 import { IInstructorSlotController } from "../controllers/instructorController/interfaces/IInstructorSlotController";
 import { InstructorSlotController } from "../controllers/instructorController/instructorSlotController";
@@ -671,11 +679,11 @@ const instructorSlotController: IInstructorSlotController =
 
 ////////////INSTRUCTOR LISTING ON STUDENT SIDE///////////
 
-import { IStudentInstructorListingRepository } from "../repositories/interfaces/IStudentInstructorListingRepository";
+import { IStudentInstructorListingRepository } from "../repositories/studentRepository/interface/IStudentInstructorListingRepository"; 
 import { StudentInstructorListingRepository } from "../repositories/studentRepository/studentInstructorListingRepository";
 
-import { IStudentInstructorListingService } from "../services/interface/IStudentInstructorListingService";
-import { StudentInstructorListingService } from "../services/studentServices/StudentInstructorListingService";
+import { IStudentInstructorListingService } from "../services/studentServices/interface/IStudentInstructorListingService"; 
+import { StudentInstructorListingService } from "../services/studentServices/studentInstructorListingService";
 
 
 import { IStudentInstructorListingController } from "../controllers/studentControllers/interfaces/IStudentInstructorListingController";
@@ -690,11 +698,11 @@ const studentInstructorListingController : IStudentInstructorListingController =
 
 ////student slot viewing////
 
-import { IStudentSlotRepository } from "../repositories/interfaces/IStudentSlotRepository";
+import { IStudentSlotRepository } from "../repositories/studentRepository/interface/IStudentSlotRepository"; 
 import { StudentSlotRepository } from "../repositories/studentRepository/StudentSlotRepository";
 
-import { IStudentSlotService } from "../services/interface/IStudentSlotService";
-import { StudentSlotService } from "../services/studentServices/StudentSlotService";
+import { IStudentSlotService } from "../services/studentServices/interface/IStudentSlotService"; 
+import { StudentSlotService } from "../services/studentServices/studentSlotService";
 
 
 import { IStudentSlotController } from "../controllers/studentControllers/interfaces/IStudentSlotController";
@@ -708,11 +716,11 @@ const studentSlotController : IStudentSlotController = new StudentSlotController
 
 ///////////////////student slot booking managment//////////
 
-import { IStudentSlotBookingRepository } from "../repositories/interfaces/IStudentSlotBookingRepository";
+import { IStudentSlotBookingRepository } from "../repositories/studentRepository/interface/IStudentSlotBookingRepository"; 
 import { StudentSlotBookingRepository } from "../repositories/studentRepository/studentSlotBookingRepository";
 
-import { IStudentSlotBookingService } from "../services/interface/IStudentSlotBookingService";
-import { StudentSlotBookingService } from "../services/studentServices/StudentSlotBookingService";
+import { IStudentSlotBookingService } from "../services/studentServices/interface/IStudentSlotBookingService"; 
+import { StudentSlotBookingService } from "../services/studentServices/studentSlotBookingService";
 
 import { IStudentSlotBookingController } from "../controllers/studentControllers/interfaces/IStudentSlotBookingController";
 import { StudentSlotBookingController } from "../controllers/studentControllers/studentSlotBookingController";
@@ -726,11 +734,11 @@ const studentSlotBookingController : IStudentSlotBookingController = new Student
 
 ////instructor viewing booked slot details//
 
-import { IInstructorSlotBookingRepository } from "../repositories/interfaces/IInstructorSlotBookingRepository";
+import { IInstructorSlotBookingRepository } from "../repositories/instructorRepository/interface/IInstructorSlotBookingRepository"; 
 import { InstructorSlotBookingRepository } from "../repositories/instructorRepository/instructorSlotBookingRepository";
 
-import { IInstructorSlotBookingService } from "../services/interface/IInstructorSlotBookingService";
-import { InstructorSlotBookingService } from "../services/instructorServices/InstructorSlotBookingService";
+import { IInstructorSlotBookingService } from "../services/instructorServices/interface/IInstructorSlotBookingService"; 
+import { InstructorSlotBookingService } from "../services/instructorServices/instructorSlotBookingService";
 
 import { IInstructorSlotBookingController } from "../controllers/instructorController/interfaces/IInstructorSlotBookingController";
 import { InstructorSlotBookingController } from "../controllers/instructorController/instructorSlotBookingController";
@@ -745,11 +753,11 @@ const instructorSlotBookingController : IInstructorSlotBookingController = new I
 ///////////////admin dashboard repository//////////////////
 
 
-import { IAdminDashboardRepository } from "../repositories/interfaces/IAdminDashboardRepository";
+import { IAdminDashboardRepository } from "../repositories/adminRepository/interface/IAdminDashboardRepository"; 
 import { AdminDashboardRepository } from "../repositories/adminRepository/adminDashboardRepository";
 
-import { IAdminDashboardService } from "../services/interface/IAdminDashboardService";
-import { AdminDashboardService } from "../services/adminServices/AdminDashboardService";
+import { IAdminDashboardService } from "../services/adminServices/interface/IAdminDashboardService"; 
+import { AdminDashboardService } from "../services/adminServices/adminDashboardService"; 
 
 import { IAdminDashboardController } from "../controllers/adminControllers/interface/IAdminDashboardController";
 import { AdminDashboardController } from "../controllers/adminControllers/adminDashboardController";
@@ -770,11 +778,11 @@ const adminDashboardController:IAdminDashboardController = new AdminDashboardCon
 
 //////////////student dashboard repository//////////////////
 
-import { IStudentDashboardRepository } from "../repositories/interfaces/IStudentDashboardRepository";
+import { IStudentDashboardRepository } from "../repositories/studentRepository/interface/IStudentDashboardRepository"; 
 import { StudentDashboardRepository } from "../repositories/studentRepository/studentDashboardRepository";
 
-import { IStudentDashboardService } from "../services/interface/IStudentDashboardService";
-import { StudentDashboardService } from "../services/studentServices/StudentDashboardService";
+import { IStudentDashboardService } from "../services/studentServices/interface/IStudentDashboardService"; 
+import { StudentDashboardService } from "../services/studentServices/studentDashboardService";
 
 import { IStudentDashboardController } from "../controllers/studentControllers/interfaces/IStudentDashboardController";
 import { StudentDashboardController } from "../controllers/studentControllers/studentDashboardController";

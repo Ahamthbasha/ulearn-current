@@ -1,4 +1,4 @@
-import { IAdminCourseRepository } from "../interfaces/IAdminCourseRepository";
+import { IAdminCourseRepository } from "./interface/IAdminCourseRepository";
 import { ICourse, CourseModel } from "../../models/courseModel";
 import { GenericRepository } from "../genericRepository";
 import { ChapterDetailRepository } from "../ChapterRepository";
@@ -7,17 +7,19 @@ import { IChapter } from "../../models/chapterModel";
 import { IQuiz } from "../../models/quizModel";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
-
 export class AdminCourseRepository
   extends GenericRepository<ICourse>
   implements IAdminCourseRepository
-  {
-  private chapterDetailRepo : ChapterDetailRepository
-  private quizDetailRepo : QuizDetailRepository
-  constructor(chapterDetailRepo:ChapterDetailRepository,quizDetailRepo:QuizDetailRepository) {
+{
+  private _chapterDetailRepo: ChapterDetailRepository;
+  private _quizDetailRepo: QuizDetailRepository;
+  constructor(
+    chapterDetailRepo: ChapterDetailRepository,
+    quizDetailRepo: QuizDetailRepository
+  ) {
     super(CourseModel);
-    this.chapterDetailRepo = chapterDetailRepo
-    this.quizDetailRepo = quizDetailRepo
+    this._chapterDetailRepo = chapterDetailRepo;
+    this._quizDetailRepo = quizDetailRepo;
   }
 
   async getAllCourses(
@@ -32,17 +34,15 @@ export class AdminCourseRepository
     return await this.paginate(filter, page, limit, { createdAt: -1 });
   }
 
+  async getCourseDetails(courseId: string): Promise<{
+    course: ICourse | null;
+    chapters: IChapter[];
+    quiz: IQuiz | null;
+  }> {
+    const course = await this.findById(courseId);
+    if (!course) return { course: null, chapters: [], quiz: null };
 
-
-async getCourseDetails(courseId: string): Promise<{
-  course: ICourse | null;
-  chapters: IChapter[];
-  quiz: IQuiz | null;
-}> {
-  const course = await this.findById(courseId);
-  if (!course) return { course: null, chapters: [], quiz: null };
-
-  if (course.demoVideo?.url) {
+    if (course.demoVideo?.url) {
       course.demoVideo.url = await getPresignedUrl(course.demoVideo.url);
     }
 
@@ -50,23 +50,17 @@ async getCourseDetails(courseId: string): Promise<{
       course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
     }
 
+    const chapters = await this._chapterDetailRepo.find({ courseId });
 
-  const chapters = await this.chapterDetailRepo.find({ courseId });
-
-  for(const chapter of chapters){
-    if(chapter.videoUrl){
-      chapter.videoUrl = await getPresignedUrl(chapter.videoUrl)
+    for (const chapter of chapters) {
+      if (chapter.videoUrl) {
+        chapter.videoUrl = await getPresignedUrl(chapter.videoUrl);
+      }
     }
+    const quiz = await this._quizDetailRepo.findOne({ courseId });
 
-    if(chapter.captionsUrl){
-      chapter.captionsUrl = await getPresignedUrl(chapter.captionsUrl)
-    }
+    return { course, chapters, quiz };
   }
-  const quiz = await this.quizDetailRepo.findOne({ courseId });
-
-  return { course, chapters, quiz };
-}
-
 
   async toggleListingStatus(courseId: string): Promise<ICourse | null> {
     const course = await this.findById(courseId);
@@ -76,16 +70,15 @@ async getCourseDetails(courseId: string): Promise<{
   }
 
   async toggleVerificationStatus(courseId: string): Promise<ICourse | null> {
-  const course = await this.findById(courseId);
-  if (!course) return null;
+    const course = await this.findById(courseId);
+    if (!course) return null;
 
-  const newVerificationStatus = !course.isVerified;
-  const updatedCourse = await this.update(courseId, {
-    isVerified: newVerificationStatus,
-    isListed: newVerificationStatus, // only allow listing if verified
-  });
+    const newVerificationStatus = !course.isVerified;
+    const updatedCourse = await this.update(courseId, {
+      isVerified: newVerificationStatus,
+      isListed: newVerificationStatus, // only allow listing if verified
+    });
 
-  return updatedCourse;
-}
-
+    return updatedCourse;
+  }
 }

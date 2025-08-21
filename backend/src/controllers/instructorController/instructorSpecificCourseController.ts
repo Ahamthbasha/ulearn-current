@@ -1,16 +1,18 @@
 import { Request, Response } from "express";
 import { IInstructorCourseSpecificDashboardController } from "./interfaces/IInstructorSpecificCourseController";
-import { IInstructorSpecificCourseDashboardService } from "../../services/interface/IInstructorSpecificCourseService";
+import { IInstructorSpecificCourseDashboardService } from "../../services/instructorServices/interface/IInstructorSpecificCourseService"; 
 import { Types } from "mongoose";
 import { StatusCode } from "../../utils/enums";
 import { generatePdfReport, generateExcelReport } from "../../utils/specificReportGenerator";
+import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
 
 export class InstructorSpecificCourseDashboardController
   implements IInstructorCourseSpecificDashboardController
 {
-  constructor(
-    private dashboardService: IInstructorSpecificCourseDashboardService
-  ) {}
+  private _dashboardService: IInstructorSpecificCourseDashboardService
+  constructor(dashboardService: IInstructorSpecificCourseDashboardService){
+    this._dashboardService = dashboardService
+  }
 
   async getCourseDashboard(req: Request, res: Response): Promise<void> {
     try {
@@ -23,7 +25,7 @@ export class InstructorSpecificCourseDashboardController
         return;
       }
 
-      const data = await this.dashboardService.getCourseDashboard(
+      const data = await this._dashboardService.getCourseDashboard(
         new Types.ObjectId(courseId)
       );
 
@@ -48,7 +50,7 @@ export class InstructorSpecificCourseDashboardController
       if (!Types.ObjectId.isValid(courseId)) {
         res
           .status(StatusCode.BAD_REQUEST)
-          .json({ success: false, message: "Invalid Course ID" });
+          .json({ success: false, message: INSTRUCTOR_ERROR_MESSAGE.INVALID_COURSE_ID });
         return;
       }
 
@@ -56,7 +58,7 @@ export class InstructorSpecificCourseDashboardController
       if (!range || !allowedRanges.includes(range as string)) {
         res
           .status(StatusCode.BAD_REQUEST)
-          .json({ success: false, message: "Invalid or missing range type" });
+          .json({ success: false, message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE_TYPE });
         return;
       }
 
@@ -67,14 +69,14 @@ export class InstructorSpecificCourseDashboardController
       if (pageNum < 1 || limitNum < 1) {
         res
           .status(StatusCode.BAD_REQUEST)
-          .json({ success: false, message: "Invalid page or limit" });
+          .json({ success: false, message: INSTRUCTOR_ERROR_MESSAGE.INVALID_PAGE_LIMIT});
         return;
       }
 
       const start = startDate ? new Date(startDate as string) : undefined;
       const end = endDate ? new Date(endDate as string) : undefined;
 
-      const { data, total } = await this.dashboardService.getCourseRevenueReport(
+      const { data, total } = await this._dashboardService.getCourseRevenueReport(
         new Types.ObjectId(courseId),
         range as any,
         pageNum,
@@ -91,7 +93,7 @@ export class InstructorSpecificCourseDashboardController
       );
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch course revenue report",
+        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_COURSE_REVENUE_REPORT,
       });
     }
   }
@@ -104,7 +106,7 @@ export class InstructorSpecificCourseDashboardController
       if (!Types.ObjectId.isValid(courseId)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid Course ID",
+          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_COURSE_ID,
         });
         return;
       }
@@ -113,7 +115,7 @@ export class InstructorSpecificCourseDashboardController
       if (!range || !allowedRanges.includes(range as string)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid or missing range type",
+          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE_TYPE,
         });
         return;
       }
@@ -121,7 +123,7 @@ export class InstructorSpecificCourseDashboardController
       if (!["pdf", "excel"].includes(format as string)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Format must be either 'pdf' or 'excel'",
+          message: INSTRUCTOR_ERROR_MESSAGE.FORMAT_ERROR,
         });
         return;
       }
@@ -129,7 +131,7 @@ export class InstructorSpecificCourseDashboardController
       const start = startDate ? new Date(startDate as string) : undefined;
       const end = endDate ? new Date(endDate as string) : undefined;
 
-      const rawData = await this.dashboardService.getCourseRevenueReport(
+      const rawData = await this._dashboardService.getCourseRevenueReport(
         new Types.ObjectId(courseId),
         range as any,
         1, // Default page for export (irrelevant since no pagination)
@@ -157,7 +159,7 @@ export class InstructorSpecificCourseDashboardController
       console.error("[InstructorSpecificCourseDashboardController] Export Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to export revenue report",
+        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_EXPORT_REVENUE_REPORT,
       });
     }
   }

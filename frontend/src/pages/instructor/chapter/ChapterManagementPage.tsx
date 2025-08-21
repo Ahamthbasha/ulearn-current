@@ -13,10 +13,11 @@ import {
 } from "../../../api/action/InstructorActionApi";
 
 interface Chapter {
-  _id: string;
+  courseId: string;
+  chapterId: string;
   chapterTitle: string;
-  chapterNumber: number;
   videoUrl: string;
+  chapterNumber?: number;
 }
 
 const ChapterManagementPage = () => {
@@ -55,12 +56,12 @@ const ChapterManagementPage = () => {
   }, [courseId, page, search]);
 
   const handleEdit = (chapter: Chapter) => {
-    navigate(`/instructor/course/${courseId}/chapters/${chapter._id}/edit`);
+    navigate(`/instructor/course/${courseId}/chapters/${chapter.chapterId}/edit`);
   };
 
   const handleDelete = async (chapter: Chapter) => {
     try {
-      await deleteChapter(courseId!, chapter._id);
+      await deleteChapter(courseId!, chapter.chapterId);
       toast.success("Chapter deleted");
       fetchChapters(); // refresh
     } catch {

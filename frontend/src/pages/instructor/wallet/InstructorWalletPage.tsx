@@ -25,31 +25,17 @@ interface Wallet {
   balance: number;
 }
 
-interface IInstructor {
-  _id: string;
-  username: string;
-  email: string;
-}
 
-interface IBankAccount {
-  accountHolderName: string;
-  accountNumber: string;
-  ifscCode: string;
-  bankName: string;
-}
-
-// API response type with populated instructorId
-interface IWithdrawalRequestResponse {
-  _id: string;
-  instructorId: IInstructor;
-  bankAccount: IBankAccount;
+// Interface matching the actual backend response structure
+interface IWithdrawalRequest {
+  _id?: string;
+  instructorName: string;
+  date: string;
   amount: number;
   status: "pending" | "approved" | "rejected";
-  createdAt: string;
-  updatedAt: string;
-  adminId?: string;
   remarks?: string;
 }
+
 
 export default function InstructorWalletPage() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -60,7 +46,7 @@ export default function InstructorWalletPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txnPage, setTxnPage] = useState(1);
   const [txnTotalPages, setTxnTotalPages] = useState(1);
-  const [withdrawalRequests, setWithdrawalRequests] = useState<IWithdrawalRequestResponse[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<IWithdrawalRequest[]>([]);
   const [withdrawalPage, setWithdrawalPage] = useState(1);
   const [withdrawalTotalPages, setWithdrawalTotalPages] = useState(1);
   const [showRetryModal, setShowRetryModal] = useState<{ show: boolean; requestId: string; currentAmount: number }>({
@@ -96,10 +82,11 @@ export default function InstructorWalletPage() {
       const res = await instructorGetWithdrawal(page, limit);
       console.log("getWithdrawal", res);
       
-      // Type assertion since we know the API returns populated instructorId
-      setWithdrawalRequests((res.transactions as unknown as IWithdrawalRequestResponse[]) || []);
-      setWithdrawalPage(res.currentPage || 1);
-      setWithdrawalTotalPages(res.totalPages || 1);
+      // Handle the actual backend response structure
+      const withdrawalData: IWithdrawalRequest[] = res.transactions || res.transactions || [];
+      setWithdrawalRequests(withdrawalData);
+      setWithdrawalPage(res.currentPage || res.currentPage || 1);
+      setWithdrawalTotalPages(res.totalPages || res.totalPages || 1);
     } catch (error: any) {
       toast.error(error.message || "Failed to load withdrawal requests");
     }
@@ -408,21 +395,20 @@ export default function InstructorWalletPage() {
               {withdrawalRequests.length ? (
                 withdrawalRequests.map((request, index) => (
                   <tr
-                    key={request._id}
+                    key={request._id || index}
                     className={`border-b transition-all duration-200 ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     } hover:bg-indigo-50`}
                   >
-    
                     <td className="py-3 px-4">
                       <div className="flex flex-col">
                         <span className="font-medium text-gray-900">
-                          {request.instructorId.username}
+                          {request.instructorName || "Unknown"}
                         </span>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-gray-500 text-xs">
-                      {formatDate(request.createdAt)}
+                      {formatDate(request.date || new Date().toISOString())}
                     </td>
                     <td className="py-3 px-4 font-semibold text-green-600">
                       ₹{request.amount.toFixed(2)}
@@ -436,13 +422,16 @@ export default function InstructorWalletPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      {request.status === "rejected" && (
+                      {request.status === "rejected" && request._id && (
                         <Button
-                          onClick={() => openRetryModal(request._id, request.amount)}
+                          onClick={() => openRetryModal(request._id!, request.amount)}
                           className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 rounded-md transition-colors"
                         >
                           Retry
                         </Button>
+                      )}
+                      {request.status === "rejected" && !request._id && (
+                        <span className="text-xs text-gray-500">No retry available</span>
                       )}
                     </td>
                   </tr>

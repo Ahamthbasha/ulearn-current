@@ -1,7 +1,7 @@
 import { Schema, model, Types, Document } from "mongoose";
 
 export interface ISlot extends Document {
-  _id:Types.ObjectId,
+  _id: Types.ObjectId;
   instructorId: Types.ObjectId;
   startTime: Date;
   endTime: Date;

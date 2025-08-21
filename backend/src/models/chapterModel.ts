@@ -8,7 +8,6 @@ export interface IChapter extends Document {
   description: string;
   videoUrl: string;
   createdAt?: Date;
-  captionsUrl?: string;
 }
 export interface CreateChapterDTO {
   chapterTitle: string;
@@ -16,7 +15,6 @@ export interface CreateChapterDTO {
   description: string;
   videoUrl: string;
   chapterNumber?: number;
-  captionsUrl?: string ;
 }
 
 const ChapterSchema = new Schema<IChapter>(
@@ -26,7 +24,6 @@ const ChapterSchema = new Schema<IChapter>(
     chapterNumber: { type: Number },
     description: { type: String, required: true },
     videoUrl: { type: String, required: true },
-    captionsUrl: { type: String, required: false },
   },
   { timestamps: true }
 );

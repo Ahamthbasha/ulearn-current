@@ -21,6 +21,41 @@ const SlotHistoryPage = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // Validate custom date range
+  const validateCustomDates = () => {
+    if (mode !== "custom") return true;
+
+    if (!startDate || !endDate) {
+      toast.error("Please select both start and end dates.");
+      return false;
+    }
+
+    const today = getTodayDate();
+
+    if (startDate > today) {
+      toast.error("Start date cannot be in the future.");
+      return false;
+    }
+
+    if (endDate > today) {
+      toast.error("End date cannot be in the future.");
+      return false;
+    }
+
+    if (startDate > endDate) {
+      toast.error("Start date cannot be later than end date.");
+      return false;
+    }
+
+    return true;
+  };
+
   const fetchSlotStats = async () => {
     try {
       if (
@@ -30,6 +65,12 @@ const SlotHistoryPage = () => {
       ) {
         setStats([]);
         return; // skip fetch if filters incomplete
+      }
+
+      // Validate custom dates before fetching
+      if (mode === "custom" && !validateCustomDates()) {
+        setStats([]);
+        return;
       }
 
       setLoading(true);
@@ -54,6 +95,41 @@ const SlotHistoryPage = () => {
     }
   };
 
+  // Handle start date change with validation
+  const handleStartDateChange = (value: string) => {
+    const today = getTodayDate();
+    
+    if (value && value > today) {
+      toast.error("Start date cannot be in the future.");
+      return;
+    }
+
+    setStartDate(value);
+    
+    // If end date is set and is now earlier than the new start date, clear it
+    if (endDate && value && value > endDate) {
+      setEndDate("");
+      toast.info("End date cleared as it's earlier than the new start date.");
+    }
+  };
+
+  // Handle end date change with validation
+  const handleEndDateChange = (value: string) => {
+    const today = getTodayDate();
+    
+    if (value && value > today) {
+      toast.error("End date cannot be in the future.");
+      return;
+    }
+
+    if (startDate && value && value < startDate) {
+      toast.error("End date cannot be earlier than start date.");
+      return;
+    }
+
+    setEndDate(value);
+  };
+
   useEffect(() => {
     fetchSlotStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +146,14 @@ const SlotHistoryPage = () => {
           <select
             className="w-full border p-2 rounded"
             value={mode}
-            onChange={(e) => setMode(e.target.value as any)}
+            onChange={(e) => {
+              setMode(e.target.value as any);
+              // Reset dates when switching modes
+              if (e.target.value !== "custom") {
+                setStartDate("");
+                setEndDate("");
+              }
+            }}
           >
             <option value="monthly">Monthly</option>
             <option value="yearly">Yearly</option>
@@ -133,7 +216,8 @@ const SlotHistoryPage = () => {
                 type="date"
                 className="w-full border p-2 rounded"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                max={getTodayDate()}
+                onChange={(e) => handleStartDateChange(e.target.value)}
               />
             </div>
             <div>
@@ -142,7 +226,9 @@ const SlotHistoryPage = () => {
                 type="date"
                 className="w-full border p-2 rounded"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
+                max={getTodayDate()}
+                onChange={(e) => handleEndDateChange(e.target.value)}
               />
             </div>
           </>

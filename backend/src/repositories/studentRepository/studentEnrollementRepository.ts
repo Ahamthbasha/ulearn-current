@@ -1,24 +1,24 @@
 import { Types } from "mongoose";
 import { GenericRepository } from "../genericRepository";
-import { IStudentEnrollmentRepository } from "../interfaces/IStudentEnrollmentRepository";
+import { IStudentEnrollmentRepository } from "./interface/IStudentEnrollmentRepository"; 
 import { EnrollmentModel, IEnrollment } from "../../models/enrollmentModel";
 import { generateCertificate } from "../../utils/certificateGenerator";
-import { IStudentRepository } from "../interfaces/IStudentRepository";
-import IInstructorRepository from "../interfaces/IInstructorRepository";
+import { IStudentRepository } from "./interface/IStudentRepository"; 
+import IInstructorRepository from "../instructorRepository/interface/IInstructorRepository"; 
 
 export class StudentEnrollmentRepository
   extends GenericRepository<IEnrollment>
   implements IStudentEnrollmentRepository
 {
-  private studentRepository: IStudentRepository;
-  private instructorRepository: IInstructorRepository;
+  private _studentRepository: IStudentRepository;
+  private _instructorRepository: IInstructorRepository;
   constructor(
     studentRepository: IStudentRepository,
     instructorRepository: IInstructorRepository
   ) {
     super(EnrollmentModel);
-    this.studentRepository = studentRepository;
-    this.instructorRepository = instructorRepository;
+    this._studentRepository = studentRepository;
+    this._instructorRepository = instructorRepository;
   }
 
   async getAllEnrolledCourses(userId: Types.ObjectId): Promise<IEnrollment[]> {
@@ -140,13 +140,13 @@ export class StudentEnrollmentRepository
       return enrollment;
     }
 
-    const student = await this.studentRepository.findById(userId);
+    const student = await this._studentRepository.findById(userId);
     if (!student || !student.username) {
       console.log("❌ Student or student username not found");
       return enrollment;
     }
 
-    const instructor = await this.instructorRepository.findById(
+    const instructor = await this._instructorRepository.findById(
       course.instructorId
     );
     const instructorName = instructor?.username || "Course Instructor";

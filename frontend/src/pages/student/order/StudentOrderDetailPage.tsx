@@ -7,25 +7,20 @@ import {
 import { toast } from "react-toastify";
 
 interface Course {
-  _id: string;
   courseName: string;
   thumbnailUrl: string;
   price: number;
 }
 
-interface User {
-  username?: string;
-  email?: string;
-}
-
 interface Order {
-  _id: string;
-  amount: number;
-  createdAt: string;
-  gateway: string;
+  customerName: string;
+  customerEmail: string;
+  payment: string;
+  totalAmount: number;
   status: string;
+  orderId: string;
+  orderDate: string;
   courses: Course[];
-  userId?: User;
 }
 
 export default function StudentOrderDetailPage() {
@@ -54,17 +49,6 @@ export default function StudentOrderDetailPage() {
     } catch (error) {
       toast.error("Failed to download invoice");
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const getStatusColor = (status: string) => {
@@ -97,7 +81,7 @@ export default function StudentOrderDetailPage() {
                 Order Details
               </h1>
               <p className="text-gray-600 text-sm sm:text-base">
-                Order placed on {formatDate(order.createdAt)}
+                Order placed on {order.orderDate}
               </p>
             </div>
             <button
@@ -130,10 +114,10 @@ export default function StudentOrderDetailPage() {
               Customer
             </h3>
             <p className="text-gray-700 font-medium">
-              {order.userId?.username || "N/A"}
+              {order.customerName || "N/A"}
             </p>
             <p className="text-gray-600 text-sm">
-              {order.userId?.email || "N/A"}
+              {order.customerEmail || "N/A"}
             </p>
           </div>
 
@@ -143,10 +127,10 @@ export default function StudentOrderDetailPage() {
               Payment
             </h3>
             <p className="text-gray-700 font-medium capitalize">
-              {order.gateway}
+              {order.payment}
             </p>
             <p className="text-2xl font-bold text-gray-800">
-              ₹{order.amount.toLocaleString()}
+              ₹{order.totalAmount.toLocaleString()}
             </p>
           </div>
 
@@ -160,7 +144,9 @@ export default function StudentOrderDetailPage() {
             >
               {order.status}
             </span>
-            <p className="text-sm text-gray-600 mt-1">Order ID: {order._id}</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Order ID: {order.orderId}
+            </p>
           </div>
         </div>
 
@@ -186,8 +172,8 @@ export default function StudentOrderDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {order.courses.map((course) => (
-                  <tr key={course._id} className="hover:bg-gray-50 transition">
+                {order.courses.map((course, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50 transition">
                     <td className="py-4 px-6 flex items-center gap-4">
                       <img
                         src={course.thumbnailUrl}
@@ -212,8 +198,8 @@ export default function StudentOrderDetailPage() {
 
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-gray-200">
-            {order.courses.map((course) => (
-              <div key={course._id} className="p-4 flex gap-4 items-center">
+            {order.courses.map((course, idx) => (
+              <div key={idx} className="p-4 flex gap-4 items-center">
                 <img
                   src={course.thumbnailUrl}
                   alt={course.courseName}
@@ -238,7 +224,7 @@ export default function StudentOrderDetailPage() {
               Total Amount:
             </span>
             <span className="text-2xl font-bold text-gray-800">
-              ₹{order.amount.toLocaleString()}
+              ₹{order.totalAmount.toLocaleString()}
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { IVerificationModel } from "../../models/verificationModel";
 import { GenericRepository } from "../genericRepository";
 import VerificationModel from "../../models/verificationModel";
-import { IAdminVerificationRepository } from "../interfaces/IAdminVerificationRepository";
+import { IAdminVerificationRepository } from "./interface/IAdminVerificationRepository"; 
 import { InstructorErrorMessages } from "../../utils/constants";
 import type { SortOrder } from "mongoose";
 export class AdminVerificationRepository

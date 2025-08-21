@@ -1,19 +1,25 @@
-import { IInstructorAllCourseDashboardService } from "../interface/IInstructorAllDashboardService";
-import { IInstructorAllCourseDashboardRepository } from "src/repositories/interfaces/IInstructorAllCourseDashboardRepository";
+import { IInstructorAllCourseDashboardService } from "./interface/IInstructorAllDashboardService"; 
+import { IInstructorAllCourseDashboardRepository } from "../../repositories/instructorRepository/interface/IInstructorAllCourseDashboardRepository";
 import { Types } from "mongoose";
+import {
+  IInstructorDashboard,
+  IDetailedRevenueReport
+} from "../../interface/instructorInterface/IInstructorInterface";
 
 export class InstructorAllCourseDashboardService implements IInstructorAllCourseDashboardService {
-  constructor(
-    private dashboardRepo: IInstructorAllCourseDashboardRepository
-  ) {}
+  private _dashboardRepo: IInstructorAllCourseDashboardRepository;
+  
+  constructor(dashboardRepo: IInstructorAllCourseDashboardRepository) {
+    this._dashboardRepo = dashboardRepo;
+  }
 
-  async getInstructorDashboard(instructorId: Types.ObjectId): Promise<any> {
+  async getInstructorDashboard(instructorId: Types.ObjectId): Promise<IInstructorDashboard> {
     const [topCourses, categorySales, monthlySales, totalRevenue, totalCourseSales] = await Promise.all([
-      this.dashboardRepo.getTopSellingCourses(instructorId),
-      this.dashboardRepo.getCategoryWiseSales(instructorId),
-      this.dashboardRepo.getMonthlySalesGraph(instructorId),
-      this.dashboardRepo.getTotalRevenue(instructorId),
-      this.dashboardRepo.getTotalCourseSales(instructorId),
+      this._dashboardRepo.getTopSellingCourses(instructorId),
+      this._dashboardRepo.getCategoryWiseSales(instructorId),
+      this._dashboardRepo.getMonthlySalesGraph(instructorId),
+      this._dashboardRepo.getTotalRevenue(instructorId),
+      this._dashboardRepo.getTotalCourseSales(instructorId),
     ]);
 
     return {
@@ -26,16 +32,13 @@ export class InstructorAllCourseDashboardService implements IInstructorAllCourse
   }
 
   async getDetailedRevenueReport(
-  instructorId: Types.ObjectId,
-  range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
-  page: number,
-  limit: number,
-  startDate?: Date,
-  endDate?: Date
-): Promise<{ data: any[]; total: number }> {
-  return this.dashboardRepo.getDetailedRevenueReport(instructorId, range, page, limit, startDate, endDate);
-}
-
-
-
+    instructorId: Types.ObjectId,
+    range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+    page: number,
+    limit: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<IDetailedRevenueReport> {
+    return this._dashboardRepo.getDetailedRevenueReport(instructorId, range, page, limit, startDate, endDate);
+  }
 }

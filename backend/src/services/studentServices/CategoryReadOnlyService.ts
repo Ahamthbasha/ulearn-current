@@ -3,13 +3,13 @@ import { ICategoryReadOnlyRepository } from "../../repositories/interfaces/ICate
 import { ICategoryModel } from "../../models/categoryModel";
 
 export class CategoryReadOnlyService implements ICategoryReadOnlyService {
-  private categoryRepo: ICategoryReadOnlyRepository;
+  private _categoryRepo: ICategoryReadOnlyRepository;
 
   constructor(categoryRepo: ICategoryReadOnlyRepository) {
-    this.categoryRepo = categoryRepo;
+    this._categoryRepo = categoryRepo;
   }
 
   async getAllCategories(): Promise<ICategoryModel[]> {
-    return await this.categoryRepo.getAllCategories();
+    return await this._categoryRepo.getAllCategories();
   }
 }

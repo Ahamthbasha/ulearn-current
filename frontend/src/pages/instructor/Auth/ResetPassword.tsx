@@ -72,9 +72,13 @@ const ResetPassword = () => {
         >
           {() => (
             <Form className="space-y-5">
-              <PasswordField name="newPassword" placeholder="New Password" />
+              <PasswordField 
+              name="newPassword" 
+              label="password"
+              placeholder="New Password" />
               <PasswordField
                 name="confirmPassword"
+                label="confirm Password"
                 placeholder="Confirm Password"
               />
               <button

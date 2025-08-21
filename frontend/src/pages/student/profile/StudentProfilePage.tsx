@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import InputField from "../../../components/common/InputField"; // path as per your setup
-import { updatePassword } from "../../../api/action/StudentAction"; // your axios API
+import InputField from "../../../components/common/InputField";
+import { updatePassword, getProfile } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 import Card from "../../../components/common/Card";
 import { setUser } from "../../../redux/slices/userSlice";
-import { getProfile } from "../../../api/action/StudentAction";
-
 import { useDispatch } from "react-redux";
+
 const StudentProfilePage = () => {
   const [profile, setProfile] = useState<any>(null);
   const dispatch = useDispatch();
@@ -18,8 +17,6 @@ const StudentProfilePage = () => {
     const fetchProfile = async () => {
       try {
         const response = await getProfile();
-        console.log(response);
-
         if (response.success) {
           dispatch(setUser(response.data));
           setProfile(response.data);
@@ -33,7 +30,7 @@ const StudentProfilePage = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [dispatch]);
 
   if (!profile) {
     return <div className="p-4">Loading...</div>;
@@ -86,8 +83,7 @@ const StudentProfilePage = () => {
             <strong>Skills:</strong> {profile.skills?.join(", ") || "None"}
           </p>
           <p>
-            <strong>Expertise:</strong>{" "}
-            {profile.expertise?.join(", ") || "None"}
+            <strong>Expertise:</strong> {profile.expertise?.join(", ") || "None"}
           </p>
           <p>
             <strong>Status:</strong> {profile.currentStatus || "N/A"}
@@ -128,17 +124,23 @@ const StudentProfilePage = () => {
                   currentPassword: values.currentPassword,
                   newPassword: values.newPassword,
                 });
-                console.log(res);
+
                 if (res.success) {
-                  toast.success("Password updated successfully");
+                  toast.success("Password updated successfully ✅");
                   resetForm();
                   setShowPasswordForm(false);
                 } else {
-                  toast.error(res.message || "Password update failed");
+                  toast.error(res.message || "Password update failed ❌");
                 }
               } catch (error: any) {
+                console.error("Password update error:", error);
+
+                // Safely extract the message from Axios error
                 const errorMessage =
-                  error?.response?.data?.message || "Password update failed";
+                  error?.response?.data?.message ||
+                  error?.message ||
+                  "Password update failed";
+
                 toast.error(errorMessage);
               }
             }}

@@ -1,28 +1,34 @@
-import { IInstructorMembershipOrderService } from "../interface/IInstructorMembershipOrderService";
+import { IInstructorMembershipOrderService } from "./interface/IInstructorMembershipOrderService"; 
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { Types } from "mongoose";
-
-import { IInstructorMembershipOrder } from "../../models/instructorMembershipOrderModel";
-import { IInstructorMembershipOrderRepository } from "../../repositories/interfaces/IInstructorMembershipOrderRepository";
-import { IInstructorMembershipRepository } from "../../repositories/interfaces/IInstructorMembershipRepository";
-import IInstructorRepository from "../../repositories/interfaces/IInstructorRepository";
+import { InstructorMembershipOrderListDTO, InstructorMembershipOrderDTO } from "../../models/instructorMembershipOrderModel";
+import { IInstructorMembershipOrderRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipOrderRepository"; 
+import { IInstructorMembershipRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipRepository"; 
+import IInstructorRepository from "../../repositories/instructorRepository/interface/IInstructorRepository"; 
 import { IMembershipPlan } from "../../models/membershipPlanModel";
 import { IWalletService } from "../interface/IWalletService";
 import { IEmail } from "../../types/Email";
 
 export class InstructorMembershipOrderService implements IInstructorMembershipOrderService {
-  constructor(
-    private readonly membershipOrderRepo: IInstructorMembershipOrderRepository,
-    private readonly planRepo: IInstructorMembershipRepository,
-    private readonly instructorRepo: IInstructorRepository,
-    private readonly razorpay: Razorpay,
-    private readonly walletService: IWalletService,
-    private readonly emailService: IEmail
-  ) {}
+    private _membershipOrderRepo: IInstructorMembershipOrderRepository
+    private _planRepo: IInstructorMembershipRepository
+    private _instructorRepo: IInstructorRepository
+    private _razorpay: Razorpay
+    private _walletService: IWalletService
+    private _emailService: IEmail
+  constructor(membershipOrderRepo: IInstructorMembershipOrderRepository,planRepo: IInstructorMembershipRepository, instructorRepo: IInstructorRepository,razorpay: Razorpay,walletService: IWalletService,emailService: IEmail
+  ) {
+    this._membershipOrderRepo = membershipOrderRepo
+    this._planRepo = planRepo
+    this._instructorRepo = instructorRepo
+    this._razorpay = razorpay
+    this._walletService = walletService
+    this._emailService = emailService
+  }
 
   async initiateCheckout(instructorId: string, planId: string) {
-    const instructor = await this.instructorRepo.findById(instructorId);
+    const instructor = await this._instructorRepo.findById(instructorId);
     if (!instructor) throw new Error("Instructor not found");
 
     if (
@@ -32,10 +38,10 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       throw new Error("You already have an active membership.");
     }
 
-    const plan = await this.planRepo.findById(planId) as IMembershipPlan;
+    const plan = await this._planRepo.findById(planId) as IMembershipPlan;
     if (!plan) throw new Error("Invalid plan");
 
-    const razorpayOrder = await this.razorpay.orders.create({
+    const razorpayOrder = await this._razorpay.orders.create({
       amount: plan.price * 100,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
@@ -74,12 +80,18 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       throw new Error("Invalid Razorpay signature");
     }
 
-    const instructor = await this.instructorRepo.findById(instructorId);
+    const instructor = await this._instructorRepo.findById(instructorId);
     if (!instructor) throw new Error("Instructor not found");
+  if (
+    instructor.membershipExpiryDate &&
+    new Date(instructor.membershipExpiryDate) > new Date()
+  ) {
+    throw new Error("You already have an active membership.");
+  }
 
-    let order = await this.membershipOrderRepo.findByRazorpayOrderId(razorpayOrderId);
+    let order = await this._membershipOrderRepo.findByRazorpayOrderId(razorpayOrderId);
 
-    const plan = await this.planRepo.findById(planId) as IMembershipPlan;
+    const plan = await this._planRepo.findById(planId) as IMembershipPlan;
     if (!plan || !plan.durationInDays || !plan._id) {
       throw new Error("Invalid membership plan");
     }
@@ -88,7 +100,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     const expiryDate = new Date(now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000);
 
     if (!order) {
-      order = await this.membershipOrderRepo.createOrder({
+      order = await this._membershipOrderRepo.createOrder({
         instructorId,
         planId: plan._id.toString(),
         razorpayOrderId,
@@ -102,27 +114,27 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
         throw new Error("Order already processed");
       }
 
-      await this.membershipOrderRepo.updateOrderStatus(razorpayOrderId, {
+      await this._membershipOrderRepo.updateOrderStatus(razorpayOrderId, {
         paymentStatus: "paid",
         startDate: now,
         endDate: expiryDate,
       });
     }
 
-    await this.instructorRepo.update(instructorId, {
+    await this._instructorRepo.update(instructorId, {
       isMentor: true,
       membershipExpiryDate: expiryDate,
       membershipPlanId: new Types.ObjectId(plan._id),
     });
 
-    await this.walletService.creditAdminWalletByEmail(
+    await this._walletService.creditAdminWalletByEmail(
       process.env.ADMINEMAIL!,
       plan.price,
       `Instructor Membership (Razorpay): ${plan.name}`,
       paymentId
     );
 
-    await this.emailService.sendMembershipPurchaseEmail(
+    await this._emailService.sendMembershipPurchaseEmail(
       instructor.username || "Instructor",
       instructor.email || "",
       plan.name,
@@ -131,7 +143,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
   }
 
   async purchaseWithWallet(instructorId: string, planId: string): Promise<void> {
-    const instructor = await this.instructorRepo.findById(instructorId);
+    const instructor = await this._instructorRepo.findById(instructorId);
     if (!instructor) throw new Error("Instructor not found");
 
     if (
@@ -141,13 +153,13 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       throw new Error("You already have an active membership.");
     }
 
-    const plan = await this.planRepo.findById(planId) as IMembershipPlan;
+    const plan = await this._planRepo.findById(planId) as IMembershipPlan;
     if (!plan || !plan._id) throw new Error("Membership plan not found");
 
     const amount = plan.price;
     const txnId = `wallet_membership_${Date.now()}`;
 
-    const instructorWallet = await this.walletService.debitWallet(
+    const instructorWallet = await this._walletService.debitWallet(
       instructor._id.toString(),
       amount,
       `Membership Purchase: ${plan.name}`,
@@ -159,14 +171,14 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     }
 
     try {
-      await this.walletService.creditAdminWalletByEmail(
+      await this._walletService.creditAdminWalletByEmail(
         process.env.ADMINEMAIL!,
         amount,
         `Instructor Membership: ${plan.name}`,
         txnId
       );
     } catch (err) {
-      await this.walletService.creditWallet(
+      await this._walletService.creditWallet(
         new Types.ObjectId(instructor._id.toString()),
         amount,
         `Refund: Failed admin credit`,
@@ -178,7 +190,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     const now = new Date();
     const expiry = new Date(now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000);
 
-    await this.membershipOrderRepo.createOrder({
+    await this._membershipOrderRepo.createOrder({
       instructorId,
       planId: plan._id.toString(),
       razorpayOrderId: txnId,
@@ -188,13 +200,13 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       endDate: expiry,
     });
 
-    await this.instructorRepo.update(instructorId, {
+    await this._instructorRepo.update(instructorId, {
       isMentor: true,
       membershipExpiryDate: expiry,
       membershipPlanId: new Types.ObjectId(plan._id),
     });
 
-    await this.emailService.sendMembershipPurchaseEmail(
+    await this._emailService.sendMembershipPurchaseEmail(
       instructor.username,
       instructor.email,
       plan.name,
@@ -205,23 +217,55 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
   async getInstructorOrders(
     instructorId: string,
     page: number = 1,
-    limit: number = 10
-  ): Promise<{ data: IInstructorMembershipOrder[]; total: number }> {
-    return await this.membershipOrderRepo.findAllByInstructorId(instructorId, page, limit);
+    limit: number = 10,
+    search?: string
+  ): Promise<{ data: InstructorMembershipOrderListDTO[]; total: number }> {
+    const { data, total } = await this._membershipOrderRepo.findAllByInstructorId(
+      instructorId,
+      page,
+      limit,
+      search
+    );
+
+    const dtoData: InstructorMembershipOrderListDTO[] = data.map(order => ({
+      orderId: order.txnId,
+      planName: (order.membershipPlanId as any).name,
+      amount: order.price,
+      status: order.paymentStatus,
+      purchaseDate: order.createdAt
+    }));
+
+    return { data: dtoData, total };
   }
 
-  async getOrderByTxnId(txnId: string, instructorId: string) {
-    const order = await this.membershipOrderRepo.findOneByTxnId(txnId);
+  // 🆕 UPDATED METHOD - Added benefits
+  async getOrderByTxnId(txnId: string, instructorId: string): Promise<InstructorMembershipOrderDTO | null> {
+    const order = await this._membershipOrderRepo.findOneByTxnId(txnId);
     if (!order) throw new Error("Order not found");
 
-    const orderInstructorId = (order.instructorId as any)._id
-      ? (order.instructorId as any)._id.toString()
-      : order.instructorId.toString();
+    const orderInstructorId = (order.instructorId as any)._id.toString();
 
     if (orderInstructorId !== instructorId.toString()) {
       throw new Error("Unauthorized access");
     }
 
-    return order;
+    return {
+      instructor: {
+        name: (order.instructorId as any).username,
+        email: (order.instructorId as any).email
+      },
+      membershipPlan: {
+        name: (order.membershipPlanId as any).name,
+        durationInDays: (order.membershipPlanId as any).durationInDays,
+        description: (order.membershipPlanId as any).description,
+        benefits: (order.membershipPlanId as any).benefits || [] // 🆕 Added benefits
+      },
+      price: order.price,
+      paymentStatus: order.paymentStatus,
+      startDate: order.startDate,
+      endDate: order.endDate,
+      txnId: order.txnId,
+      createdAt: order.createdAt
+    };
   }
 }

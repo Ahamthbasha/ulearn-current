@@ -1,13 +1,13 @@
-import { IInstructorVerificationService } from "../interface/IInstructorVerificationService";
+import { IInstructorVerificationService } from "./interface/IInstructorVerificationService"; 
 import { IVerificationModel } from "../../models/verificationModel";
-import { IInstructorVerificationRepository } from "../../repositories/interfaces/IInstructorVerifcationRepository";
+import { IInstructorVerificationRepository } from "../../repositories/instructorRepository/interface/IInstructorVerifcationRepository"; 
 import { VerificationErrorMessages } from "../../utils/constants";
 
 export class InstructorVerificationService implements IInstructorVerificationService {
-  private verificationRepository: IInstructorVerificationRepository;
+  private _verificationRepository: IInstructorVerificationRepository;
 
   constructor(verificationRepository: IInstructorVerificationRepository) {
-    this.verificationRepository = verificationRepository;
+    this._verificationRepository = verificationRepository;
   }
 
   async sendVerifyRequest(
@@ -17,7 +17,7 @@ export class InstructorVerificationService implements IInstructorVerificationSer
     resumeUrl: string,
     status: string
   ): Promise<IVerificationModel> {
-    const result = await this.verificationRepository.sendVerifyRequest(username, email, degreeCertificateUrl, resumeUrl, status);
+    const result = await this._verificationRepository.sendVerifyRequest(username, email, degreeCertificateUrl, resumeUrl, status);
     if (!result) {
       throw new Error(VerificationErrorMessages.VERIFICATION_REQUEST_FAILED);
     }
@@ -25,11 +25,11 @@ export class InstructorVerificationService implements IInstructorVerificationSer
   }
 
 async getRequestByEmail(email: string): Promise<IVerificationModel | null> {
-  return await this.verificationRepository.getRequestByEmail(email);
+  return await this._verificationRepository.getRequestByEmail(email);
 }
 
 async reverifyRequest(username: string, email: string, degreeCertificateUrl: string, resumeUrl: string): Promise<IVerificationModel> {
-    const updated = await this.verificationRepository.updateRequestByEmail(email,{username,degreeCertificateUrl,resumeUrl,status:'pending',rejectionReason:undefined,reviewedAt:null})
+    const updated = await this._verificationRepository.updateRequestByEmail(email,{username,degreeCertificateUrl,resumeUrl,status:'pending',rejectionReason:undefined,reviewedAt:null})
 
     if(!updated){
       throw new Error("Failed to update verification request")

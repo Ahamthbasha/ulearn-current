@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { IInstructorQuizController } from "./interfaces/IInstructorQuizController";
-import { IInstructorQuizService } from "../../services/interface/IInstructorQuizService";
+import { IInstructorQuizService } from "../../services/instructorServices/interface/IInstructorQuizService"; 
 import { StatusCode } from "../../utils/enums";
-import { QuizErrorMessages, QuizSuccessMessages } from "../../utils/constants";
+import { INSTRUCTOR_ERROR_MESSAGE, QuizErrorMessages, QuizSuccessMessages } from "../../utils/constants";
 
 export class InstructorQuizController implements IInstructorQuizController {
-  private quizService: IInstructorQuizService;
+  private _quizService: IInstructorQuizService;
   constructor(quizService: IInstructorQuizService) {
-    this.quizService = quizService;
+    this._quizService = quizService;
   }
 
   async createQuiz(
@@ -25,7 +25,7 @@ export class InstructorQuizController implements IInstructorQuizController {
         return;
       }
 
-      const existing = await this.quizService.getQuizByCourseId(courseId);
+      const existing = await this._quizService.getQuizByCourseId(courseId);
 
       if (existing) {
         res.status(StatusCode.CONFLICT).json({
@@ -35,7 +35,7 @@ export class InstructorQuizController implements IInstructorQuizController {
         return;
       }
 
-      const created = await this.quizService.createQuiz(req.body);
+      const created = await this._quizService.createQuiz(req.body);
 
       res.status(StatusCode.CREATED).json({
         success: true,
@@ -54,7 +54,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   ): Promise<void> {
     try {
       const { quizId } = req.params;
-      const deleted = await this.quizService.deleteQuiz(quizId);
+      const deleted = await this._quizService.deleteQuiz(quizId);
       if (!deleted) {
         res
           .status(StatusCode.NOT_FOUND)
@@ -80,11 +80,11 @@ export class InstructorQuizController implements IInstructorQuizController {
   ): Promise<void> {
     try {
       const { quizId } = req.params;
-      const quiz = await this.quizService.getQuizById(quizId);
+      const quiz = await this._quizService.getQuizById(quizId);
       if (!quiz) {
         res
           .status(StatusCode.NOT_FOUND)
-          .json({ success: false, message: "Quiz not found" });
+          .json({ success: false, message: INSTRUCTOR_ERROR_MESSAGE.QUIZ_NOT_FOUND });
         return;
       }
       res.status(StatusCode.OK).json({ success: true, data: quiz });
@@ -100,7 +100,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   ): Promise<void> {
     try {
       const { courseId } = req.params;
-      const quiz = await this.quizService.getQuizByCourseId(courseId); // returns IQuiz | null
+      const quiz = await this._quizService.getQuizByCourseId(courseId); // returns IQuiz | null
 
       if (!quiz) {
         res.status(StatusCode.OK).json({
@@ -134,7 +134,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   ): Promise<void> {
     try {
       const { courseId } = req.params;
-      const added = await this.quizService.addQuestionToQuiz(
+      const added = await this._quizService.addQuestionToQuiz(
         courseId,
         req.body
       );
@@ -163,7 +163,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   ): Promise<void> {
     try {
       const { quizId, questionId } = req.params;
-      const updated = await this.quizService.updateQuestionInQuiz(
+      const updated = await this._quizService.updateQuestionInQuiz(
         quizId,
         questionId,
         req.body
@@ -202,7 +202,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   ): Promise<void> {
     try {
       const { quizId, questionId } = req.params;
-      const deleted = await this.quizService.deleteQuestionFromQuiz(
+      const deleted = await this._quizService.deleteQuestionFromQuiz(
         quizId,
         questionId
       );
@@ -238,7 +238,7 @@ export class InstructorQuizController implements IInstructorQuizController {
       const limitNum = Number(limit);
 
       const { questions, total, quizId } =
-        await this.quizService.getPaginatedQuestionsByCourseId(
+        await this._quizService.getPaginatedQuestionsByCourseId(
           courseId,
           String(search),
           pageNum,

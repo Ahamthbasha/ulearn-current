@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DataTable, {
   type Column,
@@ -11,9 +11,11 @@ import {
 import { Eye, EyeOff, Info } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { useDebounce } from "../../../hooks/UseDebounce";
 
 interface AdminCourse {
-  _id: string;
+  _id: string; // Keep this for internal usage
+  courseId: string; // New field from backend
   courseName: string;
   isListed: boolean;
 }
@@ -25,7 +27,7 @@ const AdminCourseManagementPage = () => {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(10); // You can adjust this
+  const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
   const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(null);
@@ -33,12 +35,24 @@ const AdminCourseManagementPage = () => {
 
   const navigate = useNavigate();
 
-  const fetchCourses = async () => {
+  // ✅ Add debounced search term
+  const debouncedSearch = useDebounce(search, 300);
+
+  const fetchCourses = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await getAllCourses(search, page, limit);
-      setCourses(result.data || []);
+      const result = await getAllCourses(debouncedSearch, page, limit);
+      
+      // ✅ Updated mapping to match new backend response structure
+      const formattedCourses: AdminCourse[] = (result.data || []).map((course: any) => ({
+        _id: course.courseId, // Map courseId to _id for internal usage
+        courseId: course.courseId, // Keep original courseId
+        courseName: course.courseName,
+        isListed: course.isListed,
+      }));
+      
+      setCourses(formattedCourses);
       const total = result.total || 0;
       setTotalPages(Math.ceil(total / limit));
     } catch (err) {
@@ -46,22 +60,44 @@ const AdminCourseManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, page, limit]);
 
   const requestToggleListing = (course: AdminCourse) => {
     setSelectedCourse(course);
     setIsModalOpen(true);
   };
 
+  // ✅ Optimized toggle handler with optimistic updates
   const confirmToggleListing = async () => {
     if (!selectedCourse) return;
+
     try {
-      const updated = await listUnListCourse(selectedCourse._id);
+      // ✅ Optimistic update - Update UI immediately
+      setCourses(prev =>
+        prev.map(course =>
+          course.courseId === selectedCourse.courseId // Use courseId for comparison
+            ? { ...course, isListed: !course.isListed }
+            : course
+        )
+      );
+
+      // Use courseId for the API call
+      const updated = await listUnListCourse(selectedCourse.courseId);
+      
       toast.success(
         `Course ${updated.data.isListed ? "listed" : "unlisted"} successfully`
       );
-      fetchCourses();
+      
     } catch (err: any) {
+      // ✅ Revert optimistic update on error
+      setCourses(prev =>
+        prev.map(course =>
+          course.courseId === selectedCourse.courseId
+            ? { ...course, isListed: !course.isListed }
+            : course
+        )
+      );
+
       if (err.response?.data?.message) {
         toast.error(err.response.data.message);
       } else {
@@ -102,30 +138,31 @@ const AdminCourseManagementPage = () => {
     },
   ];
 
-  const actions: ActionButton<AdminCourse>[] = [
-    {
-      key: "toggleListing",
-      label: (record) => (record.isListed ? "Unlist" : "List"),
-      icon: (record) =>
-        record.isListed ? <EyeOff size={18} /> : <Eye size={18} />,
-      onClick: (record) => requestToggleListing(record),
-      className: (record) =>
-        record.isListed
-          ? "bg-red-500 hover:bg-red-600 text-white"
-          : "bg-green-500 hover:bg-green-600 text-white",
-    },
-    {
-      key: "viewDetails",
-      label: "View",
-      icon: () => <Info size={18} />,
-      onClick: (record) => navigate(`/admin/courses/${record._id}`),
-      className: "bg-blue-500 hover:bg-blue-600 text-white",
-    },
-  ];
+const actions: ActionButton<AdminCourse>[] = [
+  {
+    key: "toggleListing",
+    label: (record) => (record.isListed ? "Unlist" : "List"),
+    icon: (record) =>
+      record.isListed ? <EyeOff size={18} /> : <Eye size={18} />,
+    onClick: (record) => requestToggleListing(record),
+    className: (record) =>
+      record.isListed
+        ? "bg-green-500 hover:bg-green-600 text-white" // ✅ Green when listed
+        : "bg-red-500 hover:bg-red-600 text-white",    // ✅ Red when unlisted
+  },
+  {
+    key: "viewDetails",
+    label: "View",
+    icon: () => <Info size={18} />,
+    onClick: (record) => navigate(`/admin/courses/${record.courseId}`),
+    className: "bg-blue-500 hover:bg-blue-600 text-white",
+  },
+];
+
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(1);
+    setPage(1); // Reset to first page when searching
   };
 
   const handlePageChange = (newPage: number) => {
@@ -134,7 +171,7 @@ const AdminCourseManagementPage = () => {
 
   useEffect(() => {
     fetchCourses();
-  }, [search, page]);
+  }, [fetchCourses]);
 
   return (
     <>

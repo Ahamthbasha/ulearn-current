@@ -1,4 +1,4 @@
-import { IStudentWishlistRepository } from "../interfaces/IStudentWishlistRepository";
+import { IStudentWishlistRepository } from "./interface/IStudentWishlistRepository";
 import { WishlistModel, IWishlist } from "../../models/wishlistModel";
 import { Types } from "mongoose";
 import { GenericRepository } from "../genericRepository";

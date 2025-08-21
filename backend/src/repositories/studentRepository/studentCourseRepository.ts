@@ -1,4 +1,4 @@
-import { IStudentCourseRepository } from "../interfaces/IStudentCourseRepository";
+import { IStudentCourseRepository } from "./interface/IStudentCourseRepository";
 import { ICourse, CourseModel } from "../../models/courseModel";
 import { GenericRepository } from "../genericRepository";
 import { IChapterReadOnlyRepository } from "../interfaces/IChapterReadOnlyRepository";
@@ -9,16 +9,16 @@ export class StudentCourseRepository
   extends GenericRepository<ICourse>
   implements IStudentCourseRepository
 {
-  private chapterRepo: IChapterReadOnlyRepository;
-  private quizRepo: IQuizReadOnlyRepository;
+  private _chapterRepo: IChapterReadOnlyRepository;
+  private _quizRepo: IQuizReadOnlyRepository;
 
   constructor(
     chapterRepo: IChapterReadOnlyRepository,
     quizRepo: IQuizReadOnlyRepository
   ) {
     super(CourseModel);
-    this.chapterRepo = chapterRepo;
-    this.quizRepo = quizRepo;
+    this._chapterRepo = chapterRepo;
+    this._quizRepo = quizRepo;
   }
 
   async getAllListedCourses(): Promise<
@@ -32,10 +32,10 @@ export class StudentCourseRepository
     const result = await Promise.all(
       listedCourses.map(async (course) => {
         const courseId = course._id.toString();
-        const chapterCount = await this.chapterRepo.countChaptersByCourse(
+        const chapterCount = await this._chapterRepo.countChaptersByCourse(
           courseId
         );
-        const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(
+        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(
           courseId
         );
 
@@ -111,10 +111,10 @@ export class StudentCourseRepository
 
     const result = await Promise.all(
       courses.map(async (course) => {
-        const chapterCount = await this.chapterRepo.countChaptersByCourse(
+        const chapterCount = await this._chapterRepo.countChaptersByCourse(
           course._id.toString()
         );
-        const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(
+        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(
           course._id.toString()
         );
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
@@ -144,8 +144,8 @@ export class StudentCourseRepository
     ]);
     if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
 
-    const chapterCount = await this.chapterRepo.countChaptersByCourse(courseId);
-    const quizQuestionCount = await this.quizRepo.countQuestionsByCourse(
+    const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
+    const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(
       courseId
     );
 
@@ -158,3 +158,93 @@ export class StudentCourseRepository
     return { course, chapterCount, quizQuestionCount };
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

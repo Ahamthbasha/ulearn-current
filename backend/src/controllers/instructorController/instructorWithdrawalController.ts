@@ -2,94 +2,86 @@ import { Response } from 'express';
 import { Types } from 'mongoose';
 import { IWithdrawalRequestService } from '../../services/interface/IWithdrawalRequestService';
 import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from '../../middlewares/AuthenticatedRoutes';
+import { AuthenticatedRequest } from '../../middlewares/authenticatedRoutes';
 import { IInstructorWithdrawalController } from './interfaces/IInstructorWithdrawalController';
+import { INSTRUCTOR_ERROR_MESSAGE, INSTRUCTOR_SUCCESS_MESSAGE } from '../../utils/constants';
 
 export class InstructorWithdrawalController implements IInstructorWithdrawalController {
-  constructor(private withdrawalRequestService: IWithdrawalRequestService) {}
+  private _withdrawalRequestService: IWithdrawalRequestService
+  constructor(withdrawalRequestService: IWithdrawalRequestService) {
+    this._withdrawalRequestService = withdrawalRequestService
+  }
 
   async createWithdrawalRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = new Types.ObjectId(req.user?.id);
       const { amount } = req.body;
 
-      const request = await this.withdrawalRequestService.createWithdrawalRequest(
+      const request = await this._withdrawalRequestService.createWithdrawalRequest(
         instructorId,
         amount
       );
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: 'Withdrawal request created successfully',
+        message: INSTRUCTOR_SUCCESS_MESSAGE.WITHDRAWAL_REQUEST_CREATED,
         data: request,
       });
     } catch (error: any) {
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || 'Failed to create withdrawal request',
+        message: error.message || INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_CREATE_WITHDRAWAL_REQUEST,
       });
     }
   }
 
-  async getWithdrawalRequestsWithPagination(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const instructorId = new Types.ObjectId(req.user?.id);
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+async getWithdrawalRequestsWithPagination(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const instructorId = new Types.ObjectId(req.user?.id);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
 
-      if (page < 1) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: 'Page number must be greater than 0',
-        });
-        return;
-      }
-
-      if (limit < 1 || limit > 100) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: 'Limit must be between 1 and 100',
-        });
-        return;
-      }
-
-      const { transactions, total } = await this.withdrawalRequestService.getInstructorRequestsWithPagination(
+    const { transactions, total } =
+      await this._withdrawalRequestService.getInstructorRequestsWithPagination(
         instructorId,
         { page, limit }
       );
 
-      res.status(StatusCode.OK).json({
-        success: true,
-        data: {
-          transactions,
-          currentPage: page,
-          totalPages: Math.ceil(total / limit),
-          total,
-        },
-      });
-    } catch (error: any) {
-      console.error(error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to fetch withdrawal requests',
-      });
-    }
+    // const mappedTransactions = transactions.map(toWithdrawalRequestListDTO);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: {
+        transactions: transactions,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        total,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_WITHDRAWAL_REQUEST,
+    });
   }
+}
+  
 
   async retryWithdrawalRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const requestId = new Types.ObjectId(req.params.requestId);
       const { amount } = req.body; // Optional: allow changing the amount
 
-      const request = await this.withdrawalRequestService.retryWithdrawalRequest(
+      const request = await this._withdrawalRequestService.retryWithdrawalRequest(
         requestId,
         amount
       );
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: 'Withdrawal request retried successfully',
+        message: INSTRUCTOR_SUCCESS_MESSAGE.WITHDRAWAL_REQUEST_RETRIED_SUCCESSFULLY,
         data: request,
       });
     } catch (error: any) {
@@ -100,7 +92,7 @@ export class InstructorWithdrawalController implements IInstructorWithdrawalCont
       
       res.status(statusCode).json({
         success: false,
-        message: error.message || 'Failed to retry withdrawal request',
+        message: error.message || INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_RETRY_WITHDRAWAL_REQUEST,
       });
     }
   }

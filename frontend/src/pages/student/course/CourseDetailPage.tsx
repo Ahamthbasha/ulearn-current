@@ -13,25 +13,25 @@ import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../../utils/auth";
 
 interface CourseDetail {
-  _id: string;
+  courseId: string;
   courseName: string;
-  description: string;
+  instructorName: string;
+  categoryName: string;
+  thumbnailUrl: string;
+  demoVideoUrl: string;
+  chapterCount: number;
+  quizQuestionCount: number;
   duration: string;
+  description: string;
   level: string;
   price: number;
+}
+
+interface CartItem {
+  courseId: string;
+  courseName: string;
   thumbnailUrl: string;
-  demoVideo: {
-    type: "video";
-    url: string;
-  };
-  category: {
-    _id: string;
-    categoryName: string;
-  } | null;
-  instructorId: {
-    _id: string;
-    username: string;
-  } | null;
+  price: number;
 }
 
 const CourseDetailPage = () => {
@@ -40,8 +40,6 @@ const CourseDetailPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseDetail | null>(null);
-  const [chapterCount, setChapterCount] = useState(0);
-  const [quizQuestionCount, setQuizQuestionCount] = useState(0);
   const [isInCart, setIsInCart] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
 
@@ -49,17 +47,15 @@ const CourseDetailPage = () => {
     const fetchData = async () => {
       try {
         const res = await courseDetail(courseId!);
-        const { course, chapterCount, quizQuestionCount } = res.data;
+        const courseData = res.data;
 
-        setCourse(course);
-        setChapterCount(chapterCount);
-        setQuizQuestionCount(quizQuestionCount);
+        setCourse(courseData);
 
         if (isStudentLoggedIn()) {
           const cartRes = await getCart();
-          const inCart = cartRes?.data?.courses?.some(
-            (c: any) => c._id === courseId
-          );
+          const inCart = cartRes?.data && Array.isArray(cartRes.data)
+            ? cartRes.data.some((course: CartItem) => course.courseId === courseId)
+            : false;
           setIsInCart(inCart);
 
           const wishRes = await courseAlreadyExistInWishlist(courseId!);
@@ -162,15 +158,13 @@ const CourseDetailPage = () => {
 
             <div className="grid grid-cols-2 gap-y-2 text-gray-800 text-sm mt-4">
               <p>
-                <strong>Instructor:</strong>{" "}
-                {course.instructorId?.username || "N/A"}
+                <strong>Instructor:</strong> {course.instructorName}
               </p>
               <p>
-                <strong>Category:</strong>{" "}
-                {course.category?.categoryName || "N/A"}
+                <strong>Category:</strong> {course.categoryName}
               </p>
               <p>
-                <strong>Duration:</strong> {course.duration}
+                <strong>Duration:</strong> {course.duration} hrs
               </p>
               <p>
                 <strong>Level:</strong> {course.level}
@@ -179,10 +173,10 @@ const CourseDetailPage = () => {
                 <strong>Price:</strong> ₹{course.price}
               </p>
               <p>
-                <strong>Chapters:</strong> {chapterCount}
+                <strong>Chapters:</strong> {course.chapterCount}
               </p>
               <p>
-                <strong>Quiz Questions:</strong> {quizQuestionCount}
+                <strong>Quiz Questions:</strong> {course.quizQuestionCount}
               </p>
             </div>
           </div>
@@ -208,7 +202,7 @@ const CourseDetailPage = () => {
       </div>
 
       {/* Demo Video */}
-      {course.demoVideo?.url && (
+      {course.demoVideoUrl && (
         <div className="mt-14">
           <h3 className="text-2xl font-semibold mb-4 text-gray-900">
             Watch Demo Video
@@ -216,7 +210,7 @@ const CourseDetailPage = () => {
           <video
             controls
             className="w-full rounded-xl shadow-md max-h-[500px] object-cover"
-            src={course.demoVideo.url}
+            src={course.demoVideoUrl}
           >
             Your browser does not support the video tag.
           </video>

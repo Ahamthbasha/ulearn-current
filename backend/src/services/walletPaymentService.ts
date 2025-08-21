@@ -5,13 +5,15 @@ import { IWalletPaymentRepository } from "../repositories/interfaces/IWalletPaym
 import { IWalletService } from "./interface/IWalletService";
 
 export class WalletPaymentService implements IWalletPaymentService {
-  constructor(
-    private paymentRepo: IWalletPaymentRepository,
-    private walletService: IWalletService
-  ) {}
+    private _paymentRepo: IWalletPaymentRepository
+    private _walletService: IWalletService
+  constructor(paymentRepo: IWalletPaymentRepository,walletService: IWalletService){
+    this._paymentRepo = paymentRepo
+    this._walletService = walletService
+  }
 
   async createOrder(amount: number): Promise<any> {
-    return this.paymentRepo.createRazorpayOrder(amount);
+    return this._paymentRepo.createRazorpayOrder(amount);
   }
 
   async verifyAndCreditWallet({
@@ -31,17 +33,17 @@ export class WalletPaymentService implements IWalletPaymentService {
   role: 'student' | 'instructor' | 'admin';
   onModel: 'User' | 'Instructor' | 'Admin';
 }): Promise<IWallet> {
-  const isValid = this.paymentRepo.verifyPaymentSignature(orderId, paymentId, signature);
+  const isValid = this._paymentRepo.verifyPaymentSignature(orderId, paymentId, signature);
   if (!isValid) throw new Error("Invalid Razorpay signature");
 
   const userObjectId = new Types.ObjectId(userId);
 
-  let wallet = await this.walletService.getWallet(userObjectId);
+  let wallet = await this._walletService.getWallet(userObjectId);
   if (!wallet) {
-    wallet = await this.walletService.initializeWallet(userObjectId, onModel, role);
+    wallet = await this._walletService.initializeWallet(userObjectId, onModel, role);
   }
 
-  const creditedWallet = await this.walletService.creditWallet(
+  const creditedWallet = await this._walletService.creditWallet(
     userObjectId,
     amount,
     "Wallet Recharge",
@@ -52,7 +54,4 @@ export class WalletPaymentService implements IWalletPaymentService {
 
   return creditedWallet;
 }
-
-
 }
-

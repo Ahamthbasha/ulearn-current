@@ -1,21 +1,25 @@
 import { Response } from "express";
 import { IWalletPaymentService } from "../../services/interface/IWalletPaymentService";
-import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { Model, Roles, StatusCode } from "../../utils/enums";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
+import { StudentErrorMessages } from "../../utils/constants";
 
 export class StudentWalletPaymentController {
-  constructor(private walletPaymentService: IWalletPaymentService) {}
+  private _walletPaymentService: IWalletPaymentService
+  constructor(walletPaymentService: IWalletPaymentService) {
+    this._walletPaymentService = walletPaymentService
+  }
 
   async createOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { amount } = req.body;
-      const order = await this.walletPaymentService.createOrder(amount);
+      const order = await this._walletPaymentService.createOrder(amount);
       res.status(StatusCode.OK).json({ success: true, order });
     } catch (error) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to create Razorpay order",
+        message: StudentErrorMessages.FAILED_TO_CREATE_RAZORPAY_ORDER,
       });
     }
   }
@@ -33,19 +37,19 @@ export class StudentWalletPaymentController {
       if (!userId) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "User ID not found",
+          message: StudentErrorMessages.USERID_NOT_FOUND,
         });
         return;
       }
 
-      const wallet = await this.walletPaymentService.verifyAndCreditWallet({
+      const wallet = await this._walletPaymentService.verifyAndCreditWallet({
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id,
         signature: razorpay_signature,
         amount,
         userId,
-        role: "student", 
-        onModel: "User", 
+        role: Roles.STUDENT, 
+        onModel: Model.USER, 
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
@@ -53,7 +57,7 @@ export class StudentWalletPaymentController {
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || "Payment verification failed",
+        message: error.message || StudentErrorMessages.PAYMENT_VERIFICATION_FAILED,
       });
     }
   }

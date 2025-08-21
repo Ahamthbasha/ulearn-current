@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import InstructorRepository from "../repositories/instructorRepository/instructorRepository";
-import { AuthenticatedRequest } from "./AuthenticatedRoutes";
+import { AuthenticatedRequest } from "./authenticatedRoutes";
 
 const instructorRepo = new InstructorRepository();
 

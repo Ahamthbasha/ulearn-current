@@ -3,11 +3,14 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
 import { Formik, Form, Field } from "formik";
+import { jwtDecode } from "jwt-decode";
 
 import PasswordField from "../../../components/common/PasswordField";
 import { setUser } from "../../../redux/slices/userSlice";
-import { login } from "../../../api/auth/UserAuthentication";
+import { login, googleLogin } from "../../../api/auth/UserAuthentication";
 import type { Login } from "../../../types/LoginTypes";
+
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 // ✅ Improved validation
 const loginSchema = Yup.object().shape({
@@ -65,8 +68,50 @@ const LoginPage = () => {
     } catch (error: any) {
       console.error("Login error:", error);
       const errorMessage =
-        error?.response?.data?.message || "Login in failed.Please try again";
+        error?.response?.data?.message || "Login failed. Please try again";
       toast.error(errorMessage);
+    }
+  };
+
+  const handleGoogleLogin = async (credentialResponse: any) => {
+    try {
+      if (!credentialResponse.credential) {
+        toast.error("Invalid Google Credential");
+        return;
+      }
+
+      const decoded: any = jwtDecode(credentialResponse.credential);
+
+      const response = await googleLogin({
+        name: decoded.name,
+        email: decoded.email,
+        password: decoded.sub,
+        profilePicture: decoded.picture,
+        role: "student",
+      });
+
+      const user = response?.user;
+
+      if (user) {
+        dispatch(
+          setUser({
+            _id: user._id,
+            username: user.name,
+            email: user.email,
+            role: user.role,
+            isBlocked: user.isBlocked,
+            profilePicUrl: user.profilePicture,
+          })
+        );
+        localStorage.setItem("user", JSON.stringify(user));
+        toast.success(response.message || "Logged in with Google!");
+        navigate("/");
+      } else {
+        toast.error(response.message || "Google login failed");
+      }
+    } catch (error: any) {
+      console.error("Google Login Error:", error);
+      toast.error(error.message || "Google login failed");
     }
   };
 
@@ -121,6 +166,21 @@ const LoginPage = () => {
             </Form>
           )}
         </Formik>
+
+        {/* Divider and Google Login */}
+        <div className="mt-6">
+          <p className="text-center text-sm text-gray-500 mb-2">
+            Or login with Google
+          </p>
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => toast.error("Google Login Failed")}
+              />
+            </div>
+          </GoogleOAuthProvider>
+        </div>
       </div>
     </div>
   );

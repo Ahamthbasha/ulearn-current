@@ -1,17 +1,20 @@
 import { Request, Response } from "express";
 import { IInstructorMembershipController } from "./interfaces/IInstructorMembershipController";
-import { IInstructorMembershipService } from "../../services/interface/IInstructorMembershipService";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { IInstructorMembershipService } from "../../services/instructorServices/interface/IInstructorMembershipService"; 
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 
 export class InstructorMembershipController
   implements IInstructorMembershipController
 {
-  constructor(private readonly service: IInstructorMembershipService) {}
+  private _membershipService : IInstructorMembershipService
+  constructor(membershipService: IInstructorMembershipService) {
+    this._membershipService = membershipService
+  }
 
   async getPlans(_req: Request, res: Response): Promise<void> {
     try {
-      const plans = await this.service.getAvailablePlans();
+      const plans = await this._membershipService.getAvailablePlans();
       res.status(StatusCode.OK).json(plans);
     } catch (err) {
       console.error("Error fetching membership plans:", err);
@@ -27,7 +30,7 @@ export class InstructorMembershipController
         return;
       }
 
-      const instructor = await this.service.getInstructorById(instructorId);
+      const instructor = await this._membershipService.getInstructorById(instructorId);
       if (!instructor) {
         res.status(StatusCode.NOT_FOUND).json({ message: "Instructor not found" });
         return;
@@ -51,7 +54,7 @@ export class InstructorMembershipController
         return;
       }
 
-      const status = await this.service.getMembershipStatus(instructorId);
+      const status = await this._membershipService.getMembershipStatus(instructorId);
       res.status(StatusCode.OK).json(status);
     } catch (err) {
       console.error("Error fetching membership status:", err);

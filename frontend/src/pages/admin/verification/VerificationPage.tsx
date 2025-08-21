@@ -1,52 +1,78 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DataTable, {
   type Column,
   type ActionButton,
 } from "../../../components/AdminComponents/DataTable";
-import { Eye } from "lucide-react";
+import { Eye, FileText } from "lucide-react";
 import { getAllVerificationRequests } from "../../../api/action/AdminActionApi";
+import { useDebounce } from "../../../hooks/UseDebounce";
 
 interface VerificationRequest {
-  _id: string;
+  id: string;
   username: string;
   email: string;
   status: string;
-  resumeUrl: string;
-  degreeCertificateUrl: string;
-  reviewedAt?: Date;
+}
+
+interface VerificationResponse {
+  success: boolean;
+  message: string;
+  data: VerificationRequest[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 const VerificationPage = () => {
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(5); // ⬅️ Change this to desired items per page
-  const [total, setTotal] = useState(0);
+  const [limit] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
 
   const navigate = useNavigate();
+  const debouncedSearch = useDebounce(search, 500);
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getAllVerificationRequests(page, limit, search);
-      if (!res || !Array.isArray(res.data)) {
-        throw new Error("Invalid data received");
+      setError(null);
+
+      const res: VerificationResponse = await getAllVerificationRequests(
+        page,
+        limit,
+        debouncedSearch
+      );
+
+      if (!res || !res.success || !Array.isArray(res.data)) {
+        throw new Error(res?.message || "Invalid data received");
       }
 
       setRequests(res.data);
-      setTotal(res.total || 0);
-    } catch (err) {
+      setTotalPages(res.totalPages);
+    } catch (err: unknown) {
       console.error("Error fetching verification requests", err);
+      setError((err as Error).message || "Failed to fetch verification requests");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, debouncedSearch]);
 
   useEffect(() => {
     fetchRequests();
-  }, [page, search]);
+  }, [fetchRequests]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const columns: Column<VerificationRequest>[] = [
     {
@@ -58,9 +84,35 @@ const VerificationPage = () => {
         </span>
       ),
     },
-    { key: "username", title: "Name" },
-    { key: "email", title: "Email" },
-    { key: "status", title: "Status" },
+    { 
+      key: "username", 
+      title: "Name",
+      render: (value) => (
+        <div className="text-sm font-medium text-gray-900">{value}</div>
+      ),
+    },
+    { 
+      key: "email", 
+      title: "Email",
+      render: (value) => <div className="text-sm text-gray-900">{value}</div>,
+    },
+    { 
+      key: "status", 
+      title: "Status",
+      render: (value) => (
+        <span
+          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+            value === "approved"
+              ? "bg-green-100 text-green-800"
+              : value === "rejected"
+              ? "bg-red-100 text-red-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {value.charAt(0).toUpperCase() + value.slice(1)}
+        </span>
+      ),
+    },
   ];
 
   const actions: ActionButton<VerificationRequest>[] = [
@@ -71,10 +123,9 @@ const VerificationPage = () => {
       onClick: (record) => {
         navigate(`/admin/verificationDetail/${record.email}`);
       },
+      className: "bg-blue-500 hover:bg-blue-600 text-white",
     },
   ];
-
-  const totalPages = Math.ceil(total / limit);
 
   return (
     <DataTable
@@ -82,18 +133,20 @@ const VerificationPage = () => {
       description="List of instructor verification requests."
       data={requests}
       loading={loading}
+      error={error}
       columns={columns}
       actions={actions}
+      onRetry={fetchRequests}
+      emptyStateIcon={<FileText size={48} className="text-gray-300" />}
+      emptyStateTitle="No Verification Requests"
+      emptyStateDescription="No instructor verification requests have been submitted yet."
       pagination={{
         currentPage: page,
         totalPages: totalPages,
-        onPageChange: (newPage) => setPage(newPage),
+        onPageChange: handlePageChange,
       }}
       searchValue={search}
-      onSearchChange={(value) => {
-        setSearch(value);
-        setPage(1); // reset to page 1 on search
-      }}
+      onSearchChange={handleSearchChange}
       searchPlaceholder="Search by name or email..."
     />
   );

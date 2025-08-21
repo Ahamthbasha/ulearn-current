@@ -1,22 +1,31 @@
-import { Response } from 'express';
-import { Types } from 'mongoose';
-import { IWithdrawalRequestService } from '../../services/interface/IWithdrawalRequestService';
-import { StatusCode } from '../../utils/enums';
-import { AuthenticatedRequest } from '../../middlewares/AuthenticatedRoutes';
-import { IAdminWithdrawalController } from './interface/IAdminWithdrawalController';
+import { Response } from "express";
+import { Types } from "mongoose";
+import { IWithdrawalRequestService } from "../../services/interface/IWithdrawalRequestService";
+import { StatusCode } from "../../utils/enums";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
+import { IAdminWithdrawalController } from "./interface/IAdminWithdrawalController";
+import { AdminErrorMessages, AdminSuccessMessages } from "../../utils/constants";
 
 export class AdminWithdrawalController implements IAdminWithdrawalController {
-  constructor(private withdrawalRequestService: IWithdrawalRequestService) {}
+  private _withdrawalRequestService: IWithdrawalRequestService
+  
+  constructor(withdrawalRequestService: IWithdrawalRequestService) {
+    this._withdrawalRequestService = withdrawalRequestService
+  }
 
-  async getAllWithdrawalRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getAllWithdrawalRequests(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string || '';
 
       if (page < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Page number must be greater than 0',
+          message: AdminErrorMessages.ADMIN_PAGENO_VALIDATION,
         });
         return;
       }
@@ -24,14 +33,16 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
       if (limit < 1 || limit > 100) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Limit must be between 1 and 100',
+          message: AdminErrorMessages.ADMIN_LIMIT_VALIDATION,
         });
         return;
       }
 
-      const { transactions, total } = await this.withdrawalRequestService.getAllRequestsWithPagination(
-        { page, limit }
-      );
+      const { transactions, total } = await this._withdrawalRequestService.getAllRequestsWithPagination({
+        page,
+        limit,
+        search: search.trim(),
+      });
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -40,23 +51,27 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
           currentPage: page,
           totalPages: Math.ceil(total / limit),
           total,
+          search: search.trim(),
         },
       });
     } catch (error: any) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: 'Failed to fetch withdrawal requests',
+        message: AdminErrorMessages.ADMIN_FAILED_FETCH_WITHDRAWAL_REQUEST,
       });
     }
   }
 
-  async approveWithdrawalRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async approveWithdrawalRequest(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const adminId = new Types.ObjectId(req.user?.id);
       const { requestId, remarks } = req.body;
 
-      const request = await this.withdrawalRequestService.approveWithdrawalRequest(
+      const request = await this._withdrawalRequestService.approveWithdrawalRequest(
         new Types.ObjectId(requestId),
         adminId,
         remarks
@@ -64,24 +79,27 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: 'Withdrawal request approved successfully',
+        message: AdminSuccessMessages.ADMIN_APPROVE_WITHDRAWAL,
         data: request,
       });
     } catch (error: any) {
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || 'Failed to approve withdrawal request',
+        message: error.message || AdminErrorMessages.ADMIN_FAILED_TO_APPROVE_WITHDRAWAL,
       });
     }
   }
 
-  async rejectWithdrawalRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async rejectWithdrawalRequest(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const adminId = new Types.ObjectId(req.user?.id);
       const { requestId, remarks } = req.body;
 
-      const request = await this.withdrawalRequestService.rejectWithdrawalRequest(
+      const request = await this._withdrawalRequestService.rejectWithdrawalRequest(
         new Types.ObjectId(requestId),
         adminId,
         remarks
@@ -89,42 +107,45 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: 'Withdrawal request rejected successfully',
+        message: AdminSuccessMessages.ADMIN_REJECT_WITHDRAWAL,
         data: request,
       });
     } catch (error: any) {
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || 'Failed to reject withdrawal request',
+        message: error.message || AdminErrorMessages.ADMIN_FAILED_TO_REJECT_WITHDRAWAL,
       });
     }
   }
 
-  async getWithdrawalRequestById(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getWithdrawalRequestById(
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> {
     try {
       const { requestId } = req.params;
 
       if (!Types.ObjectId.isValid(requestId)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Invalid request ID format',
+          message: AdminErrorMessages.ADMIN_INVALID_ID_FORMAT,
         });
         return;
       }
 
-      const request = await this.withdrawalRequestService.getWithdrawalRequestById(
+      const withdrawalDetailRequest = await this._withdrawalRequestService.getWithdrawalRequestById(
         new Types.ObjectId(requestId)
       );
 
       res.status(StatusCode.OK).json({
         success: true,
-        data: request,
+        data: withdrawalDetailRequest,
       });
     } catch (error: any) {
-      console.error('Error fetching withdrawal request by ID:', error);
-      
-      if (error.message === 'Withdrawal request not found') {
+      console.error("Error fetching withdrawal request by ID:", error);
+
+      if (error.message === AdminErrorMessages.ADMIN_WITHDRAWAL_REQUEST_NOTFOUND) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
           message: error.message,
@@ -134,7 +155,7 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
 
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || 'Failed to fetch withdrawal request',
+        message: error.message || AdminErrorMessages.ADMIN_FAILED_TO_FETCH_WITHDRAWAL_REQUEST,
       });
     }
   }

@@ -1,4 +1,4 @@
-import { IStudentSlotRepository } from "../interfaces/IStudentSlotRepository";
+import { IStudentSlotRepository } from "./interface/IStudentSlotRepository";
 import SlotModel, { ISlot } from "../../models/slotModel";
 import { GenericRepository } from "../genericRepository";
 import { PopulateOptions } from "mongoose";

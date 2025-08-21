@@ -2,7 +2,7 @@ import { ICategoryModel, CategoryModel } from "../../models/categoryModel";
 
 import { GenericRepository } from "../genericRepository";
 
-import { IAdminCategoryRepository } from "../interfaces/IAdminCategoryRepository";
+import { IAdminCategoryRepository } from "./interface/IAdminCategoryRepository"; 
 
 import { CategoryErrorMsg } from "../../utils/constants";
 

@@ -1,14 +1,18 @@
 import { Response } from "express";
 import { Types } from "mongoose";
 import { IStudentOrderController } from "./interfaces/IStudentOrderController";
-import { IStudentOrderService } from "../../services/interface/IStudentOrderService";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { IStudentOrderService } from "../../services/studentServices/interface/IStudentOrderService"; 
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
+import { StudentErrorMessages, StudentSuccessMessages } from "../../utils/constants";
 
 export class StudentOrderController implements IStudentOrderController {
-  constructor(private orderService: IStudentOrderService) {}
+  private _orderService: IStudentOrderService;
+  
+  constructor(orderService: IStudentOrderService) {
+    this._orderService = orderService;
+  }
 
   async getOrderHistory(
     req: AuthenticatedRequest,
@@ -18,17 +22,38 @@ export class StudentOrderController implements IStudentOrderController {
       const userId = new Types.ObjectId(req.user!.id);
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 5;
+      const search = req.query.search as string | undefined;
 
-      const { orders, total } =
-        await this.orderService.getOrderHistoryPaginated(userId, page, limit);
+      // Validate pagination parameters
+      if (page < 1 || limit < 1) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid pagination parameters"
+        });
+        return;
+      }
 
-      console.log("orders", orders);
-      res.status(StatusCode.OK).json({ success: true, orders, total });
+      const { orders, total } = await this._orderService.getOrderHistoryPaginated(
+        userId,
+        page,
+        limit,
+        search
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: StudentSuccessMessages.ORDER_HISTORY_FETCHED || "Order history fetched successfully",
+        orders,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      });
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching order history:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch order history",
+        message: StudentErrorMessages.FAILED_TO_FETCH_ORDER_HISTORY,
       });
     }
   }
@@ -41,41 +66,34 @@ export class StudentOrderController implements IStudentOrderController {
       const orderId = new Types.ObjectId(req.params.orderId);
       const userId = new Types.ObjectId(req.user!.id);
 
-      const order = await this.orderService.getOrderDetails(orderId, userId);
-
-      if (!order) {
-        res.status(StatusCode.NOT_FOUND).json({
+      if (!req.params.orderId) {
+        res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Order not found",
+          message: "Order ID is required"
         });
         return;
       }
 
-      // ✅ Inject pre-signed thumbnail URLs for each course
-      const coursesWithSignedUrls = await Promise.all(
-        order.courses.map(async (course: any) => {
-          const signedUrl = await getPresignedUrl(course.thumbnailUrl);
-          return {
-            ...(course.toObject?.() || course),
-            thumbnailUrl: signedUrl,
-          };
-        })
-      );
-      const orderWithSignedUrls = {
-        ...(order.toObject?.() || order),
-        courses: coursesWithSignedUrls,
-      };
+      const orderDetailsDTO = await this._orderService.getOrderDetails(orderId, userId);
 
-      console.log(orderWithSignedUrls);
+      if (!orderDetailsDTO) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: StudentErrorMessages.ORDER_NOT_FOUND,
+        });
+        return;
+      }
 
-      res
-        .status(StatusCode.OK)
-        .json({ success: true, order: orderWithSignedUrls });
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: StudentSuccessMessages.ORDER_DETAILS_FETCHED || "Order details fetched successfully",
+        order: orderDetailsDTO
+      });
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching order details:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch order details",
+        message: StudentErrorMessages.FAILED_TO_FETCH_ORDER_DETAILS,
       });
     }
   }
@@ -88,12 +106,21 @@ export class StudentOrderController implements IStudentOrderController {
       const orderId = new Types.ObjectId(req.params.orderId);
       const userId = new Types.ObjectId(req.user!.id);
 
-      const order = await this.orderService.getOrderDetails(orderId, userId);
+      if (!req.params.orderId) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Order ID is required"
+        });
+        return;
+      }
+
+      // Use raw order data for invoice generation since PDF might need original data structure
+      const order = await this._orderService.getOrderRaw(orderId, userId);
 
       if (!order) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Order not found",
+          message: StudentErrorMessages.ORDER_NOT_FOUND,
         });
         return;
       }
@@ -101,17 +128,19 @@ export class StudentOrderController implements IStudentOrderController {
       // Generate PDF
       const pdfBuffer = await generateInvoicePdf(order);
 
+      // Set response headers for PDF download
       res.set({
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename=invoice-${order._id}.pdf`,
+        "Content-Length": pdfBuffer.length.toString(),
       });
 
       res.send(pdfBuffer);
     } catch (err) {
-      console.error(err);
+      console.error("Error downloading invoice:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to download invoice",
+        message: StudentErrorMessages.FAILED_TO_DOWNLOAD_INVOICE,
       });
     }
   }

@@ -1,7 +1,13 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { IInstructor } from './instructorModel';
-
-
+export interface WithdrawalRequestListDTO {
+  _id:string;
+  instructorName: string;
+  date: Date;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  remarks?: string;
+}
 export interface IWithdrawalRequest extends Document {
   instructorId: Types.ObjectId | IInstructor;
   amount: number;

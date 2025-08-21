@@ -7,32 +7,39 @@ import CourseCard from "../../../components/StudentComponents/CourseCard";
 import { toast } from "react-toastify";
 
 interface Course {
-  _id: string;
+  courseId: string;
   courseName: string;
-  description: string;
-  price: number;
-  duration: string;
-  level: string;
+  instructorName: string;
+  categoryName: string;
   thumbnailUrl: string;
-  category?: {
-    _id: string;
-    categoryName: string;
-  };
-}
-
-interface CourseResponse {
-  course: Course;
+  demoVideoUrl: string;
   chapterCount: number;
   quizQuestionCount: number;
+  duration: string;
+  description: string;
+  level: string;
+  price: number;
 }
 
 interface Category {
   _id: string;
   categoryName: string;
+  isListed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CourseFilterResponse {
+  success: boolean;
+  data: Course[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 const CourseListPage = () => {
-  const [courses, setCourses] = useState<CourseResponse[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -63,7 +70,7 @@ const CourseListPage = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await CoursesFiltered(
+      const response: CourseFilterResponse = await CoursesFiltered(
         currentPage,
         coursesPerPage,
         debouncedSearch,
@@ -71,9 +78,8 @@ const CourseListPage = () => {
         selectedCategory
       );
 
-      const { data, total } = response;
-      setCourses(data as CourseResponse[]);
-      setTotalPages(Math.ceil(total / coursesPerPage));
+      setCourses(response.data || []);
+      setTotalPages(response.totalPages || Math.ceil((response.total || 0) / coursesPerPage));
     } catch (error) {
       toast.error("Failed to load courses");
     }
@@ -81,8 +87,10 @@ const CourseListPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const data = await getAllCategories();
-      setCategories(data);
+      const response = await getAllCategories();
+      // Handle both possible response structures
+      const categoriesData = response.data || response;
+      setCategories(categoriesData);
     } catch (error) {
       toast.error("Failed to load categories");
     }
@@ -206,17 +214,17 @@ const CourseListPage = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {courses.map(({ course }) => (
+                {courses.map((course) => (
                   <CourseCard
-                    key={course._id}
-                    id={course._id}
+                    key={course.courseId}
+                    id={course.courseId}
                     title={course.courseName}
                     description={course.description}
                     price={course.price}
                     duration={course.duration}
                     level={course.level}
                     thumbnailUrl={course.thumbnailUrl}
-                    categoryName={course.category?.categoryName || ""}
+                    categoryName={course.categoryName}
                   />
                 ))}
               </div>

@@ -1,41 +1,41 @@
-import { IAdminCategoryRepository } from "../../repositories/interfaces/IAdminCategoryRepository";
+import { IAdminCategoryRepository } from "../../repositories/adminRepository/interface/IAdminCategoryRepository"; 
 import { ICategoryModel } from "../../models/categoryModel";
-import { IAdminCategoryService } from "../../services/interface/IAdminCategoryService";
+import { IAdminCategoryService } from "./interface/IAdminCategoryService"; 
 
 export class AdminCategoryService implements IAdminCategoryService {
-  private adminCategoryRepository: IAdminCategoryRepository;
+  private _adminCategoryRepository: IAdminCategoryRepository;
 
   constructor(adminCategoryRepository: IAdminCategoryRepository) {
-    this.adminCategoryRepository = adminCategoryRepository;
+    this._adminCategoryRepository = adminCategoryRepository;
   }
 
   async findCategoryByName(
     categoryName: string
   ): Promise<ICategoryModel | null> {
-    return this.adminCategoryRepository.findCategoryByName(categoryName);
+    return this._adminCategoryRepository.findCategoryByName(categoryName);
   }
 
   async findCategoryById(categoryId: string): Promise<ICategoryModel | null> {
-    return this.adminCategoryRepository.findById(categoryId);
+    return this._adminCategoryRepository.findById(categoryId);
   }
 
   async addCategory(categoryName: string): Promise<ICategoryModel | null> {
-    return this.adminCategoryRepository.create({ categoryName });
+    return this._adminCategoryRepository.create({ categoryName });
   }
 
   async updateCategory(
     id: string,
     categoryName: string
   ): Promise<ICategoryModel | null> {
-    return this.adminCategoryRepository.update(id, { categoryName });
+    return this._adminCategoryRepository.update(id, { categoryName });
   }
 
   async getAllCategory(): Promise<ICategoryModel[] | null> {
-    return this.adminCategoryRepository.findAll();
+    return this._adminCategoryRepository.findAll();
   }
 
   async listOrUnlistCategory(id: string): Promise<ICategoryModel | null> {
-    return this.adminCategoryRepository.listOrUnlistCategory(id);
+    return this._adminCategoryRepository.listOrUnlistCategory(id);
   }
 
   async getAllCategoriesPaginated(
@@ -43,7 +43,7 @@ export class AdminCategoryService implements IAdminCategoryService {
   limit: number,
   search: string = ""
 ): Promise<{ data: ICategoryModel[]; total: number }> {
-  return await this.adminCategoryRepository.getAllCategoriesPaginated(page, limit, search);
+  return await this._adminCategoryRepository.getAllCategoriesPaginated(page, limit, search);
 }
 
 }

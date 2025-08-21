@@ -1,16 +1,28 @@
-import { IAdminMembershipOrderRepository } from "../../repositories/interfaces/IAdminMembershipOrderRepository"; 
-import { IAdminMembershipOrderService } from "../interface/IAdminMembershipOrderService";
+import { IAdminMembershipOrderRepository } from "../../repositories/adminRepository/interface/IAdminMembershipOrderRepository"; 
+import { IAdminMembershipOrderService } from "./interface/IAdminMembershipOrderService"; 
 import { InstructorMembershipOrderDTO } from "../../models/instructorMembershipOrderModel";
+import { AdminMembershipOrderListDTO } from "../../dto/adminDTO/membershipOrderListDTO";
+import { mapMembershipOrdersToListDTO } from "../../mappers/adminMapper/membershipOrderListMapper";
+
 
 export class AdminMembershipOrderService implements IAdminMembershipOrderService {
-  constructor(private readonly orderRepo: IAdminMembershipOrderRepository) {}
+  private _orderRepo: IAdminMembershipOrderRepository
+  constructor(orderRepo: IAdminMembershipOrderRepository) {
+    this._orderRepo = orderRepo
+  }
 
-  async getAllOrders(page: number, limit: number): Promise<{ data: InstructorMembershipOrderDTO[]; total: number }> {
-    return this.orderRepo.findAllPaginated(page, limit);
+  async getAllOrders(
+    page: number,
+    limit: number,
+    search?: string
+  ): Promise<{ data: AdminMembershipOrderListDTO[]; total: number }> {
+    const { data, total } = await this._orderRepo.findAllPaginated(page, limit, search);
+    const mappedData = mapMembershipOrdersToListDTO(data);
+    return { data: mappedData, total };
   }
 
   async getOrderDetail(txnId: string): Promise<InstructorMembershipOrderDTO> {
-    const order = await this.orderRepo.findByTxnId(txnId);
+    const order = await this._orderRepo.findByTxnId(txnId);
     if (!order) {
       throw new Error("Order not found");
     }

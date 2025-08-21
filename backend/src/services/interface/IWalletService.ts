@@ -1,8 +1,9 @@
 import { Types } from 'mongoose';
 import { IWallet } from '../../models/walletModel';
+import { WalletDto } from '../../dto/common/walletDTO';
 
 export interface IWalletService {
-  getWallet(ownerId: Types.ObjectId): Promise<IWallet | null>;
+  getWallet(ownerId: Types.ObjectId): Promise<WalletDto | null>;
   creditWallet(ownerId: Types.ObjectId, amount: number, description: string, txnId: string): Promise<IWallet | null>;
   debitWallet(ownerId: string|Types.ObjectId, amount: number, description: string, txnId: string): Promise<IWallet | null>;
   initializeWallet(ownerId: Types.ObjectId, onModel: string, role: string): Promise<IWallet>;
@@ -11,3 +12,40 @@ export interface IWalletService {
    getPaginatedTransactions(ownerId: Types.ObjectId, page: number, limit: number): Promise<{ transactions: IWallet["transactions"], total: number }>
    getAdminWalletByEmail(email: string): Promise<IWallet | null>;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

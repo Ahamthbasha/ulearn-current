@@ -62,7 +62,7 @@ const InstructorProfileEditPage = () => {
         if (response.success) {
           const profile = response.data;
           setInitialValues({
-            name: profile.username || "",
+            name: profile.instructorName || "",
             skills: profile.skills?.join(", ") || "",
             expertise: profile.expertise?.join(", ") || "",
             profilePic: null,

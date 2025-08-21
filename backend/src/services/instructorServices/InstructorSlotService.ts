@@ -1,11 +1,14 @@
-import { IInstructorSlotService } from "../interface/IInstructorSlotService";
-import { IInstructorSlotRepository } from "../../repositories/interfaces/IInstructorSlotRepository";
+import { IInstructorSlotService } from "./interface/IInstructorSlotService"; 
+import { IInstructorSlotRepository } from "../../repositories/instructorRepository/interface/IInstructorSlotRepository"; 
 import { ISlot } from "../../models/slotModel";
 import { Types } from "mongoose";
 import createHttpError from "http-errors";
 
 export class InstructorSlotService implements IInstructorSlotService {
-  constructor(private slotRepo: IInstructorSlotRepository) {}
+  private _slotRepo: IInstructorSlotRepository
+  constructor(slotRepo: IInstructorSlotRepository) {
+    this._slotRepo = slotRepo
+  }
 
   async createSlot(
     instructorId: Types.ObjectId,
@@ -23,12 +26,12 @@ export class InstructorSlotService implements IInstructorSlotService {
       throw createHttpError.BadRequest("End time must be after start time");
     }
 
-    const hasOverlap = await this.slotRepo.checkOverlap(instructorId, startTime, endTime);
+    const hasOverlap = await this._slotRepo.checkOverlap(instructorId, startTime, endTime);
     if (hasOverlap) {
       throw createHttpError.Conflict("Slot overlaps with an existing one");
     }
 
-    return await this.slotRepo.createSlot({
+    return await this._slotRepo.createSlot({
       instructorId,
       startTime,
       endTime,
@@ -42,7 +45,7 @@ export class InstructorSlotService implements IInstructorSlotService {
     slotId: Types.ObjectId,
     data: Partial<ISlot>
   ): Promise<ISlot> {
-    const slot = await this.slotRepo.getSlotById(slotId);
+    const slot = await this._slotRepo.getSlotById(slotId);
     if (!slot) throw createHttpError.NotFound("Slot not found");
     if (!slot.instructorId.equals(instructorId)) throw createHttpError.Forbidden("Access denied");
 
@@ -59,12 +62,12 @@ export class InstructorSlotService implements IInstructorSlotService {
       throw createHttpError.BadRequest("End time must be after start time");
     }
 
-    const hasOverlap = await this.slotRepo.checkOverlap(instructorId, newStartTime, newEndTime,slot._id as Types.ObjectId);
+    const hasOverlap = await this._slotRepo.checkOverlap(instructorId, newStartTime, newEndTime,slot._id as Types.ObjectId);
     if (hasOverlap && (newStartTime.getTime() !== slot.startTime.getTime() || newEndTime.getTime() !== slot.endTime.getTime())) {
       throw createHttpError.Conflict("Updated slot overlaps with an existing one");
     }
 
-    const updated = await this.slotRepo.updateSlot(slotId, {
+    const updated = await this._slotRepo.updateSlot(slotId, {
       ...data,
       startTime: newStartTime,
       endTime: newEndTime,
@@ -75,15 +78,15 @@ export class InstructorSlotService implements IInstructorSlotService {
   }
 
   async deleteSlot(instructorId: Types.ObjectId, slotId: Types.ObjectId): Promise<void> {
-    const slot = await this.slotRepo.getSlotById(slotId);
+    const slot = await this._slotRepo.getSlotById(slotId);
     if (!slot) throw createHttpError.NotFound("Slot not found");
     if (!slot.instructorId.equals(instructorId)) throw createHttpError.Forbidden("Access denied");
 
-    await this.slotRepo.deleteSlot(slotId);
+    await this._slotRepo.deleteSlot(slotId);
   }
 
   async listSlots(instructorId: Types.ObjectId): Promise<ISlot[]> {
-    return await this.slotRepo.getSlotsByInstructor(instructorId);
+    return await this._slotRepo.getSlotsByInstructor(instructorId);
   }
 
   async getSlotStats(
@@ -96,7 +99,7 @@ export class InstructorSlotService implements IInstructorSlotService {
     endDate?: Date;
   }
 ) {
-  return await this.slotRepo.getSlotStats(instructorId, mode, options);
+  return await this._slotRepo.getSlotStats(instructorId, mode, options);
 }
 
 

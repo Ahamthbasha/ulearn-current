@@ -1,15 +1,15 @@
-import { IStudentInstructorListingService } from "../interface/IStudentInstructorListingService";
-import { IStudentInstructorListingRepository } from "../../repositories/interfaces/IStudentInstructorListingRepository";
+import { IStudentInstructorListingService } from "./interface/IStudentInstructorListingService"; 
+import { IStudentInstructorListingRepository } from "../../repositories/studentRepository/interface/IStudentInstructorListingRepository"; 
 import { IInstructor } from "../../models/instructorModel";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
 export class StudentInstructorListingService
   implements IStudentInstructorListingService
 {
-  private instructorListingRepo: IStudentInstructorListingRepository;
+  private _instructorListingRepo: IStudentInstructorListingRepository;
 
   constructor(repo: IStudentInstructorListingRepository) {
-    this.instructorListingRepo = repo;
+    this._instructorListingRepo = repo;
   }
 
   async getPaginatedMentors(
@@ -21,7 +21,7 @@ export class StudentInstructorListingService
   expertise?: string
 ): Promise<{ data: IInstructor[]; total: number }> {
   const { data, total } =
-    await this.instructorListingRepo.listMentorInstructorsPaginated(
+    await this._instructorListingRepo.listMentorInstructorsPaginated(
       page,
       limit,
       search,
@@ -44,7 +44,7 @@ export class StudentInstructorListingService
 
 
   async getMentorById(id: string): Promise<IInstructor | null> {
-    const mentor = await this.instructorListingRepo.getMentorInstructorById(id);
+    const mentor = await this._instructorListingRepo.getMentorInstructorById(id);
     if (!mentor) return null;
 
     const mentorObj = mentor.toObject();
@@ -55,7 +55,6 @@ export class StudentInstructorListingService
   }
 
   async getAvailableFilters(): Promise<{ skills: string[]; expertise: string[] }> {
-  return await this.instructorListingRepo.getAvailableSkillsAndExpertise();
+  return await this._instructorListingRepo.getAvailableSkillsAndExpertise();
 }
-
 }

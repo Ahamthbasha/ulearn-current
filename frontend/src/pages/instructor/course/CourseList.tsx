@@ -11,13 +11,14 @@ import {
   instructorDeleteCourse,
 } from "../../../api/action/InstructorActionApi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { useDebounce } from "../../../hooks/UseDebounce";
 
 interface Course {
-  _id: string;
+  courseId: string;
   courseName: string;
-  categoryName: string;
-  isPublished: boolean;
-  thumbnailSignedUrl?: string;
+  thumbnailUrl: string;
+  category: string;
+  status: boolean;
 }
 
 const CourseListPage = () => {
@@ -28,17 +29,21 @@ const CourseListPage = () => {
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const limit = 1; // You can change this as needed
+  const limit = 1; // adjustable
 
   const navigate = useNavigate();
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await fetchInstructorCourses({ page, limit, search });
-      console.log(response);
+      const response = await fetchInstructorCourses({
+        page,
+        limit,
+        search: debouncedSearch,
+      });
       setCourses(response?.data || []);
       setTotal(response?.total || 0);
     } catch (err: any) {
@@ -51,7 +56,7 @@ const CourseListPage = () => {
 
   useEffect(() => {
     fetchCourses();
-  }, [page, search]);
+  }, [page, debouncedSearch]);
 
   const confirmDelete = (course: Course) => {
     setCourseToDelete(course);
@@ -61,9 +66,9 @@ const CourseListPage = () => {
   const handleDeleteConfirmed = async () => {
     if (!courseToDelete) return;
     try {
-      await instructorDeleteCourse(courseToDelete._id);
+      await instructorDeleteCourse(courseToDelete.courseId);
       toast.success("Course deleted");
-      setCourses((prev) => prev.filter((c) => c._id !== courseToDelete._id));
+      setCourses((prev) => prev.filter((c) => c.courseId !== courseToDelete.courseId));
     } catch (err: any) {
       toast.error("Failed to delete course");
     } finally {
@@ -74,7 +79,7 @@ const CourseListPage = () => {
 
   const columns: InstructorColumn<Course>[] = [
     {
-      key: "thumbnailSignedUrl",
+      key: "thumbnailUrl",
       title: "Thumbnail",
       width: "120px",
       render: (value) => (
@@ -96,7 +101,7 @@ const CourseListPage = () => {
       ),
     },
     {
-      key: "categoryName",
+      key: "category",
       title: "Category",
       width: "200px",
       render: (value) => (
@@ -104,7 +109,7 @@ const CourseListPage = () => {
       ),
     },
     {
-      key: "isPublished",
+      key: "status",
       title: "Status",
       width: "140px",
       render: (value) => (
@@ -126,7 +131,7 @@ const CourseListPage = () => {
       key: "edit",
       label: "Edit",
       icon: <Edit size={16} />,
-      onClick: (record) => navigate(`/instructor/editCourse/${record._id}`),
+      onClick: (record) => navigate(`/instructor/editCourse/${record.courseId}`),
     },
     {
       key: "delete",
@@ -139,7 +144,7 @@ const CourseListPage = () => {
       key: "view",
       label: "View",
       icon: <Eye size={16} />,
-      onClick: (record) => navigate(`/instructor/course/manage/${record._id}`),
+      onClick: (record) => navigate(`/instructor/course/manage/${record.courseId}`),
       className: "bg-blue-500 hover:bg-blue-600 text-white",
     },
   ];
@@ -161,7 +166,7 @@ const CourseListPage = () => {
         searchValue={search}
         onSearchChange={(val) => {
           setSearch(val);
-          setPage(1); // reset page when searching
+          setPage(1);
         }}
         currentPage={page}
         totalPages={Math.ceil(total / limit)}

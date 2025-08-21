@@ -1,19 +1,22 @@
 import { IInstructorSlotController } from "./interfaces/IInstructorSlotController";
-import { IInstructorSlotService } from "../../services/interface/IInstructorSlotService";
+import { IInstructorSlotService } from "../../services/instructorServices/interface/IInstructorSlotService"; 
 import { Response } from "express";
 import mongoose from "mongoose";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 
 export class InstructorSlotController implements IInstructorSlotController {
-  constructor(private slotService: IInstructorSlotService) {}
+  private _slotService: IInstructorSlotService
+  constructor(slotService: IInstructorSlotService) {
+    this._slotService = slotService
+  }
 
   async createSlot(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
       const { startTime, endTime, price } = req.body;
 
-      const slot = await this.slotService.createSlot(
+      const slot = await this._slotService.createSlot(
         instructorId,
         new Date(startTime),
         new Date(endTime),
@@ -34,7 +37,7 @@ export class InstructorSlotController implements IInstructorSlotController {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
       const slotId = new mongoose.Types.ObjectId(req.params.slotId);
 
-      const updated = await this.slotService.updateSlot(
+      const updated = await this._slotService.updateSlot(
         instructorId,
         slotId,
         req.body
@@ -54,7 +57,7 @@ export class InstructorSlotController implements IInstructorSlotController {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
       const slotId = new mongoose.Types.ObjectId(req.params.slotId);
 
-      await this.slotService.deleteSlot(instructorId, slotId);
+      await this._slotService.deleteSlot(instructorId, slotId);
 
       res.status(StatusCode.NO_CONTENT).send();
     } catch (error: any) {
@@ -69,7 +72,7 @@ export class InstructorSlotController implements IInstructorSlotController {
     try {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
 
-      const slots = await this.slotService.listSlots(instructorId);
+      const slots = await this._slotService.listSlots(instructorId);
 
       res.status(StatusCode.OK).json({ success: true, slots });
     } catch (error: any) {
@@ -115,7 +118,7 @@ export class InstructorSlotController implements IInstructorSlotController {
         throw new Error("Invalid mode");
       }
 
-      const stats = await this.slotService.getSlotStats(
+      const stats = await this._slotService.getSlotStats(
         instructorId,
         mode,
         options

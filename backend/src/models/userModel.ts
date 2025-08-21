@@ -13,7 +13,6 @@ export interface IUser extends Document{
     password:string,
     role?:string,
     profilePicUrl?:string,
-    studiedHours:number,
     isVerified:boolean,
     isBlocked:boolean,
     skills?:string[],
@@ -44,11 +43,6 @@ const userSchema:Schema<IUser> = new Schema({
     profilePicUrl:{
         type:String,
         required:false
-    },
-    studiedHours:{
-        type:Number,
-        required:false,
-        default:0
     },
     isVerified:{
         type:Boolean,

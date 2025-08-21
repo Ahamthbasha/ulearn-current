@@ -31,6 +31,7 @@ const SlotPage = () => {
   const fetchSlots = async () => {
     try {
       const { slots } = await listSlots();
+      console.log(slots)
       setSlots(slots);
     } catch (err) {
       toast.error("Failed to fetch slots");

@@ -19,7 +19,7 @@ import {
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 
-import authenticateToken from "../middlewares/AuthenticatedRoutes";
+import authenticateToken from "../middlewares/authenticatedRoutes";
 import { isInstructor } from "../middlewares/roleAuth";
 
 let router = Router();

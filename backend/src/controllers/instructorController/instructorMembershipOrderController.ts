@@ -1,19 +1,21 @@
 import { Response } from "express";
 import { IInstructorMembershipOrderController } from "./interfaces/IInstructorMembershipOrderController";
-import { IInstructorMembershipOrderService } from "../../services/interface/IInstructorMembershipOrderService";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { IInstructorMembershipOrderService } from "../../services/instructorServices/interface/IInstructorMembershipOrderService"; 
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
-import { IInstructorMembershipService } from "../../services/interface/IInstructorMembershipService";
-import { ResponseMessages } from "../../utils/constants";
+import { IInstructorMembershipService } from "../../services/instructorServices/interface/IInstructorMembershipService"; 
+import { INSTRUCTOR_ERROR_MESSAGE, ResponseMessages } from "../../utils/constants";
 import { generateMembershipReceiptPdf } from "../../utils/generateMembershipReceiptPdf";
 
 export class InstructorMembershipOrderController
   implements IInstructorMembershipOrderController
 {
-  constructor(
-    private readonly service: IInstructorMembershipOrderService,
-    private readonly instructorService: IInstructorMembershipService
-  ) {}
+  private _instructorMembershipOrderService: IInstructorMembershipOrderService
+  private _instructorMembershipService: IInstructorMembershipService
+  constructor(instructorMembershipOrderService: IInstructorMembershipOrderService,instructorMembershipService: IInstructorMembershipService){
+    this._instructorMembershipOrderService = instructorMembershipOrderService
+    this._instructorMembershipService = instructorMembershipService
+  }
 
   async initiateCheckout(
     req: AuthenticatedRequest,
@@ -30,7 +32,7 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const instructor = await this.instructorService.getInstructorById(
+      const instructor = await this._instructorMembershipService.getInstructorById(
         instructorId
       );
       if (!instructor) {
@@ -52,7 +54,7 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const result = await this.service.initiateCheckout(instructorId, planId);
+      const result = await this._instructorMembershipOrderService.initiateCheckout(instructorId, planId);
       res.status(StatusCode.OK).json(result);
     } catch (error) {
       console.error("Checkout error:", error);
@@ -80,7 +82,7 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      await this.service.verifyAndActivateMembership({
+      await this._instructorMembershipOrderService.verifyAndActivateMembership({
         razorpayOrderId,
         paymentId,
         signature,
@@ -114,7 +116,7 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const instructor = await this.instructorService.getInstructorById(
+      const instructor = await this._instructorMembershipService.getInstructorById(
         instructorId
       );
       if (!instructor) {
@@ -136,7 +138,7 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      await this.service.purchaseWithWallet(instructorId, planId);
+      await this._instructorMembershipOrderService.purchaseWithWallet(instructorId, planId);
 
       res
         .status(StatusCode.OK)
@@ -164,11 +166,13 @@ export class InstructorMembershipOrderController
 
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string | undefined;
 
-      const { data, total } = await this.service.getInstructorOrders(
+      const { data, total } = await this._instructorMembershipOrderService.getInstructorOrders(
         instructorId,
         page,
-        limit
+        limit,
+        search
       );
 
       res.status(StatusCode.OK).json({ data, total });
@@ -176,7 +180,7 @@ export class InstructorMembershipOrderController
       console.error("Fetch order history error:", error);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: "Failed to fetch purchase history" });
+        .json({ message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_PURCHASE_HISTORY });
     }
   }
 
@@ -189,13 +193,13 @@ export class InstructorMembershipOrderController
       const instructorId = req.user?.id;
 
       if (!txnId || !instructorId) {
-        res.status(StatusCode.BAD_REQUEST).json({ message: "Missing data" });
+        res.status(StatusCode.BAD_REQUEST).json({ message: INSTRUCTOR_ERROR_MESSAGE.DATA_MISSING });
         return;
       }
 
-      const order = await this.service.getOrderByTxnId(txnId, instructorId);
+      const order = await this._instructorMembershipOrderService.getOrderByTxnId(txnId, instructorId);
       if (!order) {
-        res.status(StatusCode.NOT_FOUND).json({ message: "Order not found" });
+        res.status(StatusCode.NOT_FOUND).json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
         return;
       }
 
@@ -204,7 +208,7 @@ export class InstructorMembershipOrderController
       console.error("Order detail fetch error:", err);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: "Failed to fetch order" });
+        .json({ message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_ORDER });
     }
   }
 
@@ -219,13 +223,13 @@ export class InstructorMembershipOrderController
       if (!txnId || !instructorId) {
         res
           .status(StatusCode.BAD_REQUEST)
-          .json({ message: "Missing txnId or user not authenticated" });
+          .json({ message: INSTRUCTOR_ERROR_MESSAGE.TXNID_NOT_FOUND });
         return;
       }
 
-      const order = await this.service.getOrderByTxnId(txnId, instructorId);
+      const order = await this._instructorMembershipOrderService.getOrderByTxnId(txnId, instructorId);
       if (!order) {
-        res.status(StatusCode.NOT_FOUND).json({ message: "Order not found" });
+        res.status(StatusCode.NOT_FOUND).json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
         return;
       }
 
@@ -241,7 +245,7 @@ export class InstructorMembershipOrderController
       console.error("Receipt generation error:", err);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: "Failed to generate receipt" });
+        .json({ message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_GENERATE_RECEIPT });
     }
   }
 }

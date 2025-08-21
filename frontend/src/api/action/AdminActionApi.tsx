@@ -3,7 +3,7 @@ import { API } from "../../service/axios";
 import AdminRoutersEndPoints from "../../types/endPoints/adminEndPoint";
 import { type IMembershipPayload } from "../../types/interfaces/IMembershipPayload";
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
-import { type IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
+import {  type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
 
 export const getAllUser = async (
@@ -390,24 +390,38 @@ export const adminWalletTransactionHistory = async (
 };
 
 //admin withdrawal status change
+
 export const adminGetAllWithdrawalRequests = async (
   page: number,
-  limit: number
+  limit: number,
+  search?: string
 ): Promise<{
-  transactions: IWithdrawalRequest[];
+  transactions: WithdrawalRequestDto[];
   currentPage: number;
   totalPages: number;
   total: number;
+  search?: string;
 }> => {
   try {
+    const params: any = { page, limit };
+    
+    // Add search parameter if provided
+    if (search && search.trim()) {
+      params.search = search.trim();
+    }
+
     const response = await API.get(`${AdminRoutersEndPoints.adminGetAllWithdrawalRequests}`, {
-      params: { page, limit },
+      params,
     });
     return response.data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to fetch withdrawal requests");
   }
 };
+
+
+
+
 
 export const adminGetWithdrawalRequestById = async(requestId:string)=>{
   try {
@@ -531,13 +545,23 @@ export const toggleMembershipStatus = async (membershipId: string) => {
   }
 };
 
-export const getMembershipPurchaseHistory = async () => {
+export const getMembershipPurchaseHistory = async (
+  page: number,
+  limit: number,
+  search?: string
+) => {
   try {
+    const params: Record<string, any> = { page, limit };
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
     const response = await API.get(
-      `${AdminRoutersEndPoints.adminGetMembershipPurchaseHistory}`
+      `${AdminRoutersEndPoints.adminGetMembershipPurchaseHistory}`,
+      { params }
     );
 
-    return response.data;
+    return response.data; // { data, total }
   } catch (error) {
     throw error;
   }

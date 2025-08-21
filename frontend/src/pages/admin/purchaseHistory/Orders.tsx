@@ -1,55 +1,48 @@
 import React, { useEffect, useState } from "react";
-import DataTable from "../../../components/AdminComponents/DataTable";
-
-import { type Column } from "../../../components/AdminComponents/DataTable";
+import DataTable, { type Column } from "../../../components/AdminComponents/DataTable";
 import { getMembershipPurchaseHistory } from "../../../api/action/AdminActionApi";
 import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useDebounce } from "../../../hooks/UseDebounce"; 
 
-interface Instructor {
-  name: string;
-  email: string;
-}
-
-interface MembershipPlan {
-  name: string;
-  durationInDays: number;
-}
-
-interface MembershipOrder {
-  instructor: Instructor;
-  membershipPlan: MembershipPlan;
+interface MembershipOrderDTO {
+  instructorName: string;
+  orderId: string;
+  membershipName: string;
   price: number;
-  paymentStatus: "pending" | "paid" | "failed";
-  startDate: string;
-  endDate: string;
-  txnId: string;
-  createdAt: string;
+  status: "paid" | "pending" | "failed";
 }
 
 const Orders: React.FC = () => {
-  const [orders, setOrders] = useState<MembershipOrder[]>([]);
+  const [orders, setOrders] = useState<MembershipOrderDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
+  const debouncedSearch = useDebounce(searchTerm, 500); // debounce search term
   const navigate = useNavigate();
-  const limit = 10;
+  const limit = 5; // rows per page
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await getMembershipPurchaseHistory();
-      console.log(response);
-      setOrders(response.data);
+      const response = await getMembershipPurchaseHistory(
+        currentPage,
+        limit,
+        debouncedSearch
+      );
+
+      setOrders(response.data || []);
       const total = response.total || 0;
       setTotalPages(Math.ceil(total / limit));
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch orders");
-      toast.error(error);
+      const message = err.response?.data?.message || "Failed to fetch orders";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -57,30 +50,25 @@ const Orders: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [currentPage]);
+  }, [currentPage, debouncedSearch]); // listen to debouncedSearch instead of searchTerm
 
-  const columns: Column<MembershipOrder>[] = [
+  const columns: Column<MembershipOrderDTO>[] = [
     {
-      key: "instructor",
-      title: "Instructor",
-      render: (_, record) => (
-        <div>
-          <div className="font-medium">{record.instructor.name}</div>
-          <div className="text-sm text-gray-500">{record.instructor.email}</div>
-        </div>
+      key: "orderId",
+      title: "Order ID",
+      render: (value) => (
+        <span className="font-mono text-sm text-gray-700">{value}</span>
       ),
     },
     {
-      key: "membershipPlan",
+      key: "instructorName",
+      title: "Instructor",
+      render: (value) => <div className="text-sm text-gray-700">{value}</div>,
+    },
+    {
+      key: "membershipName",
       title: "Plan",
-      render: (_, record) => (
-        <div>
-          <div className="font-medium">{record.membershipPlan.name}</div>
-          <div className="text-sm text-gray-500">
-            {record.membershipPlan.durationInDays} days
-          </div>
-        </div>
-      ),
+      render: (value) => <div className="font-medium text-sm">{value}</div>,
     },
     {
       key: "price",
@@ -88,7 +76,7 @@ const Orders: React.FC = () => {
       render: (value) => `₹${value}`,
     },
     {
-      key: "paymentStatus",
+      key: "status",
       title: "Status",
       render: (value) => (
         <span
@@ -100,7 +88,7 @@ const Orders: React.FC = () => {
               : "bg-yellow-100 text-yellow-600"
           }`}
         >
-          {value}
+          {value.charAt(0).toUpperCase() + value.slice(1)}
         </span>
       ),
     },
@@ -120,13 +108,18 @@ const Orders: React.FC = () => {
         totalPages,
         onPageChange: (page) => setCurrentPage(page),
       }}
+      searchValue={searchTerm}
+      onSearchChange={(val) => {
+        setCurrentPage(1); // reset to first page when searching
+        setSearchTerm(val);
+      }}
       actions={[
         {
           key: "view",
           label: "View Details",
           icon: <Eye size={16} />,
           onClick: (record) =>
-            navigate(`/admin/membershipPurchase/${record.txnId}`),
+            navigate(`/admin/membershipPurchase/${record.orderId}`),
         },
       ]}
     />

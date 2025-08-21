@@ -1,19 +1,24 @@
 import { Request, Response } from "express";
 import { IAdminDashboardController } from "./interface/IAdminDashboardController";
-import { IAdminDashboardService } from "../../services/interface/IAdminDashboardService";
+import { IAdminDashboardService } from "../../services/adminServices/interface/IAdminDashboardService"; 
 import { FilterType } from "../../types/dashboardTypes";
 import { generateCourseSalesPdfReport, generateCourseSalesExcelReport, generateMembershipSalesPdfReport, generateMembershipSalesExcelReport } from "../../utils/adminReportGenerator";
+import { StatusCode } from "../../utils/enums";
+import { AdminErrorMessages } from "../../utils/constants";
 
 export class AdminDashboardController implements IAdminDashboardController {
-  constructor(private readonly dashboardService: IAdminDashboardService) {}
+  private _dashboardService: IAdminDashboardService
+  constructor(dashboardService: IAdminDashboardService) {
+    this._dashboardService = dashboardService
+  }
 
   async getDashboardData(_req: Request, res: Response): Promise<void> {
     try {
-      const data = await this.dashboardService.getDashboardMetrics();
-      res.status(200).json({ success: true, data });
+      const data = await this._dashboardService.getDashboardMetrics();
+      res.status(StatusCode.OK).json({ success: true, data });
     } catch (error) {
       console.error("AdminDashboardController Error:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: AdminErrorMessages.INTERNAL_SERVER_ERROR });
     }
   }
 
@@ -25,7 +30,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         typeof type !== "string" ||
         !["daily", "weekly", "monthly", "custom"].includes(type)
       ) {
-        res.status(400).json({ success: false, message: "Invalid type parameter" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_DASHBOARD_FILTER_ERROR });
         return;
       }
 
@@ -39,19 +44,19 @@ export class AdminDashboardController implements IAdminDashboardController {
       const limitNum = limit ? parseInt(limit as string, 10) : undefined;
 
       if (pageNum && (isNaN(pageNum) || pageNum < 1)) {
-        res.status(400).json({ success: false, message: "Invalid page number" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_PAGENO_INVALID });
         return;
       }
       if (limitNum && (isNaN(limitNum) || limitNum < 1)) {
-        res.status(400).json({ success: false, message: "Invalid limit number" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_PAGENOLIMIT_INVALID });
         return;
       }
 
-      const { items, totalAdminShare, totalItems, totalPages, currentPage } = await this.dashboardService.getCourseSalesReport(filter, pageNum, limitNum);
-      res.status(200).json({ success: true, data: items, adminShare: totalAdminShare, totalItems, totalPages, currentPage });
+      const { items, totalAdminShare, totalItems, totalPages, currentPage } = await this._dashboardService.getCourseSalesReport(filter, pageNum, limitNum);
+      res.status(StatusCode.OK).json({ success: true, data: items, adminShare: totalAdminShare, totalItems, totalPages, currentPage });
     } catch (error) {
       console.error("CourseSalesReport Error:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: AdminErrorMessages.INTERNAL_SERVER_ERROR });
     }
   }
 
@@ -63,7 +68,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         typeof type !== "string" ||
         !["daily", "weekly", "monthly", "custom"].includes(type)
       ) {
-        res.status(400).json({ success: false, message: "Invalid type parameter" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_DASHBOARD_FILTER_ERROR });
         return;
       }
 
@@ -77,16 +82,16 @@ export class AdminDashboardController implements IAdminDashboardController {
       const limitNum = limit ? parseInt(limit as string, 10) : undefined;
 
       if (pageNum && (isNaN(pageNum) || pageNum < 1)) {
-        res.status(400).json({ success: false, message: "Invalid page number" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_PAGENO_INVALID });
         return;
       }
       if (limitNum && (isNaN(limitNum) || limitNum < 1)) {
-        res.status(400).json({ success: false, message: "Invalid limit number" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_PAGENOLIMIT_INVALID });
         return;
       }
 
-      const { items, totalRevenue, totalSales, totalItems, totalPages, currentPage } = await this.dashboardService.getMembershipSalesReport(filter, pageNum, limitNum);
-      res.status(200).json({
+      const { items, totalRevenue, totalSales, totalItems, totalPages, currentPage } = await this._dashboardService.getMembershipSalesReport(filter, pageNum, limitNum);
+      res.status(StatusCode.OK).json({
         success: true,
         data: items,
         totalRevenue,
@@ -97,7 +102,7 @@ export class AdminDashboardController implements IAdminDashboardController {
       });
     } catch (error) {
       console.error("MembershipSalesReport Error:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: AdminErrorMessages.INTERNAL_SERVER_ERROR });
     }
   }
 
@@ -109,12 +114,12 @@ export class AdminDashboardController implements IAdminDashboardController {
         typeof type !== "string" ||
         !["daily", "weekly", "monthly", "custom"].includes(type)
       ) {
-        res.status(400).json({ success: false, message: "Invalid type parameter" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_DASHBOARD_FILTER_ERROR });
         return;
       }
 
       if (typeof format !== "string" || !["excel", "pdf"].includes(format)) {
-        res.status(400).json({ success: false, message: "Invalid format parameter" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_INVALID_FORMAT_PARAMETER });
         return;
       }
 
@@ -124,7 +129,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         endDate: endDate ? new Date(endDate as string) : undefined,
       };
 
-      const { items, totalAdminShare } = await this.dashboardService.getCourseSalesReport(filter); // No pagination for exports
+      const { items, totalAdminShare } = await this._dashboardService.getCourseSalesReport(filter); // No pagination for exports
 
       if (format === "excel") {
         await generateCourseSalesExcelReport(items, totalAdminShare, res);
@@ -133,7 +138,7 @@ export class AdminDashboardController implements IAdminDashboardController {
       }
     } catch (error) {
       console.error("ExportCourseSalesReport Error:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: AdminErrorMessages.INTERNAL_SERVER_ERROR });
     }
   }
 
@@ -145,12 +150,12 @@ export class AdminDashboardController implements IAdminDashboardController {
         typeof type !== "string" ||
         !["daily", "weekly", "monthly", "custom"].includes(type)
       ) {
-        res.status(400).json({ success: false, message: "Invalid type parameter" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_DASHBOARD_FILTER_ERROR });
         return;
       }
 
       if (typeof format !== "string" || !["excel", "pdf"].includes(format)) {
-        res.status(400).json({ success: false, message: "Invalid format parameter" });
+        res.status(StatusCode.BAD_REQUEST).json({ success: false, message: AdminErrorMessages.ADMIN_INVALID_FORMAT_PARAMETER });
         return;
       }
 
@@ -160,7 +165,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         endDate: endDate ? new Date(endDate as string) : undefined,
       };
 
-      const { items } = await this.dashboardService.getMembershipSalesReport(filter); // No pagination for exports
+      const { items } = await this._dashboardService.getMembershipSalesReport(filter); // No pagination for exports
 
       if (format === "excel") {
         await generateMembershipSalesExcelReport(items, res);
@@ -169,10 +174,7 @@ export class AdminDashboardController implements IAdminDashboardController {
       }
     } catch (error) {
       console.error("ExportMembershipSalesReport Error:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: AdminErrorMessages.INTERNAL_SERVER_ERROR });
     }
   }
 }
-
-
-

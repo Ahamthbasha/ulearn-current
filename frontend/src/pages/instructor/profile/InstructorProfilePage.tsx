@@ -27,12 +27,12 @@ const InstructorProfilePage = () => {
         if (response.success) {
           dispatch(
             setInstructor({
-              userId: response.data._id,
-              name: response.data.username,
+              userId: response.data._id || null,
+              name: response.data.instructorName,
               email: response.data.email,
-              role: response.data.role,
-              isBlocked: response.data.isBlocked,
-              isVerified: response.data.isVerified,
+              role: response.data.role || null,
+              isBlocked: response.data.isBlocked || null,
+              isVerified: response.data.status,
               profilePicture: response.data.profilePicUrl || null,
             })
           );
@@ -94,7 +94,7 @@ const InstructorProfilePage = () => {
 
         <div className="space-y-2 text-sm sm:text-base">
           <p>
-            <strong>Username:</strong> {profile.username}
+            <strong>Username:</strong> {profile.instructorName}
           </p>
           <p>
             <strong>Email:</strong> {profile.email}
@@ -103,19 +103,16 @@ const InstructorProfilePage = () => {
             <strong>Skills:</strong> {profile.skills?.join(", ") || "None"}
           </p>
           <p>
-            <strong>Expertise:</strong>{" "}
-            {profile.expertise?.join(", ") || "None"}
+            <strong>Expertise:</strong> {profile.expertise?.join(", ") || "None"}
           </p>
           <p>
-            <strong>Status:</strong>{" "}
-            {profile.isVerified ? "✅ Verified" : "⏳ Not Verified"}
+            <strong>Status:</strong> {profile.status ? "✅ Verified" : "⏳ Not Verified"}
           </p>
           <p>
-            <strong>Mentor:</strong> {profile.isMentor ? "Yes" : "No"}
+            <strong>Mentor:</strong> {profile.mentor ? "Yes" : "No"}
           </p>
           <p>
-            <strong>Bank Status:</strong>{" "}
-            {profile.bankAccount?.accountNumber ? "Linked" : "Not Linked"}
+            <strong>Bank Status:</strong> {profile.bankAccountLinked ? "Linked" : "Not Linked"}
           </p>
         </div>
       </Card>
@@ -130,9 +127,7 @@ const InstructorProfilePage = () => {
               confirmPassword: "",
             }}
             validationSchema={Yup.object({
-              currentPassword: Yup.string().required(
-                "Current password is required"
-              ),
+              currentPassword: Yup.string().required("Current password is required"),
               newPassword: Yup.string()
                 .required("New password is required")
                 .min(6, "Password must be at least 6 characters")
@@ -154,6 +149,8 @@ const InstructorProfilePage = () => {
                   newPassword: values.newPassword,
                 });
 
+                console.log(res)
+
                 if (res.success) {
                   toast.success("Password updated successfully");
                   resetForm();
@@ -161,8 +158,8 @@ const InstructorProfilePage = () => {
                 } else {
                   toast.error(res.message || "Password update failed");
                 }
-              } catch (error) {
-                toast.error("Something went wrong");
+              } catch (error:any) {
+                toast.error(error.res.message);
               }
             }}
           >
@@ -225,17 +222,20 @@ const InstructorProfilePage = () => {
             onSubmit={async (values, { resetForm }) => {
               try {
                 const res = await instructorUpdateBankDetail(values);
-
+                console.log(res)
                 if (res.success) {
-                  toast.success("Bank details updated successfully");
-                  setProfile(res.data); // Update profile with new bank details
+                  toast.success(res.message);
+                  setProfile((prev: any) => ({
+                    ...prev,
+                    bankAccountLinked: true,
+                  }));
                   resetForm();
                   setShowBankForm(false);
                 } else {
                   toast.error(res.message || "Bank details update failed");
                 }
-              } catch (error) {
-                toast.error("Something went wrong");
+              } catch (error:any) {
+                toast.error(error.res.message);
               }
             }}
           >
@@ -281,4 +281,3 @@ const InstructorProfilePage = () => {
 };
 
 export default InstructorProfilePage;
-

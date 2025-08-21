@@ -2,22 +2,28 @@ import { Response } from "express";
 import { Types } from "mongoose";
 import { IWalletService } from "../../services/interface/IWalletService";
 import { StatusCode } from "../../utils/enums";
-import { AuthenticatedRequest } from "../../middlewares/AuthenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IAdminWalletController } from "./interface/IAdminWalletController";
+import { AdminErrorMessages } from "../../utils/constants";
 
 export class AdminWalletController implements IAdminWalletController {
-  constructor(private walletService: IWalletService) {}
+  private _walletService : IWalletService
+  constructor(walletService: IWalletService) {
+    this._walletService = walletService
+  }
 
   async getWallet(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
-      const wallet = await this.walletService.getWallet(ownerId);
+      const wallet = await this._walletService.getWallet(ownerId);
+
+      console.log("admin wallet",wallet)
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch wallet",
+        message: AdminErrorMessages.ADMIN_FAILED_TO_FETCH_WALLET,
       });
     }
   }
@@ -26,7 +32,7 @@ export class AdminWalletController implements IAdminWalletController {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
       const { amount, description, txnId } = req.body;
-      const wallet = await this.walletService.creditWallet(
+      const wallet = await this._walletService.creditWallet(
         ownerId,
         amount,
         description,
@@ -37,7 +43,7 @@ export class AdminWalletController implements IAdminWalletController {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to credit wallet",
+        message: AdminErrorMessages.ADMIN_FAILED_TO_CREDIT_WALLET,
       });
     }
   }
@@ -46,7 +52,7 @@ export class AdminWalletController implements IAdminWalletController {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
       const { amount, description, txnId } = req.body;
-      const wallet = await this.walletService.debitWallet(
+      const wallet = await this._walletService.debitWallet(
         ownerId,
         amount,
         description,
@@ -56,7 +62,7 @@ export class AdminWalletController implements IAdminWalletController {
       if (!wallet) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Insufficient balance or wallet not found",
+          message: AdminErrorMessages.ADMIN_INSUFFICIENT_BALANCE_WALLET_NOT_FOUND,
         });
         return;
       }
@@ -66,7 +72,7 @@ export class AdminWalletController implements IAdminWalletController {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to debit wallet",
+        message: AdminErrorMessages.ADMIN_FAILED_TO_DEBIT_WALLET,
       });
     }
   }
@@ -81,7 +87,7 @@ export class AdminWalletController implements IAdminWalletController {
       const limit = parseInt(req.query.limit as string) || 5;
 
       const { transactions, total } =
-        await this.walletService.getPaginatedTransactions(ownerId, page, limit);
+        await this._walletService.getPaginatedTransactions(ownerId, page, limit);
 
       const totalPages = Math.ceil(total / limit);
 
@@ -98,7 +104,7 @@ export class AdminWalletController implements IAdminWalletController {
       console.error("Failed to fetch admin wallet transactions:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch transactions",
+        message: AdminErrorMessages.ADMIN_FAILED_TO_FETCH_TRANSACTIONS,
       });
     }
   }

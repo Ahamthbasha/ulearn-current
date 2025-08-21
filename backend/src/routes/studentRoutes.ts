@@ -17,7 +17,7 @@ import {
   studentDashboardController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
-import authenticateToken from "../middlewares/AuthenticatedRoutes";
+import authenticateToken from "../middlewares/authenticatedRoutes";
 import { isStudent } from "../middlewares/roleAuth";
 
 const router = Router();
@@ -175,6 +175,7 @@ router.get(
 
 ///////////////////CHECKOUT MANAGEMENT////////////////////////////////////////
 
+
 router.post(
   "/checkout",
   authenticateToken,
@@ -188,6 +189,8 @@ router.post(
   isStudent,
   studentCheckoutController.completeCheckout.bind(studentCheckoutController)
 );
+
+
 
 //////////BOUGHT COURSE MANAGEMENT/////////////////
 
@@ -394,7 +397,6 @@ router.get(
   )
 );
 
-
 //dashboard//
 
 router.get(
@@ -402,34 +404,34 @@ router.get(
   authenticateToken,
   isStudent,
   studentDashboardController.getDashboardData.bind(studentDashboardController)
-)
+);
 
 router.get(
   "/dashboard/courseReport",
   authenticateToken,
   isStudent,
   studentDashboardController.getCourseReport.bind(studentDashboardController)
-)
+);
 
 router.get(
   "/dashboard/slotReport",
   authenticateToken,
   isStudent,
   studentDashboardController.getSlotReport.bind(studentDashboardController)
-)
+);
 
 router.get(
   "/dashboard/exportCourseReport",
   authenticateToken,
   isStudent,
   studentDashboardController.exportCourseReport.bind(studentDashboardController)
-)
+);
 
 router.get(
   "/dashboard/exportSlotReport",
   authenticateToken,
   isStudent,
   studentDashboardController.exportSlotReport.bind(studentDashboardController)
-)
+);
 
 export default router;
