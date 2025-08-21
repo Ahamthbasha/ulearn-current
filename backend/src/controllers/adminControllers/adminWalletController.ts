@@ -7,9 +7,9 @@ import { IAdminWalletController } from "./interface/IAdminWalletController";
 import { AdminErrorMessages } from "../../utils/constants";
 
 export class AdminWalletController implements IAdminWalletController {
-  private _walletService : IWalletService
+  private _walletService: IWalletService;
   constructor(walletService: IWalletService) {
-    this._walletService = walletService
+    this._walletService = walletService;
   }
 
   async getWallet(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -17,7 +17,7 @@ export class AdminWalletController implements IAdminWalletController {
       const ownerId = new Types.ObjectId(req.user?.id);
       const wallet = await this._walletService.getWallet(ownerId);
 
-      console.log("admin wallet",wallet)
+      console.log("admin wallet", wallet);
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
       console.error(error);
@@ -36,7 +36,7 @@ export class AdminWalletController implements IAdminWalletController {
         ownerId,
         amount,
         description,
-        txnId
+        txnId,
       );
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
@@ -56,13 +56,14 @@ export class AdminWalletController implements IAdminWalletController {
         ownerId,
         amount,
         description,
-        txnId
+        txnId,
       );
 
       if (!wallet) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: AdminErrorMessages.ADMIN_INSUFFICIENT_BALANCE_WALLET_NOT_FOUND,
+          message:
+            AdminErrorMessages.ADMIN_INSUFFICIENT_BALANCE_WALLET_NOT_FOUND,
         });
         return;
       }
@@ -79,7 +80,7 @@ export class AdminWalletController implements IAdminWalletController {
 
   async getTransactions(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
@@ -87,7 +88,11 @@ export class AdminWalletController implements IAdminWalletController {
       const limit = parseInt(req.query.limit as string) || 5;
 
       const { transactions, total } =
-        await this._walletService.getPaginatedTransactions(ownerId, page, limit);
+        await this._walletService.getPaginatedTransactions(
+          ownerId,
+          page,
+          limit,
+        );
 
       const totalPages = Math.ceil(total / limit);
 

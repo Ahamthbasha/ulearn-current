@@ -2,29 +2,35 @@ import { IStudentCourseController } from "./interfaces/IStudentCourseController"
 import { IStudentCourseService } from "../../services/studentServices/interface/IStudentCourseService";
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/enums";
-import { StudentErrorMessages, StudentSuccessMessages } from "../../utils/constants";
+import {
+  StudentErrorMessages,
+  StudentSuccessMessages,
+} from "../../utils/constants";
 
 export class StudentCourseController implements IStudentCourseController {
   private _studentCourseService: IStudentCourseService;
-  
+
   constructor(studentCourseService: IStudentCourseService) {
     this._studentCourseService = studentCourseService;
   }
 
   async getAllCourses(_req: Request, res: Response): Promise<void> {
     try {
-      const courses = await this._studentCourseService.getAllCoursesWithDetails();
-      
+      const courses =
+        await this._studentCourseService.getAllCoursesWithDetails();
+
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.COURSES_FETCHED || "Courses fetched successfully",
-        data: courses
+        message:
+          StudentSuccessMessages.COURSES_FETCHED ||
+          "Courses fetched successfully",
+        data: courses,
       });
     } catch (error) {
       console.error("Error fetching all courses:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: StudentErrorMessages.COURSE_FETCH_FAILED
+        message: StudentErrorMessages.COURSE_FETCH_FAILED,
       });
     }
   }
@@ -55,7 +61,7 @@ export class StudentCourseController implements IStudentCourseController {
       if (isNaN(parsedPage) || parsedPage < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid page number"
+          message: "Invalid page number",
         });
         return;
       }
@@ -63,33 +69,36 @@ export class StudentCourseController implements IStudentCourseController {
       if (isNaN(parsedLimit) || parsedLimit < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid limit value"
+          message: "Invalid limit value",
         });
         return;
       }
 
-      const result = await this._studentCourseService.getFilteredCoursesWithDetails(
-        parsedPage,
-        parsedLimit,
-        searchTerm,
-        sortOption,
-        categoryId
-      );
+      const result =
+        await this._studentCourseService.getFilteredCoursesWithDetails(
+          parsedPage,
+          parsedLimit,
+          searchTerm,
+          sortOption,
+          categoryId,
+        );
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.COURSES_FETCHED || "Courses fetched successfully",
+        message:
+          StudentSuccessMessages.COURSES_FETCHED ||
+          "Courses fetched successfully",
         data: result.data,
         total: result.total,
         page: parsedPage,
         limit: parsedLimit,
-        totalPages: Math.ceil(result.total / parsedLimit)
+        totalPages: Math.ceil(result.total / parsedLimit),
       });
     } catch (error) {
       console.error("Error fetching filtered courses:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: StudentErrorMessages.COURSE_FETCH_FAILED
+        message: StudentErrorMessages.COURSE_FETCH_FAILED,
       });
     }
   }
@@ -101,31 +110,34 @@ export class StudentCourseController implements IStudentCourseController {
       if (!courseId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Course ID is required"
+          message: "Course ID is required",
         });
         return;
       }
 
-      const courseDTO = await this._studentCourseService.getCourseDetailsById(courseId);
+      const courseDTO =
+        await this._studentCourseService.getCourseDetailsById(courseId);
 
       if (!courseDTO) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Course not found"
+          message: "Course not found",
         });
         return;
       }
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.COURSE_DETAILS_FETCHED || "Course details fetched successfully",
-        data: courseDTO
+        message:
+          StudentSuccessMessages.COURSE_DETAILS_FETCHED ||
+          "Course details fetched successfully",
+        data: courseDTO,
       });
     } catch (error) {
       console.error("Error fetching course details:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: StudentErrorMessages.COURSE_DEATILFETCH_FAILED
+        message: StudentErrorMessages.COURSE_DEATILFETCH_FAILED,
       });
     }
   }

@@ -15,7 +15,7 @@ export class AdminCourseRepository
   private _quizDetailRepo: QuizDetailRepository;
   constructor(
     chapterDetailRepo: ChapterDetailRepository,
-    quizDetailRepo: QuizDetailRepository
+    quizDetailRepo: QuizDetailRepository,
   ) {
     super(CourseModel);
     this._chapterDetailRepo = chapterDetailRepo;
@@ -25,7 +25,7 @@ export class AdminCourseRepository
   async getAllCourses(
     search = "",
     page = 1,
-    limit = 10
+    limit = 10,
   ): Promise<{ data: ICourse[]; total: number }> {
     const filter = search
       ? { courseName: { $regex: search, $options: "i" } }

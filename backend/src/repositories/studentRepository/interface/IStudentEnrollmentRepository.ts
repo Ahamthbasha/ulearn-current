@@ -6,12 +6,12 @@ export interface IStudentEnrollmentRepository {
   getAllEnrolledCourses(userId: Types.ObjectId): Promise<IEnrollment[]>;
   getEnrollmentByCourseDetails(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<IEnrollment | null>;
   markChapterCompleted(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
-    chapterId: Types.ObjectId
+    chapterId: Types.ObjectId,
   ): Promise<IEnrollment | null>;
 
   submitQuizResult(
@@ -22,11 +22,11 @@ export interface IStudentEnrollmentRepository {
       correctAnswers: number;
       totalQuestions: number;
       scorePercentage: number;
-    }
+    },
   ): Promise<IEnrollment | null>;
 
   areAllChaptersCompleted(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<boolean>;
 }

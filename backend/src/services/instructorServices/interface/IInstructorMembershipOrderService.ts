@@ -1,9 +1,12 @@
-import { InstructorMembershipOrderDTO,InstructorMembershipOrderListDTO } from "../../../models/instructorMembershipOrderModel";
+import {
+  InstructorMembershipOrderDTO,
+  InstructorMembershipOrderListDTO,
+} from "../../../models/instructorMembershipOrderModel";
 
 export interface IInstructorMembershipOrderService {
   initiateCheckout(
     instructorId: string,
-    planId: string
+    planId: string,
   ): Promise<{
     razorpayOrderId: string;
     amount: number;
@@ -28,8 +31,11 @@ export interface IInstructorMembershipOrderService {
     instructorId: string,
     page?: number,
     limit?: number,
-    search?:string
+    search?: string,
   ): Promise<{ data: InstructorMembershipOrderListDTO[]; total: number }>;
 
-  getOrderByTxnId(txnId: string, instructorId: string): Promise<InstructorMembershipOrderDTO | null>;
+  getOrderByTxnId(
+    txnId: string,
+    instructorId: string,
+  ): Promise<InstructorMembershipOrderDTO | null>;
 }

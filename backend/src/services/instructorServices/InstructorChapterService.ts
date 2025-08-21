@@ -1,12 +1,15 @@
 import { CreateChapterDTO, IChapter } from "../../models/chapterModel";
 import { ChapterDTO } from "../../dto/instructorDTO/chapterDTO";
-import { IInstructorChapterRepository } from "../../repositories/instructorRepository/interface/IInstructorChapterRepository"; 
+import { IInstructorChapterRepository } from "../../repositories/instructorRepository/interface/IInstructorChapterRepository";
 import { IInstructorChapterService } from "./interface/IInstructorChapterService";
-import { mapChapterToDTO, mapChaptersToDTO } from "../../mappers/instructorMapper/chapterMapper";
+import {
+  mapChapterToDTO,
+  mapChaptersToDTO,
+} from "../../mappers/instructorMapper/chapterMapper";
 
 export class InstructorChapterService implements IInstructorChapterService {
   private _chapterRepo: IInstructorChapterRepository;
-  
+
   constructor(chapterRepo: IInstructorChapterRepository) {
     this._chapterRepo = chapterRepo;
   }
@@ -25,8 +28,14 @@ export class InstructorChapterService implements IInstructorChapterService {
     return this._chapterRepo.getChapterById(chapterId);
   }
 
-  async updateChapter(chapterId: string, data: Partial<IChapter>): Promise<ChapterDTO | null> {
-    const updatedChapter = await this._chapterRepo.updateChapter(chapterId, data);
+  async updateChapter(
+    chapterId: string,
+    data: Partial<IChapter>,
+  ): Promise<ChapterDTO | null> {
+    const updatedChapter = await this._chapterRepo.updateChapter(
+      chapterId,
+      data,
+    );
     if (!updatedChapter) return null;
     return mapChapterToDTO(updatedChapter);
   }
@@ -38,22 +47,28 @@ export class InstructorChapterService implements IInstructorChapterService {
   async findByTitleOrNumberAndCourseId(
     courseId: string,
     chapterTitle: string,
-    chapterNumber: number
+    chapterNumber: number,
   ): Promise<IChapter | null> {
-    return this._chapterRepo.findByTitleOrNumberAndCourseId(courseId, chapterTitle, chapterNumber);
+    return this._chapterRepo.findByTitleOrNumberAndCourseId(
+      courseId,
+      chapterTitle,
+      chapterNumber,
+    );
   }
 
   async paginateChapters(
     filter: object,
     page: number,
-    limit: number
+    limit: number,
   ): Promise<{ data: ChapterDTO[]; total: number }> {
-    const result = await this._chapterRepo.paginateChapters(filter, page, limit);
+    const result = await this._chapterRepo.paginateChapters(
+      filter,
+      page,
+      limit,
+    );
     return {
       data: mapChaptersToDTO(result.data),
-      total: result.total
+      total: result.total,
     };
   }
 }
-
-

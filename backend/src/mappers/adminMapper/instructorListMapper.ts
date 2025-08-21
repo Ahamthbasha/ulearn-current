@@ -12,6 +12,8 @@ export const mapInstructorToDTO = (instructor: IInstructor): InstructorDTO => {
   };
 };
 
-export const mapInstructorsToDTO = (instructors: IInstructor[]): InstructorDTO[] => {
+export const mapInstructorsToDTO = (
+  instructors: IInstructor[],
+): InstructorDTO[] => {
   return instructors.map(mapInstructorToDTO);
 };

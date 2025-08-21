@@ -168,10 +168,16 @@ export class StudentController implements IStudentController {
 
       return res
         .status(StatusCode.OK)
-        .cookie("accessToken", accessToken, { httpOnly: true,secure:true,
-              sameSite:"none" })
-        .cookie("refreshToken", refreshToken, { httpOnly: true,secure:true,
-              sameSite:"none" })
+        .cookie("accessToken", accessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
         .send({
           success: true,
           message: StudentSuccessMessages.LOGIN_SUCCESS,
@@ -187,12 +193,10 @@ export class StudentController implements IStudentController {
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");
       console.log("user is logged out");
-      res
-        .status(StatusCode.OK)
-        .send({
-          success: true,
-          message: StudentSuccessMessages.LOGOUT_SUCCESS,
-        });
+      res.status(StatusCode.OK).send({
+        success: true,
+        message: StudentSuccessMessages.LOGOUT_SUCCESS,
+      });
     } catch (error) {
       throw error;
     }
@@ -288,7 +292,7 @@ export class StudentController implements IStudentController {
 
       const passwordReset = await this._studentService.resetPassword(
         data.email,
-        hashedPassword
+        hashedPassword,
       );
       if (passwordReset) {
         res.clearCookie("forgotToken");
@@ -325,12 +329,16 @@ export class StudentController implements IStudentController {
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true,
-              secure:true,
-              sameSite:"none"
-             })
-            .cookie("refreshToken", refreshToken, { httpOnly: true,secure:true,
-              sameSite:"none" })
+            .cookie("accessToken", accessToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
+            })
+            .cookie("refreshToken", refreshToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
+            })
             .json({
               success: true,
               message: StudentSuccessMessages.GOOGLE_LOGIN_SUCCESS,
@@ -342,14 +350,24 @@ export class StudentController implements IStudentController {
           const role = existingUser.role;
           const id = existingUser._id;
           const accessToken = await this._JWT.accessToken({ id, email, role });
-          const refreshToken = await this._JWT.refreshToken({ id, email, role });
+          const refreshToken = await this._JWT.refreshToken({
+            id,
+            email,
+            role,
+          });
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true,secure:true,
-              sameSite:"none" })
-            .cookie("refreshToken", refreshToken, { httpOnly: true,secure:true,
-              sameSite:"none"})
+            .cookie("accessToken", accessToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
+            })
+            .cookie("refreshToken", refreshToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
+            })
             .json({
               success: true,
               message: StudentSuccessMessages.GOOGLE_LOGIN_SUCCESS,
@@ -371,22 +389,24 @@ export class StudentController implements IStudentController {
   async statusCheck(req: Request, res: Response): Promise<void> {
     try {
       const token = req.cookies.accessToken;
-      console.log("token",req.cookies)
+      console.log("token", req.cookies);
       const decoded = await this._JWT.verifyToken(token);
 
       if (!decoded?.email) {
-        res
-          .status(StatusCode.UNAUTHORIZED)
-          .json({ success: false, message: StudentErrorMessages.INVALID_TOKEN });
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: StudentErrorMessages.INVALID_TOKEN,
+        });
         return;
       }
 
       const student = await this._studentService.findByEmail(decoded.email);
 
       if (!student) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ success: false, message: StudentErrorMessages.NOT_FOUND_STUDENT});
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: StudentErrorMessages.NOT_FOUND_STUDENT,
+        });
         return;
       }
 

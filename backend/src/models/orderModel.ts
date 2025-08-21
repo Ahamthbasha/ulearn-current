@@ -1,9 +1,8 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-
 export interface IOrder extends Document {
-  _id:Types.ObjectId,
-  userId: Types.ObjectId ;
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
   courses: Types.ObjectId[];
   amount: number;
   status: "PENDING" | "SUCCESS" | "FAILED";
@@ -30,7 +29,7 @@ const orderSchema = new Schema<IOrder>(
     },
     gatewayOrderId: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const OrderModel = model<IOrder>("Order", orderSchema);

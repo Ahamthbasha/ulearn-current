@@ -7,7 +7,7 @@ export interface IVerificationRepository {
     email: string,
     degreeCertificateUrl: string,
     resumeUrl: string,
-    status: string
+    status: string,
   ): Promise<IVerificationModel | null>;
 
   getRequestDataByEmail(email: string): Promise<IVerificationModel | null>;
@@ -16,11 +16,11 @@ export interface IVerificationRepository {
 
   updateRequest(
     email: string,
-    data: updateRequestType
+    data: updateRequestType,
   ): Promise<IVerificationModel | null>;
 
   approveRequest(
     email: string,
-    status: string
+    status: string,
   ): Promise<IVerificationModel | null>;
 }

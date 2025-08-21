@@ -4,7 +4,7 @@ export interface IAdminInstructorRepository {
   getAllInstructors(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ instructors: IInstructor[]; total: number }>;
 
   getInstructorData(email: string): Promise<IInstructor | null>;

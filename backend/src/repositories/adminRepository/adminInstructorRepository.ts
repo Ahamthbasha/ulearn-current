@@ -2,16 +2,18 @@ import InstructorModel, { IInstructor } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
 import { IAdminInstructorRepository } from "./interface/IAdminInstructorRepository";
 
-export class AdminInstructorRespository extends GenericRepository<IInstructor> implements IAdminInstructorRepository {
-
-    constructor(){
-        super(InstructorModel)
-    }
+export class AdminInstructorRespository
+  extends GenericRepository<IInstructor>
+  implements IAdminInstructorRepository
+{
+  constructor() {
+    super(InstructorModel);
+  }
 
   async getAllInstructors(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ instructors: IInstructor[]; total: number }> {
     try {
       const query = {
@@ -22,22 +24,21 @@ export class AdminInstructorRespository extends GenericRepository<IInstructor> i
       };
 
       const total = await this.countDocuments(query);
-      
-      const result = await this.paginate(
-                query, 
-                page, 
-                limit, 
-                { createdAt: -1 } // sort by createdAt descending
-            );
 
-      return { instructors:result.data, total };
+      const result = await this.paginate(
+        query,
+        page,
+        limit,
+        { createdAt: -1 }, // sort by createdAt descending
+      );
+
+      return { instructors: result.data, total };
     } catch (error) {
       throw error;
     }
   }
 
   //get specified data based on email
-
 
   async getInstructorData(email: string): Promise<IInstructor | null> {
     try {
@@ -55,7 +56,7 @@ export class AdminInstructorRespository extends GenericRepository<IInstructor> i
       const response = await this.findOneAndUpdate(
         { email },
         { $set: data },
-        { new: true }
+        { new: true },
       );
 
       return response;

@@ -1,5 +1,7 @@
 import { Types, SortOrder, PipelineStage } from "mongoose";
-import WithdrawalRequestModel, { IWithdrawalRequest } from "../models/withdrawalRequestModel";
+import WithdrawalRequestModel, {
+  IWithdrawalRequest,
+} from "../models/withdrawalRequestModel";
 import { IWithdrawalRequestRepository } from "./interfaces/IWithdrawalRequestRepository";
 import { IPaginationOptions } from "../types/IPagination";
 import { GenericRepository } from "./genericRepository";
@@ -15,7 +17,7 @@ export class WithdrawalRequestRepository
   async createWithdrawalRequest(
     instructorId: Types.ObjectId,
     amount: number,
-    bankAccount: IWithdrawalRequest["bankAccount"]
+    bankAccount: IWithdrawalRequest["bankAccount"],
   ): Promise<IWithdrawalRequest> {
     const request = await this.create({
       instructorId,
@@ -35,7 +37,7 @@ export class WithdrawalRequestRepository
 
   async findByInstructorIdWithPagination(
     instructorId: Types.ObjectId,
-    options: IPaginationOptions
+    options: IPaginationOptions,
   ): Promise<{ transactions: IWithdrawalRequest[]; total: number }> {
     const { page, limit } = options;
     const filter = { instructorId };
@@ -50,23 +52,23 @@ export class WithdrawalRequestRepository
     requestId: Types.ObjectId,
     status: "approved" | "rejected",
     adminId: Types.ObjectId,
-    remarks?: string
+    remarks?: string,
   ): Promise<IWithdrawalRequest | null> {
     return this.updateOneWithPopulate(
       { _id: requestId },
       { status, adminId, remarks },
-      { path: "instructorId", select: "username email" }
+      { path: "instructorId", select: "username email" },
     );
   }
 
   async retryRequest(
     requestId: Types.ObjectId,
-    amount?: number
+    amount?: number,
   ): Promise<IWithdrawalRequest | null> {
     const updateData: any = {
       status: "pending",
       adminId: undefined,
-      remarks: '',
+      remarks: "",
       updatedAt: new Date(),
     };
 
@@ -74,15 +76,14 @@ export class WithdrawalRequestRepository
       updateData.amount = amount;
     }
 
-    return this.updateOneWithPopulate(
-      { _id: requestId },
-      updateData,
-      { path: "instructorId", select: "username email" }
-    );
+    return this.updateOneWithPopulate({ _id: requestId }, updateData, {
+      path: "instructorId",
+      select: "username email",
+    });
   }
 
   async getAllRequestsWithPagination(
-    options: IPaginationOptions
+    options: IPaginationOptions,
   ): Promise<{ transactions: IWithdrawalRequest[]; total: number }> {
     const { page, limit, search } = options;
 
@@ -107,7 +108,7 @@ export class WithdrawalRequestRepository
 
     // Add search match stage after lookup if search is provided
     if (search && search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+      const searchRegex = new RegExp(search.trim(), "i");
       aggregationPipeline.push({
         $match: {
           $or: [
@@ -135,12 +136,13 @@ export class WithdrawalRequestRepository
           },
         },
       },
-      { $sort: { statusOrder: 1, createdAt: -1 } }
+      { $sort: { statusOrder: 1, createdAt: -1 } },
     );
 
     // Get total count for pagination (before skip/limit)
     const countPipeline = [...aggregationPipeline, { $count: "total" }];
-    const countResult = await WithdrawalRequestModel.aggregate(countPipeline).exec();
+    const countResult =
+      await WithdrawalRequestModel.aggregate(countPipeline).exec();
     const total = countResult.length > 0 ? countResult[0].total : 0;
 
     // Add pagination
@@ -166,10 +168,11 @@ export class WithdrawalRequestRepository
             email: "$instructor.email",
           },
         },
-      }
+      },
     );
 
-    const result = await WithdrawalRequestModel.aggregate(aggregationPipeline).exec();
+    const result =
+      await WithdrawalRequestModel.aggregate(aggregationPipeline).exec();
 
     return { transactions: result || [], total };
   }

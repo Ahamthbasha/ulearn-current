@@ -12,7 +12,10 @@ interface ReportData {
   totalEnrollments: number; // Kept for compatibility with incoming data, but used only for summary
 }
 
-export async function generateExcelReport(data: ReportData[], res: Response): Promise<void> {
+export async function generateExcelReport(
+  data: ReportData[],
+  res: Response,
+): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Revenue Report");
 
@@ -44,32 +47,41 @@ export async function generateExcelReport(data: ReportData[], res: Response): Pr
     courseName: "Total Instructor Revenue:",
     instructorEarning: totalInstructorRevenue,
     coursePrice: "", // Placeholder to align columns
-    createdAt: "",  // Placeholder to align columns
-    orderId: "",    // Placeholder to align columns
+    createdAt: "", // Placeholder to align columns
+    orderId: "", // Placeholder to align columns
   });
   sheet.addRow({
     courseName: "Total Enrollments:",
     instructorEarning: totalEnrollments,
     coursePrice: "", // Placeholder to align columns
-    createdAt: "",  // Placeholder to align columns
-    orderId: "",    // Placeholder to align columns
+    createdAt: "", // Placeholder to align columns
+    orderId: "", // Placeholder to align columns
   });
 
   res.setHeader(
     "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   );
-  res.setHeader("Content-Disposition", `attachment; filename=RevenueReport.xlsx`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=RevenueReport.xlsx`,
+  );
   await workbook.xlsx.write(res);
   res.end();
 }
 
-export async function generatePdfReport(data: ReportData[], res: Response): Promise<void> {
+export async function generatePdfReport(
+  data: ReportData[],
+  res: Response,
+): Promise<void> {
   const doc = new PDFDocument({ margin: 40 });
   const stream = new PassThrough();
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=RevenueReport.pdf`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=RevenueReport.pdf`,
+  );
 
   doc.pipe(stream);
 
@@ -94,7 +106,7 @@ export async function generatePdfReport(data: ReportData[], res: Response): Prom
     row: string[],
     yOffset: number,
     height: number,
-    options: { isHeader?: boolean; isTotal?: boolean } = {}
+    options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
     doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");
@@ -134,18 +146,16 @@ export async function generatePdfReport(data: ReportData[], res: Response): Prom
     const date = new Date(group[0].createdAt).toLocaleDateString("en-IN");
     const courseNames = group.map((g) => g.courseName).join("\n");
     const coursePrices = group.map((g) => `Rs. ${g.coursePrice}`).join("\n");
-    const instructorEarnings = group.map((g) => `Rs. ${g.instructorEarning}`).join("\n");
+    const instructorEarnings = group
+      .map((g) => `Rs. ${g.instructorEarning}`)
+      .join("\n");
 
-    const row = [
-      orderId,
-      date,
-      courseNames,
-      coursePrices,
-      instructorEarnings,
-    ];
+    const row = [orderId, date, courseNames, coursePrices, instructorEarnings];
 
     const lines = Math.max(
-      ...[courseNames, coursePrices, instructorEarnings].map((text) => text.split("\n").length)
+      ...[courseNames, coursePrices, instructorEarnings].map(
+        (text) => text.split("\n").length,
+      ),
     );
     const rowHeight = lines * lineHeight + 8;
 
@@ -164,12 +174,24 @@ export async function generatePdfReport(data: ReportData[], res: Response): Prom
   }
 
   // Total Rows (aligned with table)
-  const totalRevenueRow = ["", "", "Total Instructor Revenue:", "", `Rs. ${total.toFixed(2)}`];
+  const totalRevenueRow = [
+    "",
+    "",
+    "Total Instructor Revenue:",
+    "",
+    `Rs. ${total.toFixed(2)}`,
+  ];
   drawRow(totalRevenueRow, y, 30, { isTotal: true });
   y += 30;
 
   const totalEnrollments = data.length > 0 ? data[0].totalEnrollments : 0; // Use first item's enrollments
-  const totalEnrollmentsRow = ["", "", "Total Enrollments:", "", totalEnrollments.toString()];
+  const totalEnrollmentsRow = [
+    "",
+    "",
+    "Total Enrollments:",
+    "",
+    totalEnrollments.toString(),
+  ];
   drawRow(totalEnrollmentsRow, y, 30, { isTotal: true });
 
   doc.end();

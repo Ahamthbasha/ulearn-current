@@ -8,14 +8,14 @@ export interface IStudentCheckoutService {
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
     totalAmount: number,
-    paymentMethod : 'wallet' | 'razorpay',
+    paymentMethod: "wallet" | "razorpay",
   ): Promise<IOrder>;
 
   verifyAndCompleteCheckout(
     orderId: Types.ObjectId,
     paymentId: string,
     method: string,
-    amount: number
+    amount: number,
   ): Promise<{
     order: IOrder;
     payment: IPayment;

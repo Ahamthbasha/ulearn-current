@@ -4,7 +4,6 @@ import { ICourse } from "../../models/courseModel";
 import { CourseDetailDTO } from "../../dto/userDTO/courseDetailDTO";
 import { mapCourseToDetailDTO } from "../../mappers/userMapper/mapCourseToDetailDTO";
 
-
 export class StudentCourseService implements IStudentCourseService {
   private _studentCourseRepo: IStudentCourseRepository;
 
@@ -14,19 +13,19 @@ export class StudentCourseService implements IStudentCourseService {
 
   async getAllCoursesWithDetails(): Promise<CourseDetailDTO[]> {
     const courses = await this._studentCourseRepo.getAllListedCourses();
-    
+
     const courseDTOs: CourseDetailDTO[] = [];
-    
+
     for (const courseData of courses) {
       const dto = mapCourseToDetailDTO(
         courseData.course,
         courseData.chapterCount,
-        courseData.quizQuestionCount
+        courseData.quizQuestionCount,
       );
-      
+
       courseDTOs.push(dto);
     }
-    
+
     return courseDTOs;
   }
 
@@ -35,7 +34,7 @@ export class StudentCourseService implements IStudentCourseService {
     limit: number,
     searchTerm = "",
     sort: "name-asc" | "name-desc" | "price-asc" | "price-desc" = "name-asc",
-    categoryId?: string
+    categoryId?: string,
   ): Promise<{
     data: CourseDetailDTO[];
     total: number;
@@ -45,42 +44,42 @@ export class StudentCourseService implements IStudentCourseService {
       limit,
       searchTerm,
       sort,
-      categoryId
+      categoryId,
     );
-    
+
     const courseDTOs: CourseDetailDTO[] = [];
-    
+
     for (const courseData of result.data) {
       const dto = mapCourseToDetailDTO(
         courseData.course,
         courseData.chapterCount,
-        courseData.quizQuestionCount
+        courseData.quizQuestionCount,
       );
-      
 
-      
       courseDTOs.push(dto);
     }
-    
+
     return {
       data: courseDTOs,
       total: result.total,
     };
   }
 
-  async getCourseDetailsById(courseId: string): Promise<CourseDetailDTO | null> {
+  async getCourseDetailsById(
+    courseId: string,
+  ): Promise<CourseDetailDTO | null> {
     const courseData = await this._studentCourseRepo.getCourseDetails(courseId);
-    
+
     if (!courseData.course) {
       return null;
     }
-    
+
     const dto = mapCourseToDetailDTO(
       courseData.course,
       courseData.chapterCount,
-      courseData.quizQuestionCount
+      courseData.quizQuestionCount,
     );
-    
+
     return dto;
   }
 

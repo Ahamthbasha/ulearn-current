@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import AWS from "aws-sdk";
 
 export const getViewableUrl = async (key: string): Promise<string> => {
   const {
@@ -20,8 +20,8 @@ export const getViewableUrl = async (key: string): Promise<string> => {
     Bucket: BUCKET_NAME!, // non-null assertion
     Key: key,
     Expires: 60 * 5, // 5 minutes
-    ResponseContentDisposition: `inline; filename="${key.split('/').pop()}"`, // 👈 opens in browser
+    ResponseContentDisposition: `inline; filename="${key.split("/").pop()}"`, // 👈 opens in browser
   };
 
-  return s3.getSignedUrlPromise('getObject', params);
+  return s3.getSignedUrlPromise("getObject", params);
 };

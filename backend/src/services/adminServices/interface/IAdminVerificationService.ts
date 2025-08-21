@@ -1,18 +1,22 @@
-import { VerificationRequestDTO,VerificationRequestDetailDTO } from "../../../dto/adminDTO/verificationRequestDTO";
-
+import {
+  VerificationRequestDTO,
+  VerificationRequestDetailDTO,
+} from "../../../dto/adminDTO/verificationRequestDTO";
 
 export interface IAdminVerificationService {
   getAllRequests(
     page: number,
     limit: number,
-    search?: string
+    search?: string,
   ): Promise<{ data: VerificationRequestDTO[]; total: number }>;
 
-  getRequestDataByEmail(email: string): Promise<VerificationRequestDetailDTO | null>;
-  
+  getRequestDataByEmail(
+    email: string,
+  ): Promise<VerificationRequestDetailDTO | null>;
+
   approveRequest(
     email: string,
     status: string,
-    reason?: string
+    reason?: string,
   ): Promise<VerificationRequestDTO | null>;
 }

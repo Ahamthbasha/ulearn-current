@@ -12,19 +12,19 @@ export interface IInstructorMembershipOrderRepository {
   }): Promise<IInstructorMembershipOrder>;
 
   findByRazorpayOrderId(
-    orderId: string
+    orderId: string,
   ): Promise<IInstructorMembershipOrder | null>; // ✅
 
   updateOrderStatus(
     orderId: string,
-    data: Partial<IInstructorMembershipOrder>
+    data: Partial<IInstructorMembershipOrder>,
   ): Promise<void>; // ✅
 
   findAllByInstructorId(
     instructorId: string,
     page?: number,
     limit?: number,
-    search?:string
+    search?: string,
   ): Promise<{ data: IInstructorMembershipOrder[]; total: number }>;
 
   findOneByTxnId(txnId: string): Promise<IInstructorMembershipOrder | null>;

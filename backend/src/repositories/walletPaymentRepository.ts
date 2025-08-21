@@ -16,7 +16,7 @@ export class WalletPaymentRepository implements IWalletPaymentRepository {
   verifyPaymentSignature(
     orderId: string,
     paymentId: string,
-    signature: string
+    signature: string,
   ): boolean {
     const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!);
     hmac.update(`${orderId}|${paymentId}`);

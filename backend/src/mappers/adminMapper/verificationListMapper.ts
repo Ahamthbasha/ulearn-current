@@ -3,7 +3,7 @@ import { IVerificationModel } from "../../models/verificationModel";
 import { VerificationRequestDTO } from "../../dto/adminDTO/verificationRequestDTO";
 
 export function mapVerificationToDTO(
-  request: IVerificationModel
+  request: IVerificationModel,
 ): VerificationRequestDTO {
   return {
     id: request._id.toString(),
@@ -15,7 +15,7 @@ export function mapVerificationToDTO(
 
 // For array of requests
 export function mapVerificationArrayToDTO(
-  requests: IVerificationModel[]
+  requests: IVerificationModel[],
 ): VerificationRequestDTO[] {
   return requests.map(mapVerificationToDTO);
 }

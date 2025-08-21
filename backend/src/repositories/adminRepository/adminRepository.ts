@@ -14,7 +14,7 @@ export class AdminRespository
   private _adminInstructorRepository: IAdminInstructorRepository;
   constructor(
     adminUserRepository: IAdminUserRepository,
-    adminInstructorRepository: IAdminInstructorRepository
+    adminInstructorRepository: IAdminInstructorRepository,
   ) {
     super(AdminModel);
     this._adminUserRepository = adminUserRepository;
@@ -32,13 +32,13 @@ export class AdminRespository
   async getAllUsers(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ users: IUser[]; total: number }> {
     try {
       const users = await this._adminUserRepository.getAllUsers(
         page,
         limit,
-        search
+        search,
       );
       return users;
     } catch (error) {
@@ -49,14 +49,14 @@ export class AdminRespository
   async getAllInstructors(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ instructors: IInstructor[]; total: number }> {
     try {
       const instructors =
         await this._adminInstructorRepository.getAllInstructors(
           page,
           limit,
-          search
+          search,
         );
       return instructors;
     } catch (error) {
@@ -76,9 +76,8 @@ export class AdminRespository
 
   async getInstructorData(email: string) {
     try {
-      const response = await this._adminInstructorRepository.getInstructorData(
-        email
-      );
+      const response =
+        await this._adminInstructorRepository.getInstructorData(email);
 
       return response;
     } catch (error) {
@@ -92,7 +91,7 @@ export class AdminRespository
     try {
       const response = await this._adminUserRepository.updateProfile(
         email,
-        data
+        data,
       );
       return response;
     } catch (error) {
@@ -105,7 +104,7 @@ export class AdminRespository
       const response =
         await this._adminInstructorRepository.updateInstructorProfile(
           email,
-          data
+          data,
         );
       return response;
     } catch (error) {

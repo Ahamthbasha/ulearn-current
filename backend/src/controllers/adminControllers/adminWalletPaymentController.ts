@@ -53,8 +53,8 @@ export class AdminWalletPaymentController
         signature: razorpay_signature,
         amount,
         userId,
-        role: Roles.ADMIN, 
-        onModel:Model.ADMIN, 
+        role: Roles.ADMIN,
+        onModel: Model.ADMIN,
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
@@ -62,7 +62,8 @@ export class AdminWalletPaymentController
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || AdminErrorMessages.ADMIN_PAYMENT_VERIFICATION_FAILED,
+        message:
+          error.message || AdminErrorMessages.ADMIN_PAYMENT_VERIFICATION_FAILED,
       });
     }
   }

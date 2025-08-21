@@ -1,9 +1,9 @@
 import { IUser } from "../../models/userModel";
-import { StudentProfileDTO } from "../../dto/userDTO/studentProfileDTO"; 
+import { StudentProfileDTO } from "../../dto/userDTO/studentProfileDTO";
 
 export const toStudentProfileDTO = (
   user: IUser,
-  profilePicUrl?: string
+  profilePicUrl?: string,
 ): StudentProfileDTO => {
   return {
     username: user.username,

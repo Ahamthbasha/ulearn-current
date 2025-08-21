@@ -1,4 +1,7 @@
-import { IStudentCourseReportItem, IStudentSlotReportItem } from "../../../types/dashboardTypes";
+import {
+  IStudentCourseReportItem,
+  IStudentSlotReportItem,
+} from "../../../types/dashboardTypes";
 
 export interface IStudentDashboardService {
   getStudentDashboardData(userId: string): Promise<{
@@ -11,8 +14,18 @@ export interface IStudentDashboardService {
   }>;
 
   getMonthlyPerformance(userId: string): Promise<{
-    coursePerformance: { month: number; year: number; count: number; totalAmount: number }[];
-    slotPerformance: { month: number; year: number; count: number; totalAmount: number }[];
+    coursePerformance: {
+      month: number;
+      year: number;
+      count: number;
+      totalAmount: number;
+    }[];
+    slotPerformance: {
+      month: number;
+      year: number;
+      count: number;
+      totalAmount: number;
+    }[];
   }>;
 
   getCourseReport(
@@ -23,7 +36,7 @@ export interface IStudentDashboardService {
       endDate?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<IStudentCourseReportItem[]>;
 
   getSlotReport(
@@ -34,6 +47,6 @@ export interface IStudentDashboardService {
       endDate?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<IStudentSlotReportItem[]>;
 }

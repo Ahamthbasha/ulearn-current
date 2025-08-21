@@ -9,7 +9,7 @@ export interface IStudentCourseService {
     limit: number,
     searchTerm?: string,
     sort?: "name-asc" | "name-desc" | "price-asc" | "price-desc",
-    categoryId?: string
+    categoryId?: string,
   ): Promise<{
     data: CourseDetailDTO[];
     total: number;
@@ -24,4 +24,3 @@ export interface IStudentCourseService {
     quizQuestionCount: number;
   }>;
 }
-

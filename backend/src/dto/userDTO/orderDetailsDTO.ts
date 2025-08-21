@@ -9,6 +9,6 @@ export interface OrderDetailsDTO {
   courses: {
     courseName: string;
     price: number;
-    thumbnailUrl:string;
+    thumbnailUrl: string;
   }[];
 }

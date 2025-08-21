@@ -1,7 +1,7 @@
 import { StudentErrorMessages } from "../../utils/constants";
 import UserModel, { IUser, IUserDTO } from "../../models/userModel";
 import { GenericRepository } from "../genericRepository";
-import { IStudentRepository } from "./interface/IStudentRepository"; 
+import { IStudentRepository } from "./interface/IStudentRepository";
 import bcrypt from "bcryptjs";
 import { Types } from "mongoose";
 export class StudentRepository

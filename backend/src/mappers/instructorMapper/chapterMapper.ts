@@ -1,6 +1,5 @@
-
 import { IChapter } from "../../models/chapterModel";
-import { ChapterDTO } from "../../dto/instructorDTO/chapterDTO"; 
+import { ChapterDTO } from "../../dto/instructorDTO/chapterDTO";
 
 export function mapChapterToDTO(chapter: IChapter): ChapterDTO {
   return {
@@ -8,7 +7,7 @@ export function mapChapterToDTO(chapter: IChapter): ChapterDTO {
     chapterId: chapter._id.toString(),
     chapterTitle: chapter.chapterTitle,
     videoUrl: chapter.videoUrl,
-    chapterNumber:chapter.chapterNumber
+    chapterNumber: chapter.chapterNumber,
   };
 }
 

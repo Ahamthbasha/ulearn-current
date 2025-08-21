@@ -1,4 +1,4 @@
-import { IAdminMembershipRepository } from "./interface/IAdminMembershipRepository"; 
+import { IAdminMembershipRepository } from "./interface/IAdminMembershipRepository";
 import {
   MembershipPlanModel,
   IMembershipPlan,
@@ -14,14 +14,14 @@ export class AdminMembershipRepository
   }
 
   async createPlan(
-    planData: Partial<IMembershipPlan>
+    planData: Partial<IMembershipPlan>,
   ): Promise<IMembershipPlan> {
     return this.create(planData);
   }
 
   async updatePlan(
     id: string,
-    updateData: Partial<IMembershipPlan>
+    updateData: Partial<IMembershipPlan>,
   ): Promise<IMembershipPlan | null> {
     return this.update(id, updateData);
   }
@@ -44,7 +44,7 @@ export class AdminMembershipRepository
     filter: object,
     page: number,
     limit: number,
-    sort: Record<string, any> = { createdAt: -1 }
+    sort: Record<string, any> = { createdAt: -1 },
   ): Promise<{ data: IMembershipPlan[]; total: number }> {
     return this.paginate(filter, page, limit, sort);
   }

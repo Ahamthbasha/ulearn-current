@@ -18,7 +18,7 @@ export interface ICourse extends Document {
   duration: string;
   thumbnailUrl: string;
   isPublished: boolean;
-  isVerified:boolean;
+  isVerified: boolean;
   isListed: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -55,13 +55,13 @@ const CourseSchema = new Schema<ICourse>(
     thumbnailUrl: { type: String, required: true },
     isPublished: { type: Boolean, default: false },
     isListed: { type: Boolean, default: false },
-    isVerified : {type:Boolean,default:false},
+    isVerified: { type: Boolean, default: false },
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
+  },
 );
 
 // ✅ Virtual for chapters

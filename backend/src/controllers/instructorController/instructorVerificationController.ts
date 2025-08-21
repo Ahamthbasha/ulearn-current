@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { IInstructorVerificationService } from "../../services/instructorServices/interface/IInstructorVerificationService"; 
+import { IInstructorVerificationService } from "../../services/instructorServices/interface/IInstructorVerificationService";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
 import { StatusCode } from "../../utils/enums";
 import {
@@ -38,13 +38,12 @@ export class InstructorVerificationController {
         return;
       }
 
-      const existingRequest = await this._verificationService.getRequestByEmail(
-        email
-      );
+      const existingRequest =
+        await this._verificationService.getRequestByEmail(email);
 
       const degreeCertificateUrl = await uploadToS3Bucket(
         degreeCertificate,
-        "degreeCertificate"
+        "degreeCertificate",
       );
       const resumeUrl = await uploadToS3Bucket(resume, "resume");
 
@@ -72,7 +71,7 @@ export class InstructorVerificationController {
           name,
           email,
           degreeCertificateUrl,
-          resumeUrl
+          resumeUrl,
         );
 
         res.status(StatusCode.OK).send({
@@ -89,7 +88,7 @@ export class InstructorVerificationController {
         email,
         degreeCertificateUrl,
         resumeUrl,
-        "pending"
+        "pending",
       );
 
       res.status(StatusCode.OK).send({

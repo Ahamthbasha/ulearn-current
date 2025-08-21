@@ -1,14 +1,14 @@
-import mongoose, { Document} from "mongoose";
-import {Types} from 'mongoose'
+import mongoose, { Document } from "mongoose";
+import { Types } from "mongoose";
 export interface IVerificationModel extends Document {
-  _id:Types.ObjectId;
+  _id: Types.ObjectId;
   username: string;
   email: string;
   resumeUrl: string;
   degreeCertificateUrl: string;
   status: string;
   reviewedAt: Date | null;
-  rejectionReason?:string
+  rejectionReason?: string;
 }
 
 const verificationRequestSchema = new mongoose.Schema(
@@ -23,14 +23,14 @@ const verificationRequestSchema = new mongoose.Schema(
       default: "pending",
     },
     reviewedAt: { type: Date },
-    rejectionReason:{type:String}
+    rejectionReason: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const VerificationModel = mongoose.model<IVerificationModel>(
   "VerificationRequests",
-  verificationRequestSchema
+  verificationRequestSchema,
 );
 
 export default VerificationModel;

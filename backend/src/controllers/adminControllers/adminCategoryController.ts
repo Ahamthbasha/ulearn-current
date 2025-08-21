@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { IAdminCategoryController } from "../adminControllers/interface/IAdminCategoryController";
-import { IAdminCategoryService } from "../../services/adminServices/interface/IAdminCategoryService"; 
+import { IAdminCategoryService } from "../../services/adminServices/interface/IAdminCategoryService";
 import {
   AdminErrorMessages,
   AdminSuccessMessages,
@@ -19,9 +19,8 @@ export class AdminCategoryContoller implements IAdminCategoryController {
   async addCategory(req: Request, res: Response): Promise<void> {
     try {
       const { categoryName } = req.body;
-      const existingCategory = await this._categoryService.findCategoryByName(
-        categoryName
-      );
+      const existingCategory =
+        await this._categoryService.findCategoryByName(categoryName);
       if (existingCategory) {
         res
           .status(StatusCode.CONFLICT)
@@ -29,9 +28,8 @@ export class AdminCategoryContoller implements IAdminCategoryController {
         return;
       }
 
-      const createdCategory = await this._categoryService.addCategory(
-        categoryName
-      );
+      const createdCategory =
+        await this._categoryService.addCategory(categoryName);
       if (createdCategory) {
         res.status(StatusCode.CREATED).send({
           success: true,
@@ -39,12 +37,10 @@ export class AdminCategoryContoller implements IAdminCategoryController {
           data: createdCategory,
         });
       } else {
-        res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .send({
-            success: false,
-            message: CategoryErrorMsg.CATEGORY_NOT_CREATED,
-          });
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
+          success: false,
+          message: CategoryErrorMsg.CATEGORY_NOT_CREATED,
+        });
       }
     } catch (error) {
       throw error;
@@ -56,7 +52,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
       const { categoryName, id } = req.body;
 
       const existingCategory = (await this._categoryService.findCategoryByName(
-        categoryName
+        categoryName,
       )) as ICategoryModel | null;
 
       if (existingCategory && existingCategory._id.toString() !== id) {
@@ -69,7 +65,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
 
       const updatedCategory = await this._categoryService.updateCategory(
         id,
-        categoryName
+        categoryName,
       );
 
       if (updatedCategory) {
@@ -103,7 +99,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
         await this._categoryService.getAllCategoriesPaginated(
           page,
           limit,
-          search
+          search,
         );
 
       res.status(StatusCode.OK).json({
@@ -150,13 +146,11 @@ export class AdminCategoryContoller implements IAdminCategoryController {
       if (!response)
         throw new Error(GeneralServerErrorMsg.INTERNAL_SERVER_ERROR);
 
-      res
-        .status(StatusCode.OK)
-        .send({
-          success: true,
-          message: CategorySuccessMsg.CATEGORY_FETCHED,
-          data: response,
-        });
+      res.status(StatusCode.OK).send({
+        success: true,
+        message: CategorySuccessMsg.CATEGORY_FETCHED,
+        data: response,
+      });
     } catch (error) {
       throw error;
     }

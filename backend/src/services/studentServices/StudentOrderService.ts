@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { IStudentOrderService } from "./interface/IStudentOrderService"; 
-import { IStudentOrderRepository } from "../../repositories/studentRepository/interface/IStudentOrderRepository"; 
+import { IStudentOrderService } from "./interface/IStudentOrderService";
+import { IStudentOrderRepository } from "../../repositories/studentRepository/interface/IStudentOrderRepository";
 import { IOrder } from "../../models/orderModel";
 import { OrderHistoryDTO } from "../../dto/userDTO/orderHistoryDTO";
 import { OrderDetailsDTO } from "../../dto/userDTO/orderDetailsDTO";
@@ -10,7 +10,7 @@ import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
 export class StudentOrderService implements IStudentOrderService {
   private _orderRepo: IStudentOrderRepository;
-  
+
   constructor(orderRepo: IStudentOrderRepository) {
     this._orderRepo = orderRepo;
   }
@@ -19,13 +19,13 @@ export class StudentOrderService implements IStudentOrderService {
     userId: Types.ObjectId,
     page: number,
     limit: number,
-    search?: string
+    search?: string,
   ): Promise<{ orders: OrderHistoryDTO[]; total: number }> {
     const { orders, total } = await this._orderRepo.getUserOrdersPaginated(
-      userId, 
-      page, 
-      limit, 
-      search
+      userId,
+      page,
+      limit,
+      search,
     );
 
     // Map orders to DTOs
@@ -33,13 +33,13 @@ export class StudentOrderService implements IStudentOrderService {
 
     return {
       orders: orderDTOs,
-      total
+      total,
     };
   }
 
   async getOrderDetails(
-    orderId: Types.ObjectId, 
-    userId: Types.ObjectId
+    orderId: Types.ObjectId,
+    userId: Types.ObjectId,
   ): Promise<OrderDetailsDTO | null> {
     const order = await this._orderRepo.getOrderById(orderId, userId);
 
@@ -55,7 +55,7 @@ export class StudentOrderService implements IStudentOrderService {
           ...course.toObject?.(),
           thumbnailUrl: signedUrl,
         };
-      })
+      }),
     );
 
     const orderWithSignedUrls = {
@@ -71,8 +71,8 @@ export class StudentOrderService implements IStudentOrderService {
 
   // For internal use when raw order data is needed (like for invoice generation)
   async getOrderRaw(
-    orderId: Types.ObjectId, 
-    userId: Types.ObjectId
+    orderId: Types.ObjectId,
+    userId: Types.ObjectId,
   ): Promise<IOrder | null> {
     return await this._orderRepo.getOrderById(orderId, userId);
   }

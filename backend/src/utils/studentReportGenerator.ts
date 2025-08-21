@@ -1,7 +1,10 @@
 import ExcelJS from "exceljs";
 import { Response } from "express";
 import PDFDocument from "pdfkit";
-import { IStudentCourseReportItem, IStudentSlotReportItem } from "../types/dashboardTypes";
+import {
+  IStudentCourseReportItem,
+  IStudentSlotReportItem,
+} from "../types/dashboardTypes";
 import { PassThrough } from "stream";
 
 // ✅ Time formatting utility
@@ -22,7 +25,7 @@ export function formatTo12Hour(time: string | Date): string {
 // ✅ Excel - Course Report
 export const generateStudentCourseReportExcel = async (
   report: IStudentCourseReportItem[],
-  res: Response
+  res: Response,
 ) => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Course Report");
@@ -58,8 +61,14 @@ export const generateStudentCourseReportExcel = async (
     }, 0),
   ]);
 
-  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-  res.setHeader("Content-Disposition", "attachment; filename=course_report.xlsx");
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
+  res.setHeader(
+    "Content-Disposition",
+    "attachment; filename=course_report.xlsx",
+  );
 
   await workbook.xlsx.write(res);
   res.end();
@@ -68,7 +77,7 @@ export const generateStudentCourseReportExcel = async (
 // ✅ Excel - Slot Report
 export const generateStudentSlotReportExcel = async (
   report: IStudentSlotReportItem[],
-  res: Response
+  res: Response,
 ) => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Slot Booking Report");
@@ -106,7 +115,10 @@ export const generateStudentSlotReportExcel = async (
     report.reduce((sum, item) => sum + Number(item.price), 0),
   ]);
 
-  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
   res.setHeader("Content-Disposition", "attachment; filename=slot_report.xlsx");
 
   await workbook.xlsx.write(res);
@@ -116,7 +128,7 @@ export const generateStudentSlotReportExcel = async (
 // ✅ PDF - Course Report
 export async function generateStudentCourseReportPdf(
   data: IStudentCourseReportItem[],
-  res: Response
+  res: Response,
 ): Promise<void> {
   const doc = new PDFDocument({ margin: 40 });
   const stream = new PassThrough();
@@ -139,7 +151,7 @@ export async function generateStudentCourseReportPdf(
     row: string[],
     yOffset: number,
     height: number,
-    options: { isHeader?: boolean; isTotal?: boolean } = {}
+    options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
     doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");
@@ -205,13 +217,16 @@ export async function generateStudentCourseReportPdf(
 // ✅ PDF - Slot Report
 export const generateStudentSlotReportPdf = (
   data: IStudentSlotReportItem[],
-  res: Response
+  res: Response,
 ): void => {
   const doc = new PDFDocument({ margin: 40 });
   const stream = new PassThrough();
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=StudentSlotReport.pdf`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=StudentSlotReport.pdf`,
+  );
 
   doc.pipe(stream);
 
@@ -228,7 +243,7 @@ export const generateStudentSlotReportPdf = (
     row: string[],
     yOffset: number,
     height: number,
-    options: { isHeader?: boolean; isTotal?: boolean } = {}
+    options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
     doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");

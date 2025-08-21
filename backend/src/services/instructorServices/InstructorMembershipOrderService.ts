@@ -1,30 +1,41 @@
-import { IInstructorMembershipOrderService } from "./interface/IInstructorMembershipOrderService"; 
+import { IInstructorMembershipOrderService } from "./interface/IInstructorMembershipOrderService";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { Types } from "mongoose";
-import { InstructorMembershipOrderListDTO, InstructorMembershipOrderDTO } from "../../models/instructorMembershipOrderModel";
-import { IInstructorMembershipOrderRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipOrderRepository"; 
-import { IInstructorMembershipRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipRepository"; 
-import IInstructorRepository from "../../repositories/instructorRepository/interface/IInstructorRepository"; 
+import {
+  InstructorMembershipOrderListDTO,
+  InstructorMembershipOrderDTO,
+} from "../../models/instructorMembershipOrderModel";
+import { IInstructorMembershipOrderRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipOrderRepository";
+import { IInstructorMembershipRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipRepository";
+import IInstructorRepository from "../../repositories/instructorRepository/interface/IInstructorRepository";
 import { IMembershipPlan } from "../../models/membershipPlanModel";
 import { IWalletService } from "../interface/IWalletService";
 import { IEmail } from "../../types/Email";
 
-export class InstructorMembershipOrderService implements IInstructorMembershipOrderService {
-    private _membershipOrderRepo: IInstructorMembershipOrderRepository
-    private _planRepo: IInstructorMembershipRepository
-    private _instructorRepo: IInstructorRepository
-    private _razorpay: Razorpay
-    private _walletService: IWalletService
-    private _emailService: IEmail
-  constructor(membershipOrderRepo: IInstructorMembershipOrderRepository,planRepo: IInstructorMembershipRepository, instructorRepo: IInstructorRepository,razorpay: Razorpay,walletService: IWalletService,emailService: IEmail
+export class InstructorMembershipOrderService
+  implements IInstructorMembershipOrderService
+{
+  private _membershipOrderRepo: IInstructorMembershipOrderRepository;
+  private _planRepo: IInstructorMembershipRepository;
+  private _instructorRepo: IInstructorRepository;
+  private _razorpay: Razorpay;
+  private _walletService: IWalletService;
+  private _emailService: IEmail;
+  constructor(
+    membershipOrderRepo: IInstructorMembershipOrderRepository,
+    planRepo: IInstructorMembershipRepository,
+    instructorRepo: IInstructorRepository,
+    razorpay: Razorpay,
+    walletService: IWalletService,
+    emailService: IEmail,
   ) {
-    this._membershipOrderRepo = membershipOrderRepo
-    this._planRepo = planRepo
-    this._instructorRepo = instructorRepo
-    this._razorpay = razorpay
-    this._walletService = walletService
-    this._emailService = emailService
+    this._membershipOrderRepo = membershipOrderRepo;
+    this._planRepo = planRepo;
+    this._instructorRepo = instructorRepo;
+    this._razorpay = razorpay;
+    this._walletService = walletService;
+    this._emailService = emailService;
   }
 
   async initiateCheckout(instructorId: string, planId: string) {
@@ -38,7 +49,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       throw new Error("You already have an active membership.");
     }
 
-    const plan = await this._planRepo.findById(planId) as IMembershipPlan;
+    const plan = (await this._planRepo.findById(planId)) as IMembershipPlan;
     if (!plan) throw new Error("Invalid plan");
 
     const razorpayOrder = await this._razorpay.orders.create({
@@ -82,22 +93,25 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
 
     const instructor = await this._instructorRepo.findById(instructorId);
     if (!instructor) throw new Error("Instructor not found");
-  if (
-    instructor.membershipExpiryDate &&
-    new Date(instructor.membershipExpiryDate) > new Date()
-  ) {
-    throw new Error("You already have an active membership.");
-  }
+    if (
+      instructor.membershipExpiryDate &&
+      new Date(instructor.membershipExpiryDate) > new Date()
+    ) {
+      throw new Error("You already have an active membership.");
+    }
 
-    let order = await this._membershipOrderRepo.findByRazorpayOrderId(razorpayOrderId);
+    let order =
+      await this._membershipOrderRepo.findByRazorpayOrderId(razorpayOrderId);
 
-    const plan = await this._planRepo.findById(planId) as IMembershipPlan;
+    const plan = (await this._planRepo.findById(planId)) as IMembershipPlan;
     if (!plan || !plan.durationInDays || !plan._id) {
       throw new Error("Invalid membership plan");
     }
 
     const now = new Date();
-    const expiryDate = new Date(now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000);
+    const expiryDate = new Date(
+      now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000,
+    );
 
     if (!order) {
       order = await this._membershipOrderRepo.createOrder({
@@ -131,18 +145,21 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       process.env.ADMINEMAIL!,
       plan.price,
       `Instructor Membership (Razorpay): ${plan.name}`,
-      paymentId
+      paymentId,
     );
 
     await this._emailService.sendMembershipPurchaseEmail(
       instructor.username || "Instructor",
       instructor.email || "",
       plan.name,
-      expiryDate
+      expiryDate,
     );
   }
 
-  async purchaseWithWallet(instructorId: string, planId: string): Promise<void> {
+  async purchaseWithWallet(
+    instructorId: string,
+    planId: string,
+  ): Promise<void> {
     const instructor = await this._instructorRepo.findById(instructorId);
     if (!instructor) throw new Error("Instructor not found");
 
@@ -153,7 +170,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       throw new Error("You already have an active membership.");
     }
 
-    const plan = await this._planRepo.findById(planId) as IMembershipPlan;
+    const plan = (await this._planRepo.findById(planId)) as IMembershipPlan;
     if (!plan || !plan._id) throw new Error("Membership plan not found");
 
     const amount = plan.price;
@@ -163,7 +180,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       instructor._id.toString(),
       amount,
       `Membership Purchase: ${plan.name}`,
-      txnId
+      txnId,
     );
 
     if (!instructorWallet) {
@@ -175,20 +192,22 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
         process.env.ADMINEMAIL!,
         amount,
         `Instructor Membership: ${plan.name}`,
-        txnId
+        txnId,
       );
     } catch (err) {
       await this._walletService.creditWallet(
         new Types.ObjectId(instructor._id.toString()),
         amount,
         `Refund: Failed admin credit`,
-        `refund_${txnId}`
+        `refund_${txnId}`,
       );
       throw new Error("Admin credit failed. Transaction rolled back.");
     }
 
     const now = new Date();
-    const expiry = new Date(now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000);
+    const expiry = new Date(
+      now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000,
+    );
 
     await this._membershipOrderRepo.createOrder({
       instructorId,
@@ -210,7 +229,7 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
       instructor.username,
       instructor.email,
       plan.name,
-      expiry
+      expiry,
     );
   }
 
@@ -218,28 +237,32 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     instructorId: string,
     page: number = 1,
     limit: number = 10,
-    search?: string
+    search?: string,
   ): Promise<{ data: InstructorMembershipOrderListDTO[]; total: number }> {
-    const { data, total } = await this._membershipOrderRepo.findAllByInstructorId(
-      instructorId,
-      page,
-      limit,
-      search
-    );
+    const { data, total } =
+      await this._membershipOrderRepo.findAllByInstructorId(
+        instructorId,
+        page,
+        limit,
+        search,
+      );
 
-    const dtoData: InstructorMembershipOrderListDTO[] = data.map(order => ({
+    const dtoData: InstructorMembershipOrderListDTO[] = data.map((order) => ({
       orderId: order.txnId,
       planName: (order.membershipPlanId as any).name,
       amount: order.price,
       status: order.paymentStatus,
-      purchaseDate: order.createdAt
+      purchaseDate: order.createdAt,
     }));
 
     return { data: dtoData, total };
   }
 
   // 🆕 UPDATED METHOD - Added benefits
-  async getOrderByTxnId(txnId: string, instructorId: string): Promise<InstructorMembershipOrderDTO | null> {
+  async getOrderByTxnId(
+    txnId: string,
+    instructorId: string,
+  ): Promise<InstructorMembershipOrderDTO | null> {
     const order = await this._membershipOrderRepo.findOneByTxnId(txnId);
     if (!order) throw new Error("Order not found");
 
@@ -252,20 +275,20 @@ export class InstructorMembershipOrderService implements IInstructorMembershipOr
     return {
       instructor: {
         name: (order.instructorId as any).username,
-        email: (order.instructorId as any).email
+        email: (order.instructorId as any).email,
       },
       membershipPlan: {
         name: (order.membershipPlanId as any).name,
         durationInDays: (order.membershipPlanId as any).durationInDays,
         description: (order.membershipPlanId as any).description,
-        benefits: (order.membershipPlanId as any).benefits || [] // 🆕 Added benefits
+        benefits: (order.membershipPlanId as any).benefits || [], // 🆕 Added benefits
       },
       price: order.price,
       paymentStatus: order.paymentStatus,
       startDate: order.startDate,
       endDate: order.endDate,
       txnId: order.txnId,
-      createdAt: order.createdAt
+      createdAt: order.createdAt,
     };
   }
 }

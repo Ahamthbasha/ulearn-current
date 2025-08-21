@@ -1,8 +1,8 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface ITransaction {
   amount: number;
-  type: 'credit' | 'debit';
+  type: "credit" | "debit";
   description: string;
   txnId: string;
   date: Date;
@@ -11,8 +11,8 @@ export interface ITransaction {
 export interface IWallet extends Document {
   _id: Types.ObjectId;
   ownerId: Types.ObjectId;
-  onModel: 'User' | 'Instructor' | 'Admin'; 
-  role: 'student' | 'instructor' | 'admin'; 
+  onModel: "User" | "Instructor" | "Admin";
+  role: "student" | "instructor" | "admin";
   balance: number;
   transactions: ITransaction[];
   createdAt?: Date;
@@ -22,12 +22,12 @@ export interface IWallet extends Document {
 const TransactionSchema: Schema<ITransaction> = new Schema(
   {
     amount: { type: Number, required: true },
-    type: { type: String, enum: ['credit', 'debit'], required: true },
+    type: { type: String, enum: ["credit", "debit"], required: true },
     description: { type: String, required: true },
     txnId: { type: String, required: true },
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const WalletSchema: Schema<IWallet> = new Schema(
@@ -35,30 +35,30 @@ const WalletSchema: Schema<IWallet> = new Schema(
     ownerId: {
       type: Schema.Types.ObjectId,
       required: true,
-      refPath: 'onModel'
+      refPath: "onModel",
     },
     onModel: {
       type: String,
       required: true,
-      enum: ['User', 'Instructor', 'Admin']
+      enum: ["User", "Instructor", "Admin"],
     },
     role: {
       type: String,
       required: true,
-      enum: ['student', 'instructor', 'admin']
+      enum: ["student", "instructor", "admin"],
     },
     balance: {
       type: Number,
       required: true,
-      default: 0
+      default: 0,
     },
     transactions: {
       type: [TransactionSchema],
-      default: []
-    }
+      default: [],
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const WalletModel = mongoose.model<IWallet>('Wallet', WalletSchema);
+const WalletModel = mongoose.model<IWallet>("Wallet", WalletSchema);
 export default WalletModel;

@@ -1,4 +1,4 @@
-import { IStudentInstructorListingRepository } from "./interface/IStudentInstructorListingRepository"; 
+import { IStudentInstructorListingRepository } from "./interface/IStudentInstructorListingRepository";
 import InstructorModel, { IInstructor } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
 import { PipelineStage } from "mongoose";
@@ -17,7 +17,7 @@ export class StudentInstructorListingRepository
     search?: string,
     sortOrder: "asc" | "desc" = "asc",
     skill?: string,
-    expertise?: string
+    expertise?: string,
   ): Promise<{ data: IInstructor[]; total: number }> {
     const match: any = {
       isMentor: true,

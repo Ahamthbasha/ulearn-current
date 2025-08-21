@@ -34,7 +34,7 @@ export class InstructorWalletController implements IInstructorWalletController {
         ownerId,
         amount,
         description,
-        txnId
+        txnId,
       );
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
@@ -54,13 +54,14 @@ export class InstructorWalletController implements IInstructorWalletController {
         ownerId,
         amount,
         description,
-        txnId
+        txnId,
       );
 
       if (!wallet) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INSUFFICIENT_BALANCE_OR_WALLET_NOT_FOUND,
+          message:
+            INSTRUCTOR_ERROR_MESSAGE.INSUFFICIENT_BALANCE_OR_WALLET_NOT_FOUND,
         });
         return;
       }
@@ -77,7 +78,7 @@ export class InstructorWalletController implements IInstructorWalletController {
 
   async getPaginatedTransactions(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
@@ -85,7 +86,11 @@ export class InstructorWalletController implements IInstructorWalletController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       const { transactions, total } =
-        await this._walletService.getPaginatedTransactions(ownerId, page, limit);
+        await this._walletService.getPaginatedTransactions(
+          ownerId,
+          page,
+          limit,
+        );
 
       res.status(StatusCode.OK).json({
         success: true,

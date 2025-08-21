@@ -17,7 +17,11 @@ export interface IBooking extends Document {
 const BookingSchema = new Schema<IBooking>(
   {
     studentId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    instructorId: { type: Schema.Types.ObjectId, ref: "Instructor", required: true },
+    instructorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Instructor",
+      required: true,
+    },
     slotId: { type: Schema.Types.ObjectId, ref: "Slot", required: true },
 
     status: {
@@ -34,7 +38,7 @@ const BookingSchema = new Schema<IBooking>(
 
     txnId: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const BookingModel = mongoose.model<IBooking>("Booking", BookingSchema);

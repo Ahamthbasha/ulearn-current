@@ -3,6 +3,6 @@ export interface IWalletPaymentRepository {
   verifyPaymentSignature(
     orderId: string,
     paymentId: string,
-    signature: string
+    signature: string,
   ): boolean;
 }

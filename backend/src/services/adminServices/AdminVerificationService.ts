@@ -1,9 +1,15 @@
-import { IAdminVerificationService } from "./interface/IAdminVerificationService"; 
-import { IAdminVerificationRepository } from "../../repositories/adminRepository/interface/IAdminVerificationRepository"; 
+import { IAdminVerificationService } from "./interface/IAdminVerificationService";
+import { IAdminVerificationRepository } from "../../repositories/adminRepository/interface/IAdminVerificationRepository";
 import IInstructorService from "../instructorServices/interface/IInstructorService";
-import { VerificationRequestDTO , VerificationRequestDetailDTO} from "../../dto/adminDTO/verificationRequestDTO";
+import {
+  VerificationRequestDTO,
+  VerificationRequestDetailDTO,
+} from "../../dto/adminDTO/verificationRequestDTO";
 
-import { mapVerificationArrayToDTO, mapVerificationToDTO } from "../../mappers/adminMapper/verificationListMapper";
+import {
+  mapVerificationArrayToDTO,
+  mapVerificationToDTO,
+} from "../../mappers/adminMapper/verificationListMapper";
 import { getViewableUrl } from "../../utils/getViewableUrl";
 
 export class AdminVerificationService implements IAdminVerificationService {
@@ -12,7 +18,7 @@ export class AdminVerificationService implements IAdminVerificationService {
 
   constructor(
     verificationRepository: IAdminVerificationRepository,
-    instructorService: IInstructorService
+    instructorService: IInstructorService,
   ) {
     this._verificationRepository = verificationRepository;
     this._instructorService = instructorService;
@@ -21,19 +27,28 @@ export class AdminVerificationService implements IAdminVerificationService {
   async getAllRequests(
     page: number,
     limit: number,
-    search = ''
+    search = "",
   ): Promise<{ data: VerificationRequestDTO[]; total: number }> {
-    const { data, total } = await this._verificationRepository.getAllRequests(page, limit, search);
+    const { data, total } = await this._verificationRepository.getAllRequests(
+      page,
+      limit,
+      search,
+    );
     return { data: mapVerificationArrayToDTO(data), total };
   }
 
-  async getRequestDataByEmail(email: string): Promise<VerificationRequestDetailDTO | null> {
-    const request = await this._verificationRepository.getRequestDataByEmail(email);
+  async getRequestDataByEmail(
+    email: string,
+  ): Promise<VerificationRequestDetailDTO | null> {
+    const request =
+      await this._verificationRepository.getRequestDataByEmail(email);
     if (!request) return null;
 
     // ✅ generate presigned URLs in service layer
     const resumeUrl = await getViewableUrl(request.resumeUrl);
-    const degreeCertificateUrl = await getViewableUrl(request.degreeCertificateUrl);
+    const degreeCertificateUrl = await getViewableUrl(
+      request.degreeCertificateUrl,
+    );
 
     return {
       id: request._id.toString(),
@@ -48,11 +63,15 @@ export class AdminVerificationService implements IAdminVerificationService {
   async approveRequest(
     email: string,
     status: string,
-    reason?: string
+    reason?: string,
   ): Promise<VerificationRequestDTO | null> {
-    const result = await this._verificationRepository.approveRequest(email, status, reason);
+    const result = await this._verificationRepository.approveRequest(
+      email,
+      status,
+      reason,
+    );
 
-    if (result && status === 'approved') {
+    if (result && status === "approved") {
       await this._instructorService.setInstructorVerified(email);
     }
 

@@ -7,7 +7,7 @@ import { toUserListDTOs } from "../../mappers/adminMapper/userListMapper";
 import { mapInstructorsToDTO } from "../../mappers/adminMapper/instructorListMapper";
 import { UserListDTO } from "../../dto/adminDTO/userListDTO";
 import { InstructorDTO } from "../../dto/adminDTO/instructorListDTO";
-import { BlockUpdate } from "../../types/adminTypes/adminTypes"; 
+import { BlockUpdate } from "../../types/adminTypes/adminTypes";
 
 export class AdminService implements IAdminService {
   private _adminRepository: IAdminRepository;
@@ -27,20 +27,25 @@ export class AdminService implements IAdminService {
   async getAllUsers(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ users: UserListDTO[]; total: number }> {
-    const { users, total } = await this._adminRepository.getAllUsers(page, limit, search);
-    const userDTOs = toUserListDTOs(users);   // ✅ mapping in service
+    const { users, total } = await this._adminRepository.getAllUsers(
+      page,
+      limit,
+      search,
+    );
+    const userDTOs = toUserListDTOs(users); // ✅ mapping in service
     return { users: userDTOs, total };
   }
 
   async getAllInstructors(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ instructors: InstructorDTO[]; total: number }> {
-    const { instructors, total } = await this._adminRepository.getAllInstructors(page, limit, search);
-    const instructorDTOs = mapInstructorsToDTO(instructors);  // ✅ mapping in service
+    const { instructors, total } =
+      await this._adminRepository.getAllInstructors(page, limit, search);
+    const instructorDTOs = mapInstructorsToDTO(instructors); // ✅ mapping in service
     return { instructors: instructorDTOs, total };
   }
 
@@ -52,11 +57,14 @@ export class AdminService implements IAdminService {
     return await this._adminRepository.getInstructorData(email);
   }
 
-  async updateProfile(email: string, data: BlockUpdate): Promise<IUser|null> {
+  async updateProfile(email: string, data: BlockUpdate): Promise<IUser | null> {
     return await this._adminRepository.updateProfile(email, data);
   }
 
-  async updateInstructorProfile(email: string, data: BlockUpdate): Promise<IInstructor|null> {
+  async updateInstructorProfile(
+    email: string,
+    data: BlockUpdate,
+  ): Promise<IInstructor | null> {
     return await this._adminRepository.updateInstructorProfile(email, data);
   }
 }

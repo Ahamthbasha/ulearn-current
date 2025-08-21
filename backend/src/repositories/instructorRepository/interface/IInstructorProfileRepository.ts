@@ -4,10 +4,10 @@ export interface IInstructorProfileRepository {
   getByEmail(email: string): Promise<IInstructor | null>;
   updateProfile(
     id: string,
-    data: Partial<IInstructor>
+    data: Partial<IInstructor>,
   ): Promise<IInstructor | null>;
   updatePassword(
     email: string,
-    hashedPassword: string
+    hashedPassword: string,
   ): Promise<IInstructor | null>;
 }

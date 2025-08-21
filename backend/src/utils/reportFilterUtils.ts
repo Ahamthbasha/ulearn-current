@@ -3,7 +3,7 @@ export type ReportFilter = "daily" | "weekly" | "monthly" | "yearly" | "custom";
 export function getDateRange(
   type: ReportFilter,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ): { startDate: Date; endDate: Date } {
   const now = new Date();
   let start: Date;
@@ -41,7 +41,7 @@ export function getDateRange(
         if (start > end) {
           throw new Error("startDate cannot be after endDate");
         }
-      } catch (error:any) {
+      } catch (error: any) {
         throw new Error(`Invalid custom date range: ${error.message}`);
       }
       break;

@@ -7,7 +7,7 @@ const instructorRepo = new InstructorRepository();
 export const mentorCheck = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const instructorId = req.user?.id;
@@ -21,7 +21,8 @@ export const mentorCheck = async (
 
     if (!instructor || !instructor.isMentor) {
       res.status(403).json({
-        message: "Access denied. You must be a mentor to use this functionality.",
+        message:
+          "Access denied. You must be a mentor to use this functionality.",
       });
       return;
     }

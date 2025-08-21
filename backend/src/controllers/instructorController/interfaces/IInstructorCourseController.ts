@@ -9,7 +9,7 @@ export interface IInstructorCourseController {
   getInstructorCourses(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void>;
 
   publishCourse(req: Request, res: Response, next: NextFunction): Promise<void>;

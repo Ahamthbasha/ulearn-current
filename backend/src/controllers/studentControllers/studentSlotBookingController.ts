@@ -1,5 +1,5 @@
 import { IStudentSlotBookingController } from "./interfaces/IStudentSlotBookingController";
-import { IStudentSlotBookingService } from "../../services/studentServices/interface/IStudentSlotBookingService"; 
+import { IStudentSlotBookingService } from "../../services/studentServices/interface/IStudentSlotBookingService";
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
@@ -10,14 +10,14 @@ import { StudentErrorMessages } from "../../utils/constants";
 export class StudentSlotBookingController
   implements IStudentSlotBookingController
 {
-  private _bookingService : IStudentSlotBookingService
+  private _bookingService: IStudentSlotBookingService;
   constructor(bookingService: IStudentSlotBookingService) {
-    this._bookingService = bookingService
+    this._bookingService = bookingService;
   }
 
   async initiateCheckout(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { slotId } = req.params;
@@ -26,7 +26,7 @@ export class StudentSlotBookingController
 
       const result = await this._bookingService.initiateCheckout(
         slotId,
-        studentId
+        studentId,
       );
       res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (err: any) {
@@ -49,7 +49,7 @@ export class StudentSlotBookingController
       const booking = await this._bookingService.verifyPayment(
         slotId,
         studentId,
-        razorpay_payment_id
+        razorpay_payment_id,
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
@@ -68,7 +68,7 @@ export class StudentSlotBookingController
 
       const booking = await this._bookingService.bookViaWallet(
         slotId,
-        studentId
+        studentId,
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
@@ -81,7 +81,7 @@ export class StudentSlotBookingController
 
   async getBookingHistory(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const studentId = req.user?.id;
@@ -96,13 +96,13 @@ export class StudentSlotBookingController
           studentId,
           page,
           limit,
-          searchQuery
+          searchQuery,
         );
 
       res.status(StatusCode.OK).json({
         success: true,
         data: result.data,
-        total: result.total
+        total: result.total,
       });
     } catch (err: any) {
       console.error("getBookingHistory error:", err);
@@ -114,20 +114,20 @@ export class StudentSlotBookingController
 
   async getBookingDetail(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const bookingId = req.params.bookingId;
       if (!bookingId) throw new Error("Booking ID is required");
 
-      const bookingDetail = await this._bookingService.getStudentBookingDetail(
-        bookingId
-      );
-      
+      const bookingDetail =
+        await this._bookingService.getStudentBookingDetail(bookingId);
+
       if (!bookingDetail) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ success: false, message: StudentErrorMessages.BOOKING_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: StudentErrorMessages.BOOKING_NOT_FOUND,
+        });
         return;
       }
 
@@ -142,15 +142,14 @@ export class StudentSlotBookingController
 
   async downloadReceipt(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const bookingId = req.params.bookingId;
       if (!bookingId) throw new Error("Booking ID is required");
 
-      const booking = await this._bookingService.getStudentBookingById(
-        bookingId
-      );
+      const booking =
+        await this._bookingService.getStudentBookingById(bookingId);
       if (
         !booking ||
         typeof booking.slotId === "string" ||
@@ -165,7 +164,7 @@ export class StudentSlotBookingController
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=slot-receipt-${bookingId}.pdf`
+        `attachment; filename=slot-receipt-${bookingId}.pdf`,
       );
       generateSlotReceiptPdf(res, populatedBooking);
     } catch (err: any) {

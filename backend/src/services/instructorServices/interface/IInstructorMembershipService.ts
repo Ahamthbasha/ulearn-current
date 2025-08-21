@@ -5,9 +5,8 @@ export interface IInstructorMembershipService {
   getAvailablePlans(): Promise<IMembershipPlan[]>;
   getInstructorById(instructorId: string): Promise<IInstructor | null>;
   getMembershipStatus(instructorId: string): Promise<{
-  planId: string | null;
-  expiryDate: Date | null;
-  isMentor: boolean;
-}>;
-
+    planId: string | null;
+    expiryDate: Date | null;
+    isMentor: boolean;
+  }>;
 }

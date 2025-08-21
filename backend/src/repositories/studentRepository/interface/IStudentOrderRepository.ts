@@ -6,10 +6,10 @@ export interface IStudentOrderRepository {
     userId: Types.ObjectId,
     page: number,
     limit: number,
-    search?:string
+    search?: string,
   ): Promise<{ orders: IOrder[]; total: number }>;
   getOrderById(
     orderId: Types.ObjectId,
-    userId: Types.ObjectId
+    userId: Types.ObjectId,
   ): Promise<IOrder | null>;
 }

@@ -1,4 +1,4 @@
-import { IInstructorSlotRepository } from "./interface/IInstructorSlotRepository"; 
+import { IInstructorSlotRepository } from "./interface/IInstructorSlotRepository";
 import SlotModel, { ISlot } from "../../models/slotModel";
 import { Types } from "mongoose";
 import { GenericRepository } from "../genericRepository";
@@ -17,7 +17,7 @@ export class InstructorSlotRepository
 
   async updateSlot(
     slotId: Types.ObjectId,
-    data: Partial<ISlot>
+    data: Partial<ISlot>,
   ): Promise<ISlot | null> {
     return await this.update(slotId.toString(), data); // use generic update by ID
   }
@@ -38,7 +38,7 @@ export class InstructorSlotRepository
     instructorId: Types.ObjectId,
     startTime: Date,
     endTime: Date,
-    excludeSlotId?: Types.ObjectId // optional
+    excludeSlotId?: Types.ObjectId, // optional
   ): Promise<boolean> {
     const filter: any = {
       instructorId,
@@ -66,7 +66,7 @@ export class InstructorSlotRepository
       year?: number;
       startDate?: Date;
       endDate?: Date;
-    }
+    },
   ) {
     let startDate: Date;
     let endDate: Date;

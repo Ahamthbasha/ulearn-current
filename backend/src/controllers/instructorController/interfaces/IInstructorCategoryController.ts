@@ -4,6 +4,6 @@ export interface IInstructorCategoryController {
   getListedCategories(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void>;
 }

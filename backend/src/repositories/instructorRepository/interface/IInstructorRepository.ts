@@ -1,5 +1,5 @@
 import { IInstructor } from "../../../models/instructorModel";
-import { IGenericRepository } from "../../../repositories/genericRepository"; 
+import { IGenericRepository } from "../../../repositories/genericRepository";
 
 export default interface IInstructorRepository
   extends IGenericRepository<IInstructor> {
@@ -10,13 +10,13 @@ export default interface IInstructorRepository
 
   updateByEmail(
     email: string,
-    data: Partial<IInstructor>
+    data: Partial<IInstructor>,
   ): Promise<IInstructor | null>;
 
   //enrollment side use
   findById(id: string): Promise<IInstructor | null>;
 
   //admin side
-  getMentorCount():Promise<number>
-  getInstructorCount():Promise<number>
+  getMentorCount(): Promise<number>;
+  getInstructorCount(): Promise<number>;
 }

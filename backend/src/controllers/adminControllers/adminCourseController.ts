@@ -23,24 +23,22 @@ export class AdminCourseController implements IAdminCourseController {
       const result = await this._adminCourseService.fetchAllCourses(
         search as string,
         parsedPage,
-        parsedLimit
+        parsedLimit,
       );
 
       res.status(StatusCode.OK).json({
         success: true,
-        data:result.data,
+        data: result.data,
         total: result.total,
         page: parsedPage,
         limit: parsedLimit,
       });
     } catch (error) {
       console.error("Error fetching courses:", error);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({
-          success: false,
-          message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
-        });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
+      });
     }
   }
 
@@ -48,7 +46,8 @@ export class AdminCourseController implements IAdminCourseController {
     try {
       const { courseId } = req.params;
 
-      const courseDetailsDTO = await this._adminCourseService.getCourseDetails(courseId);
+      const courseDetailsDTO =
+        await this._adminCourseService.getCourseDetails(courseId);
 
       if (!courseDetailsDTO) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -75,17 +74,14 @@ export class AdminCourseController implements IAdminCourseController {
     try {
       const { courseId } = req.params;
 
-      const updatedCourseDTO = await this._adminCourseService.toggleCourseListing(
-        courseId
-      );
+      const updatedCourseDTO =
+        await this._adminCourseService.toggleCourseListing(courseId);
 
       if (!updatedCourseDTO) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({
-            success: false,
-            message: AdminErrorMessages.ADMINSIDE_COURSE_NOTFOUND,
-          });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: AdminErrorMessages.ADMINSIDE_COURSE_NOTFOUND,
+        });
         return;
       }
 
@@ -98,12 +94,10 @@ export class AdminCourseController implements IAdminCourseController {
         .json({ success: true, message, data: updatedCourseDTO });
     } catch (error) {
       console.error("Error toggling listing status:", error);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({
-          success: false,
-          message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
-        });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
+      });
     }
   }
 
@@ -115,12 +109,10 @@ export class AdminCourseController implements IAdminCourseController {
         await this._adminCourseService.toggleCourseVerification(courseId);
 
       if (!updatedCourseDTO) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({
-            success: false,
-            message: AdminErrorMessages.ADMINSIDE_COURSE_NOTFOUND,
-          });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: AdminErrorMessages.ADMINSIDE_COURSE_NOTFOUND,
+        });
         return;
       }
 
@@ -133,12 +125,10 @@ export class AdminCourseController implements IAdminCourseController {
         .json({ success: true, message, data: updatedCourseDTO });
     } catch (error) {
       console.error("Error toggling verification status:", error);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({
-          success: false,
-          message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
-        });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
+      });
     }
   }
 }

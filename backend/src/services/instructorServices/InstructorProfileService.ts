@@ -1,5 +1,5 @@
-import { IInstructorProfileService } from "./interface/IInstructorProfileService"; 
-import { IInstructorProfileRepository } from "../../repositories/instructorRepository/interface/IInstructorProfileRepository"; 
+import { IInstructorProfileService } from "./interface/IInstructorProfileService";
+import { IInstructorProfileRepository } from "../../repositories/instructorRepository/interface/IInstructorProfileRepository";
 import { IInstructor } from "../../models/instructorModel";
 import { InstructorProfileDTO } from "../../models/instructorModel";
 import { toInstructorProfileDTO } from "../../mappers/instructorMapper/instructorProfileMapper";
@@ -14,7 +14,7 @@ export class InstructorProfileService implements IInstructorProfileService {
 
   async getProfile(email: string): Promise<InstructorProfileDTO | null> {
     const instructor = await this._instructorProfileRepo.getByEmail(email);
-    
+
     if (!instructor) {
       return null;
     }
@@ -27,9 +27,15 @@ export class InstructorProfileService implements IInstructorProfileService {
     return toInstructorProfileDTO(instructor, profilePicUrl);
   }
 
-  async updateProfile(id: string, data: Partial<IInstructor>): Promise<InstructorProfileDTO | null> {
-    const updatedInstructor = await this._instructorProfileRepo.updateProfile(id, data);
-    
+  async updateProfile(
+    id: string,
+    data: Partial<IInstructor>,
+  ): Promise<InstructorProfileDTO | null> {
+    const updatedInstructor = await this._instructorProfileRepo.updateProfile(
+      id,
+      data,
+    );
+
     if (!updatedInstructor) {
       return null;
     }
@@ -43,7 +49,10 @@ export class InstructorProfileService implements IInstructorProfileService {
   }
 
   async updatePassword(email: string, password: string): Promise<boolean> {
-    const updated = await this._instructorProfileRepo.updatePassword(email, password);
+    const updated = await this._instructorProfileRepo.updatePassword(
+      email,
+      password,
+    );
     return !!updated;
   }
 

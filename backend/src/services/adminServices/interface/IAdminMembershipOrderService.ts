@@ -5,7 +5,7 @@ export interface IAdminMembershipOrderService {
   getAllOrders(
     page: number,
     limit: number,
-    search?: string
+    search?: string,
   ): Promise<{ data: AdminMembershipOrderListDTO[]; total: number }>;
 
   getOrderDetail(txnId: string): Promise<InstructorMembershipOrderDTO>;

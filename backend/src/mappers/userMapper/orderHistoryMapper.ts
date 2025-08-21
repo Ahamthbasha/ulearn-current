@@ -1,6 +1,6 @@
 // src/mappers/student/toOrderHistoryDTO.ts
 import { IOrder } from "../../models/orderModel";
-import { OrderHistoryDTO } from "../../dto/userDTO/orderHistoryDTO"; 
+import { OrderHistoryDTO } from "../../dto/userDTO/orderHistoryDTO";
 
 export const toOrderHistoryDTO = (order: IOrder): OrderHistoryDTO => {
   const dateObj = new Date(order.createdAt);

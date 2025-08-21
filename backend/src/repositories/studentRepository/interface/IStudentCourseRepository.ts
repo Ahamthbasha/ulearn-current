@@ -14,7 +14,7 @@ export interface IStudentCourseRepository {
     limit: number,
     searchTerm?: string,
     sort?: "name-asc" | "name-desc" | "price-asc" | "price-desc",
-    categoryId?: string
+    categoryId?: string,
   ): Promise<{
     data: {
       course: ICourse;

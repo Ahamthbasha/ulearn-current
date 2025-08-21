@@ -3,14 +3,14 @@ import { InstructorProfileDTO } from "../../models/instructorModel";
 
 export const toInstructorProfileDTO = (
   instructor: IInstructor,
-  profilePicUrl?: string
+  profilePicUrl?: string,
 ): InstructorProfileDTO => {
   return {
-    _id:instructor._id,
+    _id: instructor._id,
     instructorName: instructor.username,
     email: instructor.email,
-    role:instructor.role,
-    isBlocked:instructor.isBlocked,
+    role: instructor.role,
+    isBlocked: instructor.isBlocked,
     skills: instructor.skills,
     expertise: instructor.expertise,
     status: instructor.isVerified,

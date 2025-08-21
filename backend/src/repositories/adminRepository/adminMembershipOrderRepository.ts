@@ -1,7 +1,10 @@
-import { IAdminMembershipOrderRepository } from "./interface/IAdminMembershipOrderRepository"; 
+import { IAdminMembershipOrderRepository } from "./interface/IAdminMembershipOrderRepository";
 import { InstructorMembershipOrderModel } from "../../models/instructorMembershipOrderModel";
 import { InstructorMembershipOrderDTO } from "../../models/instructorMembershipOrderModel";
-import { InstructorPopulated,MembershipPlanPopulated } from "../../models/instructorMembershipOrderModel";
+import {
+  InstructorPopulated,
+  MembershipPlanPopulated,
+} from "../../models/instructorMembershipOrderModel";
 
 export class AdminMembershipOrderRepository
   implements IAdminMembershipOrderRepository
@@ -9,7 +12,7 @@ export class AdminMembershipOrderRepository
   async findAllPaginated(
     page: number,
     limit: number,
-    search?: string
+    search?: string,
   ): Promise<{ data: InstructorMembershipOrderDTO[]; total: number }> {
     const skip = (page - 1) * limit;
 
@@ -21,8 +24,12 @@ export class AdminMembershipOrderRepository
 
     const [orders, total] = await Promise.all([
       InstructorMembershipOrderModel.find(query)
-        .populate<{ instructorId: InstructorPopulated }>("instructorId", "username email")
-        .populate<{ membershipPlanId: MembershipPlanPopulated }>("membershipPlanId", "name durationInDays")
+        .populate<{
+          instructorId: InstructorPopulated;
+        }>("instructorId", "username email")
+        .populate<{
+          membershipPlanId: MembershipPlanPopulated;
+        }>("membershipPlanId", "name durationInDays")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -51,14 +58,15 @@ export class AdminMembershipOrderRepository
   }
 
   async findByTxnId(
-    txnId: string
+    txnId: string,
   ): Promise<InstructorMembershipOrderDTO | null> {
     const order = await InstructorMembershipOrderModel.findOne({ txnId })
-      .populate<{ instructorId: InstructorPopulated }>("instructorId", "username email")
-      .populate<{ membershipPlanId: MembershipPlanPopulated }>(
-        "membershipPlanId",
-        "name durationInDays description benefits"
-      )
+      .populate<{
+        instructorId: InstructorPopulated;
+      }>("instructorId", "username email")
+      .populate<{
+        membershipPlanId: MembershipPlanPopulated;
+      }>("membershipPlanId", "name durationInDays description benefits")
       .lean();
 
     if (!order) return null;

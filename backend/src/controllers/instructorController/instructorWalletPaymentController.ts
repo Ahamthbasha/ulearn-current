@@ -8,9 +8,9 @@ import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
 export class InstructorWalletPaymentController
   implements IInstructorWalletPaymentController
 {
-  private _walletPaymentService: IWalletPaymentService
+  private _walletPaymentService: IWalletPaymentService;
   constructor(walletPaymentService: IWalletPaymentService) {
-    this._walletPaymentService = walletPaymentService
+    this._walletPaymentService = walletPaymentService;
   }
 
   async createOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -51,8 +51,8 @@ export class InstructorWalletPaymentController
         signature: razorpay_signature,
         amount,
         userId,
-        role: "instructor", 
-        onModel: "Instructor", 
+        role: "instructor",
+        onModel: "Instructor",
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
@@ -60,7 +60,8 @@ export class InstructorWalletPaymentController
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || INSTRUCTOR_ERROR_MESSAGE.PAYMENT_VERIFICATION_FAILED,
+        message:
+          error.message || INSTRUCTOR_ERROR_MESSAGE.PAYMENT_VERIFICATION_FAILED,
       });
     }
   }

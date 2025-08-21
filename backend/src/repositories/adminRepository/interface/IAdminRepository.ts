@@ -13,12 +13,12 @@ export interface IAdminRepository {
   getAllUsers(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ users: IUser[]; total: number }>;
   getAllInstructors(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ instructors: IInstructor[]; total: number }>;
 
   //get data based on email
@@ -26,6 +26,9 @@ export interface IAdminRepository {
   getInstructorData(email: string): Promise<IInstructor | null>;
 
   //block and ublock
-  updateProfile(email: String, data: BlockUpdate): Promise<IUser|null>;
-  updateInstructorProfile(email: string, data: BlockUpdate): Promise<IInstructor|null>;
+  updateProfile(email: String, data: BlockUpdate): Promise<IUser | null>;
+  updateInstructorProfile(
+    email: string,
+    data: BlockUpdate,
+  ): Promise<IInstructor | null>;
 }

@@ -6,18 +6,18 @@ export interface IStudentSlotBookingRepository {
   updateBookingStatus(id: string, update: Partial<IBooking>): Promise<void>;
   findBookingById(
     id: string,
-    populate?: PopulateOptions[]
+    populate?: PopulateOptions[],
   ): Promise<IBooking | null>;
   findOne(
     filter: object,
-    populate?: PopulateOptions[]
+    populate?: PopulateOptions[],
   ): Promise<IBooking | null>; // ✅ Add this
 
   findAllBookingsByStudentPaginated(
     studentId: string,
     page: number,
     limit: number,
-    searchQuery?:string,
-    populate?: PopulateOptions[]
+    searchQuery?: string,
+    populate?: PopulateOptions[],
   ): Promise<{ data: IBooking[]; total: number }>;
 }

@@ -1,10 +1,10 @@
 import { Types } from "mongoose";
 import { GenericRepository } from "../genericRepository";
-import { IStudentEnrollmentRepository } from "./interface/IStudentEnrollmentRepository"; 
+import { IStudentEnrollmentRepository } from "./interface/IStudentEnrollmentRepository";
 import { EnrollmentModel, IEnrollment } from "../../models/enrollmentModel";
 import { generateCertificate } from "../../utils/certificateGenerator";
-import { IStudentRepository } from "./interface/IStudentRepository"; 
-import IInstructorRepository from "../instructorRepository/interface/IInstructorRepository"; 
+import { IStudentRepository } from "./interface/IStudentRepository";
+import IInstructorRepository from "../instructorRepository/interface/IInstructorRepository";
 
 export class StudentEnrollmentRepository
   extends GenericRepository<IEnrollment>
@@ -14,7 +14,7 @@ export class StudentEnrollmentRepository
   private _instructorRepository: IInstructorRepository;
   constructor(
     studentRepository: IStudentRepository,
-    instructorRepository: IInstructorRepository
+    instructorRepository: IInstructorRepository,
   ) {
     super(EnrollmentModel);
     this._studentRepository = studentRepository;
@@ -28,7 +28,7 @@ export class StudentEnrollmentRepository
 
   async getEnrollmentByCourseDetails(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<IEnrollment | null> {
     return this.findOne({ userId, courseId }, [
       {
@@ -41,7 +41,7 @@ export class StudentEnrollmentRepository
   async markChapterCompleted(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
-    chapterId: Types.ObjectId
+    chapterId: Types.ObjectId,
   ): Promise<IEnrollment | null> {
     return this.findOneAndUpdate(
       {
@@ -61,7 +61,7 @@ export class StudentEnrollmentRepository
           completionStatus: "IN_PROGRESS",
         },
       },
-      { new: true }
+      { new: true },
     );
   }
 
@@ -73,7 +73,7 @@ export class StudentEnrollmentRepository
       correctAnswers: number;
       totalQuestions: number;
       scorePercentage: number;
-    }
+    },
   ): Promise<IEnrollment | null> {
     console.log("📥 Submitting quiz result:", quizData);
 
@@ -85,7 +85,7 @@ export class StudentEnrollmentRepository
 
     // Check if the quiz already exists and update it if so
     const quizIndex = enrollment.completedQuizzes.findIndex(
-      (q) => q.quizId.toString() === quizData.quizId.toString()
+      (q) => q.quizId.toString() === quizData.quizId.toString(),
     );
 
     const updatedQuiz = {
@@ -111,7 +111,7 @@ export class StudentEnrollmentRepository
       {
         path: "courseId",
         populate: { path: "chapters" },
-      }
+      },
     );
 
     if (!fullEnrollment || !fullEnrollment.courseId) {
@@ -130,7 +130,7 @@ export class StudentEnrollmentRepository
 
     if (!allChaptersCompleted) {
       console.log(
-        "❌ Not all chapters are completed. Certificate will not be generated."
+        "❌ Not all chapters are completed. Certificate will not be generated.",
       );
       return enrollment;
     }
@@ -147,7 +147,7 @@ export class StudentEnrollmentRepository
     }
 
     const instructor = await this._instructorRepository.findById(
-      course.instructorId
+      course.instructorId,
     );
     const instructorName = instructor?.username || "Course Instructor";
 
@@ -169,7 +169,7 @@ export class StudentEnrollmentRepository
         certificateGenerated: true,
         certificateUrl,
         completionStatus: "COMPLETED",
-      }
+      },
     );
 
     console.log("✅ Enrollment updated with certificate data.");
@@ -179,7 +179,7 @@ export class StudentEnrollmentRepository
 
   async areAllChaptersCompleted(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<boolean> {
     const enrollment = await EnrollmentModel.findOne({
       userId,

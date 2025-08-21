@@ -1,7 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface IMembershipPlan extends Document {
-  _id:string;
+  _id: string;
   name: string;
   price: number;
   durationInDays: number;
@@ -46,5 +46,5 @@ const MembershipPlanSchema = new Schema<IMembershipPlan>({
 
 export const MembershipPlanModel = model<IMembershipPlan>(
   "MembershipPlan",
-  MembershipPlanSchema
+  MembershipPlanSchema,
 );

@@ -1,4 +1,3 @@
-
 export interface WithdrawalRequestDetailDTO {
   requestId: string;
   instructorName: string;

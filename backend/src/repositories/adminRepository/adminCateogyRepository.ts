@@ -2,7 +2,7 @@ import { ICategoryModel, CategoryModel } from "../../models/categoryModel";
 
 import { GenericRepository } from "../genericRepository";
 
-import { IAdminCategoryRepository } from "./interface/IAdminCategoryRepository"; 
+import { IAdminCategoryRepository } from "./interface/IAdminCategoryRepository";
 
 import { CategoryErrorMsg } from "../../utils/constants";
 
@@ -17,7 +17,7 @@ export class AdminCategoryRepository
   async getAllCategoriesPaginated(
     page: number,
     limit: number,
-    search: string = ""
+    search: string = "",
   ): Promise<{ data: ICategoryModel[]; total: number }> {
     try {
       const filter = search
@@ -30,7 +30,7 @@ export class AdminCategoryRepository
     }
   }
   async findCategoryByName(
-    categoryName: string
+    categoryName: string,
   ): Promise<ICategoryModel | null> {
     return this.findOne({
       categoryName: { $regex: new RegExp(`^${categoryName}$`, "i") },

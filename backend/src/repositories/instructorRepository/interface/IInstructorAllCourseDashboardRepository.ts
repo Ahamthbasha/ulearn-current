@@ -3,11 +3,13 @@ import {
   ITopSellingCourse,
   ICategorySales,
   IMonthlySales,
-  IRevenueReportItem
+  IRevenueReportItem,
 } from "../../../interface/instructorInterface/IInstructorInterface";
 
 export interface IInstructorAllCourseDashboardRepository {
-  getTopSellingCourses(instructorId: Types.ObjectId): Promise<ITopSellingCourse[]>;
+  getTopSellingCourses(
+    instructorId: Types.ObjectId,
+  ): Promise<ITopSellingCourse[]>;
   getCategoryWiseSales(instructorId: Types.ObjectId): Promise<ICategorySales[]>;
   getMonthlySalesGraph(instructorId: Types.ObjectId): Promise<IMonthlySales[]>;
   getTotalRevenue(instructorId: Types.ObjectId): Promise<number>;
@@ -18,6 +20,6 @@ export interface IInstructorAllCourseDashboardRepository {
     page: number,
     limit: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<{ data: IRevenueReportItem[]; total: number }>;
 }

@@ -1,5 +1,5 @@
 // mappers/walletMapper.ts
-import { IWallet } from "../../models/walletModel"; 
+import { IWallet } from "../../models/walletModel";
 import { WalletDto } from "../../dto/common/walletDTO";
 
 export function toWalletDto(wallet: IWallet): WalletDto {

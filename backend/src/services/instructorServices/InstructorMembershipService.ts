@@ -1,8 +1,8 @@
-import { IInstructorMembershipService } from "./interface/IInstructorMembershipService"; 
-import { IInstructorMembershipRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipRepository"; 
+import { IInstructorMembershipService } from "./interface/IInstructorMembershipService";
+import { IInstructorMembershipRepository } from "../../repositories/instructorRepository/interface/IInstructorMembershipRepository";
 import { IMembershipPlan } from "../../models/membershipPlanModel";
 import { IInstructor } from "../../models/instructorModel";
-import IInstructorRepository from "../../repositories/instructorRepository/interface/IInstructorRepository"; 
+import IInstructorRepository from "../../repositories/instructorRepository/interface/IInstructorRepository";
 
 export class InstructorMembershipService
   implements IInstructorMembershipService
@@ -11,7 +11,7 @@ export class InstructorMembershipService
   private _instructorRepo: IInstructorRepository;
   constructor(
     instructorMembershipRepo: IInstructorMembershipRepository,
-    instructorRepo: IInstructorRepository
+    instructorRepo: IInstructorRepository,
   ) {
     this._instructorMembershipRepo = instructorMembershipRepo;
     this._instructorRepo = instructorRepo;

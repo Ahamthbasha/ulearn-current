@@ -1,20 +1,30 @@
-import { IInstructorAllCourseDashboardService } from "./interface/IInstructorAllDashboardService"; 
+import { IInstructorAllCourseDashboardService } from "./interface/IInstructorAllDashboardService";
 import { IInstructorAllCourseDashboardRepository } from "../../repositories/instructorRepository/interface/IInstructorAllCourseDashboardRepository";
 import { Types } from "mongoose";
 import {
   IInstructorDashboard,
-  IDetailedRevenueReport
+  IDetailedRevenueReport,
 } from "../../interface/instructorInterface/IInstructorInterface";
 
-export class InstructorAllCourseDashboardService implements IInstructorAllCourseDashboardService {
+export class InstructorAllCourseDashboardService
+  implements IInstructorAllCourseDashboardService
+{
   private _dashboardRepo: IInstructorAllCourseDashboardRepository;
-  
+
   constructor(dashboardRepo: IInstructorAllCourseDashboardRepository) {
     this._dashboardRepo = dashboardRepo;
   }
 
-  async getInstructorDashboard(instructorId: Types.ObjectId): Promise<IInstructorDashboard> {
-    const [topCourses, categorySales, monthlySales, totalRevenue, totalCourseSales] = await Promise.all([
+  async getInstructorDashboard(
+    instructorId: Types.ObjectId,
+  ): Promise<IInstructorDashboard> {
+    const [
+      topCourses,
+      categorySales,
+      monthlySales,
+      totalRevenue,
+      totalCourseSales,
+    ] = await Promise.all([
       this._dashboardRepo.getTopSellingCourses(instructorId),
       this._dashboardRepo.getCategoryWiseSales(instructorId),
       this._dashboardRepo.getMonthlySalesGraph(instructorId),
@@ -37,8 +47,15 @@ export class InstructorAllCourseDashboardService implements IInstructorAllCourse
     page: number,
     limit: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<IDetailedRevenueReport> {
-    return this._dashboardRepo.getDetailedRevenueReport(instructorId, range, page, limit, startDate, endDate);
+    return this._dashboardRepo.getDetailedRevenueReport(
+      instructorId,
+      range,
+      page,
+      limit,
+      startDate,
+      endDate,
+    );
   }
 }

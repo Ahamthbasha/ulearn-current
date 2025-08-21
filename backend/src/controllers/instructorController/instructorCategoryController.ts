@@ -1,20 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import { IInstructorCategoryController } from "./interfaces/IInstructorCategoryController";
-import { IInstructorCategoryService } from "../../services/instructorServices/interface/IInstructorCategoryService"; 
+import { IInstructorCategoryService } from "../../services/instructorServices/interface/IInstructorCategoryService";
 import { StatusCode } from "../../utils/enums";
 
 export class InstructorCategoryController
   implements IInstructorCategoryController
 {
-  private _categoryService: IInstructorCategoryService
+  private _categoryService: IInstructorCategoryService;
   constructor(categoryService: IInstructorCategoryService) {
-    this._categoryService = categoryService
+    this._categoryService = categoryService;
   }
 
   async getListedCategories(
     _req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const categories = await this._categoryService.fetchActiveCategories();

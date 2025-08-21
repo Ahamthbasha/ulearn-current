@@ -2,12 +2,15 @@ import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
 import { PassThrough } from "stream";
 import { Response } from "express";
-import { IAdminCourseSalesReportItem, IAdminMembershipReportItem } from "../types/dashboardTypes";
+import {
+  IAdminCourseSalesReportItem,
+  IAdminMembershipReportItem,
+} from "../types/dashboardTypes";
 
 export async function generateCourseSalesExcelReport(
   data: IAdminCourseSalesReportItem[],
   totalAdminShare: number,
-  res: Response
+  res: Response,
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Course Sales Report");
@@ -31,7 +34,8 @@ export async function generateCourseSalesExcelReport(
         instructorName: course.instructorName,
         coursePrice: course.coursePrice,
         totalPrice: index === item.courses.length - 1 ? item.totalPrice : "",
-        adminShare: index === item.courses.length - 1 ? item.totalAdminShare : "",
+        adminShare:
+          index === item.courses.length - 1 ? item.totalAdminShare : "",
       });
     });
     sheet.addRow({}); // Add a blank row between orders
@@ -45,9 +49,12 @@ export async function generateCourseSalesExcelReport(
 
   res.setHeader(
     "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   );
-  res.setHeader("Content-Disposition", `attachment; filename=CourseSalesReport.xlsx`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=CourseSalesReport.xlsx`,
+  );
   await workbook.xlsx.write(res);
   res.end();
 }
@@ -55,13 +62,16 @@ export async function generateCourseSalesExcelReport(
 export async function generateCourseSalesPdfReport(
   data: IAdminCourseSalesReportItem[],
   totalAdminShare: number,
-  res: Response
+  res: Response,
 ): Promise<void> {
   const doc = new PDFDocument({ margin: 40 });
   const stream = new PassThrough();
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=CourseSalesReport.pdf`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=CourseSalesReport.pdf`,
+  );
 
   doc.pipe(stream);
 
@@ -88,7 +98,7 @@ export async function generateCourseSalesPdfReport(
     row: string[],
     yOffset: number,
     height: number,
-    options: { isHeader?: boolean; isTotal?: boolean } = {}
+    options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
     doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");
@@ -122,8 +132,12 @@ export async function generateCourseSalesPdfReport(
         course.courseName,
         course.instructorName,
         `Rs. ${course.coursePrice.toFixed(2)}`,
-        index === item.courses.length - 1 ? `Rs. ${item.totalPrice.toFixed(2)}` : "",
-        index === item.courses.length - 1 ? `Rs. ${item.totalAdminShare.toFixed(2)}` : "",
+        index === item.courses.length - 1
+          ? `Rs. ${item.totalPrice.toFixed(2)}`
+          : "",
+        index === item.courses.length - 1
+          ? `Rs. ${item.totalAdminShare.toFixed(2)}`
+          : "",
       ];
 
       const rowHeight = lineHeight + 8;
@@ -159,7 +173,7 @@ export async function generateCourseSalesPdfReport(
 
 export async function generateMembershipSalesExcelReport(
   data: IAdminMembershipReportItem[],
-  res: Response
+  res: Response,
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Membership Sales Report");
@@ -194,22 +208,28 @@ export async function generateMembershipSalesExcelReport(
 
   res.setHeader(
     "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   );
-  res.setHeader("Content-Disposition", `attachment; filename=MembershipSalesReport.xlsx`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=MembershipSalesReport.xlsx`,
+  );
   await workbook.xlsx.write(res);
   res.end();
 }
 
 export async function generateMembershipSalesPdfReport(
   data: IAdminMembershipReportItem[],
-  res: Response
+  res: Response,
 ): Promise<void> {
   const doc = new PDFDocument({ margin: 40 });
   const stream = new PassThrough();
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=MembershipSalesReport.pdf`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=MembershipSalesReport.pdf`,
+  );
 
   doc.pipe(stream);
 
@@ -217,13 +237,7 @@ export async function generateMembershipSalesPdfReport(
   doc.fontSize(20).text("Membership Sales Report", { align: "center" });
   doc.moveDown(1.5);
 
-  const headers = [
-    "Order ID",
-    "Date",
-    "Plan Name",
-    "Instructor",
-    "Price",
-  ];
+  const headers = ["Order ID", "Date", "Plan Name", "Instructor", "Price"];
   const colWidths = [100, 60, 130, 100, 80]; // total ~470
 
   const startX = doc.x;
@@ -234,7 +248,7 @@ export async function generateMembershipSalesPdfReport(
     row: string[],
     yOffset: number,
     height: number,
-    options: { isHeader?: boolean; isTotal?: boolean } = {}
+    options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
     doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");

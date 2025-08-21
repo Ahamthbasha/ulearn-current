@@ -14,7 +14,7 @@ export interface IInstructorSpecificCourseDashboardService {
     page: number,
     limit: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<{
     data: {
       orderId: string;

@@ -1,6 +1,6 @@
-import { IAdminCategoryRepository } from "../../repositories/adminRepository/interface/IAdminCategoryRepository"; 
+import { IAdminCategoryRepository } from "../../repositories/adminRepository/interface/IAdminCategoryRepository";
 import { ICategoryModel } from "../../models/categoryModel";
-import { IAdminCategoryService } from "./interface/IAdminCategoryService"; 
+import { IAdminCategoryService } from "./interface/IAdminCategoryService";
 
 export class AdminCategoryService implements IAdminCategoryService {
   private _adminCategoryRepository: IAdminCategoryRepository;
@@ -10,7 +10,7 @@ export class AdminCategoryService implements IAdminCategoryService {
   }
 
   async findCategoryByName(
-    categoryName: string
+    categoryName: string,
   ): Promise<ICategoryModel | null> {
     return this._adminCategoryRepository.findCategoryByName(categoryName);
   }
@@ -25,7 +25,7 @@ export class AdminCategoryService implements IAdminCategoryService {
 
   async updateCategory(
     id: string,
-    categoryName: string
+    categoryName: string,
   ): Promise<ICategoryModel | null> {
     return this._adminCategoryRepository.update(id, { categoryName });
   }
@@ -39,11 +39,14 @@ export class AdminCategoryService implements IAdminCategoryService {
   }
 
   async getAllCategoriesPaginated(
-  page: number,
-  limit: number,
-  search: string = ""
-): Promise<{ data: ICategoryModel[]; total: number }> {
-  return await this._adminCategoryRepository.getAllCategoriesPaginated(page, limit, search);
-}
-
+    page: number,
+    limit: number,
+    search: string = "",
+  ): Promise<{ data: ICategoryModel[]; total: number }> {
+    return await this._adminCategoryRepository.getAllCategoriesPaginated(
+      page,
+      limit,
+      search,
+    );
+  }
 }

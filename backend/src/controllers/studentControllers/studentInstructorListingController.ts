@@ -1,5 +1,5 @@
 import { IStudentInstructorListingController } from "./interfaces/IStudentInstructorListingController";
-import { IStudentInstructorListingService } from "../../services/studentServices/interface/IStudentInstructorListingService"; 
+import { IStudentInstructorListingService } from "../../services/studentServices/interface/IStudentInstructorListingService";
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/enums";
 import { StudentErrorMessages } from "../../utils/constants";
@@ -10,7 +10,7 @@ export class StudentInstructorListingController
   private _instructorListingService: IStudentInstructorListingService;
 
   constructor(instructorListingService: IStudentInstructorListingService) {
-    this._instructorListingService = instructorListingService
+    this._instructorListingService = instructorListingService;
   }
 
   async listMentors(req: Request, res: Response): Promise<void> {
@@ -28,7 +28,7 @@ export class StudentInstructorListingController
         search,
         sort,
         skill,
-        expertise
+        expertise,
       );
 
       res.status(StatusCode.OK).json({ success: true, ...result });
@@ -44,9 +44,8 @@ export class StudentInstructorListingController
   async getMentorById(req: Request, res: Response): Promise<void> {
     try {
       const { instructorId } = req.params;
-      const mentor = await this._instructorListingService.getMentorById(
-        instructorId
-      );
+      const mentor =
+        await this._instructorListingService.getMentorById(instructorId);
 
       if (!mentor) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -67,7 +66,8 @@ export class StudentInstructorListingController
 
   async getAvailableFilters(_req: Request, res: Response): Promise<void> {
     try {
-      const filters = await this._instructorListingService.getAvailableFilters();
+      const filters =
+        await this._instructorListingService.getAvailableFilters();
       console.log("filters", filters);
       res.status(StatusCode.OK).json({ success: true, ...filters });
     } catch (error) {

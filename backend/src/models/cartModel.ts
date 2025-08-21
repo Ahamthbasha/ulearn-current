@@ -23,7 +23,7 @@ const cartSchema = new Schema<ICart>(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const CartModel = model<ICart>("Cart", cartSchema);

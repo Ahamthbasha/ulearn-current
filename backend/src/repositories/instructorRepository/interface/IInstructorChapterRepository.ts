@@ -6,19 +6,19 @@ export interface IInstructorChapterRepository {
   getChapterById(chapterId: string): Promise<IChapter | null>;
   updateChapter(
     chapterId: string,
-    data: Partial<IChapter>
+    data: Partial<IChapter>,
   ): Promise<IChapter | null>;
   deleteChapter(chapterId: string): Promise<IChapter | null>;
 
   findByTitleOrNumberAndCourseId(
     courseId: string,
     chapterTitle: string,
-    chapterNumber: number
+    chapterNumber: number,
   ): Promise<IChapter | null>;
 
   paginateChapters(
     filter: object,
     page: number,
-    limit: number
+    limit: number,
   ): Promise<{ data: IChapter[]; total: number }>;
 }

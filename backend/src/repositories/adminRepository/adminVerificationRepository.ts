@@ -1,7 +1,7 @@
 import { IVerificationModel } from "../../models/verificationModel";
 import { GenericRepository } from "../genericRepository";
 import VerificationModel from "../../models/verificationModel";
-import { IAdminVerificationRepository } from "./interface/IAdminVerificationRepository"; 
+import { IAdminVerificationRepository } from "./interface/IAdminVerificationRepository";
 import { InstructorErrorMessages } from "../../utils/constants";
 import type { SortOrder } from "mongoose";
 export class AdminVerificationRepository
@@ -15,7 +15,7 @@ export class AdminVerificationRepository
   async getAllRequests(
     page: number,
     limit: number,
-    search: string = ""
+    search: string = "",
   ): Promise<{ data: IVerificationModel[]; total: number }> {
     try {
       const filter = search
@@ -36,7 +36,7 @@ export class AdminVerificationRepository
   }
 
   async getRequestDataByEmail(
-    email: string
+    email: string,
   ): Promise<IVerificationModel | null> {
     try {
       return await this.findOne({ email });
@@ -48,7 +48,7 @@ export class AdminVerificationRepository
   async approveRequest(
     email: string,
     status: string,
-    reason?: string
+    reason?: string,
   ): Promise<IVerificationModel | null> {
     try {
       const instructor = await this.findOne({ email });

@@ -1,7 +1,7 @@
 import { IVerificationModel } from "../../models/verificationModel";
 import { GenericRepository } from "../genericRepository";
 import VerificationModel from "../../models/verificationModel";
-import { IInstructorVerificationRepository } from "./interface/IInstructorVerifcationRepository"; 
+import { IInstructorVerificationRepository } from "./interface/IInstructorVerifcationRepository";
 
 export class InstructorVerificationRepository
   extends GenericRepository<IVerificationModel>
@@ -16,7 +16,7 @@ export class InstructorVerificationRepository
     email: string,
     degreeCertificateUrl: string,
     resumeUrl: string,
-    status: string
+    status: string,
   ): Promise<IVerificationModel | null> {
     try {
       return await this.create({
@@ -41,12 +41,12 @@ export class InstructorVerificationRepository
 
   async updateRequestByEmail(
     email: string,
-    update: Partial<IVerificationModel>
+    update: Partial<IVerificationModel>,
   ): Promise<IVerificationModel | null> {
     return await VerificationModel.findOneAndUpdate(
       { email },
       { $set: update },
-      { new: true }
+      { new: true },
     );
   }
 }

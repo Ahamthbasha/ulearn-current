@@ -1,25 +1,31 @@
 import { Response } from "express";
 import { IInstructorMembershipOrderController } from "./interfaces/IInstructorMembershipOrderController";
-import { IInstructorMembershipOrderService } from "../../services/instructorServices/interface/IInstructorMembershipOrderService"; 
+import { IInstructorMembershipOrderService } from "../../services/instructorServices/interface/IInstructorMembershipOrderService";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
-import { IInstructorMembershipService } from "../../services/instructorServices/interface/IInstructorMembershipService"; 
-import { INSTRUCTOR_ERROR_MESSAGE, ResponseMessages } from "../../utils/constants";
+import { IInstructorMembershipService } from "../../services/instructorServices/interface/IInstructorMembershipService";
+import {
+  INSTRUCTOR_ERROR_MESSAGE,
+  ResponseMessages,
+} from "../../utils/constants";
 import { generateMembershipReceiptPdf } from "../../utils/generateMembershipReceiptPdf";
 
 export class InstructorMembershipOrderController
   implements IInstructorMembershipOrderController
 {
-  private _instructorMembershipOrderService: IInstructorMembershipOrderService
-  private _instructorMembershipService: IInstructorMembershipService
-  constructor(instructorMembershipOrderService: IInstructorMembershipOrderService,instructorMembershipService: IInstructorMembershipService){
-    this._instructorMembershipOrderService = instructorMembershipOrderService
-    this._instructorMembershipService = instructorMembershipService
+  private _instructorMembershipOrderService: IInstructorMembershipOrderService;
+  private _instructorMembershipService: IInstructorMembershipService;
+  constructor(
+    instructorMembershipOrderService: IInstructorMembershipOrderService,
+    instructorMembershipService: IInstructorMembershipService,
+  ) {
+    this._instructorMembershipOrderService = instructorMembershipOrderService;
+    this._instructorMembershipService = instructorMembershipService;
   }
 
   async initiateCheckout(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { planId } = req.params;
@@ -32,9 +38,8 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const instructor = await this._instructorMembershipService.getInstructorById(
-        instructorId
-      );
+      const instructor =
+        await this._instructorMembershipService.getInstructorById(instructorId);
       if (!instructor) {
         res
           .status(StatusCode.NOT_FOUND)
@@ -54,7 +59,11 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const result = await this._instructorMembershipOrderService.initiateCheckout(instructorId, planId);
+      const result =
+        await this._instructorMembershipOrderService.initiateCheckout(
+          instructorId,
+          planId,
+        );
       res.status(StatusCode.OK).json(result);
     } catch (error) {
       console.error("Checkout error:", error);
@@ -103,7 +112,7 @@ export class InstructorMembershipOrderController
 
   async purchaseWithWallet(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { planId } = req.params;
@@ -116,9 +125,8 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const instructor = await this._instructorMembershipService.getInstructorById(
-        instructorId
-      );
+      const instructor =
+        await this._instructorMembershipService.getInstructorById(instructorId);
       if (!instructor) {
         res
           .status(StatusCode.NOT_FOUND)
@@ -138,7 +146,10 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      await this._instructorMembershipOrderService.purchaseWithWallet(instructorId, planId);
+      await this._instructorMembershipOrderService.purchaseWithWallet(
+        instructorId,
+        planId,
+      );
 
       res
         .status(StatusCode.OK)
@@ -153,7 +164,7 @@ export class InstructorMembershipOrderController
 
   async getInstructorOrders(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const instructorId = req.user?.id;
@@ -168,12 +179,13 @@ export class InstructorMembershipOrderController
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string | undefined;
 
-      const { data, total } = await this._instructorMembershipOrderService.getInstructorOrders(
-        instructorId,
-        page,
-        limit,
-        search
-      );
+      const { data, total } =
+        await this._instructorMembershipOrderService.getInstructorOrders(
+          instructorId,
+          page,
+          limit,
+          search,
+        );
 
       res.status(StatusCode.OK).json({ data, total });
     } catch (error) {
@@ -186,20 +198,28 @@ export class InstructorMembershipOrderController
 
   async getMembershipOrderDetail(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { txnId } = req.params;
       const instructorId = req.user?.id;
 
       if (!txnId || !instructorId) {
-        res.status(StatusCode.BAD_REQUEST).json({ message: INSTRUCTOR_ERROR_MESSAGE.DATA_MISSING });
+        res
+          .status(StatusCode.BAD_REQUEST)
+          .json({ message: INSTRUCTOR_ERROR_MESSAGE.DATA_MISSING });
         return;
       }
 
-      const order = await this._instructorMembershipOrderService.getOrderByTxnId(txnId, instructorId);
+      const order =
+        await this._instructorMembershipOrderService.getOrderByTxnId(
+          txnId,
+          instructorId,
+        );
       if (!order) {
-        res.status(StatusCode.NOT_FOUND).json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
+        res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
         return;
       }
 
@@ -214,7 +234,7 @@ export class InstructorMembershipOrderController
 
   async downloadReceipt(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { txnId } = req.params;
@@ -227,9 +247,15 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const order = await this._instructorMembershipOrderService.getOrderByTxnId(txnId, instructorId);
+      const order =
+        await this._instructorMembershipOrderService.getOrderByTxnId(
+          txnId,
+          instructorId,
+        );
       if (!order) {
-        res.status(StatusCode.NOT_FOUND).json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
+        res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
         return;
       }
 
@@ -238,7 +264,7 @@ export class InstructorMembershipOrderController
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=Receipt_${txnId}.pdf`
+        `attachment; filename=Receipt_${txnId}.pdf`,
       );
       res.send(pdfBuffer);
     } catch (err) {

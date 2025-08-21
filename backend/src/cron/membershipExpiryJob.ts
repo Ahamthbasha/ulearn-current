@@ -23,12 +23,12 @@ export const startMembershipExpiryJob = () => {
           await emailService.sendMembershipExpiryReminder(
             instructor.username,
             instructor.email,
-            instructor.membershipExpiryDate
+            instructor.membershipExpiryDate,
           );
           console.log(`📧 Reminder sent to: ${instructor.email}`);
         } else {
           console.warn(
-            `⚠️ Skipped reminder: No expiry date for ${instructor.email}`
+            `⚠️ Skipped reminder: No expiry date for ${instructor.email}`,
           );
         }
       }

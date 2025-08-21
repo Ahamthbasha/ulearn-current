@@ -5,7 +5,7 @@ export interface IAdminUserRepository {
   getAllUsers(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ users: IUser[]; total: number }>;
 
   //get data based on email

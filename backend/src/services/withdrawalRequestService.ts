@@ -1,38 +1,40 @@
-import { Types } from 'mongoose';
-import { IWithdrawalRequestService } from './interface/IWithdrawalRequestService';
-import { IWithdrawalRequestRepository } from '../repositories/interfaces/IWithdrawalRequestRepository';
-import { IWalletService } from './interface/IWalletService';
-import IInstructorRepository from '../repositories/instructorRepository/interface/IInstructorRepository'; 
-import { IWithdrawalRequest } from '../models/withdrawalRequestModel';
-import { v4 as uuidv4 } from 'uuid';
-import { IPaginationOptions } from '../types/IPagination';
-import { mapWithdrawalRequestToDTO } from '../mappers/adminMapper/withdrawalListMapper';
-import { mapWithdrawalRequestDetailToDTO } from '../mappers/adminMapper/withdrawalDetailRequest';
-import { WithdrawalRequestDTO } from '../dto/adminDTO/withdrawalRequestDTO';
-import { WithdrawalRequestDetailDTO } from '../dto/adminDTO/withdrawalDetailRequest';
+import { Types } from "mongoose";
+import { IWithdrawalRequestService } from "./interface/IWithdrawalRequestService";
+import { IWithdrawalRequestRepository } from "../repositories/interfaces/IWithdrawalRequestRepository";
+import { IWalletService } from "./interface/IWalletService";
+import IInstructorRepository from "../repositories/instructorRepository/interface/IInstructorRepository";
+import { IWithdrawalRequest } from "../models/withdrawalRequestModel";
+import { v4 as uuidv4 } from "uuid";
+import { IPaginationOptions } from "../types/IPagination";
+import { mapWithdrawalRequestToDTO } from "../mappers/adminMapper/withdrawalListMapper";
+import { mapWithdrawalRequestDetailToDTO } from "../mappers/adminMapper/withdrawalDetailRequest";
+import { WithdrawalRequestDTO } from "../dto/adminDTO/withdrawalRequestDTO";
+import { WithdrawalRequestDetailDTO } from "../dto/adminDTO/withdrawalDetailRequest";
 
 export class WithdrawalRequestService implements IWithdrawalRequestService {
-  private _withdrawalRequestRepo: IWithdrawalRequestRepository
-  private _walletService: IWalletService
-  private _instructorRepo: IInstructorRepository
-  
+  private _withdrawalRequestRepo: IWithdrawalRequestRepository;
+  private _walletService: IWalletService;
+  private _instructorRepo: IInstructorRepository;
+
   constructor(
     withdrawalRequestRepo: IWithdrawalRequestRepository,
     walletService: IWalletService,
-    instructorRepo: IInstructorRepository
+    instructorRepo: IInstructorRepository,
   ) {
-    this._withdrawalRequestRepo = withdrawalRequestRepo
-    this._walletService = walletService
-    this._instructorRepo = instructorRepo
+    this._withdrawalRequestRepo = withdrawalRequestRepo;
+    this._walletService = walletService;
+    this._instructorRepo = instructorRepo;
   }
 
   async createWithdrawalRequest(
     instructorId: Types.ObjectId,
-    amount: number
+    amount: number,
   ): Promise<IWithdrawalRequest> {
-    const instructor = await this._instructorRepo.findById(instructorId.toString());
+    const instructor = await this._instructorRepo.findById(
+      instructorId.toString(),
+    );
     if (!instructor) {
-      throw new Error('Instructor not found');
+      throw new Error("Instructor not found");
     }
 
     const bankAccount = instructor.bankAccount;
@@ -43,10 +45,10 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
       !bankAccount.ifscCode ||
       !bankAccount.bankName
     ) {
-      throw new Error('Bank account details are incomplete');
+      throw new Error("Bank account details are incomplete");
     }
 
-    const validatedBankAccount: IWithdrawalRequest['bankAccount'] = {
+    const validatedBankAccount: IWithdrawalRequest["bankAccount"] = {
       accountHolderName: bankAccount.accountHolderName,
       accountNumber: bankAccount.accountNumber,
       ifscCode: bankAccount.ifscCode,
@@ -55,27 +57,29 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
 
     const wallet = await this._walletService.getWallet(instructorId);
     if (!wallet || wallet.balance < amount) {
-      throw new Error('Insufficient wallet balance');
+      throw new Error("Insufficient wallet balance");
     }
 
     return this._withdrawalRequestRepo.createWithdrawalRequest(
       instructorId,
       amount,
-      validatedBankAccount
+      validatedBankAccount,
     );
   }
 
   async approveWithdrawalRequest(
     requestId: Types.ObjectId,
     adminId: Types.ObjectId,
-    remarks?: string
+    remarks?: string,
   ): Promise<IWithdrawalRequest> {
-    const request = await this._withdrawalRequestRepo.findById(requestId.toString());
+    const request = await this._withdrawalRequestRepo.findById(
+      requestId.toString(),
+    );
     if (!request) {
-      throw new Error('Withdrawal request not found');
+      throw new Error("Withdrawal request not found");
     }
-    if (request.status !== 'pending') {
-      throw new Error('Request is not in pending status');
+    if (request.status !== "pending") {
+      throw new Error("Request is not in pending status");
     }
 
     let instructorId: Types.ObjectId;
@@ -88,21 +92,21 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
     const wallet = await this._walletService.debitWallet(
       instructorId,
       request.amount,
-      `Withdrawal approved by admin: ${remarks || 'No remarks'}`,
-      uuidv4()
+      `Withdrawal approved by admin: ${remarks || "No remarks"}`,
+      uuidv4(),
     );
     if (!wallet) {
-      throw new Error('Failed to debit wallet');
+      throw new Error("Failed to debit wallet");
     }
 
     const updatedRequest = await this._withdrawalRequestRepo.updateStatus(
       requestId,
-      'approved',
+      "approved",
       adminId,
-      remarks
+      remarks,
     );
     if (!updatedRequest) {
-      throw new Error('Failed to update withdrawal request status');
+      throw new Error("Failed to update withdrawal request status");
     }
 
     return updatedRequest;
@@ -111,24 +115,26 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
   async rejectWithdrawalRequest(
     requestId: Types.ObjectId,
     adminId: Types.ObjectId,
-    remarks?: string
+    remarks?: string,
   ): Promise<IWithdrawalRequest> {
-    const request = await this._withdrawalRequestRepo.findById(requestId.toString());
+    const request = await this._withdrawalRequestRepo.findById(
+      requestId.toString(),
+    );
     if (!request) {
-      throw new Error('Withdrawal request not found');
+      throw new Error("Withdrawal request not found");
     }
-    if (request.status !== 'pending') {
-      throw new Error('Request is not in pending status');
+    if (request.status !== "pending") {
+      throw new Error("Request is not in pending status");
     }
 
     const updatedRequest = await this._withdrawalRequestRepo.updateStatus(
       requestId,
-      'rejected',
+      "rejected",
       adminId,
-      remarks
+      remarks,
     );
     if (!updatedRequest) {
-      throw new Error('Failed to update withdrawal request status');
+      throw new Error("Failed to update withdrawal request status");
     }
 
     return updatedRequest;
@@ -136,15 +142,17 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
 
   async retryWithdrawalRequest(
     requestId: Types.ObjectId,
-    amount?: number
+    amount?: number,
   ): Promise<IWithdrawalRequest> {
-    const request = await this._withdrawalRequestRepo.findById(requestId.toString());
+    const request = await this._withdrawalRequestRepo.findById(
+      requestId.toString(),
+    );
     if (!request) {
-      throw new Error('Withdrawal request not found');
+      throw new Error("Withdrawal request not found");
     }
 
-    if (request.status !== 'rejected') {
-      throw new Error('Only rejected requests can be retried');
+    if (request.status !== "rejected") {
+      throw new Error("Only rejected requests can be retried");
     }
 
     let instructorId: Types.ObjectId;
@@ -157,16 +165,16 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
     if (amount !== undefined) {
       const wallet = await this._walletService.getWallet(instructorId);
       if (!wallet || wallet.balance < amount) {
-        throw new Error('Insufficient wallet balance for the new amount');
+        throw new Error("Insufficient wallet balance for the new amount");
       }
     }
 
     const updatedRequest = await this._withdrawalRequestRepo.retryRequest(
       requestId,
-      amount
+      amount,
     );
     if (!updatedRequest) {
-      throw new Error('Failed to retry withdrawal request');
+      throw new Error("Failed to retry withdrawal request");
     }
 
     return updatedRequest;
@@ -174,37 +182,46 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
 
   async getInstructorRequestsWithPagination(
     instructorId: Types.ObjectId,
-    options: IPaginationOptions
+    options: IPaginationOptions,
   ): Promise<{ transactions: WithdrawalRequestDTO[]; total: number }> {
-    const { transactions, total } = await this._withdrawalRequestRepo.findByInstructorIdWithPagination(instructorId, options);
-    
+    const { transactions, total } =
+      await this._withdrawalRequestRepo.findByInstructorIdWithPagination(
+        instructorId,
+        options,
+      );
+
     const dtoTransactions = transactions.map(mapWithdrawalRequestToDTO);
-    
+
     return {
       transactions: dtoTransactions,
-      total
+      total,
     };
   }
 
   async getAllRequestsWithPagination(
-    options: IPaginationOptions
+    options: IPaginationOptions,
   ): Promise<{ transactions: WithdrawalRequestDTO[]; total: number }> {
-    const { transactions, total } = await this._withdrawalRequestRepo.getAllRequestsWithPagination(options);
-    
+    const { transactions, total } =
+      await this._withdrawalRequestRepo.getAllRequestsWithPagination(options);
+
     const dtoTransactions = transactions.map(mapWithdrawalRequestToDTO);
-    
+
     return {
       transactions: dtoTransactions,
-      total
+      total,
     };
   }
 
-  async getWithdrawalRequestById(requestId: Types.ObjectId): Promise<WithdrawalRequestDetailDTO> {
-    const request = await this._withdrawalRequestRepo.findById(requestId.toString());
+  async getWithdrawalRequestById(
+    requestId: Types.ObjectId,
+  ): Promise<WithdrawalRequestDetailDTO> {
+    const request = await this._withdrawalRequestRepo.findById(
+      requestId.toString(),
+    );
     if (!request) {
-      throw new Error('Withdrawal request not found');
+      throw new Error("Withdrawal request not found");
     }
-    
+
     return mapWithdrawalRequestDetailToDTO(request);
   }
 }

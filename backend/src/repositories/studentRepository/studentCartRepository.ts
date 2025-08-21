@@ -18,7 +18,7 @@ export class StudentCartRepository
 
   async addCourse(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<ICart> {
     let cart = await this.findOne({ userId });
 
@@ -26,7 +26,7 @@ export class StudentCartRepository
       cart = new CartModel({ userId, courses: [courseId] });
     } else {
       const alreadyExists = cart.courses.some(
-        (c) => c.toString() === courseId.toString()
+        (c) => c.toString() === courseId.toString(),
       );
       if (!alreadyExists) {
         cart.courses.push(courseId);
@@ -38,12 +38,12 @@ export class StudentCartRepository
 
   async removeCourse(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<ICart | null> {
     return await this.updateOneWithPopulate(
       { userId },
       { $pull: { courses: courseId } } as any,
-      ["courses"]
+      ["courses"],
     );
   }
 
@@ -51,7 +51,7 @@ export class StudentCartRepository
     return await this.updateOneWithPopulate(
       { userId },
       { $set: { courses: [] } } as any,
-      ["courses"]
+      ["courses"],
     );
   }
 }

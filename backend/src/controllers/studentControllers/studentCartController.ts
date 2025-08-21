@@ -52,7 +52,7 @@ export class StudentCartController implements IStudentCartController {
       // Check if course already exists in cart using raw cart data
       const rawCart = await this._cartService.getCartRaw(userId);
       const alreadyInCart = rawCart?.courses.some(
-        (c) => c.toString() === courseId.toString()
+        (c) => c.toString() === courseId.toString(),
       );
 
       if (alreadyInCart) {
@@ -65,7 +65,7 @@ export class StudentCartController implements IStudentCartController {
 
       const updatedCartData = await this._cartService.addToCart(
         userId,
-        courseId
+        courseId,
       );
 
       if (!updatedCartData) {
@@ -92,7 +92,7 @@ export class StudentCartController implements IStudentCartController {
 
   async removeFromCart(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
@@ -100,7 +100,7 @@ export class StudentCartController implements IStudentCartController {
 
       const updatedCartData = await this._cartService.removeFromCart(
         userId,
-        courseId
+        courseId,
       );
 
       if (updatedCartData === null) {

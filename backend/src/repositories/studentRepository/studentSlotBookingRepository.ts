@@ -1,4 +1,4 @@
-import { IStudentSlotBookingRepository } from "./interface/IStudentSlotBookingRepository"; 
+import { IStudentSlotBookingRepository } from "./interface/IStudentSlotBookingRepository";
 import { BookingModel, IBooking } from "../../models/bookingModel";
 import { GenericRepository } from "../genericRepository";
 import { PopulateOptions, Types } from "mongoose";
@@ -18,14 +18,14 @@ export class StudentSlotBookingRepository
 
   async updateBookingStatus(
     id: string,
-    update: Partial<IBooking>
+    update: Partial<IBooking>,
   ): Promise<void> {
     await this.update(id, update);
   }
 
   async findBookingById(
     id: string,
-    populate: PopulateOptions[] = []
+    populate: PopulateOptions[] = [],
   ): Promise<IBooking | null> {
     if (populate.length) {
       return await this.findByIdWithPopulate(id, populate);
@@ -35,7 +35,7 @@ export class StudentSlotBookingRepository
 
   async findOne(
     filter: object,
-    populate?: PopulateOptions[]
+    populate?: PopulateOptions[],
   ): Promise<IBooking | null> {
     return await super.findOne(filter, populate);
   }
@@ -45,7 +45,7 @@ export class StudentSlotBookingRepository
     page: number,
     limit: number,
     searchQuery?: string,
-    populate: PopulateOptions[] = []
+    populate: PopulateOptions[] = [],
   ): Promise<{ data: IBooking[]; total: number }> {
     // If no search query, use the existing paginate method
     if (!searchQuery || !searchQuery.trim()) {
@@ -55,16 +55,16 @@ export class StudentSlotBookingRepository
         page,
         limit,
         { createdAt: -1 },
-        populate
+        populate,
       );
     }
 
     // Handle search with aggregation
     const trimmedQuery = searchQuery.trim();
-    
+
     const pipeline: any[] = [
       // Match by studentId first
-      { $match: { studentId: new Types.ObjectId(studentId) } }
+      { $match: { studentId: new Types.ObjectId(studentId) } },
     ];
 
     if (Types.ObjectId.isValid(trimmedQuery) && trimmedQuery.length === 24) {
@@ -78,10 +78,10 @@ export class StudentSlotBookingRepository
             $regexMatch: {
               input: { $toString: "$_id" },
               regex: trimmedQuery,
-              options: "i"
-            }
-          }
-        }
+              options: "i",
+            },
+          },
+        },
       });
     }
 
@@ -94,10 +94,7 @@ export class StudentSlotBookingRepository
     const total = totalResult.length > 0 ? totalResult[0].total : 0;
 
     // Add pagination
-    pipeline.push(
-      { $skip: (page - 1) * limit },
-      { $limit: limit }
-    );
+    pipeline.push({ $skip: (page - 1) * limit }, { $limit: limit });
 
     // Execute aggregation
     let data = await this.aggregate<IBooking>(pipeline);
@@ -110,4 +107,3 @@ export class StudentSlotBookingRepository
     return { data, total };
   }
 }
-

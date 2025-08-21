@@ -1,10 +1,14 @@
 import { Response } from "express";
 import { IStudentEnrollmentController } from "./interfaces/IStudentEnrollmentController";
-import { IStudentEnrollmentService } from "../../services/studentServices/interface/IStudentEnrollmentService"; 
+import { IStudentEnrollmentService } from "../../services/studentServices/interface/IStudentEnrollmentService";
 import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { Types } from "mongoose";
-import { EnrolledErrorMessage, StudentErrorMessages, StudentSuccessMessages } from "../../utils/constants";
+import {
+  EnrolledErrorMessage,
+  StudentErrorMessages,
+  StudentSuccessMessages,
+} from "../../utils/constants";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
 export class StudentEnrollmentController
@@ -18,13 +22,12 @@ export class StudentEnrollmentController
 
   async getAllEnrolledCourses(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
-      const courses = await this._enrollmentService.getAllEnrolledCourses(
-        userId
-      );
+      const courses =
+        await this._enrollmentService.getAllEnrolledCourses(userId);
 
       // Presign thumbnail URLs
       for (const enroll of courses) {
@@ -46,7 +49,7 @@ export class StudentEnrollmentController
 
   async getEnrollmentCourseDetails(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
@@ -55,7 +58,7 @@ export class StudentEnrollmentController
       const enrollment =
         await this._enrollmentService.getEnrollmentCourseWithDetails(
           userId,
-          courseId
+          courseId,
         );
 
       if (!enrollment) {
@@ -101,7 +104,7 @@ export class StudentEnrollmentController
 
   async completeChapter(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
@@ -110,7 +113,7 @@ export class StudentEnrollmentController
       const updatedEnrollment = await this._enrollmentService.completeChapter(
         userId,
         new Types.ObjectId(courseId),
-        new Types.ObjectId(chapterId)
+        new Types.ObjectId(chapterId),
       );
 
       res.status(StatusCode.OK).json({
@@ -128,7 +131,7 @@ export class StudentEnrollmentController
 
   async submitQuizResult(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
@@ -157,7 +160,7 @@ export class StudentEnrollmentController
           correctAnswers,
           totalQuestions,
           scorePercentage,
-        }
+        },
       );
 
       res.status(StatusCode.OK).json({
@@ -176,16 +179,14 @@ export class StudentEnrollmentController
 
   async checkAllChaptersCompleted(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
 
-      const allCompleted = await this._enrollmentService.areAllChaptersCompleted(
-        userId,
-        courseId
-      );
+      const allCompleted =
+        await this._enrollmentService.areAllChaptersCompleted(userId, courseId);
 
       res.status(StatusCode.OK).json({ success: true, allCompleted });
     } catch (err) {
@@ -199,7 +200,7 @@ export class StudentEnrollmentController
 
   async getCertificateUrl(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
@@ -208,7 +209,7 @@ export class StudentEnrollmentController
       const enrollment =
         await this._enrollmentService.getEnrollmentCourseWithDetails(
           userId,
-          courseId
+          courseId,
         );
 
       if (
@@ -224,7 +225,7 @@ export class StudentEnrollmentController
       }
 
       const presignedCertificateUrl = await getPresignedUrl(
-        enrollment.certificateUrl
+        enrollment.certificateUrl,
       );
 
       res.status(StatusCode.OK).json({

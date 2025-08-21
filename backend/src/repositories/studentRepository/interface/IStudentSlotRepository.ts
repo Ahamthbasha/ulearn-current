@@ -8,7 +8,3 @@ export interface IStudentSlotRepository {
 
   findOne(filter: object, populate?: PopulateOptions[]): Promise<ISlot | null>;
 }
-
-
-
-

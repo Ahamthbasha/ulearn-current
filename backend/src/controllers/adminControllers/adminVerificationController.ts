@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
-import { IAdminVerificationService } from "../../services/adminServices/interface/IAdminVerificationService"; 
+import { IAdminVerificationService } from "../../services/adminServices/interface/IAdminVerificationService";
 import { StatusCode } from "../../utils/enums";
-import { AdminErrorMessages, AdminSuccessMessages, ResponseError } from "../../utils/constants";
+import {
+  AdminErrorMessages,
+  AdminSuccessMessages,
+  ResponseError,
+} from "../../utils/constants";
 import { SendEmail } from "../../utils/sendOtpEmail";
 
 export class AdminVerificationController {
@@ -22,7 +26,7 @@ export class AdminVerificationController {
       const { data, total } = await this._verificationService.getAllRequests(
         page,
         limit,
-        search
+        search,
       );
 
       res.status(StatusCode.OK).json({
@@ -36,33 +40,34 @@ export class AdminVerificationController {
     } catch (error: any) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || AdminErrorMessages.ADMIN_VERIFICATION_FETCH_ERROR,
+        message:
+          error.message || AdminErrorMessages.ADMIN_VERIFICATION_FETCH_ERROR,
       });
     }
   }
 
-async getRequestData(req: Request, res: Response): Promise<void> {
-  try {
-    const { email } = req.params;
-    const requestData = await this._verificationService.getRequestDataByEmail(email);
+  async getRequestData(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.params;
+      const requestData =
+        await this._verificationService.getRequestDataByEmail(email);
 
-    if (!requestData) {
-      res.status(StatusCode.NOT_FOUND).json({
+      if (!requestData) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND,
+        });
+        return;
+      }
+
+      res.status(StatusCode.OK).json({ data: requestData });
+    } catch (error: any) {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND,
+        message: error.message,
       });
-      return;
     }
-
-    res.status(StatusCode.OK).json({ data: requestData });
-  } catch (error: any) {
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: error.message,
-    });
   }
-}
-
 
   async approveRequest(req: Request, res: Response): Promise<void> {
     try {
@@ -71,13 +76,14 @@ async getRequestData(req: Request, res: Response): Promise<void> {
       const approvedRequest = await this._verificationService.approveRequest(
         email,
         status,
-        reason
+        reason,
       );
 
       if (!approvedRequest) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ success: false, message: AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND,
+        });
         return;
       }
 
@@ -92,9 +98,10 @@ async getRequestData(req: Request, res: Response): Promise<void> {
         });
       } else if (status === "rejected") {
         if (!reason) {
-          res
-            .status(StatusCode.BAD_REQUEST)
-            .json({ success: false, message: AdminErrorMessages.ADMIN_VERIFICATION_REJECTION });
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: AdminErrorMessages.ADMIN_VERIFICATION_REJECTION,
+          });
           return;
         }
 
@@ -105,9 +112,10 @@ async getRequestData(req: Request, res: Response): Promise<void> {
           data: approvedRequest,
         });
       } else {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ success: false, message: AdminErrorMessages.ADMIN_INVALID_REQUEST_STATUS });
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: AdminErrorMessages.ADMIN_INVALID_REQUEST_STATUS,
+        });
       }
     } catch (error: any) {
       res

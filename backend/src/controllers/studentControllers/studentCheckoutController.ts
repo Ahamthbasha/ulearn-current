@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { IStudentCheckoutController } from "./interfaces/IStudentCheckoutController";
-import { IStudentCheckoutService } from "../../services/studentServices/interface/IStudentCheckoutService"; 
+import { IStudentCheckoutService } from "../../services/studentServices/interface/IStudentCheckoutService";
 import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import {
@@ -10,14 +10,14 @@ import {
 import { Types } from "mongoose";
 
 export class StudentCheckoutController implements IStudentCheckoutController {
-  private _checkoutService: IStudentCheckoutService
+  private _checkoutService: IStudentCheckoutService;
   constructor(checkoutService: IStudentCheckoutService) {
-    this._checkoutService = checkoutService
+    this._checkoutService = checkoutService;
   }
 
   async initiateCheckout(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { courseIds, totalAmount, paymentMethod } = req.body;
@@ -35,7 +35,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         userId,
         courseIds,
         totalAmount,
-        paymentMethod // 👈 required now
+        paymentMethod, // 👈 required now
       );
 
       res.status(StatusCode.OK).json({
@@ -72,7 +72,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         orderId,
         paymentId,
         method,
-        amount
+        amount,
       );
 
       res.status(StatusCode.OK).json({

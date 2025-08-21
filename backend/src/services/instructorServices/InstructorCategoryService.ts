@@ -1,5 +1,5 @@
-import { IInstructorCategoryService } from "./interface/IInstructorCategoryService"; 
-import { IInstructorCategoryRepository } from "../../repositories/instructorRepository/interface/IInstructorCategoryRepository"; 
+import { IInstructorCategoryService } from "./interface/IInstructorCategoryService";
+import { IInstructorCategoryRepository } from "../../repositories/instructorRepository/interface/IInstructorCategoryRepository";
 import { ICategoryModel } from "../../models/categoryModel";
 
 export class InstructorCategoryService implements IInstructorCategoryService {

@@ -11,7 +11,7 @@ export class StudentSlotRepository
   }
 
   async getAvailableSlotsByInstructorId(
-    instructorId: string
+    instructorId: string,
   ): Promise<ISlot[]> {
     const now = new Date();
 
@@ -24,7 +24,7 @@ export class StudentSlotRepository
         startTime: { $gt: now }, // Ensure slots are future
       },
       undefined,
-      { startTime: 1 }
+      { startTime: 1 },
     );
   }
 
@@ -38,7 +38,7 @@ export class StudentSlotRepository
 
   async findOne(
     filter: object,
-    populate?: PopulateOptions[]
+    populate?: PopulateOptions[],
   ): Promise<ISlot | null> {
     return await super.findOne(filter, populate);
   }

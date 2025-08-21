@@ -12,7 +12,10 @@ interface ReportData {
   paymentMethod?: string;
 }
 
-export async function generateExcelReport(data: ReportData[], res: Response): Promise<void> {
+export async function generateExcelReport(
+  data: ReportData[],
+  res: Response,
+): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Revenue Report");
 
@@ -48,20 +51,28 @@ export async function generateExcelReport(data: ReportData[], res: Response): Pr
 
   res.setHeader(
     "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   );
-  res.setHeader("Content-Disposition", `attachment; filename=RevenueReport.xlsx`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=RevenueReport.xlsx`,
+  );
   await workbook.xlsx.write(res);
   res.end();
 }
 
-
-export async function generatePdfReport(data: ReportData[], res: Response): Promise<void> {
+export async function generatePdfReport(
+  data: ReportData[],
+  res: Response,
+): Promise<void> {
   const doc = new PDFDocument({ margin: 40 });
   const stream = new PassThrough();
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=RevenueReport.pdf`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=RevenueReport.pdf`,
+  );
 
   doc.pipe(stream);
 
@@ -87,7 +98,7 @@ export async function generatePdfReport(data: ReportData[], res: Response): Prom
     row: string[],
     yOffset: number,
     height: number,
-    options: { isHeader?: boolean; isTotal?: boolean } = {}
+    options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
     doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");
@@ -129,7 +140,9 @@ export async function generatePdfReport(data: ReportData[], res: Response): Prom
 
     const courseNames = group.map((g) => g.courseName).join("\n");
     const coursePrices = group.map((g) => `Rs. ${g.coursePrice}`).join("\n");
-    const instructorEarnings = group.map((g) => `Rs. ${g.instructorEarning}`).join("\n");
+    const instructorEarnings = group
+      .map((g) => `Rs. ${g.instructorEarning}`)
+      .join("\n");
 
     const row = [
       orderId,
@@ -141,7 +154,9 @@ export async function generatePdfReport(data: ReportData[], res: Response): Prom
     ];
 
     const lines = Math.max(
-      ...[courseNames, coursePrices, instructorEarnings].map((text) => text.split("\n").length)
+      ...[courseNames, coursePrices, instructorEarnings].map(
+        (text) => text.split("\n").length,
+      ),
     );
     const rowHeight = lines * lineHeight + 8;
 
@@ -160,7 +175,14 @@ export async function generatePdfReport(data: ReportData[], res: Response): Prom
   }
 
   // Total Row (aligned with table)
-  const totalRow = ["", "", "", "", "Total Instructor Revenue:", `Rs. ${total.toFixed(2)}`];
+  const totalRow = [
+    "",
+    "",
+    "",
+    "",
+    "Total Instructor Revenue:",
+    `Rs. ${total.toFixed(2)}`,
+  ];
   drawRow(totalRow, y, 30, { isTotal: true });
 
   doc.end();

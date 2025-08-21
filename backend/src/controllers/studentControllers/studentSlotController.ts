@@ -1,4 +1,4 @@
-import { IStudentSlotService } from "../../services/studentServices/interface/IStudentSlotService"; 
+import { IStudentSlotService } from "../../services/studentServices/interface/IStudentSlotService";
 import { IStudentSlotController } from "./interfaces/IStudentSlotController";
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/enums";

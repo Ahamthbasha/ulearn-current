@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IInstructorChapterController } from "./interfaces/IInstructorChapterController";
-import { IInstructorChapterService } from "../../services/instructorServices/interface/IInstructorChapterService"; 
+import { IInstructorChapterService } from "../../services/instructorServices/interface/IInstructorChapterService";
 import { StatusCode } from "../../utils/enums";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
@@ -20,16 +20,17 @@ export class InstructorChapterController
   async createChapter(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { chapterTitle, chapterNumber, description, courseId } = req.body;
 
-      const existing = await this._chapterService.findByTitleOrNumberAndCourseId(
-        courseId,
-        chapterTitle,
-        Number(chapterNumber)
-      );
+      const existing =
+        await this._chapterService.findByTitleOrNumberAndCourseId(
+          courseId,
+          chapterTitle,
+          Number(chapterNumber),
+        );
       if (existing) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
@@ -46,12 +47,10 @@ export class InstructorChapterController
       const videoFile = files["video"]?.[0];
 
       if (!videoFile) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({
-            success: false,
-            message: ChapterErrorMessages.CHAPTER_REQUIRE_VIDEOFILE,
-          });
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_REQUIRE_VIDEOFILE,
+        });
         return;
       }
 
@@ -61,7 +60,7 @@ export class InstructorChapterController
           buffer: videoFile.buffer,
           mimetype: videoFile.mimetype,
         },
-        "chapters/videos"
+        "chapters/videos",
       );
 
       const chapterDTO = {
@@ -73,13 +72,11 @@ export class InstructorChapterController
       };
 
       const chapter = await this._chapterService.createChapter(chapterDTO);
-      res
-        .status(StatusCode.CREATED)
-        .json({
-          success: true,
-          message: ChapterSuccessMessages.CHAPTER_CREATED,
-          data: chapter,
-        });
+      res.status(StatusCode.CREATED).json({
+        success: true,
+        message: ChapterSuccessMessages.CHAPTER_CREATED,
+        data: chapter,
+      });
     } catch (error) {
       next(error);
     }
@@ -88,7 +85,7 @@ export class InstructorChapterController
   async getChaptersByCourse(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.params;
@@ -107,7 +104,7 @@ export class InstructorChapterController
       const result = await this._chapterService.paginateChapters(
         filter,
         Number(page),
-        Number(limit)
+        Number(limit),
       );
 
       res.status(StatusCode.OK).json({
@@ -124,34 +121,32 @@ export class InstructorChapterController
   async updateChapter(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { chapterId } = req.params;
       const { chapterTitle, chapterNumber, description } = req.body;
 
       // ✅ Step 1: Get original chapter (to get courseId)
-      const originalChapter = await this._chapterService.getChapterById(
-        chapterId
-      );
+      const originalChapter =
+        await this._chapterService.getChapterById(chapterId);
       if (!originalChapter) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({
-            success: false,
-            message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
-          });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
+        });
         return;
       }
 
       const courseId = originalChapter.courseId.toString();
 
       // ✅ Step 2: Check for duplicate title or number in same course (excluding self)
-      const existing = await this._chapterService.findByTitleOrNumberAndCourseId(
-        courseId,
-        chapterTitle,
-        Number(chapterNumber)
-      );
+      const existing =
+        await this._chapterService.findByTitleOrNumberAndCourseId(
+          courseId,
+          chapterTitle,
+          Number(chapterNumber),
+        );
 
       if (existing && existing._id.toString() !== chapterId) {
         res.status(StatusCode.CONFLICT).json({
@@ -177,7 +172,7 @@ export class InstructorChapterController
             buffer: videoFile.buffer,
             mimetype: videoFile.mimetype,
           },
-          "chapters/videos"
+          "chapters/videos",
         );
       }
 
@@ -191,16 +186,14 @@ export class InstructorChapterController
 
       const updated = await this._chapterService.updateChapter(
         chapterId,
-        updatedChapterData
+        updatedChapterData,
       );
 
       if (!updated) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({
-            success: false,
-            message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
-          });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
+        });
         return;
       }
 
@@ -217,26 +210,22 @@ export class InstructorChapterController
   async deleteChapter(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { chapterId } = req.params;
       const deleted = await this._chapterService.deleteChapter(chapterId);
       if (!deleted) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({
-            success: false,
-            message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
-          });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
+        });
         return;
       }
-      res
-        .status(StatusCode.OK)
-        .json({
-          success: true,
-          message: ChapterSuccessMessages.CHAPTER_DELETED,
-        });
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ChapterSuccessMessages.CHAPTER_DELETED,
+      });
     } catch (error) {
       next(error);
     }
@@ -245,19 +234,17 @@ export class InstructorChapterController
   async getChapterById(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { chapterId } = req.params;
       const chapter = await this._chapterService.getChapterById(chapterId);
 
       if (!chapter) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({
-            success: false,
-            message: ChapterSuccessMessages.CHAPTER_DELETED,
-          });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: ChapterSuccessMessages.CHAPTER_DELETED,
+        });
         return;
       }
 

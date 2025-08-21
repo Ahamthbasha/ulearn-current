@@ -1,9 +1,9 @@
-import { IStudentProfileService } from "./interface/IStudentProfileService"; 
-import { IStudentProfileRepository } from "../../repositories/studentRepository/interface/IStudentProfileRepository"; 
+import { IStudentProfileService } from "./interface/IStudentProfileService";
+import { IStudentProfileRepository } from "../../repositories/studentRepository/interface/IStudentProfileRepository";
 import { IUser } from "../../models/userModel";
 import { toStudentProfileDTO } from "../../mappers/userMapper/studentProfileMapper";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
-import { StudentProfileDTO } from "../../dto/userDTO/studentProfileDTO"; 
+import { StudentProfileDTO } from "../../dto/userDTO/studentProfileDTO";
 
 export class StudentProfileService implements IStudentProfileService {
   private _studentProfileRepository: IStudentProfileRepository;
@@ -23,8 +23,14 @@ export class StudentProfileService implements IStudentProfileService {
     return toStudentProfileDTO(user, profilePicUrl);
   }
 
-  async updateProfile(id: string, data: Partial<IUser>): Promise<StudentProfileDTO | null> {
-    const updatedUser = await this._studentProfileRepository.updateProfile(id, data);
+  async updateProfile(
+    id: string,
+    data: Partial<IUser>,
+  ): Promise<StudentProfileDTO | null> {
+    const updatedUser = await this._studentProfileRepository.updateProfile(
+      id,
+      data,
+    );
     if (!updatedUser) return null;
 
     const profilePicUrl = updatedUser.profilePicUrl
@@ -35,7 +41,10 @@ export class StudentProfileService implements IStudentProfileService {
   }
 
   async updatePassword(email: string, password: string): Promise<boolean> {
-    const updated = await this._studentProfileRepository.updatePassword(email, password);
+    const updated = await this._studentProfileRepository.updatePassword(
+      email,
+      password,
+    );
     return !!updated;
   }
 

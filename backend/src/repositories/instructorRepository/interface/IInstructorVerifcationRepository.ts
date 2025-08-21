@@ -6,13 +6,13 @@ export interface IInstructorVerificationRepository {
     email: string,
     degreeCertificateUrl: string,
     resumeUrl: string,
-    status: string
+    status: string,
   ): Promise<IVerificationModel | null>;
 
   getRequestByEmail(email: string): Promise<IVerificationModel | null>;
 
   updateRequestByEmail(
     email: string,
-    update: Partial<IVerificationModel>
+    update: Partial<IVerificationModel>,
   ): Promise<IVerificationModel | null>;
 }

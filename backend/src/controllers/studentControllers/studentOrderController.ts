@@ -1,22 +1,25 @@
 import { Response } from "express";
 import { Types } from "mongoose";
 import { IStudentOrderController } from "./interfaces/IStudentOrderController";
-import { IStudentOrderService } from "../../services/studentServices/interface/IStudentOrderService"; 
+import { IStudentOrderService } from "../../services/studentServices/interface/IStudentOrderService";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
-import { StudentErrorMessages, StudentSuccessMessages } from "../../utils/constants";
+import {
+  StudentErrorMessages,
+  StudentSuccessMessages,
+} from "../../utils/constants";
 
 export class StudentOrderController implements IStudentOrderController {
   private _orderService: IStudentOrderService;
-  
+
   constructor(orderService: IStudentOrderService) {
     this._orderService = orderService;
   }
 
   async getOrderHistory(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user!.id);
@@ -28,26 +31,29 @@ export class StudentOrderController implements IStudentOrderController {
       if (page < 1 || limit < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid pagination parameters"
+          message: "Invalid pagination parameters",
         });
         return;
       }
 
-      const { orders, total } = await this._orderService.getOrderHistoryPaginated(
-        userId,
-        page,
-        limit,
-        search
-      );
+      const { orders, total } =
+        await this._orderService.getOrderHistoryPaginated(
+          userId,
+          page,
+          limit,
+          search,
+        );
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.ORDER_HISTORY_FETCHED || "Order history fetched successfully",
+        message:
+          StudentSuccessMessages.ORDER_HISTORY_FETCHED ||
+          "Order history fetched successfully",
         orders,
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       });
     } catch (err) {
       console.error("Error fetching order history:", err);
@@ -60,7 +66,7 @@ export class StudentOrderController implements IStudentOrderController {
 
   async getOrderDetails(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const orderId = new Types.ObjectId(req.params.orderId);
@@ -69,12 +75,15 @@ export class StudentOrderController implements IStudentOrderController {
       if (!req.params.orderId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Order ID is required"
+          message: "Order ID is required",
         });
         return;
       }
 
-      const orderDetailsDTO = await this._orderService.getOrderDetails(orderId, userId);
+      const orderDetailsDTO = await this._orderService.getOrderDetails(
+        orderId,
+        userId,
+      );
 
       if (!orderDetailsDTO) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -86,8 +95,10 @@ export class StudentOrderController implements IStudentOrderController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.ORDER_DETAILS_FETCHED || "Order details fetched successfully",
-        order: orderDetailsDTO
+        message:
+          StudentSuccessMessages.ORDER_DETAILS_FETCHED ||
+          "Order details fetched successfully",
+        order: orderDetailsDTO,
       });
     } catch (err) {
       console.error("Error fetching order details:", err);
@@ -100,7 +111,7 @@ export class StudentOrderController implements IStudentOrderController {
 
   async downloadInvoice(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const orderId = new Types.ObjectId(req.params.orderId);
@@ -109,7 +120,7 @@ export class StudentOrderController implements IStudentOrderController {
       if (!req.params.orderId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Order ID is required"
+          message: "Order ID is required",
         });
         return;
       }

@@ -1,9 +1,12 @@
-import { IStudentDashboardRepository } from "./interface/IStudentDashboardRepository"; 
+import { IStudentDashboardRepository } from "./interface/IStudentDashboardRepository";
 import { EnrollmentRepository } from "../EnrollmentRepository";
 import { BookingRepository } from "../BookingRepository";
 import { OrderRepository } from "../OrderRepository";
 import mongoose from "mongoose";
-import { IStudentCourseReportItem, IStudentSlotReportItem } from "../../types/dashboardTypes";
+import {
+  IStudentCourseReportItem,
+  IStudentSlotReportItem,
+} from "../../types/dashboardTypes";
 import { getDateRange, ReportFilter } from "../../utils/reportFilterUtils";
 
 export class StudentDashboardRepository implements IStudentDashboardRepository {
@@ -14,7 +17,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   constructor(
     enrollmentRepo: EnrollmentRepository,
     bookingRepo: BookingRepository,
-    orderRepo: OrderRepository
+    orderRepo: OrderRepository,
   ) {
     this._enrollmentRepo = enrollmentRepo;
     this._bookingRepo = bookingRepo;
@@ -22,7 +25,9 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   }
 
   async getTotalCoursesPurchased(userId: string): Promise<number> {
-    return this._enrollmentRepo.countDocuments({ userId: new mongoose.Types.ObjectId(userId) });
+    return this._enrollmentRepo.countDocuments({
+      userId: new mongoose.Types.ObjectId(userId),
+    });
   }
 
   async getTotalCoursesCompleted(userId: string): Promise<number> {
@@ -42,9 +47,12 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   async getTotalCoursePurchaseCost(userId: string): Promise<number> {
     const enrollments = await this._enrollmentRepo.find(
       { userId: new mongoose.Types.ObjectId(userId) },
-      { path: "courseId", select: "price" }
+      { path: "courseId", select: "price" },
     );
-    return enrollments.reduce((total, e: any) => total + (e.courseId?.price || 0), 0);
+    return enrollments.reduce(
+      (total, e: any) => total + (e.courseId?.price || 0),
+      0,
+    );
   }
 
   async getTotalSlotBookings(userId: string): Promise<number> {
@@ -62,9 +70,12 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
         status: "confirmed",
         paymentStatus: "paid",
       },
-      { path: "slotId", select: "price" }
+      { path: "slotId", select: "price" },
     );
-    return bookings.reduce((total, b: any) => total + (b.slotId?.price || 0), 0);
+    return bookings.reduce(
+      (total, b: any) => total + (b.slotId?.price || 0),
+      0,
+    );
   }
 
   async getMonthlyCoursePerformance(userId: string) {
@@ -151,9 +162,13 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
       endDate?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<IStudentCourseReportItem[]> {
-    const { startDate, endDate } = getDateRange(filter.type, filter.startDate, filter.endDate);
+    const { startDate, endDate } = getDateRange(
+      filter.type,
+      filter.startDate,
+      filter.endDate,
+    );
     const page = filter.page || 1;
     const limit = filter.limit || 10;
     const skip = (page - 1) * limit;
@@ -218,9 +233,13 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
       endDate?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<IStudentSlotReportItem[]> {
-    const { startDate, endDate } = getDateRange(filter.type, filter.startDate, filter.endDate);
+    const { startDate, endDate } = getDateRange(
+      filter.type,
+      filter.startDate,
+      filter.endDate,
+    );
     const page = filter.page || 1;
     const limit = filter.limit || 10;
     const skip = (page - 1) * limit;

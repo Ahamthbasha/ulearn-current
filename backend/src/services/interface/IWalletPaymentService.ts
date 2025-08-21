@@ -8,7 +8,7 @@ export interface IWalletPaymentService {
     signature: string;
     amount: number;
     userId: string;
-    role: 'student' | 'instructor' | 'admin';    
-    onModel: 'User' | 'Instructor' | 'Admin';     
+    role: "student" | "instructor" | "admin";
+    onModel: "User" | "Instructor" | "Admin";
   }): Promise<IWallet>;
 }

@@ -8,7 +8,7 @@ export class SendEmail implements IEmail {
   async sentEmailVerification(
     name: string,
     email: string,
-    verificationCode: string
+    verificationCode: string,
   ): Promise<SentMessageInfo> {
     const userEmail = process.env.USER_EMAIL;
     const userPassword = process.env.USER_PASSWORD;
@@ -66,31 +66,35 @@ export class SendEmail implements IEmail {
     }
   }
 
-  async sendRejectionEmail(name: string, email: string, reason: string): Promise<SentMessageInfo> {
-  const userEmail = process.env.USER_EMAIL;
-  const userPassword = process.env.USER_PASSWORD;
+  async sendRejectionEmail(
+    name: string,
+    email: string,
+    reason: string,
+  ): Promise<SentMessageInfo> {
+    const userEmail = process.env.USER_EMAIL;
+    const userPassword = process.env.USER_PASSWORD;
 
-  if (!userEmail || !userPassword) {
-    throw new Error("Email credentials are not set in the environment");
-  }
+    if (!userEmail || !userPassword) {
+      throw new Error("Email credentials are not set in the environment");
+    }
 
-  const transporter = nodeMailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: userEmail,
-      pass: userPassword,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+    const transporter = nodeMailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: userEmail,
+        pass: userPassword,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
 
-  const mailOptions = {
-    from: userEmail,
-    to: email,
-    subject: "📢 uLearn - Verification Request Rejected",
-    text: `Hello ${name},\n\nWe regret to inform you that your instructor verification request has been rejected.\n\nReason: ${reason}\n\nYou can re-apply after resolving the issue.\n\nThank you,\nThe uLearn Team`,
-    html: `
+    const mailOptions = {
+      from: userEmail,
+      to: email,
+      subject: "📢 uLearn - Verification Request Rejected",
+      text: `Hello ${name},\n\nWe regret to inform you that your instructor verification request has been rejected.\n\nReason: ${reason}\n\nYou can re-apply after resolving the issue.\n\nThank you,\nThe uLearn Team`,
+      html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; background-color: #fef2f2; text-align: center;">
         <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; width: 80%; max-width: 600px; box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);">
           <h2 style="color: #e53935;">Verification Rejected</h2>
@@ -107,44 +111,46 @@ export class SendEmail implements IEmail {
         </div>
       </div>
     `,
-  };
+    };
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Rejection email sent successfully");
-    return info;
-  } catch (error) {
-    console.error("Error sending rejection email:", error);
-    throw new Error("Failed to send rejection email");
-  }
-}
-
-
-async sendVerificationSuccessEmail(name: string, email: string): Promise<SentMessageInfo> {
-  const userEmail = process.env.USER_EMAIL;
-  const userPassword = process.env.USER_PASSWORD;
-
-  if (!userEmail || !userPassword) {
-    throw new Error("Email credentials are not set in the environment");
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Rejection email sent successfully");
+      return info;
+    } catch (error) {
+      console.error("Error sending rejection email:", error);
+      throw new Error("Failed to send rejection email");
+    }
   }
 
-  const transporter = nodeMailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: userEmail,
-      pass: userPassword,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+  async sendVerificationSuccessEmail(
+    name: string,
+    email: string,
+  ): Promise<SentMessageInfo> {
+    const userEmail = process.env.USER_EMAIL;
+    const userPassword = process.env.USER_PASSWORD;
 
-  const mailOptions = {
-    from: userEmail,
-    to: email,
-    subject: "🎉 uLearn - Instructor Verification Approved!",
-    text: `Hello ${name},\n\nCongratulations! Your instructor verification has been successfully approved.\n\nYou now have access to your instructor dashboard.\n\nWelcome aboard!\n\nThanks,\nThe uLearn Team`,
-    html: `
+    if (!userEmail || !userPassword) {
+      throw new Error("Email credentials are not set in the environment");
+    }
+
+    const transporter = nodeMailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: userEmail,
+        pass: userPassword,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    const mailOptions = {
+      from: userEmail,
+      to: email,
+      subject: "🎉 uLearn - Instructor Verification Approved!",
+      text: `Hello ${name},\n\nCongratulations! Your instructor verification has been successfully approved.\n\nYou now have access to your instructor dashboard.\n\nWelcome aboard!\n\nThanks,\nThe uLearn Team`,
+      html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; background-color: #e8f5e9; text-align: center;">
         <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; width: 80%; max-width: 600px; box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);">
           <h2 style="color: #4CAF50;">🎉 Congratulations ${name}!</h2>
@@ -157,43 +163,47 @@ async sendVerificationSuccessEmail(name: string, email: string): Promise<SentMes
         </div>
       </div>
     `,
-  };
+    };
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Verification success email sent successfully");
-    return info;
-  } catch (error) {
-    console.error("Error sending verification success email:", error);
-    throw new Error("Failed to send verification success email");
-  }
-}
-
-
-async sendMembershipPurchaseEmail(name: string, email: string, planName: string, expiryDate: Date): Promise<SentMessageInfo> {
-  const userEmail = process.env.USER_EMAIL;
-  const userPassword = process.env.USER_PASSWORD;
-
-  if (!userEmail || !userPassword) {
-    throw new Error("Email credentials are not set in the environment");
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Verification success email sent successfully");
+      return info;
+    } catch (error) {
+      console.error("Error sending verification success email:", error);
+      throw new Error("Failed to send verification success email");
+    }
   }
 
-  const transporter = nodeMailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: userEmail,
-      pass: userPassword,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+  async sendMembershipPurchaseEmail(
+    name: string,
+    email: string,
+    planName: string,
+    expiryDate: Date,
+  ): Promise<SentMessageInfo> {
+    const userEmail = process.env.USER_EMAIL;
+    const userPassword = process.env.USER_PASSWORD;
 
-  const mailOptions = {
-    from: userEmail,
-    to: email,
-    subject: `✅ uLearn - Membership Activated for "${planName}"`,
-    html: `
+    if (!userEmail || !userPassword) {
+      throw new Error("Email credentials are not set in the environment");
+    }
+
+    const transporter = nodeMailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: userEmail,
+        pass: userPassword,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    const mailOptions = {
+      from: userEmail,
+      to: email,
+      subject: `✅ uLearn - Membership Activated for "${planName}"`,
+      html: `
       <div style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px; text-align: center;">
         <div style="background-color: white; padding: 20px; border-radius: 10px; display: inline-block;">
           <h2 style="color: #4CAF50;">Membership Activated 🎉</h2>
@@ -204,36 +214,39 @@ async sendMembershipPurchaseEmail(name: string, email: string, planName: string,
         </div>
       </div>
     `,
-  };
+    };
 
-  return await transporter.sendMail(mailOptions);
-}
-
-
-async sendMembershipExpiryReminder(name: string, email: string, expiryDate: Date): Promise<SentMessageInfo> {
-  const userEmail = process.env.USER_EMAIL;
-  const userPassword = process.env.USER_PASSWORD;
-
-  if (!userEmail || !userPassword) {
-    throw new Error("Email credentials are not set in the environment");
+    return await transporter.sendMail(mailOptions);
   }
 
-  const transporter = nodeMailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: userEmail,
-      pass: userPassword,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+  async sendMembershipExpiryReminder(
+    name: string,
+    email: string,
+    expiryDate: Date,
+  ): Promise<SentMessageInfo> {
+    const userEmail = process.env.USER_EMAIL;
+    const userPassword = process.env.USER_PASSWORD;
 
-  const mailOptions = {
-    from: userEmail,
-    to: email,
-    subject: `⚠️ Membership Expiring Soon`,
-    html: `
+    if (!userEmail || !userPassword) {
+      throw new Error("Email credentials are not set in the environment");
+    }
+
+    const transporter = nodeMailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: userEmail,
+        pass: userPassword,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    const mailOptions = {
+      from: userEmail,
+      to: email,
+      subject: `⚠️ Membership Expiring Soon`,
+      html: `
       <div style="font-family: Arial, sans-serif; background-color: #fff3cd; padding: 20px; text-align: center;">
         <div style="background-color: white; padding: 20px; border-radius: 10px; display: inline-block;">
           <h2 style="color: #ff9800;">Reminder: Membership Expiring Soon</h2>
@@ -243,42 +256,42 @@ async sendMembershipExpiryReminder(name: string, email: string, expiryDate: Date
         </div>
       </div>
     `,
-  };
+    };
 
-  return await transporter.sendMail(mailOptions);
-}
-
-async sendSlotBookingConfirmation(
-  name: string,
-  email: string,
-  instructorName: string,
-  date: string,
-  startTime: string,
-  endTime: string
-): Promise<SentMessageInfo> {
-  const userEmail = process.env.USER_EMAIL;
-  const userPassword = process.env.USER_PASSWORD;
-
-  if (!userEmail || !userPassword) {
-    throw new Error("Email credentials are not set in the environment");
+    return await transporter.sendMail(mailOptions);
   }
 
-  const transporter = nodeMailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: userEmail,
-      pass: userPassword,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+  async sendSlotBookingConfirmation(
+    name: string,
+    email: string,
+    instructorName: string,
+    date: string,
+    startTime: string,
+    endTime: string,
+  ): Promise<SentMessageInfo> {
+    const userEmail = process.env.USER_EMAIL;
+    const userPassword = process.env.USER_PASSWORD;
 
-  const mailOptions = {
-    from: userEmail,
-    to: email,
-    subject: "✅ Slot Booking Confirmed - uLearn",
-    html: `
+    if (!userEmail || !userPassword) {
+      throw new Error("Email credentials are not set in the environment");
+    }
+
+    const transporter = nodeMailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: userEmail,
+        pass: userPassword,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    const mailOptions = {
+      from: userEmail,
+      to: email,
+      subject: "✅ Slot Booking Confirmed - uLearn",
+      html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #e8f5e9;">
         <div style="background-color: white; padding: 20px; border-radius: 8px;">
           <h2 style="color: #4CAF50;">Slot Booking Confirmed!</h2>
@@ -292,12 +305,8 @@ async sendSlotBookingConfirmation(
         </div>
       </div>
     `,
-  };
+    };
 
-  return await transporter.sendMail(mailOptions);
-}
-
-
-
-
+    return await transporter.sendMail(mailOptions);
+  }
 }

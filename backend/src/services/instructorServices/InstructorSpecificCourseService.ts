@@ -1,13 +1,15 @@
 import { Types } from "mongoose";
-import { IInstructorCourseSpecificDashboardRepository } from "../../repositories/instructorRepository/interface/IInstructorSpecificCourseDashboardRepository"; 
-import { IInstructorSpecificCourseDashboardService } from "./interface/IInstructorSpecificCourseService"; 
+import { IInstructorCourseSpecificDashboardRepository } from "../../repositories/instructorRepository/interface/IInstructorSpecificCourseDashboardRepository";
+import { IInstructorSpecificCourseDashboardService } from "./interface/IInstructorSpecificCourseService";
 
 export class InstructorSpecificCourseDashboardService
   implements IInstructorSpecificCourseDashboardService
 {
-  private _dashboardRepository: IInstructorCourseSpecificDashboardRepository
-  constructor(dashboardRepository: IInstructorCourseSpecificDashboardRepository) {
-    this._dashboardRepository = dashboardRepository
+  private _dashboardRepository: IInstructorCourseSpecificDashboardRepository;
+  constructor(
+    dashboardRepository: IInstructorCourseSpecificDashboardRepository,
+  ) {
+    this._dashboardRepository = dashboardRepository;
   }
 
   async getCourseDashboard(courseId: Types.ObjectId) {
@@ -29,7 +31,7 @@ export class InstructorSpecificCourseDashboardService
     page: number,
     limit: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ) {
     return this._dashboardRepository.getCourseRevenueReport(
       courseId,
@@ -37,7 +39,7 @@ export class InstructorSpecificCourseDashboardService
       page,
       limit,
       startDate,
-      endDate
+      endDate,
     );
   }
 }

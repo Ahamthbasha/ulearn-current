@@ -11,7 +11,7 @@ dayjs.extend(timezone);
  */
 export function formatDate(
   date: Date | string,
-  tz: string = "Asia/Kolkata"
+  tz: string = "Asia/Kolkata",
 ): string {
   return dayjs(date).tz(tz).format("DD-MM-YYYY hh:mm A");
 }

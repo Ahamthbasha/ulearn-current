@@ -5,7 +5,7 @@ export interface IInstructorSlotRepository {
   createSlot(data: Partial<ISlot>): Promise<ISlot>;
   updateSlot(
     slotId: Types.ObjectId,
-    data: Partial<ISlot>
+    data: Partial<ISlot>,
   ): Promise<ISlot | null>;
   deleteSlot(slotId: Types.ObjectId): Promise<void>;
   getSlotById(slotId: Types.ObjectId): Promise<ISlot | null>;
@@ -14,7 +14,7 @@ export interface IInstructorSlotRepository {
     instructorId: Types.ObjectId,
     startTime: Date,
     endTime: Date,
-    excludeSlotId?: Types.ObjectId
+    excludeSlotId?: Types.ObjectId,
   ): Promise<boolean>;
 
   getSlotStats(
@@ -25,7 +25,7 @@ export interface IInstructorSlotRepository {
       year?: number;
       startDate?: Date;
       endDate?: Date;
-    }
+    },
   ): Promise<
     {
       date: string;
@@ -33,6 +33,4 @@ export interface IInstructorSlotRepository {
       bookedSlots: number;
     }[]
   >;
-
-  
 }

@@ -3,7 +3,7 @@ import {
   IInstructorMembershipOrder,
 } from "../../models/instructorMembershipOrderModel";
 import { GenericRepository } from "../genericRepository";
-import { IInstructorMembershipOrderRepository } from "./interface/IInstructorMembershipOrderRepository"; 
+import { IInstructorMembershipOrderRepository } from "./interface/IInstructorMembershipOrderRepository";
 import { Types, PipelineStage } from "mongoose";
 
 export class InstructorMembershipOrderRepository
@@ -40,7 +40,7 @@ export class InstructorMembershipOrderRepository
 
   async updateOrderStatus(
     orderId: string,
-    data: Partial<IInstructorMembershipOrder>
+    data: Partial<IInstructorMembershipOrder>,
   ) {
     await this.updateOne({ txnId: orderId }, data);
   }
@@ -49,7 +49,7 @@ export class InstructorMembershipOrderRepository
     instructorId: string,
     page: number = 1,
     limit: number = 10,
-    search?: string
+    search?: string,
   ): Promise<{ data: IInstructorMembershipOrder[]; total: number }> {
     const baseFilter = {
       instructorId: new Types.ObjectId(instructorId),
@@ -64,19 +64,19 @@ export class InstructorMembershipOrderRepository
             from: "membershipplans",
             localField: "membershipPlanId",
             foreignField: "_id",
-            as: "membershipPlan"
-          }
+            as: "membershipPlan",
+          },
         },
         {
           $unwind: {
             path: "$membershipPlan",
-            preserveNullAndEmptyArrays: true
-          }
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
           $addFields: {
-            txnIdString: { $toString: "$txnId" }
-          }
+            txnIdString: { $toString: "$txnId" },
+          },
         },
         {
           $match: {
@@ -84,17 +84,17 @@ export class InstructorMembershipOrderRepository
               {
                 txnIdString: {
                   $regex: search.trim(),
-                  $options: "i"
-                }
+                  $options: "i",
+                },
               },
               {
                 "membershipPlan.name": {
                   $regex: search.trim(),
-                  $options: "i"
-                }
-              }
-            ]
-          }
+                  $options: "i",
+                },
+              },
+            ],
+          },
         },
         { $sort: { createdAt: -1 } },
         {
@@ -102,38 +102,35 @@ export class InstructorMembershipOrderRepository
             from: "instructors",
             localField: "instructorId",
             foreignField: "_id",
-            as: "instructor"
-          }
+            as: "instructor",
+          },
         },
         {
           $addFields: {
             membershipPlanId: "$membershipPlan",
-            instructorId: { $arrayElemAt: ["$instructor", 0] }
-          }
+            instructorId: { $arrayElemAt: ["$instructor", 0] },
+          },
         },
         {
           $project: {
             membershipPlan: 0,
             instructor: 0,
-            txnIdString: 0
-          }
-        }
+            txnIdString: 0,
+          },
+        },
       ];
 
-      const countPipeline: PipelineStage[] = [
-        ...pipeline,
-        { $count: "total" }
-      ];
+      const countPipeline: PipelineStage[] = [...pipeline, { $count: "total" }];
 
       const dataPipeline: PipelineStage[] = [
         ...pipeline,
         { $skip: (page - 1) * limit },
-        { $limit: limit }
+        { $limit: limit },
       ];
 
       const [countResult, dataResult] = await Promise.all([
         this.aggregate<{ total: number }>(countPipeline),
-        this.aggregate<IInstructorMembershipOrder>(dataPipeline)
+        this.aggregate<IInstructorMembershipOrder>(dataPipeline),
       ]);
 
       const total = countResult.length > 0 ? countResult[0].total : 0;
@@ -142,11 +139,13 @@ export class InstructorMembershipOrderRepository
 
     return await this.paginate(baseFilter, page, limit, { createdAt: -1 }, [
       "membershipPlanId",
-      "instructorId"
+      "instructorId",
     ]);
   }
 
-  async findOneByTxnId(txnId: string): Promise<IInstructorMembershipOrder | null> {
+  async findOneByTxnId(
+    txnId: string,
+  ): Promise<IInstructorMembershipOrder | null> {
     const pipeline: PipelineStage[] = [
       { $match: { txnId } },
       {
@@ -154,45 +153,45 @@ export class InstructorMembershipOrderRepository
           from: "instructors",
           localField: "instructorId",
           foreignField: "_id",
-          as: "instructor"
-        }
+          as: "instructor",
+        },
       },
       {
         $unwind: {
           path: "$instructor",
-          preserveNullAndEmptyArrays: true
-        }
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $lookup: {
           from: "membershipplans",
           localField: "membershipPlanId",
           foreignField: "_id",
-          as: "membershipPlan"
-        }
+          as: "membershipPlan",
+        },
       },
       {
         $unwind: {
           path: "$membershipPlan",
-          preserveNullAndEmptyArrays: true
-        }
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $addFields: {
           instructorId: {
             _id: "$instructor._id",
             username: "$instructor.username",
-            email: "$instructor.email"
+            email: "$instructor.email",
           },
-          membershipPlanId: "$membershipPlan"
-        }
+          membershipPlanId: "$membershipPlan",
+        },
       },
       {
         $project: {
           instructor: 0,
-          membershipPlan: 0
-        }
-      }
+          membershipPlan: 0,
+        },
+      },
     ];
 
     const result = await this.aggregate<IInstructorMembershipOrder>(pipeline);

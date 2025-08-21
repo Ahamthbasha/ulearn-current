@@ -7,7 +7,7 @@ import { StudentBookingDetailDTO } from "../../../dto/userDTO/studentBookingDeta
 export interface IStudentSlotBookingService {
   initiateCheckout(
     slotId: string,
-    studentId: string
+    studentId: string,
   ): Promise<{
     booking: {
       slotId: ISlot;
@@ -19,7 +19,7 @@ export interface IStudentSlotBookingService {
   verifyPayment(
     slotId: string,
     studentId: string,
-    razorpayPaymentId: string
+    razorpayPaymentId: string,
   ): Promise<IBooking>;
 
   bookViaWallet(slotId: string, studentId: string): Promise<IBooking>;
@@ -28,10 +28,12 @@ export interface IStudentSlotBookingService {
     studentId: string,
     page: number,
     limit: number,
-    searchQuery?: string
+    searchQuery?: string,
   ): Promise<{ data: StudentSlotBookingHistoryDTO[]; total: number }>;
 
   getStudentBookingById(bookingId: string): Promise<IBooking | null>;
-  
-  getStudentBookingDetail(bookingId: string): Promise<StudentBookingDetailDTO | null>;
+
+  getStudentBookingDetail(
+    bookingId: string,
+  ): Promise<StudentBookingDetailDTO | null>;
 }

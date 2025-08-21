@@ -33,10 +33,10 @@ export const toOrderDetailsDTO = (order: IOrder): OrderDetailsDTO => {
     status: order.status,
     orderId: order._id.toString(),
     orderDate: formattedDate,
-    courses: populatedCourses.map(course => ({
+    courses: populatedCourses.map((course) => ({
       courseName: course.courseName,
       price: course.price,
-      thumbnailUrl:course.thumbnailUrl
+      thumbnailUrl: course.thumbnailUrl,
     })),
   };
 };

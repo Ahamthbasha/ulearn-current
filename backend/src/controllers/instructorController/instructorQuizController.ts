@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { IInstructorQuizController } from "./interfaces/IInstructorQuizController";
-import { IInstructorQuizService } from "../../services/instructorServices/interface/IInstructorQuizService"; 
+import { IInstructorQuizService } from "../../services/instructorServices/interface/IInstructorQuizService";
 import { StatusCode } from "../../utils/enums";
-import { INSTRUCTOR_ERROR_MESSAGE, QuizErrorMessages, QuizSuccessMessages } from "../../utils/constants";
+import {
+  INSTRUCTOR_ERROR_MESSAGE,
+  QuizErrorMessages,
+  QuizSuccessMessages,
+} from "../../utils/constants";
 
 export class InstructorQuizController implements IInstructorQuizController {
   private _quizService: IInstructorQuizService;
@@ -13,7 +17,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   async createQuiz(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.body;
@@ -50,18 +54,16 @@ export class InstructorQuizController implements IInstructorQuizController {
   async deleteQuiz(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { quizId } = req.params;
       const deleted = await this._quizService.deleteQuiz(quizId);
       if (!deleted) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({
-            success: false,
-            message: QuizErrorMessages.QUIZ_OR_QUESTION_NOT_FOUND,
-          });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: QuizErrorMessages.QUIZ_OR_QUESTION_NOT_FOUND,
+        });
         return;
       }
       res.status(StatusCode.OK).json({
@@ -76,15 +78,16 @@ export class InstructorQuizController implements IInstructorQuizController {
   async getQuizById(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { quizId } = req.params;
       const quiz = await this._quizService.getQuizById(quizId);
       if (!quiz) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ success: false, message: INSTRUCTOR_ERROR_MESSAGE.QUIZ_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.QUIZ_NOT_FOUND,
+        });
         return;
       }
       res.status(StatusCode.OK).json({ success: true, data: quiz });
@@ -96,7 +99,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   async getQuizByCourseId(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.params;
@@ -130,13 +133,13 @@ export class InstructorQuizController implements IInstructorQuizController {
   async addQuestion(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.params;
       const added = await this._quizService.addQuestionToQuiz(
         courseId,
-        req.body
+        req.body,
       );
 
       res.status(StatusCode.CREATED).json({
@@ -159,14 +162,14 @@ export class InstructorQuizController implements IInstructorQuizController {
   async updateQuestion(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { quizId, questionId } = req.params;
       const updated = await this._quizService.updateQuestionInQuiz(
         quizId,
         questionId,
-        req.body
+        req.body,
       );
 
       if (!updated) {
@@ -198,13 +201,13 @@ export class InstructorQuizController implements IInstructorQuizController {
   async deleteQuestion(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { quizId, questionId } = req.params;
       const deleted = await this._quizService.deleteQuestionFromQuiz(
         quizId,
-        questionId
+        questionId,
       );
 
       if (!deleted) {
@@ -228,7 +231,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   async getPaginatedQuestionsByCourseId(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.params;
@@ -242,7 +245,7 @@ export class InstructorQuizController implements IInstructorQuizController {
           courseId,
           String(search),
           pageNum,
-          limitNum
+          limitNum,
         );
 
       res.status(StatusCode.OK).json({

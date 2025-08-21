@@ -1,9 +1,13 @@
-import { Roles,StatusCode } from "../utils/enums";
+import { Roles, StatusCode } from "../utils/enums";
 import { JwtService } from "../utils/jwt";
-import { Request,Response,NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { AuthErrorMsg } from "../utils/constants";
 
-export const isStudent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const isStudent = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const Token = req.cookies.accessToken;
 
@@ -25,50 +29,58 @@ export const isStudent = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export const isInstructor = async(req:Request,res:Response,next:NextFunction):Promise<void> => {
-    try {
-        const Token = req.cookies.accessToken
-        if(!Token){
-            res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN)
-            return
-        }
-
-        const JWT = new JwtService()
-        const decode = await JWT.verifyToken(Token)
-
-        if(decode){
-            if(decode.role != Roles.INSTRUCTOR){
-                res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN)
-                return
-            }
-        }
-        
-        next()
-    } catch (error) {
-        throw error
+export const isInstructor = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const Token = req.cookies.accessToken;
+    if (!Token) {
+      res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN);
+      return;
     }
-}
 
-export const isAdmin = async(req:Request,res:Response,next:NextFunction):Promise<void> => {
-    try {
-        const Token = req.cookies.accessToken
+    const JWT = new JwtService();
+    const decode = await JWT.verifyToken(Token);
 
-        if(!Token){
-            res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN)
-            return
-        }
-
-        const JWT = new JwtService()
-        const decode = await JWT.verifyToken(Token)
-
-        if(decode){
-            if(decode.role != Roles.ADMIN){
-                res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN)
-                return
-            }
-        }
-        next()
-    } catch (error) {
-        throw error
+    if (decode) {
+      if (decode.role != Roles.INSTRUCTOR) {
+        res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN);
+        return;
+      }
     }
-}
+
+    next();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const isAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const Token = req.cookies.accessToken;
+
+    if (!Token) {
+      res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN);
+      return;
+    }
+
+    const JWT = new JwtService();
+    const decode = await JWT.verifyToken(Token);
+
+    if (decode) {
+      if (decode.role != Roles.ADMIN) {
+        res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.ACCESS_FORBIDDEN);
+        return;
+      }
+    }
+    next();
+  } catch (error) {
+    throw error;
+  }
+};

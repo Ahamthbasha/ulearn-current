@@ -17,7 +17,7 @@ export class WalletRepository
   async createWallet(
     ownerId: Types.ObjectId,
     onModel: string,
-    role: string
+    role: string,
   ): Promise<IWallet> {
     const wallet = new WalletModel({ ownerId, onModel, role });
     return wallet.save();
@@ -27,7 +27,7 @@ export class WalletRepository
     ownerId: Types.ObjectId,
     amount: number,
     description: string,
-    txnId: string
+    txnId: string,
   ): Promise<IWallet | null> {
     return await this.findOneAndUpdate(
       { ownerId },
@@ -43,7 +43,7 @@ export class WalletRepository
           },
         },
       },
-      { new: true }
+      { new: true },
     );
   }
 
@@ -51,7 +51,7 @@ export class WalletRepository
     ownerId: Types.ObjectId,
     amount: number,
     description: string,
-    txnId: string
+    txnId: string,
   ): Promise<IWallet | null> {
     const wallet = await this.findOne({ ownerId });
     if (!wallet || wallet.balance < amount) return null;
@@ -70,14 +70,14 @@ export class WalletRepository
           },
         },
       },
-      { new: true }
+      { new: true },
     );
   }
 
   async getPaginatedTransactions(
     ownerId: Types.ObjectId,
     page: number,
-    limit: number
+    limit: number,
   ): Promise<{ transactions: IWallet["transactions"]; total: number }> {
     const wallet = await WalletModel.findOne({ ownerId });
 

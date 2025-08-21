@@ -11,11 +11,15 @@ export interface IAdminDashboardService {
     membershipSalesGraph: { month: number; year: number; total: number }[];
   }>;
 
-  getCourseSalesReport(filter: {
-    type: "daily" | "weekly" | "monthly" | "custom";
-    startDate?: Date;
-    endDate?: Date;
-  }, page?: number, limit?: number): Promise<{
+  getCourseSalesReport(
+    filter: {
+      type: "daily" | "weekly" | "monthly" | "custom";
+      startDate?: Date;
+      endDate?: Date;
+    },
+    page?: number,
+    limit?: number,
+  ): Promise<{
     items: IAdminCourseSalesReportItem[];
     totalAdminShare: number;
     totalItems: number;
@@ -23,11 +27,15 @@ export interface IAdminDashboardService {
     currentPage: number;
   }>;
 
-  getMembershipSalesReport(filter: {
-    type: "daily" | "weekly" | "monthly" | "custom";
-    startDate?: Date;
-    endDate?: Date;
-  }, page?: number, limit?: number): Promise<{
+  getMembershipSalesReport(
+    filter: {
+      type: "daily" | "weekly" | "monthly" | "custom";
+      startDate?: Date;
+      endDate?: Date;
+    },
+    page?: number,
+    limit?: number,
+  ): Promise<{
     items: {
       orderId: string;
       planName: string;

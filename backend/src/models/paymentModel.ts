@@ -21,7 +21,7 @@ const paymentSchema = new Schema<IPayment>(
     amount: { type: Number, required: true },
     receiptUrl: { type: String },
   },
-  { timestamps: { createdAt: true, updatedAt: false } }
+  { timestamps: { createdAt: true, updatedAt: false } },
 );
 
 export const PaymentModel = model<IPayment>("Payment", paymentSchema);

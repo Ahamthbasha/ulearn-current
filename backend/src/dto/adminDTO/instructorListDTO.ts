@@ -1,4 +1,3 @@
-
 export interface InstructorDTO {
   id: string;
   name: string;

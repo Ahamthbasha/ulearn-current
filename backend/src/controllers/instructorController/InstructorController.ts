@@ -4,7 +4,7 @@ import { OtpGenerate } from "../../utils/otpGenerator";
 import { JwtService } from "../../utils/jwt";
 
 import IInstructorController from "./interfaces/IInstructorController";
-import IInstructorService from "../../services/instructorServices/interface/IInstructorService"; 
+import IInstructorService from "../../services/instructorServices/interface/IInstructorService";
 import IOtpServices from "../../services/interface/IOtpService";
 
 import {
@@ -38,9 +38,8 @@ export class InstructorController implements IInstructorController {
       const hashedPassword = await bcrypt.hash(password, saltRound);
       password = hashedPassword;
 
-      const ExistingInstructor = await this._instructorService.findByEmail(
-        email
-      );
+      const ExistingInstructor =
+        await this._instructorService.findByEmail(email);
 
       if (ExistingInstructor) {
         res.json({
@@ -147,7 +146,7 @@ export class InstructorController implements IInstructorController {
 
       const isPasswordValid = await bcrypt.compare(
         password,
-        instructor.password
+        instructor.password,
       );
 
       if (!isPasswordValid) {
@@ -169,7 +168,7 @@ export class InstructorController implements IInstructorController {
 
       const accesstoken = await this._jwt.accessToken({ email, role, id });
       const refreshToken = await this._jwt.refreshToken({ email, role, id });
-      
+
       res
         .status(StatusCode.OK)
         .cookie("accessToken", accesstoken, {
@@ -179,7 +178,7 @@ export class InstructorController implements IInstructorController {
         })
         .cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          sameSite: "none" ,
+          sameSite: "none",
           secure: true,
         })
 
@@ -291,7 +290,7 @@ export class InstructorController implements IInstructorController {
 
       const passwordReset = await this._instructorService.resetPassword(
         data.email,
-        hashedPassword
+        hashedPassword,
       );
 
       if (passwordReset) {
@@ -309,31 +308,36 @@ export class InstructorController implements IInstructorController {
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
     try {
       const { name, email } = req.body;
-      const existingInstructor = await this._instructorService.findByEmail(
-        email
-      );
+      const existingInstructor =
+        await this._instructorService.findByEmail(email);
 
       if (!existingInstructor) {
         const instructor = await this._instructorService.googleLogin(
           name,
-          email
+          email,
         );
 
         if (instructor) {
           const role = instructor.role;
           const id = instructor._id;
           const accessToken = await this._jwt.accessToken({ email, id, role });
-          const refreshToken = await this._jwt.refreshToken({ email, id, role });
+          const refreshToken = await this._jwt.refreshToken({
+            email,
+            id,
+            role,
+          });
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true,
-              secure:true,
-              sameSite:"none"
-             })
-            .cookie("refreshToken", refreshToken, { httpOnly: true ,
-              secure:true,
-              sameSite:"none"
+            .cookie("accessToken", accessToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
+            })
+            .cookie("refreshToken", refreshToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
             })
             .json({
               success: true,
@@ -346,12 +350,24 @@ export class InstructorController implements IInstructorController {
           const role = existingInstructor.role;
           const id = existingInstructor._id;
           const accessToken = await this._jwt.accessToken({ email, id, role });
-          const refreshToken = await this._jwt.refreshToken({ email, id, role });
+          const refreshToken = await this._jwt.refreshToken({
+            email,
+            id,
+            role,
+          });
 
           res
             .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, { httpOnly: true,sameSite:"none",secure:true})
-            .cookie("refreshToken", refreshToken, { httpOnly: true,sameSite:"none",secure:true})
+            .cookie("accessToken", accessToken, {
+              httpOnly: true,
+              sameSite: "none",
+              secure: true,
+            })
+            .cookie("refreshToken", refreshToken, {
+              httpOnly: true,
+              sameSite: "none",
+              secure: true,
+            })
             .json({
               success: true,
               message: InstructorSuccessMessages.GOOGLE_LOGIN_SUCCESS,
@@ -377,7 +393,7 @@ export class InstructorController implements IInstructorController {
       }
 
       const instructor = await this._instructorService.findByEmail(
-        decoded.email
+        decoded.email,
       );
 
       if (!instructor) {

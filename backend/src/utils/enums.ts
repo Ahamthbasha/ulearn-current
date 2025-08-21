@@ -19,5 +19,4 @@ export enum Roles {
 export enum Model {
   ADMIN = "Admin",
   USER = "User",
-  
 }

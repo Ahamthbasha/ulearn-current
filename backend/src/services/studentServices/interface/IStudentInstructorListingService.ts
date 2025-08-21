@@ -7,11 +7,10 @@ export interface IStudentInstructorListingService {
     search?: string,
     sortOrder?: "asc" | "desc",
     skill?: string,
-    expertise?: string
+    expertise?: string,
   ): Promise<{ data: IInstructor[]; total: number }>;
 
   getMentorById(id: string): Promise<IInstructor | null>;
 
   getAvailableFilters(): Promise<{ skills: string[]; expertise: string[] }>;
-
 }

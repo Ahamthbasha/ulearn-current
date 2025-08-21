@@ -17,7 +17,7 @@ export class InstructorSpecificCourseDashboardRepository
     paymentRepo: IPaymentRepository,
     enrollmentRepo: IEnrollmentRepository,
     courseRepo: ICourseRepository,
-    orderRepo: IOrderRepository
+    orderRepo: IOrderRepository,
   ) {
     this._paymentRepo = paymentRepo;
     this._enrollmentRepo = enrollmentRepo;
@@ -31,7 +31,7 @@ export class InstructorSpecificCourseDashboardRepository
 
     for (const payment of payments || []) {
       const order = await this._orderRepo.findById(
-        (payment.orderId as Types.ObjectId).toString()
+        (payment.orderId as Types.ObjectId).toString(),
       );
       if (!order || !order.courses.includes(courseId)) continue;
 
@@ -55,7 +55,7 @@ export class InstructorSpecificCourseDashboardRepository
       {
         path: "category",
         select: "categoryName",
-      }
+      },
     );
 
     return course?.category && "categoryName" in course.category
@@ -64,14 +64,14 @@ export class InstructorSpecificCourseDashboardRepository
   }
 
   async getMonthlyPerformance(
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<{ month: number; year: number; totalSales: number }[]> {
     const payments = await this._paymentRepo.findAll({ status: "SUCCESS" });
     const monthlyMap = new Map<string, number>();
 
     for (const payment of payments || []) {
       const order = await this._orderRepo.findById(
-        (payment.orderId as Types.ObjectId).toString()
+        (payment.orderId as Types.ObjectId).toString(),
       );
       if (!order || !order.courses.includes(courseId)) continue;
 
@@ -82,7 +82,7 @@ export class InstructorSpecificCourseDashboardRepository
       const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
       monthlyMap.set(
         key,
-        (monthlyMap.get(key) || 0) + course.price * INSTRUCTOR_REVENUE_SHARE
+        (monthlyMap.get(key) || 0) + course.price * INSTRUCTOR_REVENUE_SHARE,
       );
     }
 
@@ -103,7 +103,7 @@ export class InstructorSpecificCourseDashboardRepository
     page: number,
     limit: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<{
     data: {
       orderId: string;
@@ -128,7 +128,7 @@ export class InstructorSpecificCourseDashboardRepository
           0,
           0,
           0,
-          0
+          0,
         );
         end = new Date(
           now.getFullYear(),
@@ -137,7 +137,7 @@ export class InstructorSpecificCourseDashboardRepository
           23,
           59,
           59,
-          999
+          999,
         );
         break;
       case "weekly":
@@ -157,7 +157,7 @@ export class InstructorSpecificCourseDashboardRepository
           23,
           59,
           59,
-          999
+          999,
         );
         break;
       case "yearly":
@@ -206,7 +206,7 @@ export class InstructorSpecificCourseDashboardRepository
       },
       page,
       limit,
-      { createdAt: -1 }
+      { createdAt: -1 },
     );
 
     const enrollments = await this.getCourseEnrollmentCount(courseId);
@@ -215,7 +215,7 @@ export class InstructorSpecificCourseDashboardRepository
 
     for (const payment of payments || []) {
       const order = await this._orderRepo.findById(
-        (payment.orderId as Types.ObjectId).toString()
+        (payment.orderId as Types.ObjectId).toString(),
       );
       if (!order || !order.courses.includes(courseId)) continue;
 

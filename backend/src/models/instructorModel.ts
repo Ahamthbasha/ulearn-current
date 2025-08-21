@@ -6,11 +6,11 @@ export interface IInstructorDTO {
 }
 
 export interface InstructorProfileDTO {
-  _id:ObjectId;
+  _id: ObjectId;
   instructorName: string;
   email: string;
-  role:string;
-  isBlocked:boolean;
+  role: string;
+  isBlocked: boolean;
   skills?: string[];
   expertise?: string[];
   status: boolean; // isVerified
@@ -19,9 +19,8 @@ export interface InstructorProfileDTO {
   profilePicUrl?: string;
 }
 
-
 export interface IInstructor extends Document {
-  _id: ObjectId ;
+  _id: ObjectId;
   username: string;
   email: string;
   password: string;
@@ -41,8 +40,8 @@ export interface IInstructor extends Document {
     ifscCode?: string;
     bankName?: string;
   };
-  createdAt:Date;
-  updatedAt:Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const instructorSchema: Schema<IInstructor> = new Schema(
@@ -107,9 +106,12 @@ const instructorSchema: Schema<IInstructor> = new Schema(
       bankName: { type: String, required: false },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const InstructorModel = mongoose.model<IInstructor>("Instructor", instructorSchema);
+const InstructorModel = mongoose.model<IInstructor>(
+  "Instructor",
+  instructorSchema,
+);
 
 export default InstructorModel;

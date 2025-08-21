@@ -44,7 +44,7 @@ class SocketManager {
     id: string,
     userId: string,
     socketId: string,
-    role?: string
+    role?: string,
   ): void {
     this.onlineUsers.set(userId, {
       id,
@@ -98,7 +98,7 @@ async function initializeSocketIO(io: Server) {
       }
 
       const decodedToken = (await jwtService.verifyToken(
-        token
+        token,
       )) as DecodedToken;
       if (!decodedToken?.email || !decodedToken?.role) {
         throw new Error("Invalid or malformed token");
@@ -132,7 +132,7 @@ async function initializeSocketIO(io: Server) {
   // Main connection handler
   io.on("connection", (socket) => {
     console.log(
-      `${socket.data.role} connected: ${socket.id}, Email: ${socket.data.email}`
+      `${socket.data.role} connected: ${socket.id}, Email: ${socket.data.email}`,
     );
 
     // Add user to online users
@@ -140,7 +140,7 @@ async function initializeSocketIO(io: Server) {
       String(socket.data.entity._id),
       socket.data.entity.email,
       socket.id,
-      socket.data.role
+      socket.data.role,
     );
 
     // Emit user online status.It announcing the user's online status with their email and role
@@ -164,7 +164,7 @@ async function initializeSocketIO(io: Server) {
 
       // Log the call initiation
       console.log(
-        `${socket.data.role} (${socket.data.email}) initiating call to ${to}`
+        `${socket.data.role} (${socket.data.email}) initiating call to ${to}`,
       );
 
       // Send incoming call to recipient
@@ -238,7 +238,7 @@ async function initializeSocketIO(io: Server) {
     // Handle disconnection
     socket.on("disconnect", () => {
       console.log(
-        `${socket.data.role} disconnected: ${socket.id}, Email: ${socket.data.email}`
+        `${socket.data.role} disconnected: ${socket.id}, Email: ${socket.data.email}`,
       );
       socketManager.removeUser(socket.data.entity.email);
 

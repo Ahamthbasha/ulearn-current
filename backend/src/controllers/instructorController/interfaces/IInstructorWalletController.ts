@@ -8,6 +8,6 @@ export interface IInstructorWalletController {
 
   getPaginatedTransactions(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void>;
 }

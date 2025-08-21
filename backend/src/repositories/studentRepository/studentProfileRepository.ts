@@ -1,4 +1,4 @@
-import { IStudentProfileRepository } from "./interface/IStudentProfileRepository"; 
+import { IStudentProfileRepository } from "./interface/IStudentProfileRepository";
 
 import UserModel, { IUser } from "../../models/userModel";
 import { GenericRepository } from "../genericRepository";

@@ -1,5 +1,5 @@
 import { ICategoryModel } from "../../../models/categoryModel";
-import { IGenericRepository } from "../../../repositories/genericRepository"; 
+import { IGenericRepository } from "../../../repositories/genericRepository";
 
 export interface IAdminCategoryRepository
   extends IGenericRepository<ICategoryModel> {
@@ -9,6 +9,6 @@ export interface IAdminCategoryRepository
   getAllCategoriesPaginated(
     page: number,
     limit: number,
-    search?: string
+    search?: string,
   ): Promise<{ data: ICategoryModel[]; total: number }>;
 }

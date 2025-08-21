@@ -1,7 +1,7 @@
 import { Schema, Types, model, Document } from "mongoose";
 
 export interface IChapter extends Document {
-  _id:Types.ObjectId,
+  _id: Types.ObjectId;
   chapterTitle: string;
   courseId: Types.ObjectId;
   chapterNumber?: number;
@@ -25,7 +25,7 @@ const ChapterSchema = new Schema<IChapter>(
     description: { type: String, required: true },
     videoUrl: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const ChapterModel = model<IChapter>("Chapter", ChapterSchema);

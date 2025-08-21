@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { IAdminMembershipController } from "./interface/IAdminMembershipController";
-import { IAdminMembershipService } from "../../services/adminServices/interface/IAdminMembershipService"; 
-import { AdminErrorMessages, AdminSuccessMessages, MembershipMessages } from "../../utils/constants";
+import { IAdminMembershipService } from "../../services/adminServices/interface/IAdminMembershipService";
+import {
+  AdminErrorMessages,
+  AdminSuccessMessages,
+  MembershipMessages,
+} from "../../utils/constants";
 import { StatusCode } from "../../utils/enums";
 
 export class AdminMembershipController implements IAdminMembershipController {
@@ -31,11 +35,13 @@ export class AdminMembershipController implements IAdminMembershipController {
       const { membershipId } = req.params;
       const updated = await this._membershipService.updatePlan(
         membershipId,
-        req.body
+        req.body,
       );
 
       if (!updated) {
-        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
+        res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 
@@ -57,7 +63,9 @@ export class AdminMembershipController implements IAdminMembershipController {
       const deleted = await this._membershipService.deletePlan(membershipId);
 
       if (!deleted) {
-        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
+        res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 
@@ -76,7 +84,9 @@ export class AdminMembershipController implements IAdminMembershipController {
       const plan = await this._membershipService.getPlanById(membershipId);
 
       if (!plan) {
-        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
+        res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 
@@ -104,7 +114,7 @@ export class AdminMembershipController implements IAdminMembershipController {
       const { data, total } = await this._membershipService.paginatePlans(
         filter,
         Number(page),
-        Number(limit)
+        Number(limit),
       );
 
       res.json({
@@ -128,7 +138,9 @@ export class AdminMembershipController implements IAdminMembershipController {
       const updated = await this._membershipService.toggleStatus(membershipId);
 
       if (!updated) {
-        res.status(StatusCode.NOT_FOUND).json({ message: MembershipMessages.NOT_FOUND });
+        res
+          .status(StatusCode.NOT_FOUND)
+          .json({ message: MembershipMessages.NOT_FOUND });
         return;
       }
 

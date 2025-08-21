@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { IStudentEnrollmentService } from "./interface/IStudentEnrollmentService"; 
-import { IStudentEnrollmentRepository } from "../../repositories/studentRepository/interface/IStudentEnrollmentRepository"; 
+import { IStudentEnrollmentService } from "./interface/IStudentEnrollmentService";
+import { IStudentEnrollmentRepository } from "../../repositories/studentRepository/interface/IStudentEnrollmentRepository";
 import { IEnrollment } from "../../models/enrollmentModel";
 
 export class StudentEnrollmentService implements IStudentEnrollmentService {
@@ -14,12 +14,23 @@ export class StudentEnrollmentService implements IStudentEnrollmentService {
     return this._enrollmentRepo.getAllEnrolledCourses(userId);
   }
 
-  async getEnrollmentCourseWithDetails(userId: Types.ObjectId, courseId: Types.ObjectId): Promise<IEnrollment | null> {
+  async getEnrollmentCourseWithDetails(
+    userId: Types.ObjectId,
+    courseId: Types.ObjectId,
+  ): Promise<IEnrollment | null> {
     return this._enrollmentRepo.getEnrollmentByCourseDetails(userId, courseId);
   }
 
-  async completeChapter(userId: Types.ObjectId, courseId: Types.ObjectId, chapterId: Types.ObjectId): Promise<IEnrollment | null> {
-    return this._enrollmentRepo.markChapterCompleted(userId, courseId, chapterId);
+  async completeChapter(
+    userId: Types.ObjectId,
+    courseId: Types.ObjectId,
+    chapterId: Types.ObjectId,
+  ): Promise<IEnrollment | null> {
+    return this._enrollmentRepo.markChapterCompleted(
+      userId,
+      courseId,
+      chapterId,
+    );
   }
 
   async submitQuizResult(
@@ -30,12 +41,15 @@ export class StudentEnrollmentService implements IStudentEnrollmentService {
       correctAnswers: number;
       totalQuestions: number;
       scorePercentage: number;
-    }
+    },
   ): Promise<IEnrollment | null> {
     return this._enrollmentRepo.submitQuizResult(userId, courseId, quizData);
   }
 
-  async areAllChaptersCompleted(userId: Types.ObjectId, courseId: Types.ObjectId): Promise<boolean> {
-  return this._enrollmentRepo.areAllChaptersCompleted(userId, courseId);
-}
+  async areAllChaptersCompleted(
+    userId: Types.ObjectId,
+    courseId: Types.ObjectId,
+  ): Promise<boolean> {
+    return this._enrollmentRepo.areAllChaptersCompleted(userId, courseId);
+  }
 }

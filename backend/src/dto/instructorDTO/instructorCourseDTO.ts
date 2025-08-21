@@ -4,5 +4,5 @@ export interface InstructorCourseDTO {
   courseName: string;
   thumbnailUrl: string;
   category: string; // category name
-  status: boolean;  // isPublished
+  status: boolean; // isPublished
 }

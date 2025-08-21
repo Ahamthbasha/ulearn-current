@@ -5,9 +5,9 @@ import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StudentErrorMessages } from "../../utils/constants";
 
 export class StudentWalletPaymentController {
-  private _walletPaymentService: IWalletPaymentService
+  private _walletPaymentService: IWalletPaymentService;
   constructor(walletPaymentService: IWalletPaymentService) {
-    this._walletPaymentService = walletPaymentService
+    this._walletPaymentService = walletPaymentService;
   }
 
   async createOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -48,8 +48,8 @@ export class StudentWalletPaymentController {
         signature: razorpay_signature,
         amount,
         userId,
-        role: Roles.STUDENT, 
-        onModel: Model.USER, 
+        role: Roles.STUDENT,
+        onModel: Model.USER,
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
@@ -57,7 +57,8 @@ export class StudentWalletPaymentController {
       console.error(error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: error.message || StudentErrorMessages.PAYMENT_VERIFICATION_FAILED,
+        message:
+          error.message || StudentErrorMessages.PAYMENT_VERIFICATION_FAILED,
       });
     }
   }

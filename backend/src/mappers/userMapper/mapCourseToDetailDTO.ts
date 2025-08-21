@@ -1,11 +1,11 @@
 // src/mappers/courseDetailMapper.ts
 import { ICourse } from "../../models/courseModel";
-import { CourseDetailDTO } from "../../dto/userDTO/courseDetailDTO"; 
+import { CourseDetailDTO } from "../../dto/userDTO/courseDetailDTO";
 
 export const mapCourseToDetailDTO = (
   course: ICourse,
   chapterCount: number,
-  quizQuestionCount: number
+  quizQuestionCount: number,
 ): CourseDetailDTO => {
   return {
     courseId: course._id.toString(),

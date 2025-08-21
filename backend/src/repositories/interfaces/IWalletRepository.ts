@@ -6,24 +6,24 @@ export interface IWalletRepository {
   createWallet(
     ownerId: Types.ObjectId,
     onModel: string,
-    role: string
+    role: string,
   ): Promise<IWallet>;
   creditWallet(
     ownerId: Types.ObjectId,
     amount: number,
     description: string,
-    txnId: string
+    txnId: string,
   ): Promise<IWallet | null>;
   debitWallet(
     ownerId: Types.ObjectId,
     amount: number,
     description: string,
-    txnId: string
+    txnId: string,
   ): Promise<IWallet | null>;
 
   getPaginatedTransactions(
     ownerId: Types.ObjectId,
     page: number,
-    limit: number
+    limit: number,
   ): Promise<{ transactions: IWallet["transactions"]; total: number }>;
 }

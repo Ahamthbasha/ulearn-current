@@ -18,7 +18,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     orderRepo: IOrderRepository,
     paymentRepo: IPaymentRepository,
     enrollmentRepo: IEnrollmentRepository,
-    courseRepo: ICourseRepository // for course name check
+    courseRepo: ICourseRepository, // for course name check
   ) {
     this._courseRepo = courseRepo;
     this._orderRepo = orderRepo;
@@ -30,7 +30,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
     amount: number,
-    razorpayOrderId: string
+    razorpayOrderId: string,
   ): Promise<IOrder> {
     return this._orderRepo.create({
       userId,
@@ -44,7 +44,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
 
   async updateOrderStatus(
     orderId: Types.ObjectId,
-    status: "SUCCESS" | "FAILED"
+    status: "SUCCESS" | "FAILED",
   ): Promise<IOrder | null> {
     return this._orderRepo.update(orderId.toString(), { status });
   }
@@ -55,7 +55,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
 
   async createEnrollments(
     userId: Types.ObjectId,
-    courseIds: Types.ObjectId[]
+    courseIds: Types.ObjectId[],
   ): Promise<IEnrollment[]> {
     const enrollments = courseIds.map((courseId) => ({
       userId,
@@ -73,7 +73,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   }
 
   async getEnrolledCourseIds(
-    userId: Types.ObjectId
+    userId: Types.ObjectId,
   ): Promise<Types.ObjectId[]> {
     const enrollments = (await this._enrollmentRepo.findAll({ userId })) || [];
     return enrollments.map((e) => e.courseId);

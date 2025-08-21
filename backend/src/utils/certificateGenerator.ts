@@ -15,7 +15,11 @@ export const generateCertificate = async ({
   userId: string;
   courseId: string;
 }): Promise<string> => {
-  const buffer = await createCertificatePDF(studentName, courseName, instructorName);
+  const buffer = await createCertificatePDF(
+    studentName,
+    courseName,
+    instructorName,
+  );
 
   const file: IMulterFile = {
     originalname: `certificate-${sanitize(studentName)}-${sanitize(courseName)}.pdf`,
@@ -23,14 +27,17 @@ export const generateCertificate = async ({
     mimetype: "application/pdf",
   };
 
-  const s3Key = await uploadToS3Bucket(file, `certificates/${userId}/${courseId}`);
+  const s3Key = await uploadToS3Bucket(
+    file,
+    `certificates/${userId}/${courseId}`,
+  );
   return s3Key;
 };
 
 const createCertificatePDF = async (
   studentName: string,
   courseName: string,
-  instructorName: string
+  instructorName: string,
 ): Promise<Buffer> => {
   const doc = new PDFDocument({
     size: "A4",
@@ -63,21 +70,30 @@ const createCertificatePDF = async (
     .font("Helvetica-Bold")
     .fontSize(48)
     .fillColor("#1E40AF") // Blue color
-    .text("CERTIFICATE", pageWidth / 2 - 200, 140, { align: "center", width: 400 });
+    .text("CERTIFICATE", pageWidth / 2 - 200, 140, {
+      align: "center",
+      width: 400,
+    });
 
   // Subtitle
   doc
     .font("Helvetica")
     .fontSize(24)
     .fillColor("#1E40AF")
-    .text("OF COMPLETION", pageWidth / 2 - 200, 200, { align: "center", width: 400 });
+    .text("OF COMPLETION", pageWidth / 2 - 200, 200, {
+      align: "center",
+      width: 400,
+    });
 
   // Student Name with underline
   doc
     .font("Helvetica-Bold")
     .fontSize(24)
     .fillColor("#000000")
-    .text(studentName, pageWidth / 2 - 200, 280, { align: "center", width: 400 });
+    .text(studentName, pageWidth / 2 - 200, 280, {
+      align: "center",
+      width: 400,
+    });
 
   // Draw underline for student name
   doc
@@ -92,14 +108,22 @@ const createCertificatePDF = async (
     .font("Helvetica")
     .fontSize(16)
     .fillColor("#6B7280")
-    .text("for successfully completing the course of", pageWidth / 2 - 200, 340, { align: "center", width: 400 });
+    .text(
+      "for successfully completing the course of",
+      pageWidth / 2 - 200,
+      340,
+      { align: "center", width: 400 },
+    );
 
   // Course Name
   doc
     .font("Helvetica-Bold")
     .fontSize(18)
     .fillColor("#000000")
-    .text(courseName, pageWidth / 2 - 200, 370, { align: "center", width: 400 });
+    .text(courseName, pageWidth / 2 - 200, 370, {
+      align: "center",
+      width: 400,
+    });
 
   // Instructor signature area
   doc
@@ -119,7 +143,11 @@ const createCertificatePDF = async (
     .font("Helvetica")
     .fontSize(10)
     .fillColor("#6B7280")
-    .text(`Date: ${new Date().toLocaleDateString("en-IN")}`, pageWidth - 180, pageHeight - 60);
+    .text(
+      `Date: ${new Date().toLocaleDateString("en-IN")}`,
+      pageWidth - 180,
+      pageHeight - 60,
+    );
 
   // Draw medal/ribbon icon
   drawMedalIcon(doc, pageWidth - 80, 80);
@@ -132,96 +160,120 @@ const createCertificatePDF = async (
   return await streamToBuffer(stream);
 };
 
-const drawBorder = (doc: InstanceType<typeof PDFDocument>, pageWidth: number, pageHeight: number) => {
+const drawBorder = (
+  doc: InstanceType<typeof PDFDocument>,
+  pageWidth: number,
+  pageHeight: number,
+) => {
   doc.save();
-  
+
   // Draw border around the entire certificate
-  doc.strokeColor("#1E40AF")
-     .lineWidth(3)
-     .rect(20, 20, pageWidth - 40, pageHeight - 40)
-     .stroke();
-  
+  doc
+    .strokeColor("#1E40AF")
+    .lineWidth(3)
+    .rect(20, 20, pageWidth - 40, pageHeight - 40)
+    .stroke();
+
   // Draw inner border for more elegant look
-  doc.strokeColor("#F59E0B")
-     .lineWidth(1)
-     .rect(30, 30, pageWidth - 60, pageHeight - 60)
-     .stroke();
-  
+  doc
+    .strokeColor("#F59E0B")
+    .lineWidth(1)
+    .rect(30, 30, pageWidth - 60, pageHeight - 60)
+    .stroke();
+
   doc.restore();
 };
 
-const drawOrangeAccents = (doc: InstanceType<typeof PDFDocument>, pageWidth: number, pageHeight: number) => {
+const drawOrangeAccents = (
+  doc: InstanceType<typeof PDFDocument>,
+  pageWidth: number,
+  pageHeight: number,
+) => {
   doc.save();
-  
+
   // Orange vertical bar on the right
-  doc.fillColor("#F59E0B")
-     .rect(pageWidth - 30, 0, 30, pageHeight)
-     .fill();
-  
+  doc
+    .fillColor("#F59E0B")
+    .rect(pageWidth - 30, 0, 30, pageHeight)
+    .fill();
+
   // Orange horizontal bar at bottom
-  doc.fillColor("#F59E0B")
-     .rect(0, pageHeight - 30, pageWidth, 30)
-     .fill();
-  
+  doc
+    .fillColor("#F59E0B")
+    .rect(0, pageHeight - 30, pageWidth, 30)
+    .fill();
+
   doc.restore();
 };
 
-const drawMedalIcon = (doc: InstanceType<typeof PDFDocument>, x: number, y: number) => {
+const drawMedalIcon = (
+  doc: InstanceType<typeof PDFDocument>,
+  x: number,
+  y: number,
+) => {
   doc.save();
-  
+
   // Medal circle
-  doc.fillColor("#F59E0B")
-     .circle(x, y, 25)
-     .fill();
-  
+  doc.fillColor("#F59E0B").circle(x, y, 25).fill();
+
   // Inner circle
-  doc.fillColor("#FEF3C7")
-     .circle(x, y, 20)
-     .fill();
-  
+  doc.fillColor("#FEF3C7").circle(x, y, 20).fill();
+
   // Medal ribbon
-  doc.fillColor("#F59E0B")
-     .rect(x - 8, y + 15, 16, 30)
-     .fill();
-  
+  doc
+    .fillColor("#F59E0B")
+    .rect(x - 8, y + 15, 16, 30)
+    .fill();
+
   // Ribbon ends (triangular)
-  doc.moveTo(x - 8, y + 45)
-     .lineTo(x, y + 35)
-     .lineTo(x + 8, y + 45)
-     .lineTo(x + 8, y + 45)
-     .fill();
-  
+  doc
+    .moveTo(x - 8, y + 45)
+    .lineTo(x, y + 35)
+    .lineTo(x + 8, y + 45)
+    .lineTo(x + 8, y + 45)
+    .fill();
+
   doc.restore();
 };
 
-const drawPersonIllustration = (doc: InstanceType<typeof PDFDocument>, x: number, y: number) => {
+const drawPersonIllustration = (
+  doc: InstanceType<typeof PDFDocument>,
+  x: number,
+  y: number,
+) => {
   doc.save();
-  
+
   // Simple person illustration
   // Head
-  doc.fillColor("#F59E0B")
-     .circle(x + 20, y - 20, 15)
-     .fill();
-  
+  doc
+    .fillColor("#F59E0B")
+    .circle(x + 20, y - 20, 15)
+    .fill();
+
   // Body
-  doc.fillColor("#F59E0B")
-     .rect(x + 10, y - 5, 20, 30)
-     .fill();
-  
+  doc
+    .fillColor("#F59E0B")
+    .rect(x + 10, y - 5, 20, 30)
+    .fill();
+
   // Laptop
-  doc.fillColor("#6B7280")
-     .rect(x - 10, y + 10, 40, 25)
-     .fill();
-  
+  doc
+    .fillColor("#6B7280")
+    .rect(x - 10, y + 10, 40, 25)
+    .fill();
+
   // Laptop screen
-  doc.fillColor("#000000")
-     .rect(x - 8, y + 12, 36, 18)
-     .fill();
-  
+  doc
+    .fillColor("#000000")
+    .rect(x - 8, y + 12, 36, 18)
+    .fill();
+
   doc.restore();
 };
 
-const streamToBuffer = async (stream: NodeJS.ReadableStream): Promise<Buffer> => {
+const streamToBuffer = async (
+  stream: NodeJS.ReadableStream,
+): Promise<Buffer> => {
   const chunks: Uint8Array[] = [];
   for await (const chunk of stream) {
     chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
@@ -229,4 +281,5 @@ const streamToBuffer = async (stream: NodeJS.ReadableStream): Promise<Buffer> =>
   return Buffer.concat(chunks);
 };
 
-const sanitize = (str: string): string => str.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+const sanitize = (str: string): string =>
+  str.replace(/[^a-z0-9]/gi, "_").toLowerCase();

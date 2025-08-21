@@ -4,7 +4,7 @@ import {
   IChapter,
 } from "../../models/chapterModel";
 import { GenericRepository } from "../genericRepository";
-import { IInstructorChapterRepository } from "./interface/IInstructorChapterRepository"; 
+import { IInstructorChapterRepository } from "./interface/IInstructorChapterRepository";
 
 export class InstructorChapterRepository
   extends GenericRepository<IChapter>
@@ -29,7 +29,7 @@ export class InstructorChapterRepository
 
   async updateChapter(
     chapterId: string,
-    data: Partial<IChapter>
+    data: Partial<IChapter>,
   ): Promise<IChapter | null> {
     return await this.update(chapterId, data);
   }
@@ -41,7 +41,7 @@ export class InstructorChapterRepository
   async findByTitleOrNumberAndCourseId(
     courseId: string,
     chapterTitle: string,
-    chapterNumber: number
+    chapterNumber: number,
   ): Promise<IChapter | null> {
     return await this.findOne({
       courseId,
@@ -55,7 +55,7 @@ export class InstructorChapterRepository
   async paginateChapters(
     filter: object,
     page: number,
-    limit: number
+    limit: number,
   ): Promise<{ data: IChapter[]; total: number }> {
     return this.paginate(filter, page, limit, { chapterNumber: 1 });
   }

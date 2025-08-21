@@ -1,5 +1,5 @@
 import { IBooking } from "../../../models/bookingModel";
-import { IGenericRepository } from "../../../repositories/genericRepository"; 
+import { IGenericRepository } from "../../../repositories/genericRepository";
 
 export interface IBlockingResult {
   canBlockNow: boolean;
@@ -10,6 +10,6 @@ export interface IBlockingResult {
 
 export interface IAdminBookingRepository extends IGenericRepository<IBooking> {
   checkUserBlockingStatus(email: string): Promise<IBlockingResult>;
-  getUserIdByEmail(email: string): Promise<string | null>
+  getUserIdByEmail(email: string): Promise<string | null>;
   getCurrentActiveSession(email: string): Promise<IBooking | null>;
 }

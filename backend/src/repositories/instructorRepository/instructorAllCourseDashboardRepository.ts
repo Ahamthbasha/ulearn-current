@@ -19,7 +19,7 @@ export class InstructorAllCourseDashboardRepository
   }
 
   async getTopSellingCourses(
-    instructorId: Types.ObjectId
+    instructorId: Types.ObjectId,
   ): Promise<ITopSellingCourse[]> {
     return this._orderRepo.aggregate<ITopSellingCourse>([
       { $match: { status: "SUCCESS" } },
@@ -48,7 +48,7 @@ export class InstructorAllCourseDashboardRepository
   }
 
   async getCategoryWiseSales(
-    instructorId: Types.ObjectId
+    instructorId: Types.ObjectId,
   ): Promise<ICategorySales[]> {
     return this._orderRepo.aggregate<ICategorySales>([
       { $match: { status: "SUCCESS" } },
@@ -88,7 +88,7 @@ export class InstructorAllCourseDashboardRepository
   }
 
   async getMonthlySalesGraph(
-    instructorId: Types.ObjectId
+    instructorId: Types.ObjectId,
   ): Promise<IMonthlySales[]> {
     return this._orderRepo.aggregate<IMonthlySales>([
       { $match: { status: "SUCCESS" } },
@@ -177,7 +177,7 @@ export class InstructorAllCourseDashboardRepository
     page: number,
     limit: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<{ data: IRevenueReportItem[]; total: number }> {
     const now = new Date();
     let start: Date;
@@ -219,73 +219,77 @@ export class InstructorAllCourseDashboardRepository
     };
 
     // Aggregation for paginated data
-    const dataAggregation = await this._orderRepo.aggregate<IRevenueReportItem>([
-      { $match: matchStage },
-      { $unwind: "$courses" },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseInfo",
+    const dataAggregation = await this._orderRepo.aggregate<IRevenueReportItem>(
+      [
+        { $match: matchStage },
+        { $unwind: "$courses" },
+        {
+          $lookup: {
+            from: "courses",
+            localField: "courses",
+            foreignField: "_id",
+            as: "courseInfo",
+          },
         },
-      },
-      { $unwind: "$courseInfo" },
-      {
-        $match: {
-          "courseInfo.instructorId": instructorId,
+        { $unwind: "$courseInfo" },
+        {
+          $match: {
+            "courseInfo.instructorId": instructorId,
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "payments",
-          localField: "_id",
-          foreignField: "orderId",
-          as: "paymentInfo",
+        {
+          $lookup: {
+            from: "payments",
+            localField: "_id",
+            foreignField: "orderId",
+            as: "paymentInfo",
+          },
         },
-      },
-      {
-        $unwind: {
-          path: "$paymentInfo",
-          preserveNullAndEmptyArrays: true,
+        {
+          $unwind: {
+            path: "$paymentInfo",
+            preserveNullAndEmptyArrays: true,
+          },
         },
-      },
-      {
-        $project: {
-          createdAt: 1,
-          orderId: "$_id",
-          paymentMethod: { $ifNull: ["$paymentInfo.method", "N/A"] },
-          courseName: "$courseInfo.courseName",
-          coursePrice: "$courseInfo.price",
-          instructorEarning: { $multiply: ["$courseInfo.price", 0.9] },
-          totalOrderAmount: "$amount",
+        {
+          $project: {
+            createdAt: 1,
+            orderId: "$_id",
+            paymentMethod: { $ifNull: ["$paymentInfo.method", "N/A"] },
+            courseName: "$courseInfo.courseName",
+            coursePrice: "$courseInfo.price",
+            instructorEarning: { $multiply: ["$courseInfo.price", 0.9] },
+            totalOrderAmount: "$amount",
+          },
         },
-      },
-      { $sort: { createdAt: -1 } },
-      { $skip: (page - 1) * limit },
-      { $limit: limit },
-    ]);
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+      ],
+    );
 
     // Aggregation for total count
-    const countAggregation = await this._orderRepo.aggregate<{ total: number }>([
-      { $match: matchStage },
-      { $unwind: "$courses" },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseInfo",
+    const countAggregation = await this._orderRepo.aggregate<{ total: number }>(
+      [
+        { $match: matchStage },
+        { $unwind: "$courses" },
+        {
+          $lookup: {
+            from: "courses",
+            localField: "courses",
+            foreignField: "_id",
+            as: "courseInfo",
+          },
         },
-      },
-      { $unwind: "$courseInfo" },
-      {
-        $match: {
-          "courseInfo.instructorId": instructorId,
+        { $unwind: "$courseInfo" },
+        {
+          $match: {
+            "courseInfo.instructorId": instructorId,
+          },
         },
-      },
-      { $count: "total" },
-    ]);
+        { $count: "total" },
+      ],
+    );
 
     const total = countAggregation[0]?.total || 0;
 

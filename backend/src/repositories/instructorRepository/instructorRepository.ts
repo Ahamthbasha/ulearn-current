@@ -3,7 +3,7 @@ import InstructorModel, {
   IInstructorDTO,
 } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
-import IInstructorRepository from "./interface/IInstructorRepository"; 
+import IInstructorRepository from "./interface/IInstructorRepository";
 import { InstructorErrorMessages } from "../../utils/constants";
 import bcrypt from "bcryptjs";
 export default class InstructorRepository
@@ -24,7 +24,7 @@ export default class InstructorRepository
 
   async resetPassword(
     email: string,
-    password: string
+    password: string,
   ): Promise<IInstructor | null> {
     try {
       const instructor = await this.findOne({ email });
@@ -70,21 +70,21 @@ export default class InstructorRepository
 
   async updateByEmail(
     email: string,
-    data: Partial<IInstructor>
+    data: Partial<IInstructor>,
   ): Promise<IInstructor | null> {
     return await this.updateOne({ email }, data);
   }
-  
+
   //enroll
   async findById(id: string): Promise<IInstructor | null> {
     return await super.findById(id);
   }
 
   async getMentorCount(): Promise<number> {
-      return await this.countDocuments({isMentor:true})
+    return await this.countDocuments({ isMentor: true });
   }
 
   async getInstructorCount(): Promise<number> {
-      return await this.countDocuments({isVerified:true})
+    return await this.countDocuments({ isVerified: true });
   }
 }

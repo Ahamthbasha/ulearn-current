@@ -20,7 +20,6 @@ export interface IMonthlySales {
   totalSales: number;
 }
 
-
 export interface IAdminCourseSalesReportItem {
   orderId: string;
   date: Date;
@@ -30,7 +29,7 @@ export interface IAdminCourseSalesReportItem {
     adminShare: number;
     instructorName: string;
   }[];
-  totalPrice:number;
+  totalPrice: number;
   totalAdminShare: number;
 }
 
@@ -72,7 +71,6 @@ export interface IStudentSlotReportItem {
   price: number;
   totalPrice: number;
 }
-
 
 // types/aggregationTypes.ts
 export type AggregationPipelineStage = {

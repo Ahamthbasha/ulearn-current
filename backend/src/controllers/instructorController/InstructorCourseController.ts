@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IInstructorCourseController } from "./interfaces/IInstructorCourseController";
-import { IInstructorCourseService } from "../../services/instructorServices/interface/IInstructorCourseService"; 
+import { IInstructorCourseService } from "../../services/instructorServices/interface/IInstructorCourseService";
 import getId from "../../utils/getId";
 import { StatusCode } from "../../utils/enums";
 import {
@@ -13,7 +13,7 @@ import { uploadToS3Bucket } from "../../utils/s3Bucket";
 
 export class InstructorCourseController implements IInstructorCourseController {
   private _courseService: IInstructorCourseService;
-  
+
   constructor(courseService: IInstructorCourseService) {
     this._courseService = courseService;
   }
@@ -21,7 +21,7 @@ export class InstructorCourseController implements IInstructorCourseController {
   async createCourse(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const courseData = req.body;
@@ -51,7 +51,7 @@ export class InstructorCourseController implements IInstructorCourseController {
       const isAlreadyCreated =
         await this._courseService.isCourseAlreadyCreatedByInstructor(
           courseName,
-          instructorId
+          instructorId,
         );
       if (isAlreadyCreated) {
         res.status(StatusCode.BAD_REQUEST).json({
@@ -63,11 +63,11 @@ export class InstructorCourseController implements IInstructorCourseController {
 
       const thumbnailKey = await uploadToS3Bucket(
         files.thumbnail[0],
-        "thumbnails"
+        "thumbnails",
       );
       const demoVideoKey = await uploadToS3Bucket(
         files.demoVideos[0],
-        "demoVideos"
+        "demoVideos",
       );
 
       courseData.courseName = courseName;
@@ -93,13 +93,13 @@ export class InstructorCourseController implements IInstructorCourseController {
   async updateCourse(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.params;
       const courseData = req.body;
       const instructorId = await getId(req);
-      
+
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
@@ -113,13 +113,13 @@ export class InstructorCourseController implements IInstructorCourseController {
         await this._courseService.isCourseAlreadyCreatedByInstructorExcluding(
           courseName,
           instructorId,
-          courseId
+          courseId,
         );
 
       if (isDuplicate) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.COURSE_ALREADY_CREATED
+          message: INSTRUCTOR_ERROR_MESSAGE.COURSE_ALREADY_CREATED,
         });
         return;
       }
@@ -132,7 +132,7 @@ export class InstructorCourseController implements IInstructorCourseController {
       if (files?.thumbnail) {
         const thumbnailKey = await uploadToS3Bucket(
           files.thumbnail[0],
-          "thumbnails"
+          "thumbnails",
         );
         courseData.thumbnailUrl = thumbnailKey;
       }
@@ -140,7 +140,7 @@ export class InstructorCourseController implements IInstructorCourseController {
       if (files?.demoVideos) {
         const demoVideoKey = await uploadToS3Bucket(
           files.demoVideos[0],
-          "demoVideos"
+          "demoVideos",
         );
         courseData.demoVideo = {
           type: "video",
@@ -152,7 +152,7 @@ export class InstructorCourseController implements IInstructorCourseController {
 
       const updatedCourse = await this._courseService.updateCourse(
         courseId,
-        courseData
+        courseData,
       );
 
       if (!updatedCourse) {
@@ -176,7 +176,7 @@ export class InstructorCourseController implements IInstructorCourseController {
   async deleteCourse(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.params;
@@ -196,7 +196,11 @@ export class InstructorCourseController implements IInstructorCourseController {
     }
   }
 
-  async getCourseById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getCourseById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { courseId } = req.params;
       const courseDto = await this._courseService.getCourseById(courseId);
@@ -217,14 +221,14 @@ export class InstructorCourseController implements IInstructorCourseController {
   async getInstructorCourses(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const instructorId = await getId(req);
       if (!instructorId) {
-        res.status(StatusCode.UNAUTHORIZED).json({ 
-          success: false, 
-          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED 
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
         });
         return;
       }
@@ -237,7 +241,7 @@ export class InstructorCourseController implements IInstructorCourseController {
         instructorId,
         page,
         limit,
-        search
+        search,
       );
 
       res.status(StatusCode.OK).json({
@@ -255,7 +259,7 @@ export class InstructorCourseController implements IInstructorCourseController {
   async publishCourse(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { courseId } = req.params;

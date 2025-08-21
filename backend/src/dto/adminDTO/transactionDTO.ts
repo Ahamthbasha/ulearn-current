@@ -12,5 +12,5 @@ export interface ITransactionResponseDTO {
   type: "credit" | "debit";
   description: string;
   txnId: string;
-  date: string;  // formatted
+  date: string; // formatted
 }

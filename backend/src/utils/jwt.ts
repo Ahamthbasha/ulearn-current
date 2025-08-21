@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { EnvErrorMsg, JwtErrorMsg } from "./constants";
 import dotenv from "dotenv";
 
-dotenv.config()
+dotenv.config();
 
 export class JwtService {
   async createToken(payload: Object): Promise<string> {
@@ -17,7 +17,7 @@ export class JwtService {
       expiresIn: JwtErrorMsg.JWT_EXPIRATION,
     });
 
-    console.log('payload',payload)
+    console.log("payload", payload);
 
     return verifyToken;
   }
@@ -29,15 +29,13 @@ export class JwtService {
     if (!secret) {
       throw new Error(EnvErrorMsg.JWT_NOT_FOUND);
     }
-    console.log('accessToken',payload)
+    console.log("accessToken", payload);
     return jwt.sign(payload, secret, {
       expiresIn: JwtErrorMsg.JWT_EXPIRATION,
     });
-
-
   }
-  
-//to get accessToken
+
+  //to get accessToken
   async refreshToken(payload: Object): Promise<string> {
     const secret = process.env.JWT_SECRET;
 
@@ -57,7 +55,7 @@ export class JwtService {
       const secret = process.env.JWT_SECRET || "MYLIFEMYRULE";
 
       const data = await jwt.verify(token, secret);
-      
+
       return data;
     } catch (error) {
       console.error("❌ Token verification failed:", error);

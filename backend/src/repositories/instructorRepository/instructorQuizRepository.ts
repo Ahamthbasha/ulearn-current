@@ -31,7 +31,7 @@ export class InstructorQuizRepository
 
   async addQuestionToQuiz(
     courseId: string,
-    question: IQuiz["questions"][0]
+    question: IQuiz["questions"][0],
   ): Promise<IQuiz> {
     const quiz = await this.findOne({
       courseId: new mongoose.Types.ObjectId(courseId),
@@ -41,7 +41,7 @@ export class InstructorQuizRepository
     const isDuplicate = quiz.questions.some(
       (q) =>
         q.questionText.trim().toLowerCase() ===
-        question.questionText.trim().toLowerCase()
+        question.questionText.trim().toLowerCase(),
     );
 
     if (isDuplicate) {
@@ -55,7 +55,7 @@ export class InstructorQuizRepository
   async updateQuestionInQuiz(
     quizId: string,
     questionId: string,
-    updatedData: Partial<IQuiz["questions"][0]>
+    updatedData: Partial<IQuiz["questions"][0]>,
   ): Promise<IQuiz | null> {
     const quiz = await this.findById(quizId);
     if (!quiz) return null;
@@ -86,7 +86,7 @@ export class InstructorQuizRepository
 
   async deleteQuestionFromQuiz(
     quizId: string,
-    questionId: string
+    questionId: string,
   ): Promise<IQuiz | null> {
     const quiz = await this.findById(quizId);
     if (!quiz) return null;
@@ -99,7 +99,7 @@ export class InstructorQuizRepository
     courseId: string,
     search: string,
     page: number,
-    limit: number
+    limit: number,
   ): Promise<{
     questions: IQuiz["questions"][0][];
     total: number;
@@ -111,7 +111,7 @@ export class InstructorQuizRepository
     if (!quiz) return { questions: [], total: 0, quizId: null };
 
     const filtered = quiz.questions.filter((q) =>
-      q.questionText.toLowerCase().includes(search.toLowerCase())
+      q.questionText.toLowerCase().includes(search.toLowerCase()),
     );
 
     const total = filtered.length;

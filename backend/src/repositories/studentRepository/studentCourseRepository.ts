@@ -14,7 +14,7 @@ export class StudentCourseRepository
 
   constructor(
     chapterRepo: IChapterReadOnlyRepository,
-    quizRepo: IQuizReadOnlyRepository
+    quizRepo: IQuizReadOnlyRepository,
   ) {
     super(CourseModel);
     this._chapterRepo = chapterRepo;
@@ -26,18 +26,16 @@ export class StudentCourseRepository
   > {
     const listedCourses = (await this.findAll(
       { isListed: true, isPublished: true },
-      ["category", "instructorId"]
+      ["category", "instructorId"],
     )) as ICourse[];
 
     const result = await Promise.all(
       listedCourses.map(async (course) => {
         const courseId = course._id.toString();
-        const chapterCount = await this._chapterRepo.countChaptersByCourse(
-          courseId
-        );
-        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(
-          courseId
-        );
+        const chapterCount =
+          await this._chapterRepo.countChaptersByCourse(courseId);
+        const quizQuestionCount =
+          await this._quizRepo.countQuestionsByCourse(courseId);
 
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
@@ -49,7 +47,7 @@ export class StudentCourseRepository
           chapterCount,
           quizQuestionCount,
         };
-      })
+      }),
     );
 
     return result;
@@ -60,7 +58,7 @@ export class StudentCourseRepository
     limit: number,
     searchTerm = "",
     sort: "name-asc" | "name-desc" | "price-asc" | "price-desc" = "name-asc",
-    categoryId?: string
+    categoryId?: string,
   ): Promise<{
     data: {
       course: ICourse;
@@ -106,16 +104,16 @@ export class StudentCourseRepository
       page,
       limit,
       sortOption,
-      ["category", "instructorId"]
+      ["category", "instructorId"],
     );
 
     const result = await Promise.all(
       courses.map(async (course) => {
         const chapterCount = await this._chapterRepo.countChaptersByCourse(
-          course._id.toString()
+          course._id.toString(),
         );
         const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(
-          course._id.toString()
+          course._id.toString(),
         );
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
@@ -127,7 +125,7 @@ export class StudentCourseRepository
           chapterCount,
           quizQuestionCount,
         };
-      })
+      }),
     );
 
     return { data: result, total };
@@ -144,10 +142,10 @@ export class StudentCourseRepository
     ]);
     if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
 
-    const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
-    const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(
-      courseId
-    );
+    const chapterCount =
+      await this._chapterRepo.countChaptersByCourse(courseId);
+    const quizQuestionCount =
+      await this._quizRepo.countQuestionsByCourse(courseId);
 
     const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
     const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);
@@ -158,93 +156,3 @@ export class StudentCourseRepository
     return { course, chapterCount, quizQuestionCount };
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-import { IInstructorProfileRepository } from "./interface/IInstructorProfileRepository"; 
+import { IInstructorProfileRepository } from "./interface/IInstructorProfileRepository";
 import InstructorModel, { IInstructor } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
 
@@ -16,23 +16,15 @@ export class InstructorProfileRepository
 
   async updateProfile(
     id: string,
-    data: Partial<IInstructor>
+    data: Partial<IInstructor>,
   ): Promise<IInstructor | null> {
     return await this.updateOne({ _id: id }, data);
   }
 
   async updatePassword(
     email: string,
-    hashedPassword: string
+    hashedPassword: string,
   ): Promise<IInstructor | null> {
     return await this.updateOne({ email }, { password: hashedPassword });
   }
 }
-
-
-
-
-
-
-
-

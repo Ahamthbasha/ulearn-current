@@ -20,7 +20,7 @@ const wishlistSchema = new Schema<IWishlist>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const WishlistModel = model<IWishlist>("Wishlist", wishlistSchema);

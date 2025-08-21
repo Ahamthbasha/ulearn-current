@@ -5,7 +5,7 @@ export interface IInstructorCourseSpecificDashboardRepository {
   getCourseEnrollmentCount(courseId: Types.ObjectId): Promise<number>;
   getCourseCategory(courseId: Types.ObjectId): Promise<string | null>;
   getMonthlyPerformance(
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<{ month: number; year: number; totalSales: number }[]>;
   getCoursePrice(courseId: Types.ObjectId): Promise<number>;
   getCourseRevenueReport(
@@ -14,7 +14,7 @@ export interface IInstructorCourseSpecificDashboardRepository {
     page: number,
     limit: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<{
     data: {
       orderId: string;

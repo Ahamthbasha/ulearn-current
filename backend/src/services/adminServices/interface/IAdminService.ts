@@ -12,12 +12,12 @@ export interface IAdminService {
   getAllUsers(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ users: UserListDTO[]; total: number }>;
   getAllInstructors(
     page: number,
     limit: number,
-    search: string
+    search: string,
   ): Promise<{ instructors: InstructorDTO[]; total: number }>;
 
   //specified data based on email
@@ -25,6 +25,9 @@ export interface IAdminService {
   getInstructorData(email: string): Promise<IInstructor | null>;
 
   //block or unblock
-  updateProfile(email: string, data: BlockUpdate): Promise<IUser|null>;
-  updateInstructorProfile(email: string, data: BlockUpdate): Promise<IInstructor|null>;
+  updateProfile(email: string, data: BlockUpdate): Promise<IUser | null>;
+  updateInstructorProfile(
+    email: string,
+    data: BlockUpdate,
+  ): Promise<IInstructor | null>;
 }

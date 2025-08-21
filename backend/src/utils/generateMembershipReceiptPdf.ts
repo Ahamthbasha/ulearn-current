@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import { InstructorMembershipOrderDTO } from "../models/instructorMembershipOrderModel";
 
 export async function generateMembershipReceiptPdf(
-  order: InstructorMembershipOrderDTO
+  order: InstructorMembershipOrderDTO,
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -87,7 +87,7 @@ export async function generateMembershipReceiptPdf(
       .text(
         new Date(order.createdAt).toLocaleDateString("en-IN"),
         220,
-        infoBarY + 25
+        infoBarY + 25,
       );
 
     // === CUSTOMER INFORMATION ===
@@ -116,7 +116,7 @@ export async function generateMembershipReceiptPdf(
       .text(
         new Date(order.createdAt).toLocaleDateString("en-IN"),
         130,
-        currentY + 44
+        currentY + 44,
       );
 
     // === MEMBERSHIP PLAN DETAILS ===
@@ -144,7 +144,10 @@ export async function generateMembershipReceiptPdf(
 
     // Plan details grid - more compact
     const detailsData = [
-      { label: "Duration", value: `${order.membershipPlan.durationInDays} days` },
+      {
+        label: "Duration",
+        value: `${order.membershipPlan.durationInDays} days`,
+      },
       {
         label: "Start Date",
         value: new Date(order.startDate).toLocaleDateString("en-IN"),
@@ -206,7 +209,7 @@ export async function generateMembershipReceiptPdf(
       "Download course materials",
       "Certificate of completion",
       "Access to exclusive content",
-      "Community forum participation"
+      "Community forum participation",
     ];
 
     // Use benefits from membershipPlan if available, otherwise use defaults
@@ -214,14 +217,11 @@ export async function generateMembershipReceiptPdf(
 
     // Display benefits with bullet points
     benefits.slice(0, 6).forEach((benefit: string, index: number) => {
-      const benefitY = currentY + 35 + (index * 12);
-      
+      const benefitY = currentY + 35 + index * 12;
+
       // Bullet point
-      doc
-        .fillColor(successColor)
-        .fontSize(8)
-        .text("●", 55, benefitY);
-      
+      doc.fillColor(successColor).fontSize(8).text("●", 55, benefitY);
+
       // Benefit text
       doc
         .fillColor(textColor)
@@ -236,7 +236,11 @@ export async function generateMembershipReceiptPdf(
         .fillColor(primaryColor)
         .fontSize(8)
         .font("Helvetica-Oblique")
-        .text(`And ${benefits.length - 6} more benefits...`, 70, currentY + 107);
+        .text(
+          `And ${benefits.length - 6} more benefits...`,
+          70,
+          currentY + 107,
+        );
     }
 
     currentY += benefitsContainerHeight + 20;
@@ -306,7 +310,7 @@ export async function generateMembershipReceiptPdf(
         {
           align: "center",
           width: doc.page.width,
-        }
+        },
       );
 
     doc.text("© 2024 uLearn. All rights reserved.", 0, footerStartY + 50, {

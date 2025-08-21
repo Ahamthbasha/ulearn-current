@@ -11,9 +11,9 @@ export interface IInstructorMembershipOrder extends Document {
   createdAt: Date;
 }
 
-export interface InstructorPopulated{
-  username:string;
-  email:string;
+export interface InstructorPopulated {
+  username: string;
+  email: string;
 }
 
 export interface MembershipPlanPopulated {
@@ -31,8 +31,8 @@ export interface InstructorMembershipOrderDTO {
   membershipPlan: {
     name: string;
     durationInDays: number;
-    description?:string;
-    benefits?:string[];
+    description?: string;
+    benefits?: string[];
   };
   price: number;
   paymentStatus: "pending" | "paid" | "failed";
@@ -50,22 +50,32 @@ export interface InstructorMembershipOrderListDTO {
   purchaseDate: Date;
 }
 
-
-
 const InstructorMembershipOrderSchema = new Schema<IInstructorMembershipOrder>(
   {
-    instructorId: { type: Schema.Types.ObjectId, ref: "Instructor", required: true },
-    membershipPlanId: { type: Schema.Types.ObjectId, ref: "MembershipPlan", required: true },
+    instructorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Instructor",
+      required: true,
+    },
+    membershipPlanId: {
+      type: Schema.Types.ObjectId,
+      ref: "MembershipPlan",
+      required: true,
+    },
     price: { type: Number, required: true },
-    paymentStatus: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
     startDate: { type: Date },
     endDate: { type: Date },
     txnId: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const InstructorMembershipOrderModel = model<IInstructorMembershipOrder>(
   "InstructorMembershipOrder",
-  InstructorMembershipOrderSchema
+  InstructorMembershipOrderSchema,
 );

@@ -17,9 +17,10 @@ export class CategoryReadOnlyController implements ICategoryReadOnlyController {
       res.status(StatusCode.OK).json({ success: true, data: categories });
     } catch (error) {
       console.error("Error fetching categories:", error);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: CategoryErrorMsg.CATEGORY_FAILED_TO_FETCH });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: CategoryErrorMsg.CATEGORY_FAILED_TO_FETCH,
+      });
     }
   }
 }

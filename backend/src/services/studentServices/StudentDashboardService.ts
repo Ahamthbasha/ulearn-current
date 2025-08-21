@@ -1,6 +1,9 @@
-import { IStudentDashboardService } from "./interface/IStudentDashboardService"; 
-import { IStudentDashboardRepository } from "../../repositories/studentRepository/interface/IStudentDashboardRepository"; 
-import { IStudentCourseReportItem, IStudentSlotReportItem } from "../../types/dashboardTypes";
+import { IStudentDashboardService } from "./interface/IStudentDashboardService";
+import { IStudentDashboardRepository } from "../../repositories/studentRepository/interface/IStudentDashboardRepository";
+import {
+  IStudentCourseReportItem,
+  IStudentSlotReportItem,
+} from "../../types/dashboardTypes";
 
 export class StudentDashboardService implements IStudentDashboardService {
   private _dashboardRepo: IStudentDashboardRepository;
@@ -16,7 +19,7 @@ export class StudentDashboardService implements IStudentDashboardService {
       totalCoursesNotCompleted,
       totalCoursePurchaseCost,
       totalSlotBookings,
-      totalSlotBookingCost
+      totalSlotBookingCost,
     ] = await Promise.all([
       this._dashboardRepo.getTotalCoursesPurchased(userId),
       this._dashboardRepo.getTotalCoursesCompleted(userId),
@@ -32,14 +35,14 @@ export class StudentDashboardService implements IStudentDashboardService {
       totalCoursesNotCompleted,
       totalCoursePurchaseCost,
       totalSlotBookings,
-      totalSlotBookingCost
+      totalSlotBookingCost,
     };
   }
 
   async getMonthlyPerformance(userId: string) {
     const [coursePerformance, slotPerformance] = await Promise.all([
       this._dashboardRepo.getMonthlyCoursePerformance(userId),
-      this._dashboardRepo.getMonthlySlotBookingPerformance(userId)
+      this._dashboardRepo.getMonthlySlotBookingPerformance(userId),
     ]);
 
     return { coursePerformance, slotPerformance };
@@ -53,7 +56,7 @@ export class StudentDashboardService implements IStudentDashboardService {
       endDate?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<IStudentCourseReportItem[]> {
     return this._dashboardRepo.getCourseReport(userId, filter);
   }
@@ -66,7 +69,7 @@ export class StudentDashboardService implements IStudentDashboardService {
       endDate?: string;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<IStudentSlotReportItem[]> {
     return this._dashboardRepo.getSlotReport(userId, filter);
   }

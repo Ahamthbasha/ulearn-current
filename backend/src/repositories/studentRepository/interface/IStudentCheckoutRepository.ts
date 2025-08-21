@@ -8,19 +8,19 @@ export interface IStudentCheckoutRepository {
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
     amount: number,
-    razorpayOrderId: string
+    razorpayOrderId: string,
   ): Promise<IOrder>;
 
   updateOrderStatus(
     orderId: Types.ObjectId,
-    status: "SUCCESS" | "FAILED"
+    status: "SUCCESS" | "FAILED",
   ): Promise<IOrder | null>;
 
   savePayment(data: Partial<IPayment>): Promise<IPayment>;
 
   createEnrollments(
     userId: Types.ObjectId,
-    courseIds: Types.ObjectId[]
+    courseIds: Types.ObjectId[],
   ): Promise<IEnrollment[]>;
 
   getCourseNamesByIds(courseIds: Types.ObjectId[]): Promise<string[]>;
@@ -29,5 +29,5 @@ export interface IStudentCheckoutRepository {
 
   getCourseRepo(): ICourseRepository;
 
-  getOrderById(orderId:Types.ObjectId):Promise<IOrder | null>
+  getOrderById(orderId: Types.ObjectId): Promise<IOrder | null>;
 }

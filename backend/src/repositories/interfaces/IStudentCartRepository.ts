@@ -6,7 +6,7 @@ export interface IStudentCartRepository {
   addCourse(userId: Types.ObjectId, courseId: Types.ObjectId): Promise<ICart>;
   removeCourse(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId
+    courseId: Types.ObjectId,
   ): Promise<ICart | null>;
   clear(userId: Types.ObjectId): Promise<ICart | null>;
 }

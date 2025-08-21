@@ -2,7 +2,7 @@ import { InstructorMembershipOrderDTO } from "../../models/instructorMembershipO
 import { AdminMembershipOrderListDTO } from "../../dto/adminDTO/membershipOrderListDTO";
 
 export function mapMembershipOrderToListDTO(
-  order: InstructorMembershipOrderDTO
+  order: InstructorMembershipOrderDTO,
 ): AdminMembershipOrderListDTO {
   return {
     instructorName: order.instructor.name,
@@ -14,7 +14,7 @@ export function mapMembershipOrderToListDTO(
 }
 
 export function mapMembershipOrdersToListDTO(
-  orders: InstructorMembershipOrderDTO[]
+  orders: InstructorMembershipOrderDTO[],
 ): AdminMembershipOrderListDTO[] {
   return orders.map(mapMembershipOrderToListDTO);
 }

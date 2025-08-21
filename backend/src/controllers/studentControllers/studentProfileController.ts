@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { IStudentProfileService } from "../../services/studentServices/interface/IStudentProfileService"; 
+import { IStudentProfileService } from "../../services/studentServices/interface/IStudentProfileService";
 import { IStudentProfileController } from "./interfaces/IStudentProfileController";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
 import { StatusCode } from "../../utils/enums";
@@ -20,7 +20,7 @@ export class StudentProfileController implements IStudentProfileController {
   // ✅ GET PROFILE
   public async getProfile(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const email = req.user?.email;
@@ -59,7 +59,7 @@ export class StudentProfileController implements IStudentProfileController {
   // ✅ UPDATE PROFILE
   public async updateProfile(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const userId = req.user?.id;
@@ -91,7 +91,7 @@ export class StudentProfileController implements IStudentProfileController {
 
       const updatedDTO = await this._studentProfileService.updateProfile(
         userId,
-        updateData
+        updateData,
       );
 
       if (!updatedDTO) {
@@ -119,7 +119,7 @@ export class StudentProfileController implements IStudentProfileController {
   // ✅ UPDATE PASSWORD
   public async updatePassword(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const email = req.user?.email;
@@ -154,7 +154,7 @@ export class StudentProfileController implements IStudentProfileController {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       const isUpdated = await this._studentProfileService.updatePassword(
         email,
-        hashedPassword
+        hashedPassword,
       );
 
       if (!isUpdated) {
