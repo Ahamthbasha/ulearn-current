@@ -1,31 +1,50 @@
-import { IInstructorMembershipOrder } from "../../../models/instructorMembershipOrderModel";
+import { IInstructorMembershipOrder } from "../../../models/instructorMembershipOrderModel"; 
 
 export interface IInstructorMembershipOrderRepository {
-  createOrder(data: {
-    instructorId: string;
-    planId: string;
-    razorpayOrderId: string;
-    amount: number;
-    status: "pending" | "paid";
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<IInstructorMembershipOrder>;
+  createOrder(
+    data: {
+      instructorId: string;
+      planId: string;
+      razorpayOrderId: string;
+      amount: number;
+      status: "pending" | "paid";
+      startDate?: Date;
+      endDate?: Date;
+    },
+    session?: import("mongoose").ClientSession
+  ): Promise<IInstructorMembershipOrder>;
 
-  findByRazorpayOrderId(
-    orderId: string,
-  ): Promise<IInstructorMembershipOrder | null>; // ✅
+  findByOrderId(
+    orderId: string
+  ): Promise<IInstructorMembershipOrder | null>;
 
   updateOrderStatus(
     orderId: string,
     data: Partial<IInstructorMembershipOrder>,
-  ): Promise<void>; // ✅
+    session?: import("mongoose").ClientSession
+  ): Promise<void>;
 
   findAllByInstructorId(
     instructorId: string,
     page?: number,
     limit?: number,
-    search?: string,
+    search?: string
   ): Promise<{ data: IInstructorMembershipOrder[]; total: number }>;
 
-  findOneByTxnId(txnId: string): Promise<IInstructorMembershipOrder | null>;
+  findOneByOrderId(
+    orderId: string
+  ): Promise<IInstructorMembershipOrder | null>;
+
+  findExistingOrder(
+    instructorId: string,
+    planId: string,
+    session?: import("mongoose").ClientSession
+  ): Promise<IInstructorMembershipOrder | null>;
+
+  cancelOrder(
+    orderId: string,
+    session?: import("mongoose").ClientSession
+  ): Promise<void>;
+
+    findByRazorpayOrderId(razorpayOrderId:string):Promise<IInstructorMembershipOrder | null>
 }

@@ -1,10 +1,21 @@
-import { PopulateOptions } from "mongoose";
+import { ClientSession, PopulateOptions } from "mongoose";
 import { ISlot } from "../../../models/slotModel";
 
 export interface IStudentSlotRepository {
-  getAvailableSlotsByInstructorId(instructorId: string): Promise<ISlot[]>;
-  findById(slotId: string): Promise<ISlot | null>;
-  update(slotId: string, update: Partial<ISlot>): Promise<ISlot | null>;
-
-  findOne(filter: object, populate?: PopulateOptions[]): Promise<ISlot | null>;
+  getAvailableSlotsByInstructorId(
+    instructorId: string,
+    session?: ClientSession
+  ): Promise<ISlot[]>;
+  findById(slotId: string, session?: ClientSession): Promise<ISlot | null>;
+  update(
+    slotId: string,
+    update: Partial<ISlot>,
+    session?: ClientSession
+  ): Promise<ISlot | null>;
+  findOne(
+    filter: object,
+    populate?: PopulateOptions[],
+    session?: ClientSession
+  ): Promise<ISlot | null>;
+  getSlotByIdWithLock(slotId: string, session: ClientSession): Promise<ISlot | null>;
 }

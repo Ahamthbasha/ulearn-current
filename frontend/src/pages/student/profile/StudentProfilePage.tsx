@@ -72,19 +72,46 @@ const StudentProfilePage = () => {
           )}
         </div>
 
-        <div className="space-y-2 text-sm sm:text-base">
+        <div className="space-y-4 text-sm sm:text-base">
           <p>
             <strong>Username:</strong> {profile.username}
           </p>
           <p>
             <strong>Email:</strong> {profile.email}
           </p>
-          <p>
-            <strong>Skills:</strong> {profile.skills?.join(", ") || "None"}
-          </p>
-          <p>
-            <strong>Expertise:</strong> {profile.expertise?.join(", ") || "None"}
-          </p>
+
+          {/* Skills dropdown */}
+          <div>
+            <strong>Skills:</strong>
+            {profile.skills && profile.skills.length > 0 ? (
+              <select className="mt-1 block w-full border rounded px-3 py-2">
+                {profile.skills.map((skill: string, index: number) => (
+                  <option key={index} value={skill}>
+                    {skill}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-gray-500">None</p>
+            )}
+          </div>
+
+          {/* Expertise dropdown */}
+          <div>
+            <strong>Expertise:</strong>
+            {profile.expertise && profile.expertise.length > 0 ? (
+              <select className="mt-1 block w-full border rounded px-3 py-2">
+                {profile.expertise.map((exp: string, index: number) => (
+                  <option key={index} value={exp}>
+                    {exp}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-gray-500">None</p>
+            )}
+          </div>
+
           <p>
             <strong>Status:</strong> {profile.currentStatus || "N/A"}
           </p>
@@ -134,13 +161,10 @@ const StudentProfilePage = () => {
                 }
               } catch (error: any) {
                 console.error("Password update error:", error);
-
-                // Safely extract the message from Axios error
                 const errorMessage =
                   error?.response?.data?.message ||
                   error?.message ||
                   "Password update failed";
-
                 toast.error(errorMessage);
               }
             }}

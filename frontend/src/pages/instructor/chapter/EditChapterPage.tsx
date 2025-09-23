@@ -18,6 +18,7 @@ const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
     .transform((val) => (typeof val === "string" ? val.trim() : ""))
     .min(5, "Chapter title must be at least 5 characters")
+    .max(50,"Title should not exceed 50 characters")
     .test(
       "not-blank",
       "Chapter title cannot be only spaces",
@@ -28,6 +29,7 @@ const chapterSchema = Yup.object().shape({
   description: Yup.string()
     .transform((val) => (typeof val === "string" ? val.trim() : ""))
     .min(10, "Description must be at least 10 characters")
+    .max(200,"Description should not exceed 200 characters")
     .test(
       "not-blank",
       "Description cannot be only spaces",
@@ -39,6 +41,7 @@ const chapterSchema = Yup.object().shape({
     .typeError("Chapter number must be a number")
     .positive("Must be a positive number")
     .integer("Must be an integer")
+    .max(250, "Chapter number must not exceed 250")
     .required("Chapter number is required"),
 });
 

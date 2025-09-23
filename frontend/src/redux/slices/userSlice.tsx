@@ -1,14 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-interface User {
-  userId: string | null;
-  name: string | null;
-  email: string | null;
-  role: string | null;
-  isBlocked: string | null;
-  profilePicture: string | null;
-}
+import { type UserSlice } from "./interface/sliceInterface";
 
-const initialState: User = {
+const initialState: UserSlice = {
   userId: null,
   name: null,
   email: null,

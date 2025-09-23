@@ -1,9 +1,9 @@
 import React from 'react';
 import { X } from 'lucide-react';
 
-interface ConfirmationModalProps {
+export interface ConfirmationModalProps {
   isOpen: boolean;
-  message: string;
+  message: string | React.ReactNode;
   title?: string;
   confirmText?: string;
   cancelText?: string;
@@ -36,7 +36,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300"
       style={{
         background: 'rgba(0, 0, 0, 0.7)',
         backdropFilter: 'blur(5px)',
@@ -46,7 +46,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       tabIndex={0}
     >
       <div 
-        className="relative w-full max-w-md mx-4 transform transition-all duration-300 scale-100"
+        className="relative w-full max-w-sm sm:max-w-md mx-auto transform transition-all duration-300 scale-100"
         style={{
           background: '#1a1a1a',
           borderRadius: '12px',
@@ -56,34 +56,38 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         {/* Close Button */}
         <button
           onClick={onCancel}
-          className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors duration-200 w-6 h-6 flex items-center justify-center"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 text-gray-400 hover:text-white transition-colors duration-200 w-6 h-6 flex items-center justify-center z-10"
         >
-          <X size={20} />
+          <X size={18} className="sm:w-5 sm:h-5" />
         </button>
 
         {/* Modal Content */}
-        <div className="p-10">
+        <div className="p-6 sm:p-8 lg:p-10">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-semibold text-white mb-3 tracking-wide">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 tracking-wide pr-8">
               {title}
             </h2>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {message}
-            </p>
+            <div className="text-gray-400 text-sm leading-relaxed">
+              {typeof message === 'string' ? (
+                <p>{message}</p>
+              ) : (
+                message
+              )}
+            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={onCancel}
-              className="flex-1 py-3 px-4 text-gray-400 border border-gray-600 rounded-md hover:bg-gray-800 hover:text-white transition-all duration-200 text-sm font-medium"
+              className="w-full sm:flex-1 py-3 px-4 text-gray-400 border border-gray-600 rounded-md hover:bg-gray-800 hover:text-white transition-all duration-200 text-sm font-medium order-2 sm:order-1"
             >
               {cancelText}
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 py-3 px-4 text-white rounded-md font-medium text-sm transition-all duration-200 hover:transform hover:-translate-y-0.5"
+              className="w-full sm:flex-1 py-3 px-4 text-white rounded-md font-medium text-sm transition-all duration-200 hover:transform hover:-translate-y-0.5 order-1 sm:order-2"
               style={{
                 background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
               }}

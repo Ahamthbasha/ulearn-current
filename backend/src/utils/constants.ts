@@ -1,3 +1,42 @@
+export const INSTRUCTOR_MESSAGES = {
+  // General Messages
+  EMAIL_PASSWORD_USERNAME_REQUIRED: "Email, password, and username are required",
+  EMAIL_REQUIRED: "Email is required",
+  OTP_REQUIRED: "OTP is required",
+  NAME_EMAIL_REQUIRED: "Name and email are required",
+  PASSWORD_REQUIRED: "Password is required",
+  ACCESS_TOKEN_REQUIRED: "Access token is required",
+  RESET_TOKEN_REQUIRED: "Reset token is required",
+
+  // Success Messages
+  SIGNUP_SUCCESS: "Signup successful",
+  OTP_SENT: "OTP sent successfully",
+  USER_CREATED: "User created successfully",
+  LOGIN_SUCCESS: "Login successful",
+  LOGOUT_SUCCESS: "Logout successful",
+  REDIERCTING_OTP_PAGE: "Redirecting to OTP page",
+  REDIERCTING_PASSWORD_RESET_PAGE: "Redirecting to password reset page",
+  PASSWORD_RESET: "Password reset successful",
+  GOOGLE_LOGIN_SUCCESS: "Google login successful",
+
+  // Error Messages
+  USER_ALREADY_EXISTS: "User already exists",
+  FAILED_TO_CREATE_OTP: "Failed to create OTP",
+  INCORRECT_OTP: "Incorrect OTP",
+  INVALID_CREDENTIALS: "Invalid email or password",
+  INSTRUCTOR_BLOCKED: "Instructor account is blocked",
+  USER_NOT_FOUND: "User not found",
+  TOKEN_INVALID: "Invalid or missing token",
+  GOOGLE_LOGIN_FAILED: "Google login failed",
+  FAILED_TO_RESET_PASSWORD: "Failed to reset password",
+  WAIT_FOR_OTP: "Please wait {remainingTime} seconds before requesting a new OTP",
+  INTERNAL_SERVER_ERROR: "Internal server error",
+  BLOCK_CHECK: "Failed to check block status",
+};
+
+
+
+
 export const AdminErrorMessages = {
   INVALID_CREDENTIALS: "Invalid email or password.",
   EMAIL_INCORRECT: "Incorrect email.",
@@ -140,6 +179,16 @@ export const InstructorErrorMessages = {
 };
 
 export const StudentErrorMessages = {
+
+CHECKOUT_FAILED: "Failed to initiate checkout",
+  PAYMENT_FAILED: "Payment processing failed",
+  FAILED_TO_FETCH_BOOKINGS: "Failed to fetch booking history",
+  FAILED_TO_FETCH_BOOKING: "Failed to fetch booking details",
+  SLOT_ALREADY_BOOKED: "Slot is already booked",
+  PENDING_BOOKING_EXISTS: "A pending or confirmed booking already exists for this slot",
+  PENDING_BOOKING_NOT_FOUND: "Pending booking not found",
+  INSUFFICIENT_WALLET_BALANCE: "Insufficient wallet balance",
+
   USER_ALREADY_EXISTS: "User already exists. Please log in instead.",
   USER_NOT_FOUND: "No user found with this email.",
   INVALID_CREDENTIALS: "Invalid email or password.",
@@ -225,6 +274,10 @@ export const OtpResponses = {
 };
 
 export const AuthErrorMsg = {
+  INTERNAL_SERVER_ERROR :"internal server error",
+  ACCOUNT_BLOCKED : "Account is blocked",
+  USER_NOT_FOUND : "user is not found",
+  INVALID_ROLE : "Invalid role",
   NO_ACCESS_TOKEN: "Unauthorized access. Please provide a valid token OR LOGIN",
   NO_REFRESH_TOKEN: "Unauthorized access. Session verification required.",
   INVALID_ACCESS_TOKEN: "Unauthorized access. Please authenticate again.",
@@ -503,7 +556,44 @@ export const ResponseMessages = {
 
 export const INSTRUCTOR_REVENUE_SHARE = 0.9;
 
+export const INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE = {
+  SOMETHING_WENT_WRONG : "Something went wrong.",
+  INSTRUCTOR_NOT_FOUND:"Instructor not found",
+}
+
+export const INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE = {
+  MARKED_AS_FAILED:"Order marked as failed successfully"
+
+}
+
+export const INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE = {
+  FAILED_TO_CREATE_RAZORPAY_ORDER:"Failed to create Razorpay order",
+  FAILED_TO_RETRY_ORDER:"Failed to retry order",
+  INSTRUCTOR_NOT_FOUND:"Instructor not found",
+  FAILED_TO_CANCEL:"Failed to cancel order",
+  FAILED_TO_MARK_AS_FAILED:"Failed to mark order as failed"
+}
+
+export const INSTRUCTOR_SLOT_BOOKING_ERROR_MESSAGE = {
+  FAILED_TO_FETCH_BOOKING_DETAILS:"Failed to fetch booking detail",
+}
+
+export const INSTRUCTOR_SLOT_ERROR_MESSAGE = {
+  FAILED_TO_FETCH_SLOT_STAT:"Failed to fetch slot stats",
+  FAILED_TO_FETCH_SLOT:"Failed to fetch slots",
+  FAILED_TO_DELETE_SLOT:"Failed to delete slot",
+  FAILED_TO_UPDATE_SLOT:"Failed to update slot",
+  FAILED_TO_CREATE_SLOT:"Failed to create slot"
+}
+
+export const INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER = {
+  FAILED_TO_FETCH_COURSE_DASHBOARD:"Failed to fetch course dashboard",
+  INVALID_COURSE_ID:"Invalid Course ID",
+}
+
 export const INSTRUCTOR_ERROR_MESSAGE = {
+  UNAUTHORIZED_ID:"Unauthorized: Instructor ID not found.",
+  INTERNAL_SERVER_ERROR:"Internal Server Error",
   INSTRUCTOR_UNAUTHORIZED: "Unauthorized",
   INVALID_RANGE: "Invalid or missing range",
   INVALID_PAGE_LIMIT: "Invalid page or limit",
@@ -557,4 +647,38 @@ export const INSTRUCTOR_SUCCESS_MESSAGE = {
 
 export const SERVER_ERROR = {
   INTERNAL_SERVER_ERROR: "internal server error",
+};
+
+
+
+export const MESSAGES = {
+  // General Messages
+  EMAIL_REQUIRED: "Email is required",
+  PASSWORD_REQUIRED: "Password is required",
+  USERNAME_REQUIRED: "Username is required",
+  OTP_REQUIRED: "OTP is required",
+  NAME_REQUIRED: "Name and email are required",
+
+  // Success Messages
+  SIGNUP_SUCCESS: "Signup successful",
+  OTP_SENT: "OTP sent successfully",
+  USER_CREATED: "User created successfully",
+  LOGIN_SUCCESS: "Login successful",
+  LOGOUT_SUCCESS: "Logout successful",
+  REDIERCTING_OTP_PAGE: "Redirecting to OTP page",
+  REDIERCTING_PASSWORD_RESET_PAGE: "Redirecting to password reset page",
+  PASSWORD_RESET: "Password reset successful",
+  GOOGLE_LOGIN_SUCCESS: "Google login successful",
+
+  // Error Messages
+  USER_ALREADY_EXISTS: "User already exists",
+  FAILED_TO_CREATE_OTP: "Failed to create OTP",
+  INCORRECT_OTP: "Incorrect OTP",
+  INVALID_CREDENTIALS: "Invalid email or password",
+  ACCOUNT_BLOCKED: "Account is blocked",
+  USER_NOT_FOUND: "User not found",
+  TOKEN_INVALID: "Invalid or missing token",
+  NOT_FOUND_STUDENT: "Student not found",
+  STATUS_CHECK_FAILED: "Status check failed",
+  FAILED_TO_RESET_PASSWORD: "Failed to reset password",
 };

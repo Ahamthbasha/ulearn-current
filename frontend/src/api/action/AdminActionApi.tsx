@@ -3,7 +3,7 @@ import { API } from "../../service/axios";
 import AdminRoutersEndPoints from "../../types/endPoints/adminEndPoint";
 import { type IMembershipPayload } from "../../types/interfaces/IMembershipPayload";
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
-import {  type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
+import { type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
 
 export const getAllUser = async (
@@ -264,14 +264,16 @@ export const getAllCourses = async (search = "", page = 1, limit = 10) => {
   }
 };
 
-export const getCourseDetails = async(courseId:string) => {
+export const getCourseDetails = async (courseId: string) => {
   try {
-    const response = await API.get(`${AdminRoutersEndPoints.adminGetCourseDetail}/${courseId}`)
-    return response.data
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminGetCourseDetail}/${courseId}`
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const listUnListCourse = async (courseId: string) => {
   try {
@@ -287,21 +289,22 @@ export const listUnListCourse = async (courseId: string) => {
   }
 };
 
-export const verifyCourse = async(courseId:string)=>{
+export const verifyCourse = async (courseId: string) => {
   try {
-    const response = await API.patch(`${AdminRoutersEndPoints.adminVerifyCourse}/${courseId}/verifyCourse`)
-    return response.data
+    const response = await API.patch(
+      `${AdminRoutersEndPoints.adminVerifyCourse}/${courseId}/verifyCourse`
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 // wallet page
 
 export const getWallet = async () => {
   try {
     const response = await API.get(AdminRoutersEndPoints.adminGetWallet);
-    console.log("wallet", getWallet);
     return response.data;
   } catch (error) {
     throw error;
@@ -394,71 +397,95 @@ export const adminWalletTransactionHistory = async (
 export const adminGetAllWithdrawalRequests = async (
   page: number,
   limit: number,
-  search?: string
+  search?: string,
+  status?: string
 ): Promise<{
   transactions: WithdrawalRequestDto[];
   currentPage: number;
   totalPages: number;
   total: number;
   search?: string;
+  status?: string;
 }> => {
   try {
     const params: any = { page, limit };
-    
+
     // Add search parameter if provided
     if (search && search.trim()) {
       params.search = search.trim();
     }
 
-    const response = await API.get(`${AdminRoutersEndPoints.adminGetAllWithdrawalRequests}`, {
-      params,
-    });
+    if (status && status.trim()) {
+      params.status = status.trim();
+    }
+
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminGetAllWithdrawalRequests}`,
+      {
+        params,
+      }
+    );
+
     return response.data.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch withdrawal requests");
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch withdrawal requests"
+    );
   }
 };
 
-
-
-
-
-export const adminGetWithdrawalRequestById = async(requestId:string)=>{
+export const adminGetWithdrawalRequestById = async (requestId: string) => {
   try {
-    const response = await API.get(`${AdminRoutersEndPoints.adminGetRequestDetails}/${requestId}`)
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-export const adminPendingWithdrawal = async () => {
-  try {
-    const response = await API.get(`${AdminRoutersEndPoints.adminWithdrawalPending}`);
-    return response.data.data; // Extract the data array from the response
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const adminApproveWithdrawal = async (requestId: string, remarks?: string) => {
-  try {
-    const response = await API.post(`${AdminRoutersEndPoints.adminWithdrawalApprove}`, {
-      requestId,
-      remarks
-    });
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminGetRequestDetails}/${requestId}`
+    );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const adminRejectWithdrawal = async (requestId: string, remarks?: string) => {
+export const adminPendingWithdrawal = async () => {
   try {
-    const response = await API.post(`${AdminRoutersEndPoints.adminWithdrawalReject}`, {
-      requestId,
-      remarks
-    });
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminWithdrawalPending}`
+    );
+    return response.data.data; // Extract the data array from the response
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const adminApproveWithdrawal = async (
+  requestId: string,
+  remarks?: string
+) => {
+  try {
+    const response = await API.post(
+      `${AdminRoutersEndPoints.adminWithdrawalApprove}`,
+      {
+        requestId,
+        remarks,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const adminRejectWithdrawal = async (
+  requestId: string,
+  remarks?: string
+) => {
+  try {
+    const response = await API.post(
+      `${AdminRoutersEndPoints.adminWithdrawalReject}`,
+      {
+        requestId,
+        remarks,
+      }
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -548,12 +575,16 @@ export const toggleMembershipStatus = async (membershipId: string) => {
 export const getMembershipPurchaseHistory = async (
   page: number,
   limit: number,
-  search?: string
+  search?: string,
+  status?: string
 ) => {
   try {
     const params: Record<string, any> = { page, limit };
     if (search && search.trim() !== "") {
       params.search = search.trim();
+    }
+    if (status && status.trim() !== "" && ["paid", "failed"].includes(status.trim())) {
+      params.status = status.trim(); // Only allow "paid" or "failed"
     }
 
     const response = await API.get(
@@ -578,21 +609,20 @@ export const getMembershipPurchaseHistoryDetail = async (txnId: string) => {
   }
 };
 
-
 //dashboard
 
-export const getDashboard = async() => {
+export const getDashboard = async () => {
   try {
-    const response = await API.get(`${AdminRoutersEndPoints.adminDashboard}`)
-    return response.data
+    const response = await API.get(`${AdminRoutersEndPoints.adminDashboard}`);
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const getCourseReport = async (
-  filter: ReportFilter, 
-  page: number = 1, 
+  filter: ReportFilter,
+  page: number = 1,
   limit: number = 10
 ) => {
   try {
@@ -601,7 +631,7 @@ export const getCourseReport = async (
     params.append("type", filter.type);
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    
+
     if (filter.startDate) {
       params.append("startDate", filter.startDate.toISOString());
     }
@@ -620,8 +650,8 @@ export const getCourseReport = async (
 
 // 🟢 Membership Report with Pagination
 export const getMembershipCourseReport = async (
-  filter: ReportFilter, 
-  page: number = 1, 
+  filter: ReportFilter,
+  page: number = 1,
   limit: number = 10
 ) => {
   try {
@@ -630,7 +660,7 @@ export const getMembershipCourseReport = async (
     params.append("type", filter.type);
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    
+
     if (filter.startDate) {
       params.append("startDate", filter.startDate.toISOString());
     }
@@ -656,7 +686,8 @@ export const exportReport = async (
     const params = new URLSearchParams();
     params.append("type", filter.type);
     params.append("format", format);
-    if (filter.startDate) params.append("startDate", filter.startDate.toISOString());
+    if (filter.startDate)
+      params.append("startDate", filter.startDate.toISOString());
     if (filter.endDate) params.append("endDate", filter.endDate.toISOString());
 
     // Use the correct endpoint based on reportType
@@ -670,7 +701,9 @@ export const exportReport = async (
     });
 
     const extension = format === "excel" ? "xlsx" : "pdf";
-    const filename = `${reportType}-sales-report-${new Date().toISOString().split("T")[0]}.${extension}`;
+    const filename = `${reportType}-sales-report-${
+      new Date().toISOString().split("T")[0]
+    }.${extension}`;
 
     // Use js-file-download to handle the download
     fileDownload(response.data, filename);
@@ -679,4 +712,4 @@ export const exportReport = async (
   } catch (error) {
     throw error;
   }
-}
+};

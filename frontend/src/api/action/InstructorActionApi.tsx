@@ -767,6 +767,46 @@ export const membershipInitiateCheckout = async (planId: string) => {
   }
 };
 
+export const createRazorpayOrder = async(planId:string)=>{
+  try {
+    const response = await API.post(`${InstructorRouterEndPoints.instructorCreateRazorpay}`,{planId})
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const cancelOrder = async(orderId:string)=>{
+  try {
+    console.log('orderId',orderId)
+    const response = await API.post(`${InstructorRouterEndPoints.instructorCancelOrder}`,{orderId})
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const retryPayment = async(orderId:string)=>{
+  try {
+    const response = await API.post(`${InstructorRouterEndPoints.instructorRetryPayment}/${orderId}`)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const markOrderAsFailed = async (orderId: string) => {
+  try {
+    const response = await API.post(`${InstructorRouterEndPoints.instructorMarkAsFailed}`, {
+      orderId
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
 // 🔧 Update this function to accept payload
 export const verifyMembershipPurchase = async (payload: {
   razorpayOrderId: string;
@@ -823,10 +863,10 @@ export const membershipPurchaseHistory = async (page = 1, limit = 10, search="")
   }
 };
 
-export const membershipDetail = async (txnId: string) => {
+export const membershipDetail = async (orderId: string) => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorMembershipDetails}/${txnId}`
+      `${InstructorRouterEndPoints.instructorMembershipDetails}/${orderId}`
     );
     console.log(response.data);
     return response.data;
@@ -835,15 +875,15 @@ export const membershipDetail = async (txnId: string) => {
   }
 };
 
-export const downloadReceiptForMembership = async (txnId: string) => {
+export const downloadReceiptForMembership = async (orderId: string) => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorDownloadReceiptForMembership}/${txnId}/receipt`,
+      `${InstructorRouterEndPoints.instructorDownloadReceiptForMembership}/${orderId}/receipt`,
       {
         responseType: "blob",
       }
     );
-    fileDownload(response.data, `Membership_Receipt_${txnId}.pdf`);
+    fileDownload(response.data, `Membership_Receipt_${orderId}.pdf`);
     return response.data;
   } catch (error) {
     throw error;

@@ -11,14 +11,7 @@ import {
   deleteChapter,
   instructorGetCourseById,
 } from "../../../api/action/InstructorActionApi";
-
-interface Chapter {
-  courseId: string;
-  chapterId: string;
-  chapterTitle: string;
-  videoUrl: string;
-  chapterNumber?: number;
-}
+import { type Chapter } from "../interface/instructorInterface";
 
 const ChapterManagementPage = () => {
   const { courseId } = useParams<{ courseId: string }>();

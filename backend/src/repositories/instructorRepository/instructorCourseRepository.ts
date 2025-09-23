@@ -37,11 +37,22 @@ export class InstructorCourseRepository
     page: number,
     limit: number,
     search: string = "",
+    status: string = ""
   ): Promise<{ data: ICourse[]; total: number }> {
     const filter: any = { instructorId };
 
     if (search) {
       filter.courseName = { $regex: new RegExp(search, "i") }; // case-insensitive search
+    }
+
+    // Handle status filter
+    if (status) {
+      if (status === "published") {
+        filter.isPublished = true;
+      } else if (status === "unpublished") {
+        filter.isPublished = false;
+      }
+      // If status is neither "published" nor "unpublished", we don't add any filter (show all)
     }
 
     return await this.paginate(

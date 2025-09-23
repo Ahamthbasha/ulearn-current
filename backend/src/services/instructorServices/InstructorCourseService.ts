@@ -99,6 +99,7 @@ export class InstructorCourseService implements IInstructorCourseService {
     page: number,
     limit: number,
     search: string = "",
+    status: string = ""
   ): Promise<{ data: InstructorCourseDTO[]; total: number }> {
     const result =
       await this._courseRepository.getCoursesByInstructorWithPagination(
@@ -106,6 +107,7 @@ export class InstructorCourseService implements IInstructorCourseService {
         page,
         limit,
         search,
+        status
       );
 
     // Generate signed URLs and map to DTOs

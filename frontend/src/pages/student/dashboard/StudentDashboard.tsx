@@ -32,10 +32,14 @@ import {
 } from "recharts";
 import { Component } from "react";
 import { toast } from "react-toastify"; // Import toast for user feedback (ensure react-toastify is installed)
-
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-}
+import {
+  type DashboardData,
+  type MonthlyPerformanceItem,
+  type ReportFilter,
+  type IStudentSlotReportItem,
+  type IStudentCourseReportItem,
+  type ErrorBoundaryProps,
+} from "../interface/studentInterface";
 
 class ErrorBoundary extends Component<ErrorBoundaryProps> {
   state = { hasError: false, error: null as Error | null };
@@ -47,9 +51,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="text-red-600 text-center p-6 bg-red-50 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold">Something Went Wrong</h3>
-          <p>{this.state.error?.message || "An unexpected error occurred."}</p>
+        <div className="text-red-600 text-center p-4 sm:p-6 bg-red-50 rounded-lg shadow-md">
+          <h3 className="text-lg sm:text-xl font-semibold">Something Went Wrong</h3>
+          <p className="text-sm sm:text-base">{this.state.error?.message || "An unexpected error occurred."}</p>
         </div>
       );
     }
@@ -57,64 +61,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps> {
   }
 }
 
-interface MonthlyPerformanceItem {
-  month: number | null;
-  year: number | null;
-  count: number;
-  totalAmount: number;
-}
-
-interface DashboardData {
-  totalCoursesPurchased: number;
-  totalCoursesCompleted: number;
-  totalCoursesNotCompleted: number;
-  totalCoursePurchaseCost: number;
-  totalSlotBookings: number;
-  totalSlotBookingCost: number;
-  coursePerformance: MonthlyPerformanceItem[];
-  slotPerformance: MonthlyPerformanceItem[];
-}
-
-interface IStudentCourseReportItem {
-  orderId: string;
-  date: string;
-  courseName: string[] | string;
-  price: number[] | number;
-  totalCost: number;
-}
-
-interface IStudentSlotReportItem {
-  bookingId: string;
-  date: string;
-  slotTime: {
-    startTime: string;
-    endTime: string;
-  };
-  instructorName: string;
-  price: number;
-  totalPrice: number;
-}
-
-interface ReportFilter {
-  type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
-  startDate?: string;
-  endDate?: string;
-  page: number;
-}
-
 const StudentDashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [courseReportData, setCourseReportData] = useState<IStudentCourseReportItem[]>([]);
   const [slotReportData, setSlotReportData] = useState<IStudentSlotReportItem[]>([]);
-  const [courseReportTotals, setCourseReportTotals] = useState<{
-    totalCost: number;
-    totalOrders: number;
-  }>({ totalCost: 0, totalOrders: 0 });
-  const [slotReportTotals, setSlotReportTotals] = useState<{
-    totalCost: number;
-    totalBookings: number;
-  }>({ totalCost: 0, totalBookings: 0 });
+  const [courseReportTotals, setCourseReportTotals] = useState<{ totalCost: number; totalOrders: number }>({ totalCost: 0, totalOrders: 0 });
+  const [slotReportTotals, setSlotReportTotals] = useState<{ totalCost: number; totalBookings: number }>({ totalCost: 0, totalBookings: 0 });
   const [courseFilter, setCourseFilter] = useState<ReportFilter>({ type: "monthly", page: 1 });
   const [slotFilter, setSlotFilter] = useState<ReportFilter>({ type: "monthly", page: 1 });
   const [reportLoading, setReportLoading] = useState<boolean>(false);
@@ -146,7 +99,6 @@ const StudentDashboard = () => {
         setReportLoading(true);
         setError(null);
 
-        // Validate custom dates
         if (courseFilter.type === "custom" && (!customStartDate || !customEndDate)) {
           setError("Please select both start and end dates for custom range");
           toast.error("Please select both start and end dates for custom range");
@@ -171,10 +123,7 @@ const StudentDashboard = () => {
           const courseData = courseRes.data || [];
           console.log("Course report data:", courseData);
           setCourseReportData(courseData);
-          const courseTotalCost = courseData.reduce(
-            (sum: number, item: IStudentCourseReportItem) => sum + item.totalCost,
-            0
-          );
+          const courseTotalCost = courseData.reduce((sum: number, item: IStudentCourseReportItem) => sum + item.totalCost, 0);
           setCourseReportTotals({
             totalCost: courseTotalCost,
             totalOrders: courseData.length,
@@ -188,10 +137,7 @@ const StudentDashboard = () => {
           const slotData = slotRes.data || [];
           console.log("Slot report data:", slotData);
           setSlotReportData(slotData);
-          const slotTotalCost = slotData.reduce(
-            (sum: number, item: IStudentSlotReportItem) => sum + item.price,
-            0
-          );
+          const slotTotalCost = slotData.reduce((sum: number, item: IStudentSlotReportItem) => sum + item.price, 0);
           setSlotReportTotals({
             totalCost: slotTotalCost,
             totalBookings: slotData.length,
@@ -241,10 +187,8 @@ const StudentDashboard = () => {
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedDate = e.target.value;
-    // Prevent selecting dates after today
     if (selectedDate <= today) {
       setCustomStartDate(selectedDate);
-      // If endDate is before startDate, reset endDate
       if (customEndDate && selectedDate > customEndDate) {
         setCustomEndDate("");
       }
@@ -253,7 +197,6 @@ const StudentDashboard = () => {
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedDate = e.target.value;
-    // Prevent selecting dates after today or before startDate
     if (selectedDate <= today && (!customStartDate || selectedDate >= customStartDate)) {
       setCustomEndDate(selectedDate);
     }
@@ -266,7 +209,7 @@ const StudentDashboard = () => {
           ? `${item.month.toString().padStart(2, "0")}/${item.year}`
           : "Unknown",
       count: item.count,
-      totalAmount: item.totalAmount,
+      amount: item.totalAmount, // Renamed totalAmount to amount for clarity
     }));
   };
 
@@ -283,9 +226,7 @@ const StudentDashboard = () => {
         return "This Year";
       case "custom":
         return customStartDate && customEndDate
-          ? `${new Date(customStartDate).toLocaleDateString()} to ${new Date(
-              customEndDate
-            ).toLocaleDateString()}`
+          ? `${new Date(customStartDate).toLocaleDateString()} to ${new Date(customEndDate).toLocaleDateString()}`
           : "Custom Range";
       default:
         return "";
@@ -294,11 +235,13 @@ const StudentDashboard = () => {
 
   const formatTime = (timeString: string) => {
     const date = new Date(timeString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }).toUpperCase();
+    return date
+      .toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .toUpperCase();
   };
 
   if (loading) {
@@ -306,7 +249,7 @@ const StudentDashboard = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading dashboard...</p>
+          <p className="text-gray-600 text-sm sm:text-base">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -316,10 +259,10 @@ const StudentDashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-red-600 mb-4 text-sm sm:text-base">{error}</p>
           <button
             onClick={fetchDashboardData}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
           >
             Retry
           </button>
@@ -330,7 +273,7 @@ const StudentDashboard = () => {
 
   if (!data) {
     return (
-      <div className="text-gray-500 text-center mt-10 text-xl">
+      <div className="text-gray-500 text-center mt-10 text-lg sm:text-xl">
         No data available
       </div>
     );
@@ -338,19 +281,19 @@ const StudentDashboard = () => {
 
   return (
     <ErrorBoundary>
-      <div className="p-6 space-y-10 bg-gray-50 min-h-screen">
+      <div className="p-4 sm:p-6 space-y-6 bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Student Dashboard
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm sm:text-base">
             Overview of your learning journey and booking activities
           </p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
           <Card
             title="Courses Purchased"
             value={data.totalCoursesPurchased}
@@ -373,11 +316,7 @@ const StudentDashboard = () => {
             icon="💰"
             green
           />
-          <Card
-            title="Slots Booked"
-            value={data.totalSlotBookings}
-            icon="🎯"
-          />
+          <Card title="Slots Booked" value={data.totalSlotBookings} icon="🎯" />
           <Card
             title="Slot Investment"
             value={`₹${data.totalSlotBookingCost.toLocaleString()}`}
@@ -387,7 +326,7 @@ const StudentDashboard = () => {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <Graph
             title="Monthly Course Purchases"
             data={formatChartData(data.coursePerformance)}
@@ -401,29 +340,29 @@ const StudentDashboard = () => {
         </div>
 
         {/* Report Generation Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6">
+            <div className="flex items-center space-x-3 mb-4 sm:mb-0">
               <FileText className="h-6 w-6 text-blue-600" />
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                 Generate Reports
               </h2>
             </div>
             <div className="flex items-center space-x-2">
               <Filter className="h-5 w-5 text-gray-500" />
-              <span className="text-sm text-gray-600">Filter & Generate</span>
+              <span className="text-sm sm:text-base text-gray-600">Filter & Generate</span>
             </div>
           </div>
 
           {/* Filter Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 sm:mb-6 p-4 bg-gray-50 rounded-lg">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="inline h-4 w-4 mr-1" />
                 Report Type
               </label>
               <select
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                 value={courseFilter.type}
                 onChange={handleFilterChange}
               >
@@ -443,7 +382,7 @@ const StudentDashboard = () => {
                   </label>
                   <input
                     type="date"
-                    className="w-full border border-gray-200 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-200 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     value={customStartDate}
                     onChange={handleStartDateChange}
                     max={today}
@@ -455,7 +394,7 @@ const StudentDashboard = () => {
                   </label>
                   <input
                     type="date"
-                    className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     value={customEndDate}
                     onChange={handleEndDateChange}
                     min={customStartDate}
@@ -468,35 +407,29 @@ const StudentDashboard = () => {
             <div className="flex items-end">
               <button
                 onClick={() => generateReports("both", 1)}
-                disabled={
-                  reportLoading ||
-                  (courseFilter.type === "custom" &&
-                    (!customStartDate || !customEndDate))
-                }
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+                disabled={reportLoading || (courseFilter.type === "custom" && (!customStartDate || !customEndDate))}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 {reportLoading ? (
                   <RefreshCw className="animate-spin h-4 w-4" />
                 ) : (
                   <Search className="h-4 w-4" />
                 )}
-                <span>
-                  {reportLoading ? "Generating..." : "Generate Reports"}
-                </span>
+                <span>{reportLoading ? "Generating..." : "Generate Reports"}</span>
               </button>
             </div>
           </div>
 
           {/* Report Status */}
           {!showReports && !reportLoading && (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Click "Generate Reports" to view detailed activity data</p>
+            <div className="text-center py-6 sm:py-8 text-gray-500">
+              <FileText className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+              <p className="text-sm sm:text-base">Click "Generate Reports" to view detailed activity data</p>
             </div>
           )}
 
           {error && (
-            <div className="text-red-600 text-center mt-4 bg-red-50 p-3 rounded-lg border border-red-200">
+            <div className="text-red-600 text-center mt-4 bg-red-50 p-3 rounded-lg border border-red-200 text-sm sm:text-base">
               {error}
             </div>
           )}
@@ -504,21 +437,21 @@ const StudentDashboard = () => {
 
         {/* Reports Display */}
         {showReports && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
             {/* Report Header with Period */}
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center justify-between">
+            <div className="mb-4 sm:mb-6 p-4 bg-blue-50 rounded-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-blue-900">
+                  <h3 className="text-lg sm:text-xl font-semibold text-blue-900">
                     Activity Report
                   </h3>
-                  <p className="text-blue-700">
+                  <p className="text-blue-700 text-sm sm:text-base">
                     Period: {getFilterDisplayName()}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right mt-2 sm:mt-0">
                   <p className="text-sm text-blue-600">Generated on</p>
-                  <p className="font-semibold text-blue-900">
+                  <p className="font-semibold text-blue-900 text-sm sm:text-base">
                     {new Date().toLocaleDateString("en-GB")}
                   </p>
                 </div>
@@ -526,11 +459,11 @@ const StudentDashboard = () => {
             </div>
 
             {/* Report Tabs */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6">
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-full sm:w-auto mb-4 sm:mb-0">
                 <button
                   onClick={() => setActiveTab("course")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors w-full sm:w-auto ${
                     activeTab === "course"
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
@@ -540,7 +473,7 @@ const StudentDashboard = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab("slot")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors w-full sm:w-auto ${
                     activeTab === "slot"
                       ? "bg-white text-green-600 shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
@@ -550,7 +483,7 @@ const StudentDashboard = () => {
                 </button>
               </div>
               {activeTab === "course" && courseReportData.length > 0 && (
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 w-full sm:w-auto">
                   <button
                     onClick={() =>
                       exportCourseReport(
@@ -565,11 +498,8 @@ const StudentDashboard = () => {
                         customEndDate
                       )
                     }
-                    disabled={
-                      courseFilter.type === "custom" &&
-                      (!customStartDate || !customEndDate)
-                    }
-                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center"
+                    disabled={courseFilter.type === "custom" && (!customStartDate || !customEndDate)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center w-full sm:w-auto text-sm sm:text-base"
                   >
                     <Download className="h-4 w-4 mr-1" /> Excel
                   </button>
@@ -587,18 +517,15 @@ const StudentDashboard = () => {
                         customEndDate
                       )
                     }
-                    disabled={
-                      courseFilter.type === "custom" &&
-                      (!customStartDate || !customEndDate)
-                    }
-                    className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center"
+                    disabled={courseFilter.type === "custom" && (!customStartDate || !customEndDate)}
+                    className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center w-full sm:w-auto text-sm sm:text-base"
                   >
                     <Download className="h-4 w-4 mr-1" /> PDF
                   </button>
                 </div>
               )}
               {activeTab === "slot" && slotReportData.length > 0 && (
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 w-full sm:w-auto">
                   <button
                     onClick={() =>
                       exportSlotReport(
@@ -613,11 +540,8 @@ const StudentDashboard = () => {
                         customEndDate
                       )
                     }
-                    disabled={
-                      slotFilter.type === "custom" &&
-                      (!customStartDate || !customEndDate)
-                    }
-                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center"
+                    disabled={slotFilter.type === "custom" && (!customStartDate || !customEndDate)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center w-full sm:w-auto text-sm sm:text-base"
                   >
                     <Download className="h-4 w-4 mr-1" /> Excel
                   </button>
@@ -635,11 +559,8 @@ const StudentDashboard = () => {
                         customEndDate
                       )
                     }
-                    disabled={
-                      slotFilter.type === "custom" &&
-                      (!customStartDate || !customEndDate)
-                    }
-                    className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center"
+                    disabled={slotFilter.type === "custom" && (!customStartDate || !customEndDate)}
+                    className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center w-full sm:w-auto text-sm sm:text-base"
                   >
                     <Download className="h-4 w-4 mr-1" /> PDF
                   </button>
@@ -650,13 +571,13 @@ const StudentDashboard = () => {
             {/* Course Report */}
             {activeTab === "course" && (
               <div>
-                <h3 className="text-xl font-semibold mb-4 text-blue-600 flex items-center">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600 flex items-center">
                   <BookOpen className="h-5 w-5 mr-2" />
                   Course Purchase Report
                 </h3>
                 {courseReportData.length > 0 ? (
                   <div>
-                    <div className="space-y-6 mb-6">
+                    <div className="space-y-4 mb-4 sm:mb-6">
                       {courseReportData.map((item) => {
                         const courses = Array.isArray(item.courseName)
                           ? item.courseName
@@ -670,8 +591,8 @@ const StudentDashboard = () => {
                             key={item.orderId}
                             className="border border-gray-200 rounded-lg overflow-hidden"
                           >
-                            <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
-                              <div className="flex justify-between items-center">
+                            <div className="bg-blue-50 px-3 sm:px-4 py-2 sm:py-3 border-b border-blue-200">
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                 <div>
                                   <span className="text-sm font-medium text-blue-600">
                                     Order ID:{" "}
@@ -685,9 +606,7 @@ const StudentDashboard = () => {
                                     Date:{" "}
                                   </span>
                                   <span className="text-sm font-bold text-blue-900">
-                                    {new Date(item.date).toLocaleDateString(
-                                      "en-GB"
-                                    )}
+                                    {new Date(item.date).toLocaleDateString("en-GB")}
                                   </span>
                                 </div>
                               </div>
@@ -696,10 +615,10 @@ const StudentDashboard = () => {
                             <table className="w-full">
                               <thead className="bg-gray-50">
                                 <tr>
-                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                  <th className="px-3 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700">
                                     Course Name
                                   </th>
-                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                  <th className="px-3 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700">
                                     Price
                                   </th>
                                 </tr>
@@ -710,10 +629,10 @@ const StudentDashboard = () => {
                                     key={`${item.orderId}-${index}`}
                                     className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
                                   >
-                                    <td className="px-4 py-3 text-sm text-gray-800 font-medium">
+                                    <td className="px-3 sm:px-4 py-2 text-sm text-gray-800 font-medium">
                                       {course}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-green-600 font-semibold">
+                                    <td className="px-3 sm:px-4 py-2 text-sm text-green-600 font-semibold">
                                       ₹{(prices[index] || 0).toLocaleString()}
                                     </td>
                                   </tr>
@@ -721,7 +640,7 @@ const StudentDashboard = () => {
                               </tbody>
                             </table>
 
-                            <div className="bg-blue-50 px-4 py-3 border-t border-blue-200">
+                            <div className="bg-blue-50 px-3 sm:px-4 py-2 sm:py-3 border-t border-blue-200">
                               <div className="text-right">
                                 <span className="text-lg font-bold text-blue-600">
                                   Total Cost: ₹{item.totalCost.toLocaleString()}
@@ -739,7 +658,7 @@ const StudentDashboard = () => {
                         <button
                           onClick={() => handlePageChange(courseFilter.page - 1)}
                           disabled={courseFilter.page === 1 || reportLoading}
-                          className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                          className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </button>
@@ -749,7 +668,7 @@ const StudentDashboard = () => {
                         <button
                           onClick={() => handlePageChange(courseFilter.page + 1)}
                           disabled={courseReportData.length < 5 || reportLoading}
-                          className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                          className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
                         >
                           <ChevronRight className="h-4 w-4" />
                         </button>
@@ -757,27 +676,27 @@ const StudentDashboard = () => {
                     </div>
 
                     {/* Course Report Totals */}
-                    <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mt-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border-2 border-blue-200 mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <DollarSign className="h-5 w-5 text-blue-600" />
-                            <span className="font-semibold text-blue-900">
+                            <span className="font-semibold text-blue-900 text-sm sm:text-base">
                               Total Investment
                             </span>
                           </div>
-                          <p className="text-xl font-bold text-blue-900">
+                          <p className="text-lg sm:text-xl font-bold text-blue-900">
                             ₹{courseReportTotals.totalCost.toLocaleString()}
                           </p>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <TrendingUp className="h-5 w-5 text-blue-600" />
-                            <span className="font-semibold text-blue-900">
+                            <span className="font-semibold text-blue-900 text-sm sm:text-base">
                               Total Orders
                             </span>
                           </div>
-                          <p className="text-xl font-bold text-blue-900">
+                          <p className="text-lg sm:text-xl font-bold text-blue-900">
                             {courseReportTotals.totalOrders}
                           </p>
                         </div>
@@ -785,9 +704,9 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <BookOpen className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>No course purchase data found for the selected period</p>
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <BookOpen className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm sm:text-base">No course purchase data found for the selected period</p>
                   </div>
                 )}
               </div>
@@ -796,29 +715,29 @@ const StudentDashboard = () => {
             {/* Slot Report */}
             {activeTab === "slot" && (
               <div>
-                <h3 className="text-xl font-semibold mb-4 text-green-600 flex items-center">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 text-green-600 flex items-center">
                   <Clock className="h-5 w-5 mr-2" />
                   Slot Booking Report
                 </h3>
                 {slotReportData.length > 0 ? (
                   <div>
-                    <div className="overflow-x-auto mb-6">
+                    <div className="overflow-x-auto mb-4 sm:mb-6">
                       <table className="min-w-full table-auto border-collapse border border-gray-200 rounded-lg">
                         <thead className="bg-green-50">
                           <tr>
-                            <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
                               Booking ID
                             </th>
-                            <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
                               Date
                             </th>
-                            <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
                               Instructor
                             </th>
-                            <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
                               Slot Time
                             </th>
-                            <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
                               Price
                             </th>
                           </tr>
@@ -829,21 +748,19 @@ const StudentDashboard = () => {
                               key={idx}
                               className="hover:bg-gray-50 transition-colors"
                             >
-                              <td className="px-4 py-3 border border-gray-200 font-mono text-sm">
+                              <td className="px-2 sm:px-4 py-2 border border-gray-200 font-mono text-sm">
                                 {item.bookingId}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 text-gray-600">
+                              <td className="px-2 sm:px-4 py-2 border border-gray-200 text-gray-600 text-sm">
                                 {new Date(item.date).toLocaleDateString("en-GB")}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 font-medium">
+                              <td className="px-2 sm:px-4 py-2 border border-gray-200 font-medium text-sm">
                                 {item.instructorName}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 text-gray-600">
-                                {`${formatTime(item.slotTime.startTime)} to ${formatTime(
-                                  item.slotTime.endTime
-                                )}`}
+                              <td className="px-2 sm:px-4 py-2 border border-gray-200 text-gray-600 text-sm">
+                                {`${formatTime(item.slotTime.startTime)} to ${formatTime(item.slotTime.endTime)}`}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 font-semibold text-green-600">
+                              <td className="px-2 sm:px-4 py-2 border border-gray-200 font-semibold text-green-600 text-sm">
                                 ₹{item.price.toLocaleString()}
                               </td>
                             </tr>
@@ -858,7 +775,7 @@ const StudentDashboard = () => {
                         <button
                           onClick={() => handlePageChange(slotFilter.page - 1)}
                           disabled={slotFilter.page === 1 || reportLoading}
-                          className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                          className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </button>
@@ -868,7 +785,7 @@ const StudentDashboard = () => {
                         <button
                           onClick={() => handlePageChange(slotFilter.page + 1)}
                           disabled={slotReportData.length < 5 || reportLoading}
-                          className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
+                          className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400"
                         >
                           <ChevronRight className="h-4 w-4" />
                         </button>
@@ -876,27 +793,27 @@ const StudentDashboard = () => {
                     </div>
 
                     {/* Slot Report Totals */}
-                    <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 mt-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-green-50 rounded-lg p-3 sm:p-4 border-2 border-green-200 mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <DollarSign className="h-5 w-5 text-green-600" />
-                            <span className="font-semibold text-green-900">
+                            <span className="font-semibold text-green-900 text-sm sm:text-base">
                               Total Investment
                             </span>
                           </div>
-                          <p className="text-xl font-bold text-green-900">
+                          <p className="text-lg sm:text-xl font-bold text-green-900">
                             ₹{slotReportTotals.totalCost.toLocaleString()}
                           </p>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <TrendingUp className="h-5 w-5 text-green-600" />
-                            <span className="font-semibold text-green-900">
+                            <span className="font-semibold text-green-900 text-sm sm:text-base">
                               Total Bookings
                             </span>
                           </div>
-                          <p className="text-xl font-bold text-green-900">
+                          <p className="text-lg sm:text-xl font-bold text-green-900">
                             {slotReportTotals.totalBookings}
                           </p>
                         </div>
@@ -904,9 +821,9 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>No slot booking data found for the selected period</p>
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <Clock className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm sm:text-base">No slot booking data found for the selected period</p>
                   </div>
                 )}
               </div>
@@ -930,19 +847,15 @@ const Card = ({
   green?: boolean;
   icon?: string;
 }) => (
-  <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
+  <div className="bg-white shadow-sm rounded-lg p-3 sm:p-4 border border-gray-100 hover:shadow-md transition-shadow">
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
-        <p
-          className={`text-2xl font-bold ${
-            green ? "text-green-600" : "text-gray-900"
-          }`}
-        >
+        <h3 className="text-xs sm:text-sm font-medium text-gray-600 mb-1">{title}</h3>
+        <p className={`text-lg sm:text-2xl font-bold ${green ? "text-green-600" : "text-gray-900"}`}>
           {value}
         </p>
       </div>
-      {icon && <div className="text-2xl opacity-50">{icon}</div>}
+      {icon && <div className="text-xl sm:text-2xl opacity-50">{icon}</div>}
     </div>
   </div>
 );
@@ -957,23 +870,23 @@ const Graph = ({
   data: any[];
   color: string;
 }) => (
-  <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
-    <h3 className="text-lg font-semibold mb-4 text-gray-900">{title}</h3>
-    <ResponsiveContainer width="100%" height={300}>
+  <div className="bg-white shadow-sm rounded-lg p-3 sm:p-4 border border-gray-100">
+    <h3 className="text-md sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-900">{title}</h3>
+    <ResponsiveContainer width="100%" height={250} className="sm:height-300">
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis
           dataKey="name"
           stroke="#6b7280"
-          fontSize={12}
+          fontSize={10}
           angle={-45}
           textAnchor="end"
-          height={80}
+          height={60}
         />
-        <YAxis allowDecimals={false} stroke="#6b7280" fontSize={12} />
+        <YAxis allowDecimals={false} stroke="#6b7280" fontSize={10} />
         <Tooltip
           formatter={(value: any, name: any) =>
-            name === "totalAmount"
+            name === "amount"
               ? [`₹${value.toLocaleString()}`, "Amount"]
               : [value, "Count"]
           }
@@ -985,13 +898,8 @@ const Graph = ({
           }}
         />
         <Legend />
-        <Bar dataKey="count" fill={color} name="Count" radius={[4, 4, 0, 0]} />
-        <Bar
-          dataKey="totalAmount"
-          fill="#d1d5db"
-          name="Total Amount"
-          radius={[4, 4, 0, 0]}
-        />
+        <Bar dataKey="count" fill="#d1d5db" name="Count" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="amount" fill={color} name="Amount" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   </div>

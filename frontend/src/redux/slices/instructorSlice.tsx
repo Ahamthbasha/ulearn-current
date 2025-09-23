@@ -1,16 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import {type InstructorSlice} from "../slices/interface/sliceInterface"
 
-interface Instructor {
-  userId: string | null;
-  name: string | null;
-  email: string | null;
-  role: string | null;
-  isBlocked: string | null;
-  isVerified: boolean | null; // ✅ Added this
-  profilePicture: string | null;
-}
-
-const initialState: Instructor = {
+const initialState: InstructorSlice = {
   userId: null,
   name: null,
   email: null,
@@ -24,7 +15,7 @@ const instructorSlice = createSlice({
   name: "instructor",
   initialState,
   reducers: {
-    setInstructor: (state, action: PayloadAction<Instructor>) => {
+    setInstructor: (state, action: PayloadAction<InstructorSlice>) => {
       const {
         userId,
         name,

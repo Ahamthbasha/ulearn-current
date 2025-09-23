@@ -11,28 +11,7 @@ import {
 } from "../../../api/action/StudentAction";
 import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../../utils/auth";
-
-interface CourseDetail {
-  courseId: string;
-  courseName: string;
-  instructorName: string;
-  categoryName: string;
-  thumbnailUrl: string;
-  demoVideoUrl: string;
-  chapterCount: number;
-  quizQuestionCount: number;
-  duration: string;
-  description: string;
-  level: string;
-  price: number;
-}
-
-interface CartItem {
-  courseId: string;
-  courseName: string;
-  thumbnailUrl: string;
-  price: number;
-}
+import { type CourseDetail, type CartItem } from "../interface/studentInterface";
 
 const CourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -116,85 +95,69 @@ const CourseDetailPage = () => {
     }
   };
 
-  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (loading) return <div className="text-center py-6 sm:py-8 md:py-10">Loading...</div>;
 
   if (!course)
     return (
-      <div className="text-center py-10 text-red-500">Course not found</div>
+      <div className="text-center py-6 sm:py-8 md:py-10 text-red-500 text-lg sm:text-xl">Course not found</div>
     );
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 font-sans">
+    <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 font-sans">
       {/* Course Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-white shadow-lg rounded-xl p-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-10 bg-white shadow-lg rounded-xl p-4 sm:p-6 md:p-8">
         {/* Thumbnail */}
-        <div className="relative">
+        <div className="relative w-full">
           <img
             src={course.thumbnailUrl}
             alt={course.courseName}
-            className="w-full h-64 object-cover rounded-lg shadow-md"
+            className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-lg shadow-md"
           />
         </div>
 
         {/* Course Info */}
-        <div className="flex flex-col justify-between space-y-4">
+        <div className="flex flex-col justify-between space-y-4 sm:space-y-6">
           <div>
-            <h2 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-3">
               {course.courseName}
               <button
                 onClick={handleWishlistToggle}
-                className="text-red-500 hover:text-red-600 transition"
-                title={
-                  isInWishlist ? "Remove from wishlist" : "Add to wishlist"
-                }
+                className="text-red-500 hover:text-red-600 transition focus:outline-none focus:ring-2 focus:ring-red-500"
+                title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart
-                  size={28}
+                  size={24}
                   className={isInWishlist ? "fill-red-500" : ""}
                 />
               </button>
             </h2>
-            <p className="text-gray-700 text-sm mt-2">{course.description}</p>
+            <p className="text-gray-700 text-sm sm:text-base mt-2 sm:mt-3 line-clamp-3">{course.description}</p>
 
-            <div className="grid grid-cols-2 gap-y-2 text-gray-800 text-sm mt-4">
-              <p>
-                <strong>Instructor:</strong> {course.instructorName}
-              </p>
-              <p>
-                <strong>Category:</strong> {course.categoryName}
-              </p>
-              <p>
-                <strong>Duration:</strong> {course.duration} hrs
-              </p>
-              <p>
-                <strong>Level:</strong> {course.level}
-              </p>
-              <p>
-                <strong>Price:</strong> ₹{course.price}
-              </p>
-              <p>
-                <strong>Chapters:</strong> {course.chapterCount}
-              </p>
-              <p>
-                <strong>Quiz Questions:</strong> {course.quizQuestionCount}
-              </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 sm:gap-y-3 text-gray-800 text-sm sm:text-base mt-4 sm:mt-6">
+              <p><strong>Instructor:</strong> {course.instructorName}</p>
+              <p><strong>Category:</strong> {course.categoryName}</p>
+              <p><strong>Duration:</strong> {course.duration} hrs</p>
+              <p><strong>Level:</strong> {course.level}</p>
+              <p><strong>Price:</strong> ₹{course.price}</p>
+              <p><strong>Chapters:</strong> {course.chapterCount}</p>
+              <p><strong>Quiz Questions:</strong> {course.quizQuestionCount}</p>
             </div>
           </div>
 
           {isInCart ? (
             <button
               onClick={() => navigate("/user/cart")}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-md shadow mt-6 w-fit flex items-center gap-2"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 sm:px-6 rounded-md shadow mt-4 sm:mt-6 w-full sm:w-auto flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart size={16} />
               Go to Cart
             </button>
           ) : (
             <button
               onClick={handleAddToCart}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md shadow mt-6 w-fit flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 sm:px-6 rounded-md shadow mt-4 sm:mt-6 w-full sm:w-auto flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart size={16} />
               Add to Cart
             </button>
           )}
@@ -203,13 +166,13 @@ const CourseDetailPage = () => {
 
       {/* Demo Video */}
       {course.demoVideoUrl && (
-        <div className="mt-14">
-          <h3 className="text-2xl font-semibold mb-4 text-gray-900">
+        <div className="mt-8 sm:mt-10 md:mt-12">
+          <h3 className="text-xl sm:text-2xl md:text-2xl font-semibold mb-4 sm:mb-6 text-gray-900">
             Watch Demo Video
           </h3>
           <video
             controls
-            className="w-full rounded-xl shadow-md max-h-[500px] object-cover"
+            className="w-full rounded-xl shadow-md max-h-[300px] sm:max-h-[400px] md:max-h-[500px] object-cover"
             src={course.demoVideoUrl}
           >
             Your browser does not support the video tag.

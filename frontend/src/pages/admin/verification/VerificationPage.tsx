@@ -7,25 +7,10 @@ import DataTable, {
 import { Eye, FileText } from "lucide-react";
 import { getAllVerificationRequests } from "../../../api/action/AdminActionApi";
 import { useDebounce } from "../../../hooks/UseDebounce";
-
-interface VerificationRequest {
-  id: string;
-  username: string;
-  email: string;
-  status: string;
-}
-
-interface VerificationResponse {
-  success: boolean;
-  message: string;
-  data: VerificationRequest[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
+import { type VerificationRequestPage,type VerificationResponse } from "../interface/adminInterface";
 
 const VerificationPage = () => {
-  const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [requests, setRequests] = useState<VerificationRequestPage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -74,7 +59,7 @@ const VerificationPage = () => {
     setPage(newPage);
   };
 
-  const columns: Column<VerificationRequest>[] = [
+  const columns: Column<VerificationRequestPage>[] = [
     {
       key: "serialNo",
       title: "S.NO",
@@ -115,7 +100,7 @@ const VerificationPage = () => {
     },
   ];
 
-  const actions: ActionButton<VerificationRequest>[] = [
+  const actions: ActionButton<VerificationRequestPage>[] = [
     {
       key: "view",
       label: "View Details",

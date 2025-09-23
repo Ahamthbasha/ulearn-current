@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { IWalletPaymentService } from "../../services/interface/IWalletPaymentService";
-import { StatusCode } from "../../utils/enums";
+import { Model, Roles, StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IInstructorWalletPaymentController } from "./interfaces/IInstructorWalletPaymentController";
 import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
@@ -51,8 +51,8 @@ export class InstructorWalletPaymentController
         signature: razorpay_signature,
         amount,
         userId,
-        role: "instructor",
-        onModel: "Instructor",
+        role: Roles.INSTRUCTOR,
+        onModel: Model.INSTRUCTOR,
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });

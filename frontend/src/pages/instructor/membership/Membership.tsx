@@ -13,15 +13,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
-
-interface MembershipPlan {
-  _id: string;
-  name: string;
-  durationInDays: number;
-  description?: string;
-  price?: number;
-  benefits?: string[];
-}
+import { type MembershipPlan } from "../interface/instructorInterface";
 
 const Membership: React.FC = () => {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);

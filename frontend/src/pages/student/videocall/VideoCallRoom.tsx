@@ -10,6 +10,13 @@ import {
   FaVideoSlash,
   FaPhoneSlash,
 } from "react-icons/fa";
+import {
+  type JoinRoomPayload,
+  type UserJoinedPayload,
+  type OfferPayload,
+  type AnswerPayload,
+  type CandidatePayload,
+} from "../interface/studentInterface";
 
 declare module "socket.io-client" {
   interface Socket {
@@ -19,34 +26,6 @@ declare module "socket.io-client" {
       roomId?: string;
     };
   }
-}
-
-interface JoinRoomPayload {
-  roomId: string;
-  email: string;
-  role: "student" | "instructor";
-}
-
-interface UserJoinedPayload {
-  email: string;
-  role: "student" | "instructor";
-  userId: string;
-  name?: string;
-}
-
-interface OfferPayload {
-  offer: RTCSessionDescriptionInit;
-  from: string;
-}
-
-interface AnswerPayload {
-  answer: RTCSessionDescriptionInit;
-  from: string;
-}
-
-interface CandidatePayload {
-  candidate: RTCIceCandidateInit;
-  from: string;
 }
 
 const SERVER_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
@@ -64,7 +43,9 @@ const VideoCallRoom: React.FC = () => {
   const [micOn, setMicOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
   const [remoteUserName, setRemoteUserName] = useState<string | null>(null);
-  const [remoteUserRole, setRemoteUserRole] = useState<"student" | "mentor" | null>(null);
+  const [remoteUserRole, setRemoteUserRole] = useState<
+    "student" | "mentor" | null
+  >(null);
 
   const userState = useSelector((state: RootState) => state.user);
   const instructorState = useSelector((state: RootState) => state.instructor);
@@ -132,9 +113,11 @@ const VideoCallRoom: React.FC = () => {
 
         if (peerConnectionRef.current && localStreamRef.current) {
           const safeStream = localStreamRef.current;
-          safeStream.getTracks().forEach((track) =>
-            peerConnectionRef.current!.addTrack(track, safeStream)
-          );
+          safeStream
+            .getTracks()
+            .forEach((track) =>
+              peerConnectionRef.current!.addTrack(track, safeStream)
+            );
         }
 
         socketRef.current?.emit("join-room", {
@@ -151,63 +134,75 @@ const VideoCallRoom: React.FC = () => {
 
     initMedia();
 
-    socketRef.current.on("user-joined", ({ email, name, role }: UserJoinedPayload) => {
-      if (email !== user.email) {
-        setRemoteUserName(name || email); // Use name if available, fallback to email
-        setRemoteUserRole(role === "student" ? "student" : "mentor"); // Map role to display
-      }
-      if (user.role === "instructor") {
-        handleStartCall();
-      }
-    });
-
-    socketRef.current.on("receive-offer", async ({ offer, from }: OfferPayload) => {
-      try {
-        await peerConnectionRef.current!.setRemoteDescription(
-          new RTCSessionDescription(offer)
-        );
-        const answer = await peerConnectionRef.current!.createAnswer();
-        await peerConnectionRef.current!.setLocalDescription(answer);
-        socketRef.current?.emit("send-answer", {
-          answer,
-          roomId: bookingId,
-        });
-        if (!remoteUserName) {
-          setRemoteUserName(from); // Use 'from' as name (set by backend)
-          setRemoteUserRole("mentor"); // Fallback, improve with role from backend if possible
+    socketRef.current.on(
+      "user-joined",
+      ({ email, name, role }: UserJoinedPayload) => {
+        if (email !== user.email) {
+          setRemoteUserName(name || email); // Use name if available, fallback to email
+          setRemoteUserRole(role === "student" ? "student" : "mentor"); // Map role to display
         }
-      } catch (err) {
-        console.error("Error handling offer:", err);
-      }
-    });
-
-    socketRef.current.on("receive-answer", async ({ answer, from }: AnswerPayload) => {
-      try {
-        await peerConnectionRef.current?.setRemoteDescription(
-          new RTCSessionDescription(answer)
-        );
-        if (!remoteUserName) {
-          setRemoteUserName(from); // Use 'from' as name (set by backend)
-          setRemoteUserRole("student")//Fallback, improve with role from backend if possible
+        if (user.role === "instructor") {
+          handleStartCall();
         }
-      } catch (err) {
-        console.error("Error setting remote description:", err);
       }
-    });
+    );
 
-    socketRef.current.on("receive-candidate", async ({ candidate, from }: CandidatePayload) => {
-      try {
-        await peerConnectionRef.current?.addIceCandidate(
-          new RTCIceCandidate(candidate)
-        );
-        if (!remoteUserName) {
-          setRemoteUserName(from); // Use 'from' as name (set by backend)
-          setRemoteUserRole("student"); // Fallback, improve with role from backend if possible
+    socketRef.current.on(
+      "receive-offer",
+      async ({ offer, from }: OfferPayload) => {
+        try {
+          await peerConnectionRef.current!.setRemoteDescription(
+            new RTCSessionDescription(offer)
+          );
+          const answer = await peerConnectionRef.current!.createAnswer();
+          await peerConnectionRef.current!.setLocalDescription(answer);
+          socketRef.current?.emit("send-answer", {
+            answer,
+            roomId: bookingId,
+          });
+          if (!remoteUserName) {
+            setRemoteUserName(from); // Use 'from' as name (set by backend)
+            setRemoteUserRole("mentor"); // Fallback, improve with role from backend if possible
+          }
+        } catch (err) {
+          console.error("Error handling offer:", err);
         }
-      } catch (err) {
-        console.error("ICE candidate error:", err);
       }
-    });
+    );
+
+    socketRef.current.on(
+      "receive-answer",
+      async ({ answer, from }: AnswerPayload) => {
+        try {
+          await peerConnectionRef.current?.setRemoteDescription(
+            new RTCSessionDescription(answer)
+          );
+          if (!remoteUserName) {
+            setRemoteUserName(from); // Use 'from' as name (set by backend)
+            setRemoteUserRole("student"); //Fallback, improve with role from backend if possible
+          }
+        } catch (err) {
+          console.error("Error setting remote description:", err);
+        }
+      }
+    );
+
+    socketRef.current.on(
+      "receive-candidate",
+      async ({ candidate, from }: CandidatePayload) => {
+        try {
+          await peerConnectionRef.current?.addIceCandidate(
+            new RTCIceCandidate(candidate)
+          );
+          if (!remoteUserName) {
+            setRemoteUserName(from); // Use 'from' as name (set by backend)
+            setRemoteUserRole("student"); // Fallback, improve with role from backend if possible
+          }
+        } catch (err) {
+          console.error("ICE candidate error:", err);
+        }
+      }
+    );
 
     socketRef.current.on("call:end", ({ from }: { from: string }) => {
       console.log(`Call ended by ${from}`);
@@ -291,7 +286,8 @@ const VideoCallRoom: React.FC = () => {
               className="w-full h-64 bg-black rounded-lg shadow-lg"
             />
             <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-1 rounded text-sm">
-              {user?.name || user?.email || "You"} {user?.role === "student" ? "(Student)" : "(Mentor)"}
+              {user?.name || user?.email || "You"}{" "}
+              {user?.role === "student" ? "(Student)" : "(Mentor)"}
             </div>
           </div>
         </div>
@@ -307,7 +303,8 @@ const VideoCallRoom: React.FC = () => {
               className="w-full h-64 bg-black rounded-lg shadow-lg"
             />
             <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-1 rounded text-sm">
-              {remoteUserName || "Waiting for remote user..."} {remoteUserRole ? `(${remoteUserRole})` : ""}
+              {remoteUserName || "Waiting for remote user..."}{" "}
+              {remoteUserRole ? `(${remoteUserRole})` : ""}
             </div>
           </div>
         </div>
@@ -318,7 +315,9 @@ const VideoCallRoom: React.FC = () => {
         <button
           onClick={toggleMic}
           className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            micOn ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
+            micOn
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-red-500 hover:bg-red-600"
           } text-white transition-colors`}
         >
           {micOn ? <FaMicrophone /> : <FaMicrophoneSlash />}
@@ -326,7 +325,9 @@ const VideoCallRoom: React.FC = () => {
         <button
           onClick={toggleVideo}
           className={`w-12 h-12 rounded-full flex items-center justify-center ${
-            videoOn ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
+            videoOn
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-red-500 hover:bg-red-600"
           } text-white transition-colors`}
         >
           {videoOn ? <FaVideo /> : <FaVideoSlash />}
@@ -353,33 +354,6 @@ const VideoCallRoom: React.FC = () => {
 };
 
 export default VideoCallRoom;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useEffect, useRef, useState } from "react";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -469,8 +443,8 @@ export default VideoCallRoom;
 //     <div
 //       className={`
 //         relative rounded-xl overflow-hidden bg-gray-900 shadow-2xl transition-all duration-300
-//         ${isMainView 
-//           ? "w-full h-full min-h-[400px] lg:min-h-[500px]" 
+//         ${isMainView
+//           ? "w-full h-full min-h-[400px] lg:min-h-[500px]"
 //           : "w-full h-full min-h-[200px] sm:min-h-[250px] md:min-h-[300px]"
 //         }
 //         ${!videoOn ? "bg-gradient-to-br from-gray-800 to-gray-900" : ""}
@@ -492,7 +466,7 @@ export default VideoCallRoom;
 //           </div>
 //         </div>
 //       )}
-      
+
 //       {/* User info overlay */}
 //       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 md:p-4">
 //         <div className="flex items-center justify-between text-white">
@@ -506,7 +480,7 @@ export default VideoCallRoom;
 //               </span>
 //             )}
 //           </div>
-          
+
 //           {/* Media status indicators */}
 //           <div className="flex gap-2 items-center">
 //             {typeof micOn === "boolean" && (
@@ -789,7 +763,7 @@ export default VideoCallRoom;
 //     setRemoteUserName(null);
 //     setRemoteUserRole(null);
 //     setCallStarted(false);
-    
+
 //     // Navigate back to previous page
 //     navigate(-1);
 //   };
@@ -808,7 +782,7 @@ export default VideoCallRoom;
 //               {connectionStatus}
 //             </div>
 //           </div>
-          
+
 //           <div className="flex items-center gap-3">
 //             <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
 //               <FaUsers className="text-lg" />
@@ -846,7 +820,7 @@ export default VideoCallRoom;
 //                   isMainView={true}
 //                 />
 //               </div>
-              
+
 //               {/* Sidebar with local video */}
 //               <div className="lg:col-span-1 h-full min-h-[200px] lg:min-h-0">
 //                 <VideoTile
@@ -873,7 +847,7 @@ export default VideoCallRoom;
 //                   isMainView={true}
 //                 />
 //               </div>
-              
+
 //               <div className="text-center">
 //                 <p className="text-xl text-gray-300 mb-2">
 //                   {joined ? "Waiting for others to join..." : "Joining call..."}
@@ -942,23 +916,6 @@ export default VideoCallRoom;
 // };
 
 // export default VideoCallRoom;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import React, { useEffect, useRef, useState } from "react";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -1307,4 +1264,3 @@ export default VideoCallRoom;
 // };
 
 // export default VideoCallRoom;
-

@@ -6,7 +6,7 @@ export function mapMembershipOrderToListDTO(
 ): AdminMembershipOrderListDTO {
   return {
     instructorName: order.instructor.name,
-    orderId: order.txnId,
+    orderId: order.razorpayOrderId,
     membershipName: order.membershipPlan.name,
     price: order.price,
     status: order.paymentStatus,

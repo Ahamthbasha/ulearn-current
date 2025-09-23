@@ -7,7 +7,7 @@ export interface IBooking extends Document {
   studentId: Types.ObjectId;
   instructorId: Types.ObjectId | IInstructor;
   slotId: Types.ObjectId | ISlot;
-  status: "pending" | "confirmed" | "cancelled" | "initiated";
+  status: "pending" | "confirmed" | "cancelled" | "failed";
   paymentStatus: "paid" | "failed" | "pending";
   txnId?: string;
   createdAt: Date;

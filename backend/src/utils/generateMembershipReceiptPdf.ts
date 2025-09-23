@@ -83,7 +83,7 @@ export async function generateMembershipReceiptPdf(
     doc
       .fontSize(10)
       .font("Helvetica")
-      .text(order.txnId, 50, infoBarY + 25)
+      .text(order.razorpayOrderId, 50, infoBarY + 25)
       .text(
         new Date(order.createdAt).toLocaleDateString("en-IN"),
         220,

@@ -1,28 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { type ReactNode } from "react";
-
-interface PaginationProps {
-  currentPage: number;
-  totalItems: number;
-  pageSize: number;
-  onPageChange: (page: number) => void;
-}
-
-interface EntityTableProps<T> {
-  title: string;
-  data: T[];
-  columns: {
-    key: keyof T;
-    label: string;
-    render?: (value: any, row: T) => ReactNode;
-  }[];
-  onEdit?: (item: T) => void;
-  onDelete?: (item: T) => void;
-  onAction?: (item: T) => void;
-  actionLabel?: string;
-  emptyText?: string;
-  pagination?: PaginationProps;
-}
+import { type EntityTableProps } from "./interface/commonComponent";
 
 const EntityTable = <T,>({
   title,

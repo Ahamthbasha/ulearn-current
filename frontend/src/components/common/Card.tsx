@@ -1,15 +1,6 @@
 import React from "react";
 import classNames from "classnames";
-
-interface CardProps {
-  title?: string;
-  children: React.ReactNode;
-  className?: string;
-  footer?: React.ReactNode;
-  header?: React.ReactNode;
-  withShadow?: boolean;
-  padded?: boolean;
-}
+import { type CardProps } from "./interface/commonComponent";
 
 const Card: React.FC<CardProps> = ({
   title,

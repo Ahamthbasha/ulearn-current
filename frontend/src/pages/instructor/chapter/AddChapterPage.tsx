@@ -16,6 +16,7 @@ const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
     .transform((value) => value.trim())
     .min(5, "Chapter title must be at least 5 characters long")
+    .max(50,"Title should not exceed 50 characters")
     .matches(
       textOnlyRegex,
       "Chapter title must contain only letters and single spaces"
@@ -30,6 +31,7 @@ const chapterSchema = Yup.object().shape({
   description: Yup.string()
     .transform((value) => value.trim())
     .min(10, "Description must be at least 10 characters long")
+    .max(200,'chapter description should not exceed 200 characters')
     .matches(
       textOnlyRegex,
       "Description must contain only letters and single spaces"
@@ -45,6 +47,7 @@ const chapterSchema = Yup.object().shape({
     .typeError("Chapter number must be a valid number")
     .positive("Chapter number must be a positive value")
     .integer("Chapter number must be an integer")
+    .max(250, "Chapter number must not exceed 250")
     .required("Chapter number is required"),
 });
 

@@ -6,15 +6,15 @@ import {
   AdminSuccessMessages,
   ResponseError,
 } from "../../utils/constants";
-import { SendEmail } from "../../utils/sendOtpEmail";
+import { IEmail } from "../../types/Email";
 
 export class AdminVerificationController {
   private _verificationService: IAdminVerificationService;
-  private _emailService: SendEmail;
+  private _emailService: IEmail;
 
-  constructor(verificationService: IAdminVerificationService) {
+  constructor(verificationService: IAdminVerificationService,emailService:IEmail) {
     this._verificationService = verificationService;
-    this._emailService = new SendEmail();
+    this._emailService = emailService;
   }
 
   async getAllRequests(req: Request, res: Response): Promise<void> {

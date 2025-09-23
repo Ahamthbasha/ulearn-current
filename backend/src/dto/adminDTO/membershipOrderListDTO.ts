@@ -3,5 +3,5 @@ export interface AdminMembershipOrderListDTO {
   orderId: string;
   membershipName: string;
   price: number;
-  status: string;
+  status: "paid" | "pending" | "failed" | "cancelled";
 }

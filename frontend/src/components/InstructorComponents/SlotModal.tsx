@@ -3,23 +3,7 @@ import { format, parseISO, isBefore } from "date-fns";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { createSlot, updateSlot } from "../../api/action/InstructorActionApi";
-
-export interface Slot {
-  _id: string;
-  startTime: string;
-  endTime: string;
-  price: number;
-  isBooked: boolean;
-}
-
-interface SlotModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  mode: "add" | "edit";
-  selectedDate: Date;
-  onSuccess: () => void;
-  initialData?: Slot | null;
-}
+import { type SlotModalProps } from "./interface/instructorComponentInterface";
 
 const SlotModal = ({
   isOpen,

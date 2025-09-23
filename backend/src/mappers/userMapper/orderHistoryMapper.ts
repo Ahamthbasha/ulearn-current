@@ -12,6 +12,7 @@ export const toOrderHistoryDTO = (order: IOrder): OrderHistoryDTO => {
     orderId: order._id.toString(),
     amount: order.amount,
     gateway: order.gateway,
-    date: `${day}-${month}-${year}`, // formatted as DD-MM-YYYY
+    date: `${day}-${month}-${year}`, 
+    status:order.status
   };
 };

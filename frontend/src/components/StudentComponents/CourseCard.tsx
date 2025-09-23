@@ -10,24 +10,7 @@ import {
 } from "../../api/action/StudentAction";
 import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../utils/auth";
-
-interface CourseCardProps {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  duration: string;
-  level: string;
-  thumbnailUrl: string;
-  categoryName?: string;
-}
-
-interface CartItem {
-  courseId: string;
-  courseName: string;
-  thumbnailUrl: string;
-  price: number;
-}
+import { type CourseCardProps, type CartItem } from "./interface/studentComponentInterface";
 
 const CourseCard: React.FC<CourseCardProps> = ({
   id,
@@ -48,8 +31,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
     const fetchStatuses = async () => {
       try {
         const cartRes = await getCart();
-        // Updated to match the new cart response structure
-        const existsInCart = cartRes?.data && Array.isArray(cartRes.data) 
+        const existsInCart = cartRes?.data && Array.isArray(cartRes.data)
           ? cartRes.data.some((course: CartItem) => course.courseId === id)
           : false;
         setIsInCart(existsInCart);
@@ -105,29 +87,37 @@ const CourseCard: React.FC<CourseCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border flex flex-col">
-      <div className="relative group h-48 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border flex flex-col max-w-sm mx-auto sm:max-w-md lg:max-w-lg overflow-hidden">
+      <div className="relative group h-40 sm:h-48 lg:h-52 overflow-hidden">
         <img
           src={thumbnailUrl}
           alt={title}
-          className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+          className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-500 ease-out"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </div>
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-lg font-semibold mb-1 line-clamp-1">{title}</h3>
-        <p className="text-sm text-gray-600 line-clamp-2 mb-3">{description}</p>
+      <div className="p-4 sm:p-5 flex flex-col flex-grow gap-3">
+        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-800 line-clamp-1">{title}</h3>
+        <p className="text-sm sm:text-base text-gray-600 line-clamp-2 leading-relaxed">{description}</p>
 
-        <div className="grid grid-cols-2 text-sm text-gray-700 gap-2 mb-4">
-          <span>🕒 {duration} hrs</span>
-          <span>🎯 {level}</span>
-          <span>💰 ₹{price}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-gray-700">
+          <span className="flex items-center gap-1">
+            <span className="text-gray-500">🕒</span> {duration} hrs
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-gray-500">🎯</span> {level}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-gray-500">💰</span> ₹{price}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between gap-2 mt-auto">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 mt-auto">
           {isInCart ? (
             <button
               onClick={() => navigate("/user/cart")}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-3 py-1.5 rounded-md flex items-center gap-1 transition"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
             >
               <ShoppingCart size={16} />
               Go to Cart
@@ -135,34 +125,26 @@ const CourseCard: React.FC<CourseCardProps> = ({
           ) : (
             <button
               onClick={handleAddToCart}
-              className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1.5 rounded-md flex items-center gap-1 transition"
+              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
               <ShoppingCart size={16} />
               Add to Cart
             </button>
           )}
 
-          {isInWishlist ? (
-            <button
-              className="text-red-500 hover:text-red-600 transition"
-              title="Remove from Wishlist"
-              onClick={handleRemoveFromWishlist}
-            >
-              <Heart size={20} fill="currentColor" />
-            </button>
-          ) : (
-            <button
-              className="text-gray-400 hover:text-red-500 transition"
-              title="Add to Wishlist"
-              onClick={handleAddToWishlist}
-            >
-              <Heart size={20} />
-            </button>
-          )}
+          <button
+            className={`transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+              isInWishlist ? "text-red-500 hover:text-red-600" : "text-gray-400 hover:text-red-500"
+            }`}
+            title={isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+            onClick={isInWishlist ? handleRemoveFromWishlist : handleAddToWishlist}
+          >
+            <Heart size={20} fill={isInWishlist ? "currentColor" : "none"} />
+          </button>
 
           <button
             onClick={() => navigate(`/user/course/${id}`)}
-            className="ml-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-4 rounded-md transition"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             View Details
           </button>

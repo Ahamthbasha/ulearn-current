@@ -33,6 +33,8 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID)
+
   const initialValues = {
     email: "",
     password: "",
@@ -48,6 +50,9 @@ const LoginPage = () => {
         role: data.role,
       });
       const user = response.user;
+
+      console.log(user) 
+      
       if (user) {
         localStorage.setItem("instructor", JSON.stringify(user));
         toast.success(response?.message);
@@ -92,9 +97,9 @@ const LoginPage = () => {
       const response = await googleLogin({
         name: decoded.name,
         email: decoded.email,
-        password: decoded.sub,
+         password: decoded.sub,
         profilePicture: decoded.picture,
-        mobileNumber: decoded.phoneNumber,
+        role: "instructor",
       });
 
       const instructor = response?.instructor;

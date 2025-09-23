@@ -5,26 +5,19 @@ import { toast } from "react-toastify";
 import { PlusCircle, Trash2, Pencil } from "lucide-react";
 import SlotModal from "../../../components/InstructorComponents/SlotModal";
 import { useNavigate } from "react-router-dom";
-
-interface Slot {
-  _id: string;
-  startTime: string;
-  endTime: string;
-  price: number;
-  isBooked: boolean;
-}
+import { type ISlotPage } from "../interface/instructorInterface";
 
 const daysToRender = 7;
 
 const SlotPage = () => {
-  const [slots, setSlots] = useState<Slot[]>([]);
+  const [slots, setSlots] = useState<ISlotPage[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekStartDate, setWeekStartDate] = useState<Date>(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-  const [editingSlot, setEditingSlot] = useState<Slot | null>(null);
+  const [editingSlot, setEditingSlot] = useState<ISlotPage | null>(null);
 
   const navigate = useNavigate();
 
@@ -62,7 +55,7 @@ const SlotPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (slot: Slot) => {
+  const handleOpenEditModal = (slot: ISlotPage) => {
     setModalMode("edit");
     setEditingSlot(slot);
     setIsModalOpen(true);

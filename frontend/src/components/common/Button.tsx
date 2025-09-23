@@ -1,9 +1,6 @@
 import React from "react";
 import classNames from "classnames";
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "destructive" | "danger";
-}
+import { type ButtonProps } from "./interface/commonComponent";
 
 export const Button: React.FC<ButtonProps> = ({
   children,

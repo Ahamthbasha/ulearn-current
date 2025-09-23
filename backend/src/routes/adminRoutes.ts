@@ -272,7 +272,7 @@ router.get(
 );
 
 router.get(
-  "/membershipPurchaseHistory/:txnId",
+  "/membershipPurchaseHistory/:razorpayOrderId",
   authenticateToken,
   isAdmin,
   adminMembershipOrderController.getOrderDetail.bind(

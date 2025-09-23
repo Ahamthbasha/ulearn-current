@@ -6,10 +6,11 @@ import IInstructorRepository from "../repositories/instructorRepository/interfac
 import { IWithdrawalRequest } from "../models/withdrawalRequestModel";
 import { v4 as uuidv4 } from "uuid";
 import { IPaginationOptions } from "../types/IPagination";
-import { mapWithdrawalRequestToDTO } from "../mappers/adminMapper/withdrawalListMapper";
+import { mapWithdrawalRequestToDTO } from "../mappers/instructorMapper/withdrawalListMapper";
 import { mapWithdrawalRequestDetailToDTO } from "../mappers/adminMapper/withdrawalDetailRequest";
-import { WithdrawalRequestDTO } from "../dto/adminDTO/withdrawalRequestDTO";
+import { WithdrawalRequestDTO } from "../dto/instructorDTO/withdrawalRequestDTO";
 import { WithdrawalRequestDetailDTO } from "../dto/adminDTO/withdrawalDetailRequest";
+import { mapAdminWithdrawalRequestToDTO } from "../mappers/adminMapper/adminWithdrawalMapper";
 
 export class WithdrawalRequestService implements IWithdrawalRequestService {
   private _withdrawalRequestRepo: IWithdrawalRequestRepository;
@@ -189,9 +190,10 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
         instructorId,
         options,
       );
-
     const dtoTransactions = transactions.map(mapWithdrawalRequestToDTO);
 
+    console.log("dto Transactions",dtoTransactions)
+    
     return {
       transactions: dtoTransactions,
       total,
@@ -203,11 +205,12 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
   ): Promise<{ transactions: WithdrawalRequestDTO[]; total: number }> {
     const { transactions, total } =
       await this._withdrawalRequestRepo.getAllRequestsWithPagination(options);
+    
+    console.log('all transaction',transactions)
 
-    const dtoTransactions = transactions.map(mapWithdrawalRequestToDTO);
-
+    const dtoTransactions = transactions.map(mapAdminWithdrawalRequestToDTO)
     return {
-      transactions: dtoTransactions,
+      transactions:dtoTransactions,
       total,
     };
   }

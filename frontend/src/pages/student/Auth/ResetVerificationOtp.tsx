@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-
-import {
-  verifyEmail,
-  verifyResetOtp,
-} from "../../../api/auth/UserAuthentication";
+import { verifyEmail, verifyResetOtp } from "../../../api/auth/UserAuthentication";
 
 const ResetVerificationOTP = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -30,11 +26,15 @@ const ResetVerificationOTP = () => {
     setOtp(Array(4).fill("")); // reset OTP input
 
     const email = localStorage.getItem("ForgotPassEmail") || "";
-    const response = await verifyEmail(email);
-    if (response.success) {
-      toast.success(response.message);
-    } else {
-      toast.error(response.message);
+    try {
+      const response = await verifyEmail(email);
+      if (response.success) {
+        toast.success(response.message);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("Failed to resend OTP. Please try again.");
     }
   };
 
@@ -67,18 +67,28 @@ const ResetVerificationOTP = () => {
 
   const handleSubmit = async () => {
     const OTP = otp.join("");
+    
     if (OTP.length !== 4 || otp.some((digit) => digit === "")) {
       toast.error("Please enter the full OTP!");
       return;
     }
 
     const email = localStorage.getItem("ForgotPassEmail") || "";
-    const response = await verifyResetOtp(email, OTP);
-    if (response.success) {
-      toast.success(response.message);
-      navigate("/user/resetPassword");
-    } else {
-      toast.error(response.message);
+    console.log("Sending OTP:", OTP); // Debug log for OTP
+
+    try {
+      const response = await verifyResetOtp(email, OTP);
+      console.log('response', response);
+      
+      if (response.success) {
+        toast.success(response.message);
+        navigate("/user/resetPassword");
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error:any) {
+      console.error("Axios error:", error);
+      toast.error(error?.response?.data?.message);
     }
   };
 

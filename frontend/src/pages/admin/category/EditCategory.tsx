@@ -27,7 +27,7 @@ const EditCategoryPage = () => {
           toast.error(response?.data?.message);
         }
       } catch (err) {
-        toast.error("something went wrong");
+        toast.error("Something went wrong");
       } finally {
         setLoading(false);
       }
@@ -49,19 +49,20 @@ const EditCategoryPage = () => {
           validationSchema={Yup.object({
             name: Yup.string()
               .required("Category name is required")
+              .min(5, "Category name must be at least 5 characters")
+              .max(30, "Category name must not exceed 30 characters")
               .test(
                 "is-valid-category",
-                "Must be at least 5 characters with alphabet letters (no only numbers/symbols)",
+                "Must contain at least 5 alphabet letters (no only numbers/symbols)",
                 (value) => {
                   if (!value) return false;
                   const trimmed = value.trim();
-
-                  // At least 5 characters, contains at least 1 alphabet, not just digits/symbols
-                  const hasMinLength = trimmed.length >= 5;
+                  // Count alphabetic characters
+                  const letterCount = (trimmed.match(/[a-zA-Z]/g) || []).length;
+                  // Ensure at least 5 letters and not only numbers/symbols
                   const hasLetters = /[a-zA-Z]/.test(trimmed);
-                  const notOnlySymbolsOrDigits = /[a-zA-Z]/.test(trimmed); // Ensures there's a letter
-
-                  return hasMinLength && hasLetters && notOnlySymbolsOrDigits;
+                  const notOnlySymbolsOrDigits = /[a-zA-Z]/.test(trimmed);
+                  return letterCount >= 5 && hasLetters && notOnlySymbolsOrDigits;
                 }
               ),
           })}

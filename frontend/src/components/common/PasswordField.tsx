@@ -1,13 +1,7 @@
 import React, { useState } from "react";
 import { Field, ErrorMessage } from "formik";
 import { Eye, EyeOff } from "lucide-react";
-
-interface PasswordFieldProps {
-  name: string;
-  label?: string;
-  placeholder?: string;
-  hideError?: boolean; // Optional to skip ErrorMessage here
-}
+import { type PasswordFieldProps } from "./interface/commonComponent";
 
 const PasswordField: React.FC<PasswordFieldProps> = ({
   name,

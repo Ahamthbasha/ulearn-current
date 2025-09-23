@@ -24,4 +24,9 @@ const paymentSchema = new Schema<IPayment>(
   { timestamps: { createdAt: true, updatedAt: false } },
 );
 
+paymentSchema.index({ orderId: 1 }, { unique: true }); // One payment per order
+paymentSchema.index({ paymentId: 1 }, { unique: true }); // Unique payment IDs
+paymentSchema.index({ userId: 1, status: 1 }); // User payment history
+paymentSchema.index({ createdAt: -1 }); // Payment history ordering
+
 export const PaymentModel = model<IPayment>("Payment", paymentSchema);

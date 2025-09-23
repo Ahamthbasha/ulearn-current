@@ -63,6 +63,12 @@ const enrollmentSchema = new Schema<IEnrollment>(
   { timestamps: true },
 );
 
+enrollmentSchema.index({ userId: 1, courseId: 1 }, { unique: true });
+enrollmentSchema.index({ userId: 1 }); // User's enrollments
+enrollmentSchema.index({ courseId: 1 }); // Course enrollments
+enrollmentSchema.index({ completionStatus: 1 }); // Filter by completion status
+
+
 export const EnrollmentModel = model<IEnrollment>(
   "Enrollment",
   enrollmentSchema,

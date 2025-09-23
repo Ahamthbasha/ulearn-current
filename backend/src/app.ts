@@ -1,36 +1,51 @@
-import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
+dotenv.config({ path: ".env.development" });
+import express, { Request, Response, NextFunction } from "express";
 import connectDB from "./config/db";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import { createServer } from "http";
 import { Server } from "socket.io";
-
+import redisClient from "./config/redis";
 import studentRoutes from "./routes/studentRoutes";
 import instructorRoutes from "./routes/instructorRoutes";
 import adminRoutes from "./routes/adminRoutes";
-
 import { startMembershipExpiryJob } from "./cron/membershipExpiryJob";
 import { initializeSocketIO } from "./sockets/socketServer";
 import { appLogger, accessLogStream } from "./utils/logger";
 
-dotenv.config();
+// Validate critical environment variables
+const requiredEnv = [
+  "MONGO_URI",
+  "JWT_SECRET",
+  "RAZORPAY_KEY_ID",
+  "RAZORPAY_KEY_SECRET",
+  "REDIS_HOST",
+  "REDIS_PORT",
+];
+requiredEnv.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`❌ Missing environment variable: ${key}`);
+    process.exit(1);
+  }
+});
 
 const app = express();
 const port: number = Number(process.env.PORT) || 3000;
 
-const corsOptions = {
+// Filter only valid string origins
+const allowedOrigins: string[] = [
+  process.env.FRONTEND_URL ?? ""
+].filter((url): url is string => Boolean(url));
+
+const corsOptions: CorsOptions = {
   credentials: true,
-  origin: [
-    String(process.env.FRONTEND_URL),
-    "http://localhost:5173",
-    "https://6964887265b9.ngrok-free.app",
-  ],
+  origin: allowedOrigins,
   methods: "GET,POST,PUT,PATCH,DELETE,HEAD",
 };
 
-// Morgan HTTP request logging
+// HTTP request logging
 if (process.env.NODE_ENV === "production") {
   app.use(morgan("combined", { stream: accessLogStream }));
 } else {
@@ -48,7 +63,7 @@ app.use("/api/student", studentRoutes);
 app.use("/api/instructor", instructorRoutes);
 app.use("/api/admin", adminRoutes);
 
-// 404 Handler
+// 404 handler
 app.use("/api", (_req, res) => {
   res.status(404).json({
     success: false,
@@ -56,7 +71,7 @@ app.use("/api", (_req, res) => {
   });
 });
 
-// Global Error Handler
+// Global error handler
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
@@ -76,7 +91,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-// Process-level Error Logging
+// Process-level error logging
 process.on("unhandledRejection", (reason: any) => {
   appLogger.error("Unhandled Promise Rejection", { reason });
 });
@@ -93,6 +108,13 @@ const start = async () => {
     await connectDB();
     appLogger.info("Database connected successfully");
 
+    try {
+      await redisClient.ping();
+      appLogger.info("Redis connected successfully");
+    } catch (redisError) {
+      appLogger.warn("Redis connection failed, OTP functionality may be limited", { redisError });
+    }
+
     startMembershipExpiryJob();
     appLogger.info("Membership expiry job started");
 
@@ -100,10 +122,7 @@ const start = async () => {
 
     const io = new Server(httpServer, {
       cors: {
-        origin: [
-          String(process.env.FRONTEND_URL),
-          "https://6964887265b9.ngrok-free.app",
-        ],
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true,
       },
@@ -116,10 +135,10 @@ const start = async () => {
 
     httpServer.listen(port, () => {
       appLogger.info(`Server is running on port ${port}`);
-      appLogger.info(`Frontend URL: ${process.env.FRONTEND_URL}`);
+      appLogger.info(`Frontend URLs: ${allowedOrigins.join(", ")}`);
       appLogger.info(`Socket.IO is ready for connections`);
       appLogger.info(
-        `HTTP request logging enabled (${process.env.NODE_ENV || "development"} mode)`,
+        `HTTP request logging enabled (${process.env.NODE_ENV || "development"} mode)`
       );
     });
   } catch (error) {

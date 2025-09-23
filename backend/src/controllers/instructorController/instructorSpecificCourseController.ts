@@ -7,7 +7,7 @@ import {
   generatePdfReport,
   generateExcelReport,
 } from "../../utils/specificReportGenerator";
-import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
+import { INSTRUCTOR_ERROR_MESSAGE, INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER } from "../../utils/constants";
 
 export class InstructorSpecificCourseDashboardController
   implements IInstructorCourseSpecificDashboardController
@@ -24,7 +24,7 @@ export class InstructorSpecificCourseDashboardController
       if (!Types.ObjectId.isValid(courseId)) {
         res
           .status(StatusCode.BAD_REQUEST)
-          .json({ success: false, message: "Invalid Course ID" });
+          .json({ success: false, message: INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER.INVALID_COURSE_ID});
         return;
       }
 
@@ -40,7 +40,7 @@ export class InstructorSpecificCourseDashboardController
       );
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch course dashboard",
+        message: INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER.FAILED_TO_FETCH_COURSE_DASHBOARD,
       });
     }
   }

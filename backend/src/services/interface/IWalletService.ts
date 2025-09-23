@@ -9,12 +9,14 @@ export interface IWalletService {
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null>;
   debitWallet(
     ownerId: string | Types.ObjectId,
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null>;
   initializeWallet(
     ownerId: Types.ObjectId,
@@ -27,6 +29,7 @@ export interface IWalletService {
     amount: number,
     description: string,
     tnxId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<void>;
   getPaginatedTransactions(
     ownerId: Types.ObjectId,

@@ -3,6 +3,7 @@ import { IInstructorMembershipController } from "./interfaces/IInstructorMembers
 import { IInstructorMembershipService } from "../../services/instructorServices/interface/IInstructorMembershipService";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
+import { INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE } from "../../utils/constants";
 
 export class InstructorMembershipController
   implements IInstructorMembershipController
@@ -20,7 +21,7 @@ export class InstructorMembershipController
       console.error("Error fetching membership plans:", err);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: "Something went wrong." });
+        .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG });
     }
   }
 
@@ -37,7 +38,7 @@ export class InstructorMembershipController
       if (!instructor) {
         res
           .status(StatusCode.NOT_FOUND)
-          .json({ message: "Instructor not found" });
+          .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.INSTRUCTOR_NOT_FOUND });
         return;
       }
 
@@ -46,7 +47,7 @@ export class InstructorMembershipController
       console.error("Error getting mentor status:", err);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: "Something went wrong." });
+        .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG });
     }
   }
 
@@ -68,7 +69,7 @@ export class InstructorMembershipController
       console.error("Error fetching membership status:", err);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: "Something went wrong" });
+        .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG });
     }
   }
 }

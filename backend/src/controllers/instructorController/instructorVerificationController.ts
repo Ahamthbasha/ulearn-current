@@ -19,9 +19,6 @@ export class InstructorVerificationController {
     try {
       const { name, email } = req.body;
 
-      console.log("body", req.body);
-      console.log("Files", req.files || req.file);
-
       if (!req.files || typeof req.files !== "object") {
         throw new Error(VerificationErrorMessages.DOCUMENTS_MISSING);
       }

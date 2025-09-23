@@ -1,7 +1,7 @@
 import { API } from "../../service/axios";
 import UserRouterEndpoints from "../../types/endPoints/userEndPoint";
 import type QuizPayload from "../../types/interfaces/IQuizPayload";
-import type { ListInstructorParams } from "../../types/interfaces/ListInstructorParams";
+import type { ListInstructorParams, RetryPaymentResponse } from "../../types/interfaces/ListInstructorParams";
 import fileDownload from "js-file-download";
 
 export const getProfile = async () => {
@@ -200,58 +200,6 @@ export const courseAlreadyExistInWishlist = async (courseId: string) => {
 
 //checkout actions
 
-
-// export const initiateCheckout = async (
-//   courseIds: string[],
-//   totalAmount: number,
-//   paymentMethod: "razorpay" | "wallet"
-// ) => {
-//   try {
-//     const response = await API.post(UserRouterEndpoints.userInitiateCheckout, {
-//       courseIds,
-//       totalAmount,
-//       paymentMethod,
-//     });
-//     return response.data;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
-// export const checkoutCompleted = async ({
-//   orderId,
-//   paymentId,
-//   method,
-//   amount,
-// }: {
-//   orderId: string;
-//   paymentId: string;
-//   method: string;
-//   amount: number;
-// }) => {
-//   try {
-//     const response = await API.post(UserRouterEndpoints.userCompleteCheckout, {
-//       orderId,
-//       paymentId,
-//       method,
-//       amount,
-//     });
-//     return response.data;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
-
-
-
-
-
-
-// Updated checkout actions with session management
-
-
-
 export const initiateCheckout = async (
   courseIds: string[],
   totalAmount: number,
@@ -293,10 +241,23 @@ export const checkoutCompleted = async ({
   }
 };
 
+export const cancelPendingOrder = async(orderId:string)=>{
+  try {
+    const response = await API.post(UserRouterEndpoints.userCancelPendingOrder,{orderId})
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
-
-
-
+export const markFailed = async(orderId:string)=>{
+  try {
+    const response = await API.post(UserRouterEndpoints.userMarkFailed,{orderId})
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 
 //boughted courses actions
@@ -453,7 +414,11 @@ export const walletTransactionHistory = async (
   }
 };
 
-export const allOrder = async (page: number = 1, limit: number = 5,search:string= "") => {
+export const allOrder = async (
+  page: number = 1,
+  limit: number = 5,
+  search: string = ""
+) => {
   try {
     const response = await API.get(UserRouterEndpoints.userGetOrders, {
       params: { page, limit, search },
@@ -496,6 +461,17 @@ export const downloadInvoice = async (orderId: string) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const retryPayment = async (
+  orderId: string,
+  paymentData?: { paymentId: string; method: string; amount: number,retryAttemptId?:string },
+): Promise<RetryPaymentResponse> => {
+  const response = await API.post(
+    `/api/student/orders/${orderId}/retry`,
+    paymentData || {},
+  );
+  return response.data;
 };
 
 export const listInstructors = async (params: ListInstructorParams) => {
@@ -590,28 +566,77 @@ export const bookSlotViaWallet = async (slotId: string) => {
   }
 };
 
-// export const bookingHistory = async (page = 1, limit = 5) => {
-//   try {
-//     const response = await API.get(
-//       `${UserRouterEndpoints.userGetSlotBookingHistory}?page=${page}&limit=${limit}`
-//     );
-//     return response.data;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
+export const checkSlotAvailabilityApi = async (slotId: string) => {
+  try {
+    const response = await API.get(
+      `${UserRouterEndpoints.userCheckSlotStatus}/${slotId}/availability`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
-export const bookingHistory = async (page = 1, limit = 5, searchQuery = '') => {
+export const cancelPendingBookingApi = async (bookingId: string) => {
+  try {
+    const response = await API.post(
+      `${UserRouterEndpoints.userCancelPendingBooking}/${bookingId}/cancel`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const handlePaymentFailureApi = async (bookingId: string) => {
+  try {
+    const response = await API.post(
+      `${UserRouterEndpoints.userCancelPendingBooking}/${bookingId}/paymentFailed`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const retrySlotPayment = async(bookingId:string)=>{
+  try {
+    const response = await API.post(`${UserRouterEndpoints.userRetrySlotPayment}/${bookingId}/retryPayment`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const verifyRetrySlotPayment = async (
+  bookingId: string,
+  razorpay_payment_id: string
+) => {
+  try {
+    const response = await API.post(
+      `${UserRouterEndpoints.userVerifySlotRetryPayment}`,
+      {
+        bookingId,
+        razorpay_payment_id,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const bookingHistory = async (page = 1, limit = 5, searchQuery = "") => {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
-    
+
     if (searchQuery && searchQuery.trim()) {
-      params.append('search', searchQuery.trim());
+      params.append("search", searchQuery.trim());
     }
-    
+
     const response = await API.get(
       `${UserRouterEndpoints.userGetSlotBookingHistory}?${params.toString()}`
     );
@@ -620,7 +645,6 @@ export const bookingHistory = async (page = 1, limit = 5, searchQuery = '') => {
     throw error;
   }
 };
-
 
 export const bookingDetail = async (bookingId: string) => {
   try {
@@ -645,6 +669,7 @@ export const slotReceipt = async (bookingId: string) => {
     throw error;
   }
 };
+
 
 //dashboard
 
@@ -774,8 +799,6 @@ export const slotReport = async (filter: {
 //   }
 // };
 
-
-
 export const exportCourseReport = async (
   format: "pdf" | "excel",
   filter?: {
@@ -806,7 +829,8 @@ export const exportCourseReport = async (
       responseType: "blob",
     });
 
-    const filename = format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
+    const filename =
+      format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
     const blob = new Blob([response.data], {
       type:
         format === "pdf"

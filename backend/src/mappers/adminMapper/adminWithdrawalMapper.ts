@@ -1,14 +1,19 @@
+import { AdminWithdrawalRequestDTO } from "../../dto/adminDTO/adminWithdrawalRequest";
 import { IWithdrawalRequest } from "../../models/withdrawalRequestModel";
-import { WithdrawalRequestDTO } from "../../dto/adminDTO/withdrawalRequestDTO";
+import {Types} from "mongoose"
 
-export function mapWithdrawalRequestToDTO(
-  request: IWithdrawalRequest & {
-    instructor?: { username: string; email: string };
+
+export function mapAdminWithdrawalRequestToDTO(
+  request: IWithdrawalRequest & { 
+    instructor?: {
+      _id: Types.ObjectId;
+      username: string;
+      email: string;
+    }
   },
-): WithdrawalRequestDTO {
+): AdminWithdrawalRequestDTO {
   const createdAtDate = new Date(request.createdAt);
 
-  // Format: DD-MM-YYYY hh:mm AM/PM
   const formattedDate =
     createdAtDate.toLocaleDateString("en-GB") +
     " " +
@@ -17,13 +22,18 @@ export function mapWithdrawalRequestToDTO(
       minute: "2-digit",
     });
 
+
+  const instructorName = request.instructor?.username || "";
+  const instructorEmail = request.instructor?.email || "";
+
   return {
     requestId: request._id?.toString() || "",
-    instructorName: request.instructor?.username || "",
-    instructorEmail: request.instructor?.email || "",
+    instructorName,
+    instructorEmail,
     amount: request.amount ?? 0,
     status: request.status,
     bankAccount: request.bankAccount ? "Linked" : "Not Linked",
     createdAt: formattedDate,
+    reason: request.remarks || ""
   };
 }

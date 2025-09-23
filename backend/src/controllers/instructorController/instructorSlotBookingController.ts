@@ -4,6 +4,7 @@ import { Response } from "express";
 import mongoose from "mongoose";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
+import { INSTRUCTOR_SLOT_BOOKING_ERROR_MESSAGE } from "../../utils/constants";
 
 export class InstructorSlotBookingController
   implements IInstructorSlotBookingController
@@ -30,7 +31,7 @@ export class InstructorSlotBookingController
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || "Failed to fetch booking detail",
+        message: error.message || INSTRUCTOR_SLOT_BOOKING_ERROR_MESSAGE.FAILED_TO_FETCH_BOOKING_DETAILS,
       });
     }
   }

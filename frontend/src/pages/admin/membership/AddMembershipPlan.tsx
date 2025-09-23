@@ -19,10 +19,19 @@ const AddMembershipPlan = () => {
   const validationSchema = Yup.object().shape({
     name: Yup.string()
       .required("Plan name is required")
-      .max(50, "Plan name must be under 50 characters")
+      .max(50, "Plan name must not exceed 50 characters")
       .matches(
         /^[A-Za-z][A-Za-z0-9\s&-]{2,}$/,
-        "Plan name must start with a letter and contain only letters, numbers, spaces, hyphens or ampersands"
+        "Plan name must start with a letter and contain only letters, numbers, spaces, hyphens, or ampersands"
+      )
+      .test(
+        "min-letters",
+        "Plan name must contain at least 5 alphabet letters",
+        (value) => {
+          if (!value) return false;
+          const letterCount = (value.match(/[A-Za-z]/g) || []).length;
+          return letterCount >= 5;
+        }
       )
       .test(
         "not-only-symbols-or-numbers",
@@ -35,31 +44,46 @@ const AddMembershipPlan = () => {
     durationInDays: Yup.number()
       .typeError("Duration must be a number")
       .required("Duration is required")
-      .min(30, "Minimum duration is 30 days"),
+      .min(30, "Minimum duration is 30 days")
+      .max(365,"Maximum duration will be an year"),
 
     price: Yup.number()
       .typeError("Price must be a number")
       .required("Price is required")
-      .min(100, "Price must be at least ₹100"),
+      .min(100, "Price must be at least ₹100")
+      .max(100000,"price maximum will be ₹100000"),
 
     description: Yup.string()
       .required("Description is required")
-      .min(20, "Description should be at least 20 characters")
-      .max(300, "Description should not exceed 300 characters")
+      .min(20, "Description must be at least 20 characters")
+      .max(150, "Description must not exceed 300 characters")
       .matches(
         /^[A-Za-z\s]+$/,
         "Description must contain only letters and spaces"
+      )
+      .test(
+        "min-letters",
+        "Description must contain at least 5 alphabet letters",
+        (value) => {
+          if (!value) return false;
+          const letterCount = (value.match(/[A-Za-z]/g) || []).length;
+          return letterCount >= 5;
+        }
       ),
 
     benefits: Yup.string()
       .required("At least one benefit is required")
       .test(
         "valid-benefits",
-        "Each benefit must contain only letters and be at least 3 characters",
+        "Each benefit must contain at least 5 alphabet letters and only letters/spaces",
         (value) => {
           if (!value) return false;
           const benefits = value.split(",").map((b) => b.trim());
-          return benefits.every((b) => /^[A-Za-z\s]{3,}$/.test(b));
+          return benefits.every((b) => {
+            if (!/^[A-Za-z\s]{3,}$/.test(b)) return false;
+            const letterCount = (b.match(/[A-Za-z]/g) || []).length;
+            return letterCount >= 5;
+          });
         }
       ),
   });

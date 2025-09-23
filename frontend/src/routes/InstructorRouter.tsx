@@ -88,7 +88,7 @@ const InstructorRouter = () => {
     <Route path="membership" element={<Membership/>} />
     <Route path="membership/checkout/:planId" element={<MembershipCheckoutPage/>} />
     <Route path="purchaseHistory" element={<Orders/>}/>
-    <Route path="membershipOrders/:txnId" element={<MembershipOrderDetail/>}/>
+    <Route path="membershipOrders/:orderId" element={<MembershipOrderDetail/>}/>
 
 
 

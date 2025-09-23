@@ -3,29 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getMembershipPurchaseHistoryDetail } from "../../../api/action/AdminActionApi";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
-
-interface Instructor {
-  name: string;
-  email: string;
-}
-
-interface MembershipPlan {
-  name: string;
-  durationInDays: number;
-  description: string;
-  benefits: string[];
-}
-
-interface MembershipOrder {
-  instructor: Instructor;
-  membershipPlan: MembershipPlan;
-  price: number;
-  paymentStatus: "pending" | "paid" | "failed";
-  startDate: string;
-  endDate: string;
-  txnId: string;
-  createdAt: string;
-}
+import { type MembershipOrder } from "../interface/adminInterface";
 
 const MembershipOrderDetail: React.FC = () => {
   const { txnId } = useParams<{ txnId: string }>();
@@ -137,7 +115,7 @@ const MembershipOrderDetail: React.FC = () => {
                 <h3 className="font-semibold text-gray-900 mb-1">
                   Transaction ID
                 </h3>
-                <p>{order.txnId}</p>
+                <p>{order.razorpayOrderId}</p>
               </div>
 
               {/* Created At */}

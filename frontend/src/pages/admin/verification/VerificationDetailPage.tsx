@@ -7,16 +7,7 @@ import {
 import { Button } from "../../../components/common/Button";
 import { Loader } from "lucide-react";
 import { toast } from "react-toastify";
-
-interface VerificationRequest {
-  _id: string;
-  username: string;
-  email: string;
-  status: string;
-  resumeUrl: string;
-  degreeCertificateUrl: string;
-  reviewedAt?: Date;
-}
+import { type VerificationRequest } from "../interface/adminInterface";
 
 const VerificationDetailsPage = () => {
   const { email } = useParams<{ email: string }>();

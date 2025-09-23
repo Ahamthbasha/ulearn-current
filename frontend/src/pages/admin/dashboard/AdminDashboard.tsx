@@ -26,61 +26,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// Interfaces
-interface SalesData {
-  month: number;
-  year: number;
-  total: number;
-}
-
-interface TopCourse {
-  courseName: string;
-  salesCount: number;
-}
-
-interface TopCategory {
-  categoryName: string;
-}
-
-interface DashboardData {
-  instructorCount: number;
-  mentorCount: number;
-  courseCount: number;
-  courseRevenue: number;
-  membershipRevenue: number;
-  courseSalesGraph: SalesData[];
-  membershipSalesGraph: SalesData[];
-  topCourses: TopCourse[];
-  topCategories: TopCategory[];
-}
-
-interface ReportFilter {
-  type: "daily" | "weekly" | "monthly" | "custom";
-  startDate?: Date;
-  endDate?: Date;
-}
-
-// Updated to match the grouped structure from the backend
-interface CourseReportRow {
-  orderId: string;
-  date: Date;
-  courses: {
-    courseName: string;
-    instructorName: string;
-    coursePrice: number;
-    adminShare: number;
-  }[];
-  totalPrice: number;
-  totalAdminShare: number;
-}
-
-interface MembershipReportRow {
-  orderId: string;
-  planName: string;
-  instructorName: string;
-  price: number;
-  date: Date;
-}
+import {
+  type MembershipReportRow,
+  type DashboardData,
+  type CourseReportRow,
+  type ReportFilter,
+  type SalesData,
+} from "../interface/adminInterface";
 
 const monthNames = [
   "Jan",
@@ -98,9 +50,13 @@ const monthNames = [
 ];
 
 const AdminDashboard = () => {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [courseReport, setCourseReport] = useState<CourseReportRow[]>([]);
-  const [membershipReport, setMembershipReport] = useState<MembershipReportRow[]>([]);
+  const [membershipReport, setMembershipReport] = useState<
+    MembershipReportRow[]
+  >([]);
   const [courseReportTotals, setCourseReportTotals] = useState<{
     totalAdminShare: number;
   }>({ totalAdminShare: 0 });
@@ -127,7 +83,7 @@ const AdminDashboard = () => {
   // Get today's date in YYYY-MM-DD format
   const getTodayString = () => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    return today.toISOString().split("T")[0];
   };
 
   // Date validation functions
@@ -139,7 +95,7 @@ const AdminDashboard = () => {
     const today = new Date();
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     // Set time to start of day for accurate comparison
     today.setHours(0, 0, 0, 0);
     start.setHours(0, 0, 0, 0);
@@ -161,7 +117,9 @@ const AdminDashboard = () => {
     }
 
     // Check if date range is too large (optional - you can adjust this)
-    const daysDifference = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const daysDifference = Math.ceil(
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+    );
     if (daysDifference > 365) {
       return "Date range cannot exceed 365 days";
     }
@@ -172,7 +130,7 @@ const AdminDashboard = () => {
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value;
     setCustomStartDate(newStartDate);
-    
+
     if (newStartDate && customEndDate) {
       const validationError = validateDates(newStartDate, customEndDate);
       setDateValidationError(validationError);
@@ -185,7 +143,7 @@ const AdminDashboard = () => {
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEndDate = e.target.value;
     setCustomEndDate(newEndDate);
-    
+
     if (customStartDate && newEndDate) {
       const validationError = validateDates(customStartDate, newEndDate);
       setDateValidationError(validationError);
@@ -197,11 +155,11 @@ const AdminDashboard = () => {
 
   const isGenerateButtonDisabled = () => {
     if (reportLoading) return true;
-    
+
     if (filter.type === "custom") {
       return !customStartDate || !customEndDate || !!dateValidationError;
     }
-    
+
     return false;
   };
 
@@ -249,7 +207,9 @@ const AdminDashboard = () => {
     }
   };
 
-  const generateMembershipReport = async (page: number = membershipCurrentPage) => {
+  const generateMembershipReport = async (
+    page: number = membershipCurrentPage
+  ) => {
     try {
       setReportLoading(true);
       const reportFilter = {
@@ -262,7 +222,11 @@ const AdminDashboard = () => {
           : {}),
       };
 
-      const membershipRes = await getMembershipCourseReport(reportFilter, page, limit);
+      const membershipRes = await getMembershipCourseReport(
+        reportFilter,
+        page,
+        limit
+      );
 
       if (membershipRes.success) {
         setMembershipReport(membershipRes.data || []);
@@ -349,7 +313,7 @@ const AdminDashboard = () => {
     setShowReports(false);
     setCourseCurrentPage(1);
     setMembershipCurrentPage(1);
-    
+
     // Reset custom dates and validation errors when switching away from custom
     if (selected !== "custom") {
       setCustomStartDate("");
@@ -381,7 +345,7 @@ const AdminDashboard = () => {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen px-4">
         <div className="text-center">
           <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4 text-blue-600" />
           <p className="text-gray-600">Loading dashboard...</p>
@@ -391,7 +355,7 @@ const AdminDashboard = () => {
 
   if (error)
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen px-4">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
@@ -405,19 +369,19 @@ const AdminDashboard = () => {
     );
 
   return (
-    <div className="p-6 space-y-10 bg-gray-50 min-h-screen">
+    <div className="p-3 sm:p-4 lg:p-6 space-y-6 sm:space-y-8 lg:space-y-10 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
           Admin Dashboard
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-sm sm:text-base">
           Overview of your platform's performance and metrics
         </p>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
         <Card
           title="Total Instructors"
           value={dashboardData?.instructorCount}
@@ -448,53 +412,53 @@ const AdminDashboard = () => {
       </div>
 
       {/* Top Courses and Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="bg-white shadow-sm rounded-xl p-4 sm:p-6 border border-gray-100">
           <h3 className="text-lg font-semibold mb-4 text-gray-900">
             Top 3 Courses
           </h3>
           {dashboardData?.topCourses && dashboardData.topCourses.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {dashboardData.topCourses.map((course, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg gap-2 sm:gap-0"
                 >
                   <div className="flex items-center space-x-3">
-                    <span className="text-lg font-bold text-blue-600">
+                    <span className="text-lg font-bold text-blue-600 flex-shrink-0">
                       {index + 1}.
                     </span>
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-gray-900 text-sm sm:text-base break-words">
                       {course.courseName}
                     </span>
                   </div>
-                  <span className="text-sm font-semibold text-blue-600">
+                  <span className="text-sm font-semibold text-blue-600 self-start sm:self-center">
                     {course.salesCount} sales
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No top courses data available</p>
+            <p className="text-gray-500 text-sm sm:text-base">No top courses data available</p>
           )}
         </div>
-        <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
+        <div className="bg-white shadow-sm rounded-xl p-4 sm:p-6 border border-gray-100">
           <h3 className="text-lg font-semibold mb-4 text-gray-900">
             Top 3 Categories
           </h3>
           {dashboardData?.topCategories &&
           dashboardData.topCategories.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {dashboardData.topCategories.map((category, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
-                    <span className="text-lg font-bold text-green-600">
+                    <span className="text-lg font-bold text-green-600 flex-shrink-0">
                       {index + 1}.
                     </span>
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-gray-900 text-sm sm:text-base break-words">
                       {category.categoryName}
                     </span>
                   </div>
@@ -502,13 +466,13 @@ const AdminDashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No top categories data available</p>
+            <p className="text-gray-500 text-sm sm:text-base">No top categories data available</p>
           )}
         </div>
       </div>
 
       {/* Graphs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Graph
           title="Monthly Course Sales"
           data={formatGraphData(dashboardData?.courseSalesGraph || [])}
@@ -522,11 +486,11 @@ const AdminDashboard = () => {
       </div>
 
       {/* Report Generation Section */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div className="flex items-center space-x-3">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">
+            <FileText className="h-6 w-6 text-blue-600 flex-shrink-0" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
               Generate Reports
             </h2>
           </div>
@@ -538,14 +502,14 @@ const AdminDashboard = () => {
 
         {/* Filter Controls */}
         <div className="p-4 bg-gray-50 rounded-lg mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="sm:col-span-2 lg:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="inline h-4 w-4 mr-1" />
                 Report Type
               </label>
               <select
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 value={filter.type}
                 onChange={handleFilterChange}
               >
@@ -564,8 +528,8 @@ const AdminDashboard = () => {
                   </label>
                   <input
                     type="date"
-                    className={`w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      dateValidationError ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                      dateValidationError ? "border-red-300" : "border-gray-300"
                     }`}
                     value={customStartDate}
                     onChange={handleStartDateChange}
@@ -578,8 +542,8 @@ const AdminDashboard = () => {
                   </label>
                   <input
                     type="date"
-                    className={`w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      dateValidationError ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full border px-3 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                      dateValidationError ? "border-red-300" : "border-gray-300"
                     }`}
                     value={customEndDate}
                     onChange={handleEndDateChange}
@@ -590,11 +554,11 @@ const AdminDashboard = () => {
               </>
             )}
 
-            <div className="flex items-end">
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
               <button
                 onClick={generateReports}
                 disabled={isGenerateButtonDisabled()}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm"
               >
                 {reportLoading ? (
                   <RefreshCw className="animate-spin h-4 w-4" />
@@ -610,8 +574,8 @@ const AdminDashboard = () => {
 
           {/* Date Validation Error */}
           {dateValidationError && (
-            <div className="flex items-center space-x-2 text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <div className="flex items-start space-x-2 text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <span className="text-sm">{dateValidationError}</span>
             </div>
           )}
@@ -622,7 +586,9 @@ const AdminDashboard = () => {
               <div className="flex items-start space-x-2">
                 <Calendar className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-600" />
                 <div>
-                  <p className="font-medium text-blue-800 mb-1">Date Selection Guidelines:</p>
+                  <p className="font-medium text-blue-800 mb-1">
+                    Date Selection Guidelines:
+                  </p>
                   <ul className="text-blue-700 space-y-1">
                     <li>• End date must be today or earlier</li>
                     <li>• Start date must be before or equal to end date</li>
@@ -638,28 +604,28 @@ const AdminDashboard = () => {
         {!showReports && !reportLoading && (
           <div className="text-center py-8 text-gray-500">
             <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-            <p>Click "Generate Reports" to view detailed sales data</p>
+            <p className="text-sm sm:text-base">Click "Generate Reports" to view detailed sales data</p>
           </div>
         )}
       </div>
 
       {/* Reports Display */}
       {showReports && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
           {/* Report Header with Period */}
           <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg font-semibold text-blue-900">
                   Sales Report
                 </h3>
-                <p className="text-blue-700">
+                <p className="text-blue-700 text-sm">
                   Period: {getFilterDisplayName()}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <p className="text-sm text-blue-600">Generated on</p>
-                <p className="font-semibold text-blue-900">
+                <p className="font-semibold text-blue-900 text-sm">
                   {new Date().toLocaleString("en-GB", {
                     day: "2-digit",
                     month: "2-digit",
@@ -674,11 +640,11 @@ const AdminDashboard = () => {
           </div>
 
           {/* Report Tabs */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
               <button
                 onClick={() => setActiveTab("course")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   activeTab === "course"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
@@ -688,7 +654,7 @@ const AdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab("membership")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   activeTab === "membership"
                     ? "bg-white text-green-600 shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
@@ -708,10 +674,11 @@ const AdminDashboard = () => {
                     ? courseReport.length === 0
                     : membershipReport.length === 0)
                 }
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center space-x-2 bg-green-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm"
               >
-                <Download className="h-4 w-4" />
-                <span>{exportLoading ? "Exporting..." : "Export Excel"}</span>
+                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{exportLoading ? "Exporting..." : "Export Excel"}</span>
+                <span className="sm:hidden">Excel</span>
               </button>
               <button
                 onClick={() => handleExport(activeTab, "pdf")}
@@ -721,10 +688,11 @@ const AdminDashboard = () => {
                     ? courseReport.length === 0
                     : membershipReport.length === 0)
                 }
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center space-x-2 bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm"
               >
-                <Download className="h-4 w-4" />
-                <span>{exportLoading ? "Exporting..." : "Export PDF"}</span>
+                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{exportLoading ? "Exporting..." : "Export PDF"}</span>
+                <span className="sm:hidden">PDF</span>
               </button>
             </div>
           </div>
@@ -732,34 +700,100 @@ const AdminDashboard = () => {
           {/* Course Sales Report */}
           {activeTab === "course" && (
             <div>
-              <h3 className="text-xl font-semibold mb-4 text-blue-600">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600">
                 Course Sales Report
               </h3>
               {courseReport.length > 0 ? (
                 <div>
-                  <div className="overflow-x-auto mb-4">
+                  {/* Mobile Card View */}
+                  <div className="block sm:hidden space-y-4 mb-4">
+                    {courseReport.map((order) =>
+                      order.courses.map((course, courseIdx) => (
+                        <div
+                          key={`${order.orderId}-${courseIdx}`}
+                          className="bg-gray-50 rounded-lg p-4 space-y-2"
+                        >
+                          {courseIdx === 0 && (
+                            <>
+                              <div className="flex justify-between items-start">
+                                <span className="text-xs text-gray-500">Order ID</span>
+                                <span className="font-mono text-sm font-medium">
+                                  {order.orderId}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-start">
+                                <span className="text-xs text-gray-500">Date</span>
+                                <span className="text-sm">
+                                  {new Date(order.date)
+                                    .toLocaleDateString("en-GB")
+                                    .replace(/\//g, "-")}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                          <div className="flex justify-between items-start">
+                            <span className="text-xs text-gray-500">Course</span>
+                            <span className="text-sm font-medium text-right max-w-[60%]">
+                              {course.courseName}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-start">
+                            <span className="text-xs text-gray-500">Instructor</span>
+                            <span className="text-sm text-right max-w-[60%]">
+                              {course.instructorName}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-start">
+                            <span className="text-xs text-gray-500">Course Price</span>
+                            <span className="text-sm font-semibold text-green-600">
+                              ₹{course.coursePrice.toLocaleString()}
+                            </span>
+                          </div>
+                          {courseIdx === order.courses.length - 1 && (
+                            <>
+                              <div className="flex justify-between items-start">
+                                <span className="text-xs text-gray-500">Total Price</span>
+                                <span className="text-sm font-semibold text-blue-600">
+                                  ₹{order.totalPrice.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-start">
+                                <span className="text-xs text-gray-500">Admin Share</span>
+                                <span className="text-sm font-semibold text-blue-600">
+                                  ₹{order.totalAdminShare.toLocaleString()}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden sm:block overflow-x-auto mb-4">
                     <table className="min-w-full table-auto border-collapse border border-gray-200 rounded-lg">
                       <thead className="bg-blue-50">
                         <tr>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Order ID
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Date
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Course Name
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Instructor
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Course Price
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Total Price
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Admin Share
                           </th>
                         </tr>
@@ -775,31 +809,35 @@ const AdminDashboard = () => {
                                   : "hover:bg-gray-50 transition-colors"
                               }
                             >
-                              <td className="px-4 py-3 border border-gray-200 font-mono text-sm">
+                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-mono text-xs sm:text-sm">
                                 {courseIdx === 0 ? order.orderId : ""}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 text-gray-600">
+                              <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
                                 {courseIdx === 0
                                   ? new Date(order.date)
                                       .toLocaleDateString("en-GB")
                                       .replace(/\//g, "-")
                                   : ""}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 font-medium">
-                                {course.courseName}
+                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-medium text-xs sm:text-sm">
+                                <div className="break-words max-w-[150px] sm:max-w-none">
+                                  {course.courseName}
+                                </div>
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 text-gray-600">
-                                {course.instructorName}
+                              <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
+                                <div className="break-words max-w-[100px] sm:max-w-none">
+                                  {course.instructorName}
+                                </div>
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 font-semibold text-green-600">
+                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-green-600 text-xs sm:text-sm">
                                 ₹{course.coursePrice.toLocaleString()}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 font-semibold text-blue-600">
+                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-blue-600 text-xs sm:text-sm">
                                 {courseIdx === order.courses.length - 1
                                   ? `₹${order.totalPrice.toLocaleString()}`
                                   : ""}
                               </td>
-                              <td className="px-4 py-3 border border-gray-200 font-semibold text-blue-600">
+                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-blue-600 text-xs sm:text-sm">
                                 {courseIdx === order.courses.length - 1
                                   ? `₹${order.totalAdminShare.toLocaleString()}`
                                   : ""}
@@ -812,21 +850,25 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Course Pagination Controls */}
-                  <div className="flex justify-center items-center space-x-4 mt-4">
+                  <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
                     <button
-                      onClick={() => handleCoursePageChange(courseCurrentPage - 1)}
+                      onClick={() =>
+                        handleCoursePageChange(courseCurrentPage - 1)
+                      }
                       disabled={courseCurrentPage === 1}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
                     >
                       Previous
                     </button>
-                    <span>
+                    <span className="text-sm">
                       Page {courseCurrentPage} of {courseTotalPages}
                     </span>
                     <button
-                      onClick={() => handleCoursePageChange(courseCurrentPage + 1)}
+                      onClick={() =>
+                        handleCoursePageChange(courseCurrentPage + 1)
+                      }
                       disabled={courseCurrentPage === courseTotalPages}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
                     >
                       Next
                     </button>
@@ -834,18 +876,18 @@ const AdminDashboard = () => {
 
                   {/* Course Report Totals */}
                   <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mt-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center space-x-2">
                         <TrendingUp className="h-5 w-5 text-blue-600" />
-                        <span className="font-semibold text-blue-900">
+                        <span className="font-semibold text-blue-900 text-sm sm:text-base">
                           Report Summary
                         </span>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-blue-600">
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs sm:text-sm text-blue-600">
                           Total Admin Revenue
                         </p>
-                        <p className="text-2xl font-bold text-blue-900">
+                        <p className="text-xl sm:text-2xl font-bold text-blue-900">
                           ₹{courseReportTotals.totalAdminShare.toLocaleString()}
                         </p>
                       </div>
@@ -854,7 +896,7 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <p>No course sales data found for the selected period</p>
+                  <p className="text-sm sm:text-base">No course sales data found for the selected period</p>
                 </div>
               )}
             </div>
@@ -863,28 +905,72 @@ const AdminDashboard = () => {
           {/* Membership Report */}
           {activeTab === "membership" && (
             <div>
-              <h3 className="text-xl font-semibold mb-4 text-green-600">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4 text-green-600">
                 Membership Report
               </h3>
               {membershipReport.length > 0 ? (
                 <div>
-                  <div className="overflow-x-auto mb-4">
+                  {/* Mobile Card View */}
+                  <div className="block sm:hidden space-y-4 mb-4">
+                    {membershipReport.map((row, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-gray-50 rounded-lg p-4 space-y-2"
+                      >
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs text-gray-500">Order ID</span>
+                          <span className="font-mono text-sm font-medium">
+                            {row.orderId}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs text-gray-500">Plan</span>
+                          <span className="text-sm font-semibold text-right max-w-[60%]">
+                            {row.planName}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs text-gray-500">Instructor</span>
+                          <span className="text-sm text-right max-w-[60%]">
+                            {row.instructorName}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs text-gray-500">Price</span>
+                          <span className="text-sm font-semibold text-green-600">
+                            ₹{row.price.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs text-gray-500">Date</span>
+                          <span className="text-sm">
+                            {new Date(row.date)
+                              .toLocaleDateString("en-GB")
+                              .replace(/\//g, "-")}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden sm:block overflow-x-auto mb-4">
                     <table className="min-w-full table-auto border-collapse border border-gray-200 rounded-lg">
                       <thead className="bg-green-50">
                         <tr>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Order ID
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Plan
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Instructor
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Price
                           </th>
-                          <th className="px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700">
+                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
                             Date
                           </th>
                         </tr>
@@ -895,19 +981,23 @@ const AdminDashboard = () => {
                             key={idx}
                             className="hover:bg-gray-50 transition-colors"
                           >
-                            <td className="px-4 py-3 border border-gray-200 font-mono text-sm">
+                            <td className="px-3 sm:px-4 py-3 border border-gray-200 font-mono text-xs sm:text-sm">
                               {row.orderId}
                             </td>
-                            <td className="px-4 py-3 border border-gray-200 font-semibold">
-                              {row.planName}
+                            <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-xs sm:text-sm">
+                              <div className="break-words max-w-[120px] sm:max-w-none">
+                                {row.planName}
+                              </div>
                             </td>
-                            <td className="px-4 py-3 border border-gray-200 text-gray-600">
-                              {row.instructorName}
+                            <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
+                              <div className="break-words max-w-[100px] sm:max-w-none">
+                                {row.instructorName}
+                              </div>
                             </td>
-                            <td className="px-4 py-3 border border-gray-200 font-semibold text-green-600">
+                            <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-green-600 text-xs sm:text-sm">
                               ₹{row.price.toLocaleString()}
                             </td>
-                            <td className="px-4 py-3 border border-gray-200 text-gray-600">
+                            <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
                               {new Date(row.date)
                                 .toLocaleDateString("en-GB")
                                 .replace(/\//g, "-")}
@@ -919,21 +1009,25 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Membership Pagination Controls */}
-                  <div className="flex justify-center items-center space-x-4 mt-4">
+                  <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
                     <button
-                      onClick={() => handleMembershipPageChange(membershipCurrentPage - 1)}
+                      onClick={() =>
+                        handleMembershipPageChange(membershipCurrentPage - 1)
+                      }
                       disabled={membershipCurrentPage === 1}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
                     >
                       Previous
                     </button>
-                    <span>
+                    <span className="text-sm">
                       Page {membershipCurrentPage} of {membershipTotalPages}
                     </span>
                     <button
-                      onClick={() => handleMembershipPageChange(membershipCurrentPage + 1)}
+                      onClick={() =>
+                        handleMembershipPageChange(membershipCurrentPage + 1)
+                      }
                       disabled={membershipCurrentPage === membershipTotalPages}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
                     >
                       Next
                     </button>
@@ -941,26 +1035,27 @@ const AdminDashboard = () => {
 
                   {/* Membership Report Totals */}
                   <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 mt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center space-x-2">
                           <DollarSign className="h-5 w-5 text-green-600" />
-                          <span className="font-semibold text-green-900">
+                          <span className="font-semibold text-green-900 text-sm sm:text-base">
                             Total Revenue
                           </span>
                         </div>
-                        <p className="text-xl font-bold text-green-900">
-                          ₹{membershipReportTotals.totalRevenue.toLocaleString()}
+                        <p className="text-lg sm:text-xl font-bold text-green-900 text-left sm:text-right">
+                          ₹
+                          {membershipReportTotals.totalRevenue.toLocaleString()}
                         </p>
                       </div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center space-x-2">
                           <TrendingUp className="h-5 w-5 text-green-600" />
-                          <span className="font-semibold text-green-900">
+                          <span className="font-semibold text-green-900 text-sm sm:text-base">
                             Total Sales
                           </span>
                         </div>
-                        <p className="text-xl font-bold text-green-900">
+                        <p className="text-lg sm:text-xl font-bold text-green-900 text-left sm:text-right">
                           {membershipReportTotals.totalSales.toLocaleString()}
                         </p>
                       </div>
@@ -969,7 +1064,7 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <p>No membership sales data found for the selected period</p>
+                  <p className="text-sm sm:text-base">No membership sales data found for the selected period</p>
                 </div>
               )}
             </div>
@@ -992,19 +1087,19 @@ const Card = ({
   green?: boolean;
   icon?: string;
 }) => (
-  <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
+  <div className="bg-white shadow-sm rounded-xl p-4 sm:p-6 border border-gray-100 hover:shadow-md transition-shadow">
     <div className="flex items-center justify-between">
-      <div>
-        <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-xs sm:text-sm font-medium text-gray-600 mb-1 truncate">{title}</h3>
         <p
-          className={`text-2xl font-bold ${
+          className={`text-lg sm:text-2xl font-bold truncate ${
             green ? "text-green-600" : "text-gray-900"
           }`}
         >
           {value}
         </p>
       </div>
-      {icon && <div className="text-2xl opacity-50">{icon}</div>}
+      {icon && <div className="text-xl sm:text-2xl opacity-50 flex-shrink-0 ml-2">{icon}</div>}
     </div>
   </div>
 );
@@ -1019,20 +1114,22 @@ const Graph = ({
   data: any[];
   color: string;
 }) => (
-  <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
-    <h3 className="text-lg font-semibold mb-4 text-gray-900">{title}</h3>
-    <ResponsiveContainer width="100%" height={300}>
+  <div className="bg-white shadow-sm rounded-xl p-4 sm:p-6 border border-gray-100">
+    <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-900">{title}</h3>
+    <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
       <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis
           dataKey="name"
           stroke="#6b7280"
-          fontSize={12}
+          fontSize={10}
+          className="sm:text-xs"
           angle={-45}
           textAnchor="end"
-          height={80}
+          height={60}
+          interval={0}
         />
-        <YAxis stroke="#6b7280" fontSize={12} />
+        <YAxis stroke="#6b7280" fontSize={10} className="sm:text-xs" />
         <Tooltip
           formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
           labelStyle={{ color: "#374151" }}
@@ -1040,9 +1137,10 @@ const Graph = ({
             backgroundColor: "#ffffff",
             border: "1px solid #e5e7eb",
             borderRadius: "8px",
+            fontSize: "12px",
           }}
         />
-        <Bar dataKey="total" fill={color} radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" fill={color} radius={[2, 2, 0, 0]} className="sm:!rounded-[4px_4px_0_0]" />
       </BarChart>
     </ResponsiveContainer>
   </div>

@@ -12,13 +12,7 @@ import { Eye, EyeOff, Info } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { useDebounce } from "../../../hooks/UseDebounce";
-
-interface AdminCourse {
-  _id: string; // Keep this for internal usage
-  courseId: string; // New field from backend
-  courseName: string;
-  isListed: boolean;
-}
+import { type AdminCourse } from "../interface/adminInterface";
 
 const AdminCourseManagementPage = () => {
   const [courses, setCourses] = useState<AdminCourse[]>([]);

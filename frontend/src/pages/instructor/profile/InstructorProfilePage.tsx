@@ -93,28 +93,51 @@ const InstructorProfilePage = () => {
         </div>
 
         <div className="space-y-2 text-sm sm:text-base">
-          <p>
-            <strong>Username:</strong> {profile.instructorName}
-          </p>
-          <p>
-            <strong>Email:</strong> {profile.email}
-          </p>
-          <p>
-            <strong>Skills:</strong> {profile.skills?.join(", ") || "None"}
-          </p>
-          <p>
-            <strong>Expertise:</strong> {profile.expertise?.join(", ") || "None"}
-          </p>
-          <p>
-            <strong>Status:</strong> {profile.status ? "✅ Verified" : "⏳ Not Verified"}
-          </p>
-          <p>
-            <strong>Mentor:</strong> {profile.mentor ? "Yes" : "No"}
-          </p>
-          <p>
-            <strong>Bank Status:</strong> {profile.bankAccountLinked ? "Linked" : "Not Linked"}
-          </p>
-        </div>
+  <p>
+    <strong>Username:</strong> {profile.instructorName}
+  </p>
+  <p>
+    <strong>Email:</strong> {profile.email}
+  </p>
+
+  <div>
+    <strong>Skills:</strong>
+    {profile.skills && profile.skills.length > 0 ? (
+      <select className="ml-2 border rounded px-2 py-1 text-sm bg-gray-50">
+        {profile.skills.map((skill: string, idx: number) => (
+          <option key={idx}>{skill}</option>
+        ))}
+      </select>
+    ) : (
+      <span className="ml-2 text-gray-500">None</span>
+    )}
+  </div>
+
+  <div>
+    <strong>Expertise:</strong>
+    {profile.expertise && profile.expertise.length > 0 ? (
+      <select className="ml-2 border rounded px-2 py-1 text-sm bg-gray-50">
+        {profile.expertise.map((exp: string, idx: number) => (
+          <option key={idx}>{exp}</option>
+        ))}
+      </select>
+    ) : (
+      <span className="ml-2 text-gray-500">None</span>
+    )}
+  </div>
+
+  <p>
+    <strong>Status:</strong> {profile.status ? "✅ Verified" : "⏳ Not Verified"}
+  </p>
+  <p>
+    <strong>Mentor:</strong> {profile.mentor ? "Yes" : "No"}
+  </p>
+  <p>
+    <strong>Bank Status:</strong>{" "}
+    {profile.bankAccountLinked ? "Linked" : "Not Linked"}
+  </p>
+</div>
+
       </Card>
 
       {showPasswordForm && (

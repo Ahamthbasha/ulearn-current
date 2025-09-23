@@ -30,7 +30,7 @@ export class InstructorCourseController implements IInstructorCourseController {
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          message: "Unauthorized: Instructor ID not found.",
+          message: INSTRUCTOR_ERROR_MESSAGE.UNAUTHORIZED_ID,
         });
         return;
       }
@@ -236,12 +236,14 @@ export class InstructorCourseController implements IInstructorCourseController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";
-
+      const status = (req.query.status as string) || "";
+      
       const result = await this._courseService.getInstructorCoursesPaginated(
         instructorId,
         page,
         limit,
         search,
+        status
       );
 
       res.status(StatusCode.OK).json({

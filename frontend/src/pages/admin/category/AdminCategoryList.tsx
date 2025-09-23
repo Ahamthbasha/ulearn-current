@@ -151,12 +151,16 @@ const AdminCategoryListPage = () => {
       key: "toggle",
       label: (record) => (record.isListed ? "Unlist" : "List"),
       icon: (record) =>
-        record.isListed ? <ShieldX size={16} /> : <ShieldCheck size={16} />,
+        record.isListed ? (
+          <ShieldX size={16} color="white" />
+        ) : (
+          <ShieldCheck size={16} color="white" />
+        ),
       onClick: openModalForToggle,
       className: (record) =>
         record.isListed
-          ? "bg-red-500 hover:bg-red-600 text-white"
-          : "bg-green-500 hover:bg-green-600 text-white",
+          ? "bg-green-500 hover:bg-green-600 text-white"
+          : "bg-red-500 hover:bg-red-600 text-white",
     },
   ];
 

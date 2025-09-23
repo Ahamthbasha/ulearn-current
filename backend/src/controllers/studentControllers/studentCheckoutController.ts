@@ -35,7 +35,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         userId,
         courseIds,
         totalAmount,
-        paymentMethod, // 👈 required now
+        paymentMethod,
       );
 
       res.status(StatusCode.OK).json({
@@ -44,6 +44,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         order,
       });
     } catch (error: any) {
+      console.log("Initiate checkout error:", error);
       const errorMsg = error.message || CheckoutErrorMessages.CHECKOUT_FAILED;
 
       if (
@@ -53,6 +54,15 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: errorMsg,
+        });
+        return;
+      }
+
+      if (errorMsg.includes("A pending order already exists")) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: errorMsg,
+          orderId: error.orderId,
         });
         return;
       }
@@ -85,6 +95,79 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: CheckoutErrorMessages.PAYMENT_FAILED,
+      });
+    }
+  }
+
+  async cancelPendingOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { orderId } = req.body;
+      const userId = new Types.ObjectId(req.user?.id);
+
+      if (!userId) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: CheckoutErrorMessages.USER_NOT_AUTHENTICATED,
+        });
+        return;
+      }
+
+      if (!orderId) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Order ID is required",
+        });
+        return;
+      }
+
+      await this._checkoutService.cancelPendingOrder(new Types.ObjectId(orderId), userId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Pending order cancelled successfully",
+      });
+    } catch (error: any) {
+      console.error("Cancel Order Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to cancel pending order",
+      });
+    }
+  }
+
+  // New method for marking orders as failed (e.g., when Razorpay payment fails)
+  async markOrderAsFailed(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { orderId } = req.body;
+      const userId = new Types.ObjectId(req.user?.id);
+
+      if (!userId) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: CheckoutErrorMessages.USER_NOT_AUTHENTICATED,
+        });
+        return;
+      }
+
+      if (!orderId) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Order ID is required",
+        });
+        return;
+      }
+
+      await this._checkoutService.markOrderAsFailed(new Types.ObjectId(orderId), userId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Order marked as failed successfully",
+      });
+    } catch (error: any) {
+      console.error("Mark Order as Failed Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: error.message || "Failed to mark order as failed",
       });
     }
   }

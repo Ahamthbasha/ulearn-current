@@ -1,8 +1,5 @@
 import {Navigate} from 'react-router-dom'
-
-interface ProtectedRouteProps{
-    children : React.ReactNode
-}
+import { type ProtectedRouteProps } from './interface/sessionRouter'
 
 const UserSessionRoute:React.FC<ProtectedRouteProps> = ({children}) => {
     const user = JSON.parse(localStorage.getItem('user') || 'null')

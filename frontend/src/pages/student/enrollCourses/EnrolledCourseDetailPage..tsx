@@ -6,42 +6,14 @@ import {
   checkChapterCompletedOrNot,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
-
-interface Chapter {
-  _id: string;
-  chapterTitle: string;
-  videoUrl: string;
-}
-
-interface Quiz {
-  _id: string;
-  title: string;
-  totalQuestions: number;
-  questions: {
-    questionText: string;
-    options: string[];
-    correctAnswer: string;
-  }[];
-}
-
-interface Course {
-  _id: string;
-  courseName: string;
-  description: string;
-  thumbnailUrl: string;
-  demoVideo?: {
-    type: string;
-    url: string;
-  };
-  chapters: Chapter[];
-  quizzes: Quiz[];
-}
-
-interface Enrollment {
-  _id: string;
-  courseId: Course;
-  completedChapters: { chapterId: string }[];
-}
+import { type Enrollment } from "../interface/studentInterface";
+import {
+  Play,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 
 const EnrolledCourseDetailPage = () => {
   const { courseId } = useParams();
@@ -93,22 +65,25 @@ const EnrolledCourseDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-600">Loading course details...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <p className="text-lg text-gray-700">Loading course details...</p>
+        </div>
       </div>
     );
   }
 
   if (!enrollment) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">No course found.</p>
+          <p className="text-gray-600 mb-4 text-lg">No course found.</p>
           <button
             onClick={() => navigate("/user/enrolled")}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg shadow-md transition duration-300"
           >
-            Back to Courses
+            <ChevronLeft className="inline mr-2 h-5 w-5" /> Back to Courses
           </button>
         </div>
       </div>
@@ -122,29 +97,34 @@ const EnrolledCourseDetailPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Top Navbar */}
-      <nav className="bg-white shadow-sm px-6 py-4">
+      <nav className="bg-white shadow-md px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4 sm:space-x-6">
             <div
-              className="flex items-center space-x-3 cursor-pointer"
+              className="flex items-center space-x-2 cursor-pointer"
               onClick={() => navigate("/")}
             >
-              <span className="font-bold text-xl">Ulearn</span>
+              <span className="font-bold text-xl sm:text-2xl text-gray-800">
+                Ulearn
+              </span>
             </div>
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="h-5 w-px bg-gray-300"></div>
             <button
               onClick={() => navigate("/user/enrolled")}
-              className="text-gray-600 hover:text-blue-600 text-sm flex items-center"
+              className="text-gray-600 hover:text-blue-600 text-sm sm:text-base flex items-center"
             >
-              ← Back to Courses
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1" /> Back to
+              Courses
             </button>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-700">{username}</p>
-              <p className="text-xs text-gray-500">Student</p>
+              <p className="text-sm sm:text-base font-medium text-gray-700">
+                {username}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-500">Student</p>
             </div>
-            <div className="w-8 h-8 rounded-full overflow-hidden border bg-white">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-gray-200">
               {user?.profilePicture ? (
                 <img
                   src={user.profilePicture}
@@ -153,7 +133,9 @@ const EnrolledCourseDetailPage = () => {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                  <span className="text-white font-semibold text-xs">👤</span>
+                  <span className="text-white font-semibold text-xs sm:text-sm">
+                    👤
+                  </span>
                 </div>
               )}
             </div>
@@ -161,28 +143,28 @@ const EnrolledCourseDetailPage = () => {
         </div>
       </nav>
 
-      <div className="flex h-[calc(100vh-80px)]">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside
           className={`${
-            sidebarCollapsed ? "w-16" : "w-80"
+            sidebarCollapsed ? "w-16" : "w-80 md:w-64 sm:w-60"
           } bg-white shadow-lg flex flex-col transition-all duration-300 ease-in-out`}
         >
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
+          <div className="p-3 sm:p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2
                 className={`font-bold text-gray-800 ${
-                  sidebarCollapsed ? "hidden" : "text-lg"
+                  sidebarCollapsed ? "hidden" : "text-lg sm:text-xl"
                 }`}
               >
                 {course.courseName}
               </h2>
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-1 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <svg
-                  className={`w-5 h-5 transform transition-transform ${
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transform transition-transform ${
                     sidebarCollapsed ? "rotate-180" : ""
                   }`}
                   fill="none"
@@ -201,10 +183,10 @@ const EnrolledCourseDetailPage = () => {
 
             {!sidebarCollapsed && (
               <>
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                <div className="flex items-center space-x-2 mb-2 sm:mb-3">
+                  <div className="flex-1 bg-gray-200 rounded-full h-1.5 sm:h-2">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>
@@ -212,7 +194,7 @@ const EnrolledCourseDetailPage = () => {
                     {progress}%
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   {completedChapterIds.length} of {course.chapters.length}{" "}
                   chapters completed
                 </p>
@@ -221,13 +203,13 @@ const EnrolledCourseDetailPage = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               {!sidebarCollapsed && (
-                <h3 className="text-xs text-gray-400 uppercase mb-4 tracking-widest font-semibold">
+                <h3 className="text-xs sm:text-sm text-gray-400 uppercase mb-2 sm:mb-3 tracking-widest font-semibold">
                   Chapters
                 </h3>
               )}
-              <div className="space-y-2">
+              <div className="space-y-1 sm:space-y-2">
                 {course.chapters.map((chapter, index) => {
                   const isCompleted = completedChapterIds.includes(chapter._id);
                   const isCurrent = index === currentChapterIndex;
@@ -236,15 +218,15 @@ const EnrolledCourseDetailPage = () => {
                     <div
                       key={chapter._id}
                       onClick={() => setCurrentChapterIndex(index)}
-                      className={`group cursor-pointer rounded-xl transition-all duration-200 ${
+                      className={`group cursor-pointer rounded-lg transition-all duration-200 ${
                         isCurrent
-                          ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                          ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
                           : "hover:bg-gray-50 text-gray-700"
                       }`}
                     >
-                      <div className="p-3 flex items-center space-x-3">
+                      <div className="p-2 sm:p-3 flex items-center space-x-2">
                         <div
-                          className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                          className={`flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
                             isCurrent
                               ? "bg-white text-blue-600"
                               : isCompleted
@@ -253,17 +235,7 @@ const EnrolledCourseDetailPage = () => {
                           }`}
                         >
                           {isCompleted ? (
-                            <svg
-                              className="w-4 h-4"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
+                            <CheckCircle className="w-4 h-4" />
                           ) : (
                             index + 1
                           )}
@@ -293,7 +265,7 @@ const EnrolledCourseDetailPage = () => {
 
                 {/* Start Quiz Button at Bottom */}
                 {course.quizzes.length > 0 && (
-                  <div className="mt-6">
+                  <div className="mt-4 sm:mt-6">
                     <button
                       onClick={async () => {
                         try {
@@ -315,34 +287,15 @@ const EnrolledCourseDetailPage = () => {
                           );
                         }
                       }}
-                      className={`w-full flex items-center justify-center px-4 py-2 ${
+                      className={`w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 ${
                         sidebarCollapsed
                           ? "justify-center text-[0px] p-2"
-                          : "text-sm font-medium"
-                      } text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition`}
+                          : "text-sm sm:text-base font-medium"
+                      } text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-md transition duration-300`}
                       title="Start Quiz"
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M14.752 11.168l-5.197-3.03A1 1 0 008 9.03v5.939a1 1 0 001.555.832l5.197-3.03a1 1 0 000-1.732z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {!sidebarCollapsed && (
-                        <span className="ml-2">Start Quiz</span>
-                      )}
+                      <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                      {!sidebarCollapsed && <span className="ml-2">Start Quiz</span>}
                     </button>
                   </div>
                 )}
@@ -353,17 +306,17 @@ const EnrolledCourseDetailPage = () => {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col bg-white">
-          <div className="p-6 border-b border-gray-200 bg-white">
-            <h1 className="text-2xl font-bold text-gray-800">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
               {currentChapter.chapterTitle}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
               Chapter {currentChapterIndex + 1} of {course.chapters.length}
             </p>
           </div>
 
-          <div className="flex-1 p-6 bg-gray-50">
-            <div className="bg-black rounded-lg overflow-hidden h-full max-h-[60vh] shadow-lg">
+          <div className="flex-1 p-4 sm:p-6 bg-gray-50">
+            <div className="bg-black rounded-xl overflow-hidden h-full max-h-[60vh] sm:max-h-[70vh] shadow-lg">
               <video
                 controls
                 key={currentChapter._id}
@@ -380,16 +333,17 @@ const EnrolledCourseDetailPage = () => {
             </div>
           </div>
 
-          <div className="p-6 border-t border-gray-200 bg-white flex justify-between items-center">
+          <div className="p-4 sm:p-6 border-t border-gray-200 bg-white flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
             <button
               disabled={currentChapterIndex === 0}
               onClick={() => setCurrentChapterIndex((prev) => prev - 1)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition duration-300 flex items-center justify-center"
             >
-              ← Previous Chapter
+              <ChevronLeft className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Previous
+              Chapter
             </button>
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm sm:text-base text-gray-600 text-center">
               Chapter {currentChapterIndex + 1} of {course.chapters.length} —{" "}
               {progress}% Complete
             </div>
@@ -397,9 +351,9 @@ const EnrolledCourseDetailPage = () => {
             <button
               disabled={currentChapterIndex === course.chapters.length - 1}
               onClick={() => setCurrentChapterIndex((prev) => prev + 1)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition duration-300 flex items-center justify-center"
             >
-              Next Chapter →
+              Next Chapter <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
         </main>

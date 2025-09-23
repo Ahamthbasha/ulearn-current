@@ -8,16 +8,7 @@ import {
 } from "../../../api/action/AdminActionApi";
 import Card from "../../../components/common/Card";
 import { Button } from "../../../components/common/Button";
-
-interface IWithdrawalRequestDetail {
-  requestId: string;
-  instructorName: string;
-  instructorEmail: string;
-  amount: number;
-  requestDate: string;
-  bankAccountLinked: "Linked" | "Not Linked";
-  remarks?: string;
-}
+import { type IWithdrawalRequestDetail } from "../interface/adminInterface";
 
 export default function WithdrawalDetailsPage() {
   const { requestId } = useParams<{ requestId: string }>();
@@ -48,6 +39,23 @@ export default function WithdrawalDetailsPage() {
     }
   };
 
+  const validateRemarks = (value: string) => {
+    if (!value.trim()) {
+      return "Remarks are required when rejecting a withdrawal request";
+    }
+    const letterCount = (value.match(/[A-Za-z]/g) || []).length;
+    if (letterCount < 5) {
+      return "Remarks must contain at least 5 alphabet letters";
+    }
+    if (value.length > 300) {
+      return "Remarks must not exceed 300 characters";
+    }
+    if (!/^[A-Za-z0-9\s-.]+$/.test(value)) {
+      return "Remarks can only contain letters, numbers, spaces, hyphens, or periods";
+    }
+    return null;
+  };
+
   const handleApprove = async () => {
     if (!withdrawalRequest) return;
 
@@ -66,9 +74,10 @@ export default function WithdrawalDetailsPage() {
   const handleReject = async () => {
     if (!withdrawalRequest) return;
 
-    if (!remarks.trim()) {
-      setRemarksError("Remarks are required when rejecting a withdrawal request");
-      toast.error("Please provide remarks before rejecting the request");
+    const validationError = validateRemarks(remarks);
+    if (validationError) {
+      setRemarksError(validationError);
+      toast.error(validationError);
       return;
     }
 
@@ -198,7 +207,7 @@ export default function WithdrawalDetailsPage() {
                 className={`w-full px-3 py-2 rounded-lg font-medium border-2 ${
                   remarksError ? "border-red-500" : "border-transparent"
                 } bg-gray-100`}
-                placeholder="Enter remarks (required for rejection)"
+                placeholder="Enter remarks (required for rejection, at least 5 letters)"
                 id="remarks"
                 value={remarks}
                 onChange={(e) => {

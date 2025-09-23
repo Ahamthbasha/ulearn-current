@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { IOrder } from "../../../models/orderModel";
-
+import mongoose from "mongoose";
 export interface IStudentOrderRepository {
   getUserOrdersPaginated(
     userId: Types.ObjectId,
@@ -11,5 +11,6 @@ export interface IStudentOrderRepository {
   getOrderById(
     orderId: Types.ObjectId,
     userId: Types.ObjectId,
+    session?: mongoose.ClientSession
   ): Promise<IOrder | null>;
 }

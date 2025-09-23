@@ -5,7 +5,8 @@ export interface IAdminMembershipOrderRepository {
     page: number,
     limit: number,
     search?: string,
+    status?: string
   ): Promise<{ data: InstructorMembershipOrderDTO[]; total: number }>;
 
-  findByTxnId(txnId: string): Promise<InstructorMembershipOrderDTO | null>;
+  findByTxnId(razorpayOrderId : string): Promise<InstructorMembershipOrderDTO | null>;
 }

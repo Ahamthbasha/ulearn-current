@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { IWithdrawalRequest } from "../../models/withdrawalRequestModel";
 import { IPaginationOptions } from "../../types/IPagination";
-import { WithdrawalRequestDTO } from "../../dto/adminDTO/withdrawalRequestDTO";
+import { WithdrawalRequestDTO } from "../../dto/instructorDTO/withdrawalRequestDTO";
 import { WithdrawalRequestDetailDTO } from "../../dto/adminDTO/withdrawalDetailRequest";
 
 export interface IWithdrawalRequestService {

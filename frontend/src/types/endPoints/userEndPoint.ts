@@ -27,7 +27,9 @@ const UserRouterEndpoints = {
   //checkout
   userInitiateCheckout: "/api/student/checkout", 
   userCompleteCheckout: "/api/student/complete",
-
+  userCancelPendingOrder: "/api/student/cancelPendingOrder",
+  userMarkFailed: "/api/student/markFailed",
+  
   //enroll
   userGetEnrolledCourses: "/api/student/enrolled",
   userGetSpecificEnrolledCourses: "/api/student/enrolled",
@@ -70,6 +72,11 @@ const UserRouterEndpoints = {
   userGetSlotBookingHistory : "/api/student/bookingHistory",
   userGetSpecificSlotDetail : "/api/student/booking",
   userDownloadSlotReceipt : "/api/student/booking",
+  userCancelPendingBooking : "/api/student/bookings",
+  userCheckSlotStatus : "/api/student/checkout",
+  userHandlePaymentFailure :  "/api/student/bookings",
+  userRetrySlotPayment : "/api/student/bookings",
+  userVerifySlotRetryPayment : "/api/student/verifyRetrySlotPayment",
 
   //student dashboard
 

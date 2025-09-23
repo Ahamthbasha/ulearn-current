@@ -12,7 +12,6 @@ import {
   deleteQuiz,
   deleteQuestionFromQuiz,
 } from "../../../api/action/InstructorActionApi";
-
 import { type IQuestion } from "../../../types/interfaces/IQuiz";
 
 const QuizManagementPage = () => {

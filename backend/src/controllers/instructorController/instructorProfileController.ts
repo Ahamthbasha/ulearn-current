@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { IInstructorProfileService } from "../../services/instructorServices/interface/IInstructorProfileService";
 import { IInstructorProfileController } from "./interfaces/IInstructorProfileController";
-import { JwtService } from "../../utils/jwt";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
 import bcrypt from "bcrypt";
 import { StatusCode } from "../../utils/enums";
@@ -9,15 +8,17 @@ import {
   InstructorErrorMessages,
   InstructorSuccessMessages,
 } from "../../utils/constants";
+import { IJwtService } from "../../services/interface/IJwtService";
 
 export class InstructorProfileController
   implements IInstructorProfileController
 {
   private _profileService: IInstructorProfileService;
-  private _jwt = new JwtService();
+  private _jwt :IJwtService;
 
-  constructor(profileService: IInstructorProfileService) {
+  constructor(profileService: IInstructorProfileService,jwtService:IJwtService) {
     this._profileService = profileService;
+    this._jwt = jwtService
   }
 
   async getProfile(req: Request, res: Response): Promise<void> {

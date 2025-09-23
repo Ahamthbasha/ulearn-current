@@ -38,5 +38,7 @@ export const toOrderDetailsDTO = (order: IOrder): OrderDetailsDTO => {
       price: course.price,
       thumbnailUrl: course.thumbnailUrl,
     })),
+    canRetryPayment:order.status === "FAILED",
+    retryInProgress:order.retryInProgress || false
   };
 };

@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-
 import SingleQuestionForm from "../../../components/InstructorComponents/QuizForm";
 import { type SingleQuestionFormValues } from "../../../types/interfaces/IQuiz";
 import {

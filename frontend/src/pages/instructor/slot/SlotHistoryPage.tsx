@@ -3,12 +3,7 @@ import { slotHistory } from "../../../api/action/InstructorActionApi";
 import EntityTable from "../../../components/common/EntityTable";
 import { format, isValid, parseISO } from "date-fns";
 import { toast } from "react-toastify";
-
-interface SlotStat {
-  date: string;
-  totalSlots: number;
-  bookedSlots: number;
-}
+import { type SlotStat } from "../interface/instructorInterface";
 
 const SlotHistoryPage = () => {
   const currentDate = new Date();

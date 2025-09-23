@@ -1,30 +1,17 @@
 import { useEffect, useState, useRef } from "react";
 import {
   getCart,
+  getWallet,
   initiateCheckout,
   checkoutCompleted,
   removeFromCart,
-  getWallet,
+  cancelPendingOrder,
+  markFailed,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
-interface Course {
-  _id: string;
-  courseName: string;
-  price: number;
-  thumbnailUrl: string;
-}
-
-interface Wallet {
-  balance: number;
-}
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
+import { type Course, type Wallet } from "../interface/studentInterface";
+import { debounce } from "lodash";
 
 const CheckoutPage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -33,186 +20,27 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "wallet">("razorpay");
   const [isRazorpayProcessing, setIsRazorpayProcessing] = useState(false);
   const [isWalletProcessing, setIsWalletProcessing] = useState(false);
-  const [sessionLocked, setSessionLocked] = useState(false);
-  const [lockMessage, setLockMessage] = useState("");
-  const [showRetryOption, setShowRetryOption] = useState(false);
-  const [lockPaymentType, setLockPaymentType] = useState<string>("");
+  const [isCancelProcessing, setIsCancelProcessing] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const lockRef = useRef(false);
-  const sessionId = useRef(`session_${Date.now()}_${Math.random()}`);
-  const razorpayOpenRef = useRef(false);
   const razorpayInstanceRef = useRef<any>(null);
 
-  // Computed state for any processing
-  const isProcessing = isRazorpayProcessing || isWalletProcessing;
+  const isProcessing = isRazorpayProcessing || isWalletProcessing || isCancelProcessing;
 
   useEffect(() => {
     fetchCartCourses();
     fetchWalletBalance();
-    initializeSessionLock();
 
     return () => {
-      // Close any open Razorpay modal
       if (razorpayInstanceRef.current) {
         try {
           razorpayInstanceRef.current.close();
         } catch (e) {
-          // Ignore errors when closing
+          console.error("Error closing Razorpay modal:", e);
         }
-      }
-
-      // Only cleanup if this session owns the lock
-      const lockData = localStorage.getItem('payment_processing');
-      if (lockData && lockData !== 'false') {
-        try {
-          const { sessionId: lockedSession } = JSON.parse(lockData);
-          if (lockedSession === sessionId.current) {
-            releasePaymentLock();
-          }
-        } catch {
-          // If parsing fails, don't release the lock as it might belong to another session
-        }
-      } else {
-        // No active lock, safe to cleanup local state
-        lockRef.current = false;
-        setIsRazorpayProcessing(false);
-        setIsWalletProcessing(false);
       }
     };
   }, []);
-
-  const initializeSessionLock = () => {
-    // Check if payment is already in progress
-    const checkPaymentLock = () => {
-      const lockData = localStorage.getItem('payment_processing');
-      if (lockData && lockData !== 'false') {
-        try {
-          const { isLocked, sessionId: lockedSession, timestamp, paymentType } = JSON.parse(lockData);
-          const now = Date.now();
-          
-          // Auto-unlock after 5 minutes (payment timeout)
-          if (now - timestamp > 5 * 60 * 1000) {
-            localStorage.setItem('payment_processing', 'false');
-            setSessionLocked(false);
-            setShowRetryOption(false);
-            setLockPaymentType("");
-            return;
-          }
-
-          if (isLocked && lockedSession !== sessionId.current) {
-            setSessionLocked(true);
-            setLockPaymentType(paymentType || "");
-            
-            // Only show retry option for Razorpay payments after 30 seconds (longer delay)
-            // This gives more time for the original payment to complete
-            if (paymentType === 'razorpay' && now - timestamp > 30 * 1000) {
-              setLockMessage("Course payment is being processed in another tab. If the payment window was closed or is not responding, you can retry below.");
-              setShowRetryOption(true);
-            } else {
-              const timeRemaining = Math.ceil((30 * 1000 - (now - timestamp)) / 1000);
-              if (paymentType === 'razorpay' && timeRemaining > 0) {
-                setLockMessage(`Course payment is being processed in another tab. Retry option will be available in ${timeRemaining} seconds.`);
-              } else {
-                setLockMessage("Course payment is being processed in another tab. Please wait or check your other tabs.");
-              }
-              setShowRetryOption(false);
-            }
-          } else {
-            setSessionLocked(false);
-            setShowRetryOption(false);
-            setLockPaymentType("");
-          }
-        } catch {
-          localStorage.setItem('payment_processing', 'false');
-          setSessionLocked(false);
-          setShowRetryOption(false);
-          setLockPaymentType("");
-        }
-      } else {
-        setSessionLocked(false);
-        setShowRetryOption(false);
-        setLockPaymentType("");
-      }
-    };
-
-    // Listen for storage changes from other tabs
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'payment_processing') {
-        checkPaymentLock();
-      }
-    };
-
-    // Listen for visibility changes to detect tab switching
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Tab became visible, check lock status
-        checkPaymentLock();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    checkPaymentLock();
-
-    // Check periodically for retry option (every 3 seconds)
-    const retryCheckInterval = setInterval(checkPaymentLock, 3000);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(retryCheckInterval);
-    };
-  };
-
-  const acquirePaymentLock = (paymentType: string): boolean => {
-    const lockData = localStorage.getItem('payment_processing');
-    
-    if (lockData && lockData !== 'false') {
-      try {
-        const { isLocked, sessionId: lockedSession, timestamp } = JSON.parse(lockData);
-        const now = Date.now();
-        
-        // If locked by another session and not expired
-        if (isLocked && lockedSession !== sessionId.current && now - timestamp < 5 * 60 * 1000) {
-          return false;
-        }
-      } catch {
-        // Invalid lock data, proceed
-      }
-    }
-
-    // Acquire lock
-    localStorage.setItem('payment_processing', JSON.stringify({
-      isLocked: true,
-      sessionId: sessionId.current,
-      timestamp: Date.now(),
-      paymentType: paymentType
-    }));
-    
-    return true;
-  };
-
-  const releasePaymentLock = () => {
-    // Only release if this session owns the lock
-    const lockData = localStorage.getItem('payment_processing');
-    if (lockData && lockData !== 'false') {
-      try {
-        const { sessionId: lockedSession } = JSON.parse(lockData);
-        if (lockedSession === sessionId.current) {
-          localStorage.setItem('payment_processing', 'false');
-        }
-      } catch {
-        // If parsing fails, clear it anyway
-        localStorage.setItem('payment_processing', 'false');
-      }
-    }
-    lockRef.current = false;
-    razorpayOpenRef.current = false;
-    setIsRazorpayProcessing(false);
-    setIsWalletProcessing(false);
-    setShowRetryOption(false);
-    setLockPaymentType("");
-  };
 
   const fetchCartCourses = async () => {
     try {
@@ -243,9 +71,93 @@ const CheckoutPage = () => {
 
   const totalAmount = courses.reduce((sum, c) => sum + c.price, 0);
 
+  const handleBackendError = (error: any, paymentType: "razorpay" | "wallet") => {
+    const errorMessage = error?.response?.data?.message || error?.response?.data?.errorMessage || error?.message;
+    const orderId = error?.response?.data?.orderId || (error?.response?.data?.error && error?.response?.data?.error?.orderId);
+    console.log("Backend error details:", {
+      errorMessage,
+      orderId,
+      rawResponseData: error?.response?.data,
+      fullError: error
+    });
+
+    if (errorMessage?.includes("A pending order already exists")) {
+      toast.error(
+        "A payment is already in progress for these courses. Cancel it to proceed with a new payment or wait 15 minutes for it to expire.",
+      );
+      if (orderId) {
+        console.log("Setting pendingOrderId:", orderId);
+        setPendingOrderId(orderId);
+      } else {
+        console.error("No orderId in pending order error response");
+        toast.error("Unable to identify pending order. Please try again later.");
+      }
+    } else if (errorMessage?.includes("Remove") && errorMessage?.includes("already enrolled")) {
+      toast.error(errorMessage);
+      fetchCartCourses();
+      navigate("/user/enrolled");
+    } else if (errorMessage?.includes("Order already processed")) {
+      toast.success("Payment already completed! Redirecting to enrolled courses.");
+      navigate("/user/enrolled");
+    } else if (
+      errorMessage?.includes("already enrolled") ||
+      errorMessage?.includes("Payment cancelled")
+    ) {
+      toast.error(errorMessage);
+      navigate("/user/enrolled");
+    } else if (errorMessage?.includes("Order failed earlier")) {
+      toast.error("This order failed previously. Please start a new checkout.");
+      navigate("/user/cart");
+    } else if (errorMessage?.includes("Order was cancelled")) {
+      toast.error("This order was cancelled. Please start a new checkout.");
+      navigate("/user/cart");
+    } else if (errorMessage?.includes("Insufficient wallet balance")) {
+      toast.error("Insufficient wallet balance. Please use Razorpay or recharge your wallet.");
+    } else if (errorMessage?.includes("Order not found")) {
+      toast.error("Order not found. Please try again.");
+      navigate("/user/cart");
+    } else {
+      toast.error(
+        `${paymentType === "razorpay" ? "Payment" : "Wallet payment"} failed. Please try again.`,
+      );
+    }
+  };
+
+  const handleCancelPendingOrder = async () => {
+    if (!pendingOrderId) {
+      toast.error("No pending order to cancel.");
+      return;
+    }
+
+    setIsCancelProcessing(true);
+    try {
+      await cancelPendingOrder(pendingOrderId);
+      toast.success("Pending order cancelled successfully. You can now proceed with a new payment.");
+      setPendingOrderId(null);
+    } catch (error: any) {
+      console.error("Cancel pending order error:", error);
+      toast.error(error?.response?.data?.message || "Failed to cancel pending order.");
+    } finally {
+      setIsCancelProcessing(false);
+    }
+  };
+
+  const markOrderAsFailed = async (orderId: string) => {
+    try {
+      await markFailed(orderId);
+      toast.error("Payment failed. Order marked as failed.");
+      navigate("/user/order", { replace: true });
+    } catch (error: any) {
+      console.error("Failed to mark order as failed:", error);
+      toast.error(error?.response?.data?.message || "Failed to mark order as failed.");
+    } finally {
+      setIsRazorpayProcessing(false);
+    }
+  };
+
   const handleRazorpayPayment = async () => {
-    if (isProcessing || sessionLocked || lockRef.current) {
-      toast.warn("Payment is already being processed.");
+    if (isProcessing) {
+      toast.warn("Payment or cancellation is already being processed.");
       return;
     }
 
@@ -254,16 +166,6 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Try to acquire payment lock
-    if (!acquirePaymentLock('razorpay')) {
-      setSessionLocked(true);
-      setLockMessage("Payment is being processed in another tab. Please wait.");
-      toast.warn("Payment is being processed in another tab.");
-      return;
-    }
-
-    lockRef.current = true;
-    razorpayOpenRef.current = false;
     setIsRazorpayProcessing(true);
 
     try {
@@ -273,7 +175,7 @@ const CheckoutPage = () => {
 
       if (!order || !order.gatewayOrderId) {
         toast.error("Failed to initiate order with Razorpay.");
-        releasePaymentLock();
+        setIsRazorpayProcessing(false);
         return;
       }
 
@@ -293,37 +195,21 @@ const CheckoutPage = () => {
               amount: order.amount,
             });
             toast.success("Payment successful! You've been enrolled.");
-            releasePaymentLock();
+            setIsRazorpayProcessing(false);
             navigate("/user/enrolled");
           } catch (error: any) {
-            console.error("Payment verification failed:", error);
-            const errorMessage = error?.response?.data?.message || "Payment verification failed.";
-            
-            if (errorMessage.includes("Order already processed")) {
-              toast.error("This order has already been processed.");
-              navigate("/user/enrolled");
-            } else if (errorMessage.includes("already enrolled") || 
-                       errorMessage.includes("Payment cancelled")) {
-              toast.error(errorMessage);
-              navigate("/user/enrolled");
-            } else if (errorMessage.includes("Order failed earlier")) {
-              toast.error("This order failed previously. Please start a new checkout.");
-              navigate("/user/cart");
-            } else {
-              toast.error(errorMessage);
-            }
-            
-            releasePaymentLock();
+            handleBackendError(error, "razorpay");
+            setIsRazorpayProcessing(false);
           }
         },
         modal: {
           ondismiss: function () {
             console.log("Razorpay modal dismissed");
-            releasePaymentLock();
+            markOrderAsFailed(order._id);
           },
           onhidden: function () {
             console.log("Razorpay modal hidden");
-            releasePaymentLock();
+            setIsRazorpayProcessing(false);
           },
         },
         theme: {
@@ -333,34 +219,22 @@ const CheckoutPage = () => {
 
       const rzp = new window.Razorpay(options);
       razorpayInstanceRef.current = rzp;
-      razorpayOpenRef.current = true;
-      
-      // Handle payment failures
-      rzp.on('payment.failed', function (response: any) {
+
+      rzp.on("payment.failed", function (response: any) {
         console.error("Razorpay payment failed:", response.error);
-        toast.error("Payment failed. Please try again.");
-        releasePaymentLock();
+        markOrderAsFailed(order._id);
       });
 
       rzp.open();
     } catch (error: any) {
-      console.error("Payment initiation error:", error);
-      const errorMessage = error?.response?.data?.message;
-      
-      if (errorMessage?.includes("already enrolled")) {
-        toast.error(errorMessage);
-        navigate("/user/enrolled");
-      } else {
-        toast.error("Payment initiation failed.");
-      }
-      
-      releasePaymentLock();
+      handleBackendError(error, "razorpay");
+      setIsRazorpayProcessing(false);
     }
   };
 
   const handleWalletPayment = async () => {
-    if (isProcessing || sessionLocked || lockRef.current) {
-      toast.warn("Payment is already being processed.");
+    if (isProcessing) {
+      toast.warn("Payment or cancellation is already being processed.");
       return;
     }
 
@@ -374,72 +248,34 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Try to acquire payment lock
-    if (!acquirePaymentLock('wallet')) {
-      setSessionLocked(true);
-      setLockMessage("Payment is being processed in another tab. Please wait.");
-      toast.warn("Payment is being processed in another tab.");
-      return;
-    }
-
-    lockRef.current = true;
     setIsWalletProcessing(true);
 
     try {
       const courseIds = courses.map((c) => c._id);
       await initiateCheckout(courseIds, totalAmount, "wallet");
-      
+
       toast.success("Payment successful via wallet! You've been enrolled.");
-      releasePaymentLock();
+      setIsWalletProcessing(false);
+      fetchWalletBalance();
       navigate("/user/enrolled");
     } catch (error: any) {
-      console.error("Wallet payment error:", error);
-      const errorMessage = error?.response?.data?.message;
-      
-      if (errorMessage?.includes("already enrolled")) {
-        toast.error(errorMessage);
-        navigate("/user/enrolled");
-      } else if (errorMessage?.includes("Insufficient wallet balance")) {
-        toast.error("Insufficient wallet balance.");
-      } else {
-        toast.error("Wallet payment failed.");
-      }
-      
-      releasePaymentLock();
+      handleBackendError(error, "wallet");
+      setIsWalletProcessing(false);
+      fetchWalletBalance();
     }
   };
 
-  const handleRetryPayment = () => {
-    // Close any existing Razorpay modals first
-    if (razorpayInstanceRef.current) {
-      try {
-        razorpayInstanceRef.current.close();
-      } catch (e) {
-        // Ignore errors when closing
-      }
-    }
-
-    // Force release the lock and refresh the page
-    localStorage.setItem('payment_processing', 'false');
-    toast.info("Payment session reset. Refreshing page...");
-    
-    // Add a small delay before refresh for toast to show
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  };
-
-  const handlePayment = () => {
+  const handlePayment = debounce(() => {
     if (paymentMethod === "razorpay") {
       handleRazorpayPayment();
     } else {
       handleWalletPayment();
     }
-  };
+  }, 1000);
 
   const handleRemove = async (courseId: string, courseName: string) => {
-    if (isProcessing || sessionLocked) {
-      toast.warn("Cannot modify cart during payment process.");
+    if (isProcessing) {
+      toast.warn("Cannot modify cart during payment or cancellation process.");
       return;
     }
 
@@ -447,84 +283,22 @@ const CheckoutPage = () => {
       await removeFromCart(courseId);
       setCourses((prev) => prev.filter((c) => c._id !== courseId));
       toast.info(`${courseName} removed from cart.`);
-    } catch {
-      toast.error("Failed to remove course.");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message;
+      if (errorMessage?.includes("already enrolled")) {
+        toast.info(`${courseName} is already enrolled, removing from cart.`);
+        setCourses((prev) => prev.filter((c) => c._id !== courseId));
+      } else {
+        toast.error("Failed to remove course.");
+      }
     }
-  };
-
-  const handleCheckEnrolledCourses = () => {
-    // Don't navigate if this session is actively processing
-    if (lockRef.current && razorpayOpenRef.current) {
-      toast.warn("Please complete or cancel the current payment first.");
-      return;
-    }
-    navigate("/user/enrolled");
   };
 
   const handleBackToCart = () => {
-    // Don't navigate if this session is actively processing
-    if (lockRef.current && razorpayOpenRef.current) {
-      toast.warn("Please complete or cancel the current payment first.");
-      return;
-    }
     navigate("/user/cart");
   };
 
   const canProceedWithWallet = wallet && wallet.balance >= totalAmount;
-
-  // Session locked UI
-  if (sessionLocked) {
-    return (
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
-          <div className="text-6xl mb-4">
-            {lockPaymentType === 'razorpay' ? '💳' : lockPaymentType === 'wallet' ? '💰' : '⏳'}
-          </div>
-          <h2 className="text-2xl font-bold text-yellow-800 mb-4">Payment in Progress</h2>
-          <p className="text-yellow-700 mb-6">{lockMessage}</p>
-          <div className="space-y-4">
-            <div className="space-x-4">
-              <button
-                onClick={handleCheckEnrolledCourses}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Check Enrolled Courses
-              </button>
-              <button
-                onClick={handleBackToCart}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Back to Cart
-              </button>
-            </div>
-            
-            {showRetryOption && lockPaymentType === 'razorpay' && (
-              <div className="border-t pt-4">
-                <p className="text-sm text-yellow-600 mb-3">
-                  ⚠️ If the payment window was closed or is not responding, you can retry the payment.
-                  This will reset the payment session.
-                </p>
-                <button
-                  onClick={handleRetryPayment}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg transition-colors"
-                >
-                  🔄 Reset & Retry Payment
-                </button>
-              </div>
-            )}
-
-            {!showRetryOption && lockPaymentType === 'razorpay' && (
-              <div className="border-t pt-4">
-                <p className="text-sm text-gray-600">
-                  💡 Check your other browser tabs for the payment window, or wait for the retry option to appear.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -549,20 +323,50 @@ const CheckoutPage = () => {
         </div>
       ) : (
         <>
-          {/* Processing Warning Banner */}
           {isProcessing && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-center">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
                 <div className="text-blue-800">
-                  <div className="font-medium">Payment Processing</div>
-                  <div className="text-sm">Please don't refresh or close this tab until payment is complete.</div>
+                  <div className="font-medium">Processing</div>
+                  <div className="text-sm">Please don't refresh or close this tab until the process is complete.</div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Courses Table */}
+          {pendingOrderId && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6" style={{ zIndex: 1000 }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="text-2xl mr-3">⚠️</div>
+                  <div className="text-yellow-800">
+                    <div className="font-medium">Pending Order Detected</div>
+                    <div className="text-sm">A payment is in progress for these courses. Cancel it to start a new payment or wait 15 minutes for it to expire.</div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCancelPendingOrder}
+                  disabled={isCancelProcessing}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    isCancelProcessing
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-yellow-600 hover:bg-yellow-700 text-white"
+                  }`}
+                >
+                  {isCancelProcessing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+                      Cancelling...
+                    </>
+                  ) : (
+                    "Cancel Pending Order"
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden mb-6">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -604,9 +408,9 @@ const CheckoutPage = () => {
                       <td className="py-4 px-6 text-center">
                         <button
                           onClick={() => handleRemove(course._id, course.courseName)}
-                          disabled={isProcessing || sessionLocked}
+                          disabled={isProcessing}
                           className={`text-sm px-3 py-1 rounded transition-colors ${
-                            isProcessing || sessionLocked
+                            isProcessing
                               ? "text-gray-400 bg-gray-100 cursor-not-allowed"
                               : "text-red-600 hover:bg-red-50 hover:text-red-700"
                           }`}
@@ -634,7 +438,6 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* Wallet Balance */}
           {wallet && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between">
@@ -657,21 +460,20 @@ const CheckoutPage = () => {
             </div>
           )}
 
-          {/* Payment Method Selection */}
           <div className="bg-white border rounded-lg p-6 mb-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Choose Payment Method</h3>
             <div className="space-y-3">
               <label
                 className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
                   paymentMethod === "razorpay" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-                } ${isProcessing || sessionLocked ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <input
                   type="radio"
                   value="razorpay"
                   checked={paymentMethod === "razorpay"}
                   onChange={() => setPaymentMethod("razorpay")}
-                  disabled={isProcessing || sessionLocked}
+                  disabled={isProcessing}
                   className="mr-3 text-blue-600"
                 />
                 <div className="flex items-center">
@@ -686,14 +488,14 @@ const CheckoutPage = () => {
               <label
                 className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
                   paymentMethod === "wallet" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-                } ${isProcessing || sessionLocked || !canProceedWithWallet ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${isProcessing || !canProceedWithWallet ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <input
                   type="radio"
                   value="wallet"
                   checked={paymentMethod === "wallet"}
                   onChange={() => setPaymentMethod("wallet")}
-                  disabled={isProcessing || sessionLocked || !canProceedWithWallet}
+                  disabled={isProcessing || !canProceedWithWallet}
                   className="mr-3 text-blue-600"
                 />
                 <div className="flex items-center">
@@ -709,23 +511,22 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* Payment Buttons */}
           <div className="bg-white border rounded-lg p-6 mb-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Complete Payment</h3>
             <div className="flex flex-col gap-4 sm:flex-row">
               <button
                 onClick={handleWalletPayment}
                 disabled={
-                  isProcessing || 
-                  sessionLocked || 
+                  isProcessing ||
                   !canProceedWithWallet ||
-                  paymentMethod !== "wallet"
+                  paymentMethod !== "wallet" ||
+                  !!pendingOrderId
                 }
                 className={`flex-1 px-6 py-3 rounded-lg transition flex items-center justify-center ${
-                  isProcessing || 
-                  sessionLocked || 
+                  isProcessing ||
                   !canProceedWithWallet ||
-                  paymentMethod !== "wallet"
+                  paymentMethod !== "wallet" ||
+                  !!pendingOrderId
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-green-600 text-white hover:bg-green-700"
                 }`}
@@ -743,14 +544,14 @@ const CheckoutPage = () => {
               <button
                 onClick={handleRazorpayPayment}
                 disabled={
-                  isProcessing || 
-                  sessionLocked || 
-                  paymentMethod !== "razorpay"
+                  isProcessing ||
+                  paymentMethod !== "razorpay" ||
+                  !!pendingOrderId
                 }
                 className={`flex-1 px-6 py-3 rounded-lg transition flex items-center justify-center ${
-                  isProcessing || 
-                  sessionLocked || 
-                  paymentMethod !== "razorpay"
+                  isProcessing ||
+                  paymentMethod !== "razorpay" ||
+                  !!pendingOrderId
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
@@ -767,14 +568,13 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-between items-center">
             <button
               onClick={handleBackToCart}
-              disabled={isProcessing || sessionLocked}
+              disabled={isProcessing}
               className={`font-medium transition-colors ${
-                isProcessing || sessionLocked 
-                  ? "text-gray-400 cursor-not-allowed" 
+                isProcessing
+                  ? "text-gray-400 cursor-not-allowed"
                   : "text-gray-600 hover:text-gray-800"
               }`}
             >
@@ -784,16 +584,16 @@ const CheckoutPage = () => {
             <button
               onClick={handlePayment}
               disabled={
-                isProcessing || 
-                sessionLocked || 
-                courses.length === 0 || 
-                (paymentMethod === "wallet" && !canProceedWithWallet)
+                isProcessing ||
+                courses.length === 0 ||
+                (paymentMethod === "wallet" && !canProceedWithWallet) ||
+                !!pendingOrderId
               }
               className={`${
-                isProcessing || 
-                sessionLocked || 
-                courses.length === 0 || 
-                (paymentMethod === "wallet" && !canProceedWithWallet)
+                isProcessing ||
+                courses.length === 0 ||
+                (paymentMethod === "wallet" && !canProceedWithWallet) ||
+                !!pendingOrderId
                   ? "bg-gray-300 cursor-not-allowed"
                   : "bg-green-600 hover:bg-green-700"
               } text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center`}
@@ -804,9 +604,7 @@ const CheckoutPage = () => {
                   Processing...
                 </>
               ) : (
-                <>
-                  💸 Pay ₹{totalAmount.toLocaleString()}
-                </>
+                `Pay ₹${totalAmount.toLocaleString()}`
               )}
             </button>
           </div>

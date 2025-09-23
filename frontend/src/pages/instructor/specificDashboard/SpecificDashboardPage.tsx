@@ -18,21 +18,7 @@ import {
 import { DollarSign, Users, Tag, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-
-interface MonthlyData {
-  month: number;
-  year: number;
-  totalSales: number;
-}
-
-interface ReportItem {
-  orderId: string;
-  courseName: string;
-  purchaseDate: string;
-  coursePrice: number;
-  instructorRevenue: number;
-  totalEnrollments: number;
-}
+import { type MonthlyData,type ReportItem } from "../interface/instructorInterface";
 
 const monthMap = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",

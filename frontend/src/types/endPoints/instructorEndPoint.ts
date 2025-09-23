@@ -75,9 +75,12 @@ const InstructorRouterEndPoints = {
   instructorCheckActiveMembership : "/api/instructor/membership/active",
 
   //purchase membership
-
   instructorInitiateCheckout : "/api/instructor/checkout",
   instructorVerifyMembership : "/api/instructor/verify",
+  instructorCreateRazorpay : "/api/instructor/createRazorpayOrder",
+  instructorCancelOrder : "/api/instructor/cancelOrder",
+  instructorMarkAsFailed : "/api/instructor/markOrderAsFailed",
+  instructorRetryPayment : "/api/instructor/retryOrder",
   instructorPurcahseMembershipWithWallet : "/api/instructor/membership/purchaseWallet",
 
   //purchase history

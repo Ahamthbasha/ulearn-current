@@ -28,6 +28,7 @@ export class WalletRepository
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null> {
     return await this.findOneAndUpdate(
       { ownerId },
@@ -43,7 +44,7 @@ export class WalletRepository
           },
         },
       },
-      { new: true },
+      { new: true, ...options },
     );
   }
 
@@ -52,6 +53,7 @@ export class WalletRepository
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null> {
     const wallet = await this.findOne({ ownerId });
     if (!wallet || wallet.balance < amount) return null;
@@ -70,7 +72,7 @@ export class WalletRepository
           },
         },
       },
-      { new: true },
+      { new: true, ...options },
     );
   }
 

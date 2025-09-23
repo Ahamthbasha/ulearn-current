@@ -8,7 +8,9 @@ export interface IWithdrawalRequestRepository {
     amount: number,
     bankAccount: IWithdrawalRequest["bankAccount"],
   ): Promise<IWithdrawalRequest>;
+  
   findById(requestId: string): Promise<IWithdrawalRequest | null>;
+  
   findByInstructorIdWithPagination(
     instructorId: Types.ObjectId,
     options: IPaginationOptions,

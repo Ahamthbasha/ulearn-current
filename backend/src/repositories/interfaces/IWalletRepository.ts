@@ -13,12 +13,14 @@ export interface IWalletRepository {
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null>;
   debitWallet(
     ownerId: Types.ObjectId,
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null>;
 
   getPaginatedTransactions(

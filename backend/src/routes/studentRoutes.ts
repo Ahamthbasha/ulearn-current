@@ -19,6 +19,7 @@ import {
 import upload from "../utils/multer";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 import { isStudent } from "../middlewares/roleAuth";
+import { restrictBlockedUser } from "../middlewares/blockCheck";
 
 const router = Router();
 
@@ -28,7 +29,7 @@ router.post("/resendOtp", studentController.resendOtp.bind(studentController));
 
 router.post(
   "/createUser",
-  studentController.createUser.bind(studentController),
+  studentController.createUser.bind(studentController)
 );
 
 router.post("/login", studentController.login.bind(studentController));
@@ -37,80 +38,78 @@ router.post("/logout", studentController.logout.bind(studentController));
 
 router.post(
   "/verifyEmail",
-  studentController.verifyEmail.bind(studentController),
+  studentController.verifyEmail.bind(studentController)
 );
 
 router.post(
   "/verifyResetOtp",
-  studentController.verifyResetOtp.bind(studentController),
+  studentController.verifyResetOtp.bind(studentController)
 );
 
 router.post(
   "/forgotResendOtp",
-  studentController.forgotResendOtp.bind(studentController),
+  studentController.forgotResendOtp.bind(studentController)
 );
 
 router.post(
   "/resetPassword",
-  studentController.resetPassword.bind(studentController),
+  studentController.resetPassword.bind(studentController)
 );
 
 router.post(
   "/googleLogin",
-  studentController.doGoogleLogin.bind(studentController),
+  studentController.doGoogleLogin.bind(studentController)
 );
 
-//isBlocked checker
-router.get(
-  "/statusCheck",
-  studentController.statusCheck.bind(studentController),
-);
 
 /////////////////////student profile controller/////////////////////////////////
 
 router.get(
   "/profile",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentProfileController.getProfile.bind(studentProfileController),
+  studentProfileController.getProfile.bind(studentProfileController)
 );
 
 router.put(
   "/profile",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   upload.single("profilePic"),
-  studentProfileController.updateProfile.bind(studentProfileController),
+  studentProfileController.updateProfile.bind(studentProfileController)
 );
 
 router.put(
   "/profile/password",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentProfileController.updatePassword.bind(studentProfileController),
+  studentProfileController.updatePassword.bind(studentProfileController)
 );
 
 ////////////////////////student side course listing///////////////////////////////////////
 
 router.get(
   "/courses",
-  studentCourseController.getAllCourses.bind(studentCourseController),
+  studentCourseController.getAllCourses.bind(studentCourseController)
 );
 
 router.get(
   "/courses/filter",
-  studentCourseController.getFilteredCourses.bind(studentCourseController),
+  studentCourseController.getFilteredCourses.bind(studentCourseController)
 );
 
 router.get(
   "/courses/:courseId",
-  studentCourseController.getCourseDetails.bind(studentCourseController),
+  studentCourseController.getCourseDetails.bind(studentCourseController)
 );
 //readCategory
 
 router.get(
   "/categories",
-  categoryReadOnlyController.getAllCategories.bind(categoryReadOnlyController),
+  categoryReadOnlyController.getAllCategories.bind(categoryReadOnlyController)
 );
 
 /////////////////////cart management/////////////////////////////////////
@@ -118,29 +117,33 @@ router.get(
 router.get(
   "/cart",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentCartController.getCart.bind(studentCartController),
+  studentCartController.getCart.bind(studentCartController)
 );
 
 router.post(
   "/addToCart",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentCartController.addToCart.bind(studentCartController),
+  studentCartController.addToCart.bind(studentCartController)
 );
 
 router.delete(
   "/remove/:courseId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentCartController.removeFromCart.bind(studentCartController),
+  studentCartController.removeFromCart.bind(studentCartController)
 );
 
 router.delete(
   "/clearCart",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentCartController.clearCart.bind(studentCartController),
+  studentCartController.clearCart.bind(studentCartController)
 );
 
 ////////WISHLIST MANAGEMENT////////
@@ -148,29 +151,33 @@ router.delete(
 router.post(
   "/addToWishlist",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWishlistController.addToWishlist.bind(studentWishlistController),
+  studentWishlistController.addToWishlist.bind(studentWishlistController)
 );
 
 router.delete(
   "/removeWishlistCourse/:courseId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWishlistController.removeFromWishlist.bind(studentWishlistController),
+  studentWishlistController.removeFromWishlist.bind(studentWishlistController)
 );
 
 router.get(
   "/wishlist",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWishlistController.getWishlistCourses.bind(studentWishlistController),
+  studentWishlistController.getWishlistCourses.bind(studentWishlistController)
 );
 
 router.get(
   "/check/:courseId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWishlistController.isCourseInWishlist.bind(studentWishlistController),
+  studentWishlistController.isCourseInWishlist.bind(studentWishlistController)
 );
 
 ///////////////////CHECKOUT MANAGEMENT////////////////////////////////////////
@@ -178,15 +185,33 @@ router.get(
 router.post(
   "/checkout",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentCheckoutController.initiateCheckout.bind(studentCheckoutController),
+  studentCheckoutController.initiateCheckout.bind(studentCheckoutController)
 );
 
 router.post(
   "/complete",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentCheckoutController.completeCheckout.bind(studentCheckoutController),
+  studentCheckoutController.completeCheckout.bind(studentCheckoutController)
+);
+
+router.post(
+  "/cancelPendingOrder",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentCheckoutController.cancelPendingOrder.bind(studentCheckoutController)
+);
+
+router.post(
+  "/markFailed",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentCheckoutController.markOrderAsFailed.bind(studentCheckoutController)
 );
 
 //////////BOUGHT COURSE MANAGEMENT/////////////////
@@ -194,53 +219,57 @@ router.post(
 router.get(
   "/enrolled",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentEnrollmentController.getAllEnrolledCourses.bind(
-    studentEnrollmentController,
-  ),
+    studentEnrollmentController
+  )
 );
 
 router.get(
   "/enrolled/:courseId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentEnrollmentController.getEnrollmentCourseDetails.bind(
-    studentEnrollmentController,
-  ),
+    studentEnrollmentController
+  )
 );
 
 router.patch(
   "/enrolled/completeChapter",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentEnrollmentController.completeChapter.bind(studentEnrollmentController),
+  studentEnrollmentController.completeChapter.bind(studentEnrollmentController)
 );
 
 router.post(
   "/submitQuiz",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentEnrollmentController.submitQuizResult.bind(
-    studentEnrollmentController,
-  ),
+  studentEnrollmentController.submitQuizResult.bind(studentEnrollmentController)
 );
 
 router.get(
   "/enrollment/:courseId/allChaptersComplete",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentEnrollmentController.checkAllChaptersCompleted.bind(
-    studentEnrollmentController,
-  ),
+    studentEnrollmentController
+  )
 );
 
 router.get(
   "/certificate/:courseId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentEnrollmentController.getCertificateUrl.bind(
-    studentEnrollmentController,
-  ),
+    studentEnrollmentController
+  )
 );
 
 //wallet related routes
@@ -248,31 +277,33 @@ router.get(
 router.get(
   "/wallet",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWalletController.getWallet.bind(studentWalletController),
+  studentWalletController.getWallet.bind(studentWalletController)
 );
 
 router.post(
   "/wallet/credit",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWalletController.creditWallet.bind(studentWalletController),
+  studentWalletController.creditWallet.bind(studentWalletController)
 );
 
 router.post(
   "/wallet/debit",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWalletController.debitWallet.bind(studentWalletController),
+  studentWalletController.debitWallet.bind(studentWalletController)
 );
 
 router.get(
   "/wallet/transactions",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentWalletController.getPaginatedTransactions.bind(
-    studentWalletController,
-  ),
+  studentWalletController.getPaginatedTransactions.bind(studentWalletController)
 );
 
 //wallet payment related routes
@@ -280,19 +311,21 @@ router.get(
 router.post(
   "/wallet/payment/createOrder",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentWalletPaymentController.createOrder.bind(
-    studentWalletPaymentController,
-  ),
+    studentWalletPaymentController
+  )
 );
 
 router.post(
   "/wallet/payment/verify",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentWalletPaymentController.verifyPayment.bind(
-    studentWalletPaymentController,
-  ),
+    studentWalletPaymentController
+  )
 );
 
 //////////////////////order history///////////////////////////////////
@@ -300,22 +333,33 @@ router.post(
 router.get(
   "/orders",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentOrderController.getOrderHistory.bind(studentOrderController),
+  studentOrderController.getOrderHistory.bind(studentOrderController)
 );
 
 router.get(
   "/orders/:orderId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentOrderController.getOrderDetails.bind(studentOrderController),
+  studentOrderController.getOrderDetails.bind(studentOrderController)
 );
 
 router.get(
   "/orders/:orderId/invoice",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentOrderController.downloadInvoice.bind(studentOrderController),
+  studentOrderController.downloadInvoice.bind(studentOrderController)
+);
+
+router.post(
+  "/orders/:orderId/retry",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentOrderController.retryPayment.bind(studentOrderController)
 );
 
 //student side instructor Listing
@@ -323,118 +367,172 @@ router.get(
 router.get(
   "/instructors",
   studentInstructorListingController.listMentors.bind(
-    studentInstructorListingController,
-  ),
+    studentInstructorListingController
+  )
 );
 
 router.get(
   "/instructors/filters",
   studentInstructorListingController.getAvailableFilters.bind(
-    studentInstructorListingController,
-  ),
+    studentInstructorListingController
+  )
 );
 
 router.get(
   "/instructors/:instructorId",
   studentInstructorListingController.getMentorById.bind(
-    studentInstructorListingController,
-  ),
+    studentInstructorListingController
+  )
 );
 
 router.get(
   "/slots/:instructorId",
-  studentSlotController.getAvailableSlots.bind(studentSlotController),
+  studentSlotController.getAvailableSlots.bind(studentSlotController)
 );
 
-///////////////slot booking related routes/////////////////
+//slot purchase related things
+
+router.get(
+  "/checkout/:slotId/availability",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentSlotBookingController.checkSlotAvailability.bind(
+    studentSlotBookingController
+  )
+);
 
 router.post(
   "/checkout/:slotId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentSlotBookingController.initiateCheckout.bind(
-    studentSlotBookingController,
-  ),
+    studentSlotBookingController
+  )
 );
 
 router.post(
   "/verifySlotPayment",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentSlotBookingController.verifyPayment.bind(studentSlotBookingController),
+  studentSlotBookingController.verifyPayment.bind(studentSlotBookingController)
 );
+
+router.post(
+  "/verifyRetrySlotPayment",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentSlotBookingController.verifyRetryPayment.bind(studentSlotBookingController)
+)
 
 router.post(
   "/wallet/:slotId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentSlotBookingController.bookViaWallet.bind(studentSlotBookingController),
+  studentSlotBookingController.bookViaWallet.bind(studentSlotBookingController)
 );
 
 router.get(
   "/bookingHistory",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentSlotBookingController.getBookingHistory.bind(
-    studentSlotBookingController,
-  ),
+    studentSlotBookingController
+  )
 );
 
 router.get(
   "/booking/:bookingId",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentSlotBookingController.getBookingDetail.bind(
-    studentSlotBookingController,
-  ),
+    studentSlotBookingController
+  )
 );
 
 router.get(
   "/booking/:bookingId/receipt",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
   studentSlotBookingController.downloadReceipt.bind(
-    studentSlotBookingController,
-  ),
+    studentSlotBookingController
+  )
 );
 
-//dashboard//
+router.post(
+  "/bookings/:bookingId/cancel",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentSlotBookingController.cancelPendingBooking.bind(
+    studentSlotBookingController
+  )
+);
 
+router.post(
+  "/bookings/:bookingId/paymentFailed",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentSlotBookingController.handlePaymentFailure.bind(
+    studentSlotBookingController
+  )
+);
+
+router.post(
+  "/bookings/:bookingId/retryPayment",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentSlotBookingController.retryPayment.bind(studentSlotBookingController)
+)
+
+////////// dashboard /////////////
 router.get(
   "/dashboard",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentDashboardController.getDashboardData.bind(studentDashboardController),
+  studentDashboardController.getDashboardData.bind(studentDashboardController)
 );
 
 router.get(
   "/dashboard/courseReport",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentDashboardController.getCourseReport.bind(studentDashboardController),
+  studentDashboardController.getCourseReport.bind(studentDashboardController)
 );
 
 router.get(
   "/dashboard/slotReport",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentDashboardController.getSlotReport.bind(studentDashboardController),
+  studentDashboardController.getSlotReport.bind(studentDashboardController)
 );
 
 router.get(
   "/dashboard/exportCourseReport",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentDashboardController.exportCourseReport.bind(
-    studentDashboardController,
-  ),
+  studentDashboardController.exportCourseReport.bind(studentDashboardController)
 );
 
 router.get(
   "/dashboard/exportSlotReport",
   authenticateToken,
+  restrictBlockedUser,
   isStudent,
-  studentDashboardController.exportSlotReport.bind(studentDashboardController),
+  studentDashboardController.exportSlotReport.bind(studentDashboardController)
 );
 
 export default router;

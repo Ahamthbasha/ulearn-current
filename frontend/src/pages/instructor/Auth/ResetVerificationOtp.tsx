@@ -27,12 +27,17 @@ const ResetVerificationOTP = () => {
   const handleResend = async () => {
     setResendActive(false);
     setCounter(60);
+    setOtp(Array(4).fill(""))
     const email = localStorage.getItem("ForgotPassEmail") || "";
-    const response = await instructorForgotResendOtp(email);
-    if (response.success) {
-      toast.success(response.message);
-    } else {
-      toast.error(response.message);
+    try {
+      const response = await instructorForgotResendOtp(email);
+      if (response.success) {
+        toast.success(response.message);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("Failed to resend OTP. Please try again.");
     }
   };
 
@@ -41,6 +46,9 @@ const ResetVerificationOTP = () => {
     index: number
   ) => {
     const value = e.target.value;
+    // Only allow digits
+    if (!/^\d?$/.test(value)) return;
+
     const newOTP = [...otp];
     newOTP[index] = value;
     setOtp(newOTP);
@@ -63,18 +71,26 @@ const ResetVerificationOTP = () => {
 
   const handleSubmit = async () => {
     const OTP = otp.join("");
-    if (OTP.length !== 4) {
-      toast.error("Please enter the full OTP!");
+    if (OTP.length !== 4 || otp.some((digit) => !/^\d$/.test(digit))) {
+      toast.error("Please enter the full 4-digit OTP!");
       return;
     }
 
     const email = localStorage.getItem("ForgotPassEmail") || "";
-    const response = await instructorVerifyResetOtp(email, OTP);
-    if (response.success) {
-      toast.success(response.message);
-      navigate("/instructor/resetPassword");
-    } else {
-      toast.error(response.message);
+    console.log("Sending OTP:", OTP); // Debug log
+
+    try {
+      const response = await instructorVerifyResetOtp(email, OTP);
+      console.log("Response:", response); // Debug log
+      if (response.success) {
+        toast.success(response.message);
+        navigate("/instructor/resetPassword");
+      } else {
+        toast.error(response.message); // Displays "Incorrect OTP" when success is false
+      }
+    } catch (error:any) {
+      console.error("Error:", error);
+      toast.error(error?.response?.data?.message);
     }
   };
 

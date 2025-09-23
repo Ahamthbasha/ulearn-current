@@ -13,8 +13,8 @@ export interface IInstructorCourseRepository {
     page: number,
     limit: number,
     search?: string,
+    status?: string
   ): Promise<{ data: ICourse[]; total: number }>;
-
   findCourseByNameForInstructor(
     courseName: string,
     instructorId: string,
@@ -24,6 +24,5 @@ export interface IInstructorCourseRepository {
     instructorId: string,
     excludeId: string,
   ): Promise<ICourse | null>;
-
   publishCourse(courseId: string): Promise<ICourse | null>;
 }

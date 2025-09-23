@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { IAdminController } from "./interface/IAdminController";
 import { IAdminService } from "../../services/adminServices/interface/IAdminService";
-import { JwtService } from "../../utils/jwt";
 import { config } from "dotenv";
 import { Roles, StatusCode } from "../../utils/enums";
 import {
@@ -9,16 +8,17 @@ import {
   AdminSuccessMessages,
   ResponseError,
 } from "../../utils/constants";
+import { IJwtService } from "../../services/interface/IJwtService";
 
 config();
 
 export class AdminController implements IAdminController {
   private _adminService: IAdminService;
-  private JWT: JwtService;
+  private _JWT: IJwtService;
 
-  constructor(adminService: IAdminService) {
+  constructor(adminService: IAdminService,jwtService:IJwtService) {
     this._adminService = adminService;
-    this.JWT = new JwtService();
+    this._JWT = jwtService;
   }
 
   async login(req: Request, res: Response): Promise<void> {
@@ -44,22 +44,24 @@ export class AdminController implements IAdminController {
         admin = await this._adminService.createAdmin({ email, password });
       }
 
-      const accessToken = await this.JWT.accessToken({
+      const accessToken = await this._JWT.accessToken({
         email,
         role: Roles.ADMIN,
         id: admin?._id,
       });
 
+      const refreshToken = await this._JWT.refreshToken({
+        email,
+        role:Roles.ADMIN,
+        id:admin?._id
+      })
+
       res
         .cookie("accessToken", accessToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: "none",
         })
-        .cookie("refreshToken", accessToken, {
+        .cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: "none",
         })
         .status(StatusCode.OK)
         .send({

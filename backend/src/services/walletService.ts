@@ -9,6 +9,7 @@ import { toWalletDto } from "../mappers/common/walletMapper";
 export class WalletService implements IWalletService {
   private _walletRepository: IWalletRepository;
   private _adminRepository: IAdminRepository;
+
   constructor(
     walletRepository: IWalletRepository,
     adminRepository: IAdminRepository,
@@ -27,13 +28,9 @@ export class WalletService implements IWalletService {
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null> {
-    return this._walletRepository.creditWallet(
-      ownerId,
-      amount,
-      description,
-      txnId,
-    );
+    return this._walletRepository.creditWallet(ownerId, amount, description, txnId, options);
   }
 
   async debitWallet(
@@ -41,16 +38,12 @@ export class WalletService implements IWalletService {
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<IWallet | null> {
     const objectId =
       typeof ownerId === "string" ? new Types.ObjectId(ownerId) : ownerId;
 
-    return this._walletRepository.debitWallet(
-      objectId,
-      amount,
-      description,
-      txnId,
-    );
+    return this._walletRepository.debitWallet(objectId, amount, description, txnId, options);
   }
 
   async initializeWallet(
@@ -66,6 +59,7 @@ export class WalletService implements IWalletService {
     amount: number,
     description: string,
     txnId: string,
+    options?: { session?: import("mongoose").ClientSession }
   ): Promise<void> {
     const admin = await this._adminRepository.getAdmin(email);
 
@@ -90,6 +84,7 @@ export class WalletService implements IWalletService {
       amount,
       description,
       txnId,
+      options,
     );
   }
 

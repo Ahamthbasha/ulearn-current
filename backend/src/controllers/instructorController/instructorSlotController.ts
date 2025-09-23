@@ -4,6 +4,7 @@ import { Response } from "express";
 import mongoose from "mongoose";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
+import { INSTRUCTOR_SLOT_ERROR_MESSAGE } from "../../utils/constants";
 
 export class InstructorSlotController implements IInstructorSlotController {
   private _slotService: IInstructorSlotService;
@@ -27,7 +28,7 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || "Failed to create slot",
+        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_CREATE_SLOT,
       });
     }
   }
@@ -47,7 +48,7 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || "Failed to update slot",
+        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_UPDATE_SLOT,
       });
     }
   }
@@ -63,7 +64,7 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || "Failed to delete slot",
+        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_DELETE_SLOT,
       });
     }
   }
@@ -78,7 +79,7 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || "Failed to fetch slots",
+        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_FETCH_SLOT,
       });
     }
   }
@@ -128,7 +129,7 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || "Failed to fetch slot stats",
+        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_FETCH_SLOT_STAT,
       });
     }
   }

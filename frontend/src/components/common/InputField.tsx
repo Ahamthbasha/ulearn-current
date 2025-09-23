@@ -1,19 +1,7 @@
 import React, { useState } from "react";
 import { Field, ErrorMessage } from "formik";
 import { Eye, EyeOff } from "lucide-react";
-
-interface InputFieldProps {
-  type?: string;
-  placeholder?: string;
-  name: string;
-  label: string;
-  disabled?: boolean;
-
-  // New props for useState compatibility
-  value?: string | number;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  useFormik?: boolean; // default true
-}
+import { type InputFieldProps } from "./interface/commonComponent";
 
 const InputField: React.FC<InputFieldProps> = ({
   type = "text",

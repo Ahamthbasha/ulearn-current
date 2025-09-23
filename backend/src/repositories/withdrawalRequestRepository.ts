@@ -45,6 +45,7 @@ export class WithdrawalRequestRepository
     const populate = { path: "instructorId", select: "username email" };
 
     const result = await this.paginate(filter, page, limit, sort, populate);
+    
     return { transactions: result.data, total: result.total };
   }
 
@@ -85,7 +86,7 @@ export class WithdrawalRequestRepository
   async getAllRequestsWithPagination(
     options: IPaginationOptions,
   ): Promise<{ transactions: IWithdrawalRequest[]; total: number }> {
-    const { page, limit, search } = options;
+    const { page, limit, search, status } = options; // Add status from options
 
     // Define the aggregation pipeline
     const aggregationPipeline: PipelineStage[] = [
@@ -106,17 +107,28 @@ export class WithdrawalRequestRepository
       },
     ];
 
-    // Add search match stage after lookup if search is provided
+    // Build match conditions
+    const matchConditions: any = {};
+
+    // Add search condition if provided
     if (search && search.trim()) {
       const searchRegex = new RegExp(search.trim(), "i");
+      matchConditions.$or = [
+        { "instructor.username": searchRegex },
+        { "instructor.email": searchRegex },
+        { "bankAccount.accountHolderName": searchRegex },
+      ];
+    }
+
+    // Add status filter condition if provided
+    if (status && status.trim()) {
+      matchConditions.status = status.trim();
+    }
+
+    // Add match stage if there are any conditions
+    if (Object.keys(matchConditions).length > 0) {
       aggregationPipeline.push({
-        $match: {
-          $or: [
-            { "instructor.username": searchRegex },
-            { "instructor.email": searchRegex },
-            { "bankAccount.accountHolderName": searchRegex },
-          ],
-        },
+        $match: matchConditions,
       });
     }
 
@@ -129,7 +141,7 @@ export class WithdrawalRequestRepository
               branches: [
                 { case: { $eq: ["$status", "pending"] }, then: 1 },
                 { case: { $eq: ["$status", "rejected"] }, then: 2 },
-                { case: { $eq: ["$status", "completed"] }, then: 3 },
+                { case: { $eq: ["$status", "approved"] }, then: 3 },
               ],
               default: 4,
             },
@@ -173,7 +185,6 @@ export class WithdrawalRequestRepository
 
     const result =
       await WithdrawalRequestModel.aggregate(aggregationPipeline).exec();
-
     return { transactions: result || [], total };
   }
 }

@@ -1,52 +1,68 @@
 import { Request, Response } from "express";
 import IStudentController from "./interfaces/IStudentController";
 import IStudentService from "../../services/studentServices/interface/IStudentService";
-import IOtpServices from "../../services/interface/IOtpService";
-import { OtpGenerate } from "../../utils/otpGenerator";
-import { JwtService } from "../../utils/jwt";
 import bcrypt from "bcrypt";
 import {
   SERVER_ERROR,
   StudentErrorMessages,
-  StudentSuccessMessages,
+  MESSAGES,
 } from "../../utils/constants";
 import { Roles, StatusCode } from "../../utils/enums";
-import { SendEmail } from "../../utils/sendOtpEmail";
+import IOtpServices from "../../services/interface/IOtpService";
+import { IOtpGenerate } from "../../types/types";
+import { IJwtService } from "../../services/interface/IJwtService";
+import { IEmail } from "../../types/Email";
+
 export class StudentController implements IStudentController {
   private _studentService: IStudentService;
   private _otpService: IOtpServices;
-  private _otpGenerator: OtpGenerate;
-  private _JWT: JwtService;
-  private _emailSender: SendEmail;
+  private _otpGenerator: IOtpGenerate;
+  private _JWT: IJwtService;
+  private _emailSender: IEmail;
 
-  constructor(studentService: IStudentService, otpService: IOtpServices) {
+  constructor(studentService: IStudentService,otpService:IOtpServices,otpGenerateService:IOtpGenerate,jwtService:IJwtService,emailService:IEmail) {
     this._studentService = studentService;
     this._otpService = otpService;
-    this._otpGenerator = new OtpGenerate();
-    this._JWT = new JwtService();
-    this._emailSender = new SendEmail();
+    this._otpGenerator = otpGenerateService;
+    this._JWT = jwtService;
+    this._emailSender = emailService;
   }
 
   async studentSignUp(req: Request, res: Response): Promise<any> {
     try {
       let { email, password, username } = req.body;
 
+      // Validate input
+      if (!email || !password || !username) {
+        return res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: `${MESSAGES.EMAIL_REQUIRED}, ${MESSAGES.PASSWORD_REQUIRED}, and ${MESSAGES.USERNAME_REQUIRED}`,
+        });
+      }
+
       const saltRound = 10;
       const hashedPassword = await bcrypt.hash(password, saltRound);
       password = hashedPassword;
 
-      const ExistingStudent = await this._studentService.findByEmail(email);
+      const existingStudent = await this._studentService.findByEmail(email);
 
-      if (ExistingStudent) {
-        return res.json({
+      if (existingStudent) {
+        return res.status(StatusCode.CONFLICT).json({
           success: false,
-          message: StudentErrorMessages.USER_ALREADY_EXISTS,
-          user: ExistingStudent,
+          message: MESSAGES.USER_ALREADY_EXISTS,
         });
       } else {
         const otp = await this._otpGenerator.createOtpDigit();
 
-        await this._otpService.createOtp(email, otp);
+        // Create OTP with 60 seconds expiration
+        const otpCreated = await this._otpService.createOtp(email, otp, 60);
+        
+        if (!otpCreated) {
+          return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: MESSAGES.FAILED_TO_CREATE_OTP,
+          });
+        }
 
         await this._emailSender.sentEmailVerification("Student", email, otp);
 
@@ -59,12 +75,12 @@ export class StudentController implements IStudentController {
 
         return res.status(StatusCode.CREATED).json({
           success: true,
-          message: StudentSuccessMessages.SIGNUP_SUCCESS,
+          message: MESSAGES.SIGNUP_SUCCESS,
           token,
         });
       }
     } catch (error: any) {
-      console.error(error);
+      console.error('Student SignUp Error:', error);
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -77,16 +93,43 @@ export class StudentController implements IStudentController {
     try {
       let { email } = req.body;
 
+      if (!email) {
+        return res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.EMAIL_REQUIRED,
+        });
+      }
+
+      // Check if there's an existing OTP
+      const existingOtp = await this._otpService.otpExists(email);
+      if (existingOtp) {
+        const remainingTime = await this._otpService.getOtpRemainingTime(email);
+        console.log(`Existing OTP found for ${email}, remaining time: ${remainingTime}`);
+      }
+
       const otp = await this._otpGenerator.createOtpDigit();
-      await this._otpService.createOtp(email, otp);
+      const otpCreated = await this._otpService.createOtp(email, otp, 60);
+      
+      if (!otpCreated) {
+        return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          message: MESSAGES.FAILED_TO_CREATE_OTP,
+        });
+      }
+
       await this._emailSender.sentEmailVerification("Student", email, otp);
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.OTP_SENT,
+        message: MESSAGES.OTP_SENT,
       });
     } catch (error: any) {
-      throw error;
+      console.error('Resend OTP Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
@@ -94,66 +137,97 @@ export class StudentController implements IStudentController {
     try {
       const { otp } = req.body;
 
+      if (!otp) {
+        return res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.OTP_REQUIRED,
+        });
+      }
+
       const token = req.headers["the-verify-token"] || "";
       if (typeof token != "string") {
-        throw new Error();
+        return res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
       }
+
       const decode = await this._JWT.verifyToken(token);
-      if (!decode) {
-        return new Error(StudentErrorMessages.TOKEN_INVALID);
+      if (!decode || !decode.email) {
+        return res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
       }
-      const resultOtp = await this._otpService.findOtp(decode.email);
-      console.log(resultOtp?.otp, "<>", otp);
-      if (resultOtp?.otp === otp) {
+
+      // Use the Redis OTP verification
+      const isOtpValid = await this._otpService.verifyOtp(decode.email, otp);
+
+      if (isOtpValid) {
         const user = await this._studentService.createUser(decode);
 
         if (user) {
-          await this._otpService.deleteOtp(user.email);
-
           return res.status(StatusCode.CREATED).json({
             success: true,
-            message: StudentSuccessMessages.USER_CREATED,
+            message: MESSAGES.USER_CREATED,
             user,
+          });
+        } else {
+          return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: MESSAGES.FAILED_TO_RESET_PASSWORD,
           });
         }
       } else {
-        return res.json({
+        return res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: StudentErrorMessages.INCORRECT_OTP,
+          message: MESSAGES.INCORRECT_OTP,
         });
       }
     } catch (error: any) {
-      throw error;
+      console.error('Create User Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
   async login(req: Request, res: Response): Promise<any> {
     try {
       const { email, password } = req.body;
-      console.log(req.body);
+      
+      if (!email || !password) {
+        return res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.PASSWORD_REQUIRED}`,
+        });
+      }
+
       const student = await this._studentService.findByEmail(email);
 
       if (!student) {
         return res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: StudentErrorMessages.INVALID_CREDENTIALS,
+          message: MESSAGES.INVALID_CREDENTIALS,
         });
       }
 
-      // ✅ Block check
+      // Block check
       if (student.isBlocked) {
         return res.status(StatusCode.FORBIDDEN).json({
           success: false,
-          message: StudentErrorMessages.ACCOUNT_BLOCKED,
+          message: MESSAGES.ACCOUNT_BLOCKED,
         });
       }
 
       const passwordMatch = await bcrypt.compare(password, student.password);
 
       if (!passwordMatch) {
-        return res.status(StatusCode.NOT_FOUND).json({
+        return res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          message: StudentErrorMessages.INVALID_CREDENTIALS,
+          message: MESSAGES.INVALID_CREDENTIALS,
         });
       }
 
@@ -163,42 +237,51 @@ export class StudentController implements IStudentController {
       const accessToken = await this._JWT.accessToken({ id, role, email });
       const refreshToken = await this._JWT.refreshToken({ id, role, email });
 
-      console.log("ACCESS TOKEN:", accessToken);
-      console.log("REFRESH TOKEN:", refreshToken);
-
       return res
         .status(StatusCode.OK)
         .cookie("accessToken", accessToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: "none",
         })
         .cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: "none",
         })
-        .send({
+        .json({
           success: true,
-          message: StudentSuccessMessages.LOGIN_SUCCESS,
-          user: student,
+          message: MESSAGES.LOGIN_SUCCESS,
+          user: {
+            id: student.id,
+            email: student.email,
+            username: student.username,
+            role: student.role,
+            isBlocked: student.isBlocked,
+          },
         });
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Login Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
-  async logout(_req: Request, res: Response) {
+  async logout(_req: Request, res: Response): Promise<any> {
     try {
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");
-      console.log("user is logged out");
-      res.status(StatusCode.OK).send({
+      
+      res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.LOGOUT_SUCCESS,
+        message: MESSAGES.LOGOUT_SUCCESS,
       });
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Logout Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
@@ -206,29 +289,52 @@ export class StudentController implements IStudentController {
     try {
       let { email } = req.body;
 
+      if (!email) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.EMAIL_REQUIRED,
+        });
+        return;
+      }
+
       const existingUser = await this._studentService.findByEmail(email);
 
       if (existingUser) {
         const otp = await this._otpGenerator.createOtpDigit();
 
-        await this._otpService.createOtp(email, otp);
-        console.log("verifyEmail otp ");
-        await this._emailSender.sentEmailVerification("Student", email, otp);
-        console.log("verifyEmail otp is sended");
+        const otpCreated = await this._otpService.createOtp(email, otp, 60);
+        
+        if (!otpCreated) {
+          res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: MESSAGES.FAILED_TO_CREATE_OTP,
+          });
+          return;
+        }
 
-        res.send({
+        await this._emailSender.sentEmailVerification("Student", email, otp);
+
+        res.status(StatusCode.OK).json({
           success: true,
-          message: StudentSuccessMessages.REDIERCTING_OTP_PAGE,
-          data: existingUser,
+          message: MESSAGES.REDIERCTING_OTP_PAGE,
+          data: {
+            email: existingUser.email,
+            username: existingUser.username,
+          },
         });
       } else {
-        res.send({
+        res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: StudentErrorMessages.USER_NOT_FOUND,
+          message: MESSAGES.USER_NOT_FOUND,
         });
       }
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Verify Email Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
@@ -236,25 +342,42 @@ export class StudentController implements IStudentController {
     try {
       const { email, otp } = req.body;
 
-      const resultOtp = await this._otpService.findOtp(email);
+      if (!email || !otp) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.OTP_REQUIRED}`,
+        });
+        return;
+      }
 
-      console.log(resultOtp?.otp, "==", otp);
+      const isOtpValid = await this._otpService.verifyOtp(email, otp);
 
-      if (resultOtp?.otp === otp) {
+      console.log("isOtpValid",isOtpValid)
+
+      if (isOtpValid) {
         let token = await this._JWT.createToken({ email });
 
-        res.status(StatusCode.OK).cookie("forgotToken", token).json({
-          success: true,
-          message: StudentSuccessMessages.REDIERCTING_PASSWORD_RESET_PAGE,
-        });
+        res.status(StatusCode.OK)
+          .cookie("forgotToken", token, {
+            httpOnly: true,
+          })
+          .json({
+            success: true,
+            message: MESSAGES.REDIERCTING_PASSWORD_RESET_PAGE,
+          });
       } else {
-        res.json({
+        res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: StudentErrorMessages.INCORRECT_OTP,
+          message: MESSAGES.INCORRECT_OTP,
         });
       }
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Verify Reset OTP Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
@@ -262,53 +385,114 @@ export class StudentController implements IStudentController {
     try {
       let { email } = req.body;
 
+      if (!email) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.EMAIL_REQUIRED,
+        });
+        return;
+      }
+
       let otp = await this._otpGenerator.createOtpDigit();
-      await this._otpService.createOtp(email, otp);
+      const otpCreated = await this._otpService.createOtp(email, otp, 60);
+      
+      if (!otpCreated) {
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          message: MESSAGES.FAILED_TO_CREATE_OTP,
+        });
+        return;
+      }
 
-      console.log("forgotResendOtp controller in student");
-
-      await this._emailSender.sentEmailVerification("student", email, otp);
-
-      console.log("forgotResendOtp controller in student otp sended");
+      await this._emailSender.sentEmailVerification("Student", email, otp);
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.OTP_SENT,
+        message: MESSAGES.OTP_SENT,
       });
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Forgot Resend OTP Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
   async resetPassword(req: Request, res: Response): Promise<void> {
     try {
       const { password } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const token = req.cookies.forgotToken;
-      let data = await this._JWT.verifyToken(token);
-      if (!data) {
-        throw new Error(StudentErrorMessages.TOKEN_INVALID);
+      console.log(password)
+      if (!password) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.PASSWORD_REQUIRED,
+        });
+        return;
       }
 
+      const token = req.cookies.forgotToken;
+      
+      console.log(req.cookies.forgotToken)
+
+      if (!token) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: "Reset token is required",
+        });
+        return;
+      }
+
+      let data = await this._JWT.verifyToken(token);
+      if (!data || !data.email) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
+        return;
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
       const passwordReset = await this._studentService.resetPassword(
         data.email,
         hashedPassword,
       );
+      
       if (passwordReset) {
         res.clearCookie("forgotToken");
         res.status(StatusCode.OK).json({
           success: true,
-          message: StudentSuccessMessages.PASSWORD_RESET,
+          message: MESSAGES.PASSWORD_RESET,
+        });
+      } else {
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          message: MESSAGES.FAILED_TO_RESET_PASSWORD,
         });
       }
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Reset Password Error:', error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
     }
   }
 
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
     try {
       const { name, email } = req.body;
+      
+      if (!name || !email) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.NAME_REQUIRED,
+        });
+        return;
+      }
+
       const existingUser = await this._studentService.findByEmail(email);
 
       if (!existingUser) {
@@ -331,18 +515,19 @@ export class StudentController implements IStudentController {
             .status(StatusCode.OK)
             .cookie("accessToken", accessToken, {
               httpOnly: true,
-              secure: true,
-              sameSite: "none",
             })
             .cookie("refreshToken", refreshToken, {
               httpOnly: true,
-              secure: true,
-              sameSite: "none",
             })
             .json({
               success: true,
-              message: StudentSuccessMessages.GOOGLE_LOGIN_SUCCESS,
-              user,
+              message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
+              user: {
+                id: user._id,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+              },
             });
         }
       } else {
@@ -360,66 +545,33 @@ export class StudentController implements IStudentController {
             .status(StatusCode.OK)
             .cookie("accessToken", accessToken, {
               httpOnly: true,
-              secure: true,
-              sameSite: "none",
             })
             .cookie("refreshToken", refreshToken, {
               httpOnly: true,
-              secure: true,
-              sameSite: "none",
             })
             .json({
               success: true,
-              message: StudentSuccessMessages.GOOGLE_LOGIN_SUCCESS,
-              user: existingUser,
+              message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
+              user: {
+                id: existingUser._id,
+                email: existingUser.email,
+                username: existingUser.username,
+                role: existingUser.role,
+              },
             });
         } else {
-          res.status(StatusCode.OK).json({
+          res.status(StatusCode.FORBIDDEN).json({
             success: false,
-            message: StudentErrorMessages.INTERNAL_SERVER_ERROR,
-            user: existingUser,
+            message: MESSAGES.ACCOUNT_BLOCKED,
           });
         }
       }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async statusCheck(req: Request, res: Response): Promise<void> {
-    try {
-      const token = req.cookies.accessToken;
-      console.log("token", req.cookies);
-      const decoded = await this._JWT.verifyToken(token);
-
-      if (!decoded?.email) {
-        res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: StudentErrorMessages.INVALID_TOKEN,
-        });
-        return;
-      }
-
-      const student = await this._studentService.findByEmail(decoded.email);
-
-      if (!student) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: StudentErrorMessages.NOT_FOUND_STUDENT,
-        });
-        return;
-      }
-
-      res.status(StatusCode.OK).json({
-        success: true,
-        data: {
-          isBlocked: student.isBlocked,
-        },
-      });
-    } catch (err) {
+    } catch (error: any) {
+      console.error('Google Login Error:', error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: StudentErrorMessages.STATUS_CHECK_FAILED,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error: error.message,
       });
     }
   }
