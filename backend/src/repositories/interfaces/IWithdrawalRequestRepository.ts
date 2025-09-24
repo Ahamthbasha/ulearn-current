@@ -29,4 +29,6 @@ export interface IWithdrawalRequestRepository {
   getAllRequestsWithPagination(
     options: IPaginationOptions,
   ): Promise<{ transactions: IWithdrawalRequest[]; total: number }>;
+
+  getTotalPendingAmount(instructorId: Types.ObjectId):Promise<number>
 }

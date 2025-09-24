@@ -474,6 +474,15 @@ export const retryPayment = async (
   return response.data;
 };
 
+export const MarkCourseOrderAsFailed = async(orderId:string)=>{
+  try {
+    const response = await API.post(`${UserRouterEndpoints.userMarkOrderFailed}/${orderId}/markFailed`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
 export const listInstructors = async (params: ListInstructorParams) => {
   try {
     const queryParams = new URLSearchParams();

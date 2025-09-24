@@ -133,203 +133,12 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     return this._checkoutRepo.createOrder(userId, courseIds, totalAmount, razorpayOrder.id, session);
   }
 
-  // async verifyAndCompleteCheckout(
-  //   orderId: Types.ObjectId,
-  //   paymentId: string,
-  //   method: string,
-  //   amount: number,
-  //   session?: mongoose.ClientSession
-  // ): Promise<{
-  //   order: IOrder;
-  //   payment: IPayment;
-  //   enrollments: IEnrollment[];
-  // }> {
-  //   const localSession = session || await mongoose.startSession();
-
-  //   try {
-  //     return await localSession.withTransaction(async () => {
-  //       const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, localSession);
-
-  //       if (!order) {
-  //         throw new Error("Order not found");
-  //       }
-
-  //       if (order.status === "SUCCESS") {
-  //         throw new Error("Order already processed");
-  //       }
-
-  //       if (order.status !== "FAILED" && order.status !== "PENDING") {
-  //         throw new Error("Order cannot be processed");
-  //       }
-
-  //       if (Math.abs(order.amount - amount) > 0.01) {
-  //         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", localSession);
-  //         await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, localSession);
-  //         throw new Error("Payment amount mismatch");
-  //       }
-
-  //       const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(
-  //         order.userId,
-  //         localSession
-  //       );
-
-  //       const alreadyEnrolled = order.courses.filter((courseId) =>
-  //         enrolledCourseIds.some((eid) => eid.equals(courseId))
-  //       );
-
-  //       if (alreadyEnrolled.length > 0) {
-  //         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", localSession);
-  //         await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, localSession);
-  //         const names = await this._checkoutRepo.getCourseNamesByIds(alreadyEnrolled, localSession);
-  //         throw new Error(`Payment cancelled: Already enrolled in ${names.join(", ")}`);
-  //       }
-
-  //       await this._checkoutRepo.updateOrderStatus(orderId, "PENDING", localSession);
-
-  //       const updatedOrder = await this._checkoutRepo.updateOrderStatus(orderId, "SUCCESS", localSession);
-  //       if (!updatedOrder) throw new Error("Order not found or could not be updated");
-
-  //       const payment = await this._checkoutRepo.savePayment(
-  //         {
-  //           orderId,
-  //           userId: updatedOrder.userId,
-  //           paymentId,
-  //           method,
-  //           amount,
-  //           status: "SUCCESS",
-  //         },
-  //         localSession
-  //       );
-
-  //       const enrollments = await this._checkoutRepo.createEnrollments(
-  //         updatedOrder.userId,
-  //         updatedOrder.courses,
-  //         localSession
-  //       );
-
-  //       await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, localSession);
-
-  //       setImmediate(() => {
-  //         this.processRevenueSharing(updatedOrder.courses, orderId.toString()).catch(console.error);
-  //       });
-
-  //       await this._cartRepo.clear(updatedOrder.userId);
-
-  //       return { order: updatedOrder, payment, enrollments };
-  //     });
-  //   } finally {
-  //     if (!session) await localSession.endSession();
-  //   }
-  // }
-
-// async verifyAndCompleteCheckout(
-//   orderId: Types.ObjectId,
-//   paymentId: string,
-//   method: string,
-//   amount: number,
-//   session?: mongoose.ClientSession
-// ): Promise<{
-//   order: IOrder;
-//   payment: IPayment;
-//   enrollments: IEnrollment[];
-// }> {
-//   const localSession = session || await mongoose.startSession();
-
-//   try {
-//     return await localSession.withTransaction(async () => {
-//       console.log(`Verifying payment for order ${orderId}, amount: ${amount}`);
-//       const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, localSession);
-
-//       if (!order) {
-//         throw new Error("Order not found");
-//       }
-
-//       if (order.status === "SUCCESS") {
-//         throw new Error("Order already processed");
-//       }
-
-//       if (order.status !== "FAILED" && order.status !== "PENDING") {
-//         throw new Error("Order cannot be processed");
-//       }
-
-//       if (Math.abs(order.amount - amount) > 0.01) {
-//         console.error(`Amount mismatch: Expected ${order.amount}, received ${amount}`);
-//         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", localSession);
-//         await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, localSession);
-//         throw new Error("Payment amount mismatch");
-//       }
-
-//       const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(
-//         order.userId,
-//         localSession
-//       );
-
-//       const alreadyEnrolled = order.courses.filter((courseId) =>
-//         enrolledCourseIds.some((eid) => eid.equals(courseId))
-//       );
-
-//       if (alreadyEnrolled.length > 0) {
-//         console.warn(`Already enrolled in courses: ${alreadyEnrolled.map(String)}`);
-//         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", localSession);
-//         await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, localSession);
-//         const names = await this._checkoutRepo.getCourseNamesByIds(alreadyEnrolled, localSession);
-//         throw new Error(`Payment cancelled: Already enrolled in ${names.join(", ")}`);
-//       }
-
-//       console.log(`Updating order ${orderId} status to PENDING`);
-//       await this._checkoutRepo.updateOrderStatus(orderId, "PENDING", localSession);
-
-//       console.log(`Updating order ${orderId} status to SUCCESS`);
-//       const updatedOrder = await this._checkoutRepo.updateOrderStatus(orderId, "SUCCESS", localSession);
-//       if (!updatedOrder) throw new Error("Order not found or could not be updated");
-
-//       console.log(`Saving payment for order ${orderId}`);
-//       const payment = await this._checkoutRepo.savePayment(
-//         {
-//           orderId,
-//           userId: updatedOrder.userId,
-//           paymentId,
-//           method,
-//           amount,
-//           status: "SUCCESS",
-//         },
-//         localSession
-//       );
-
-//       console.log(`Creating enrollments for order ${orderId}`);
-//       const enrollments = await this._checkoutRepo.createEnrollments(
-//         updatedOrder.userId,
-//         updatedOrder.courses,
-//         localSession
-//       );
-
-//       console.log(`Resetting retryInProgress for order ${orderId}`);
-//       await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, localSession);
-
-//       setImmediate(() => {
-//         this.processRevenueSharing(updatedOrder.courses, orderId.toString()).catch(console.error);
-//       });
-
-//       await this._cartRepo.clear(updatedOrder.userId);
-
-//       console.log(`Verification completed for order ${orderId}`);
-//       return { order: updatedOrder, payment, enrollments };
-//     });
-//   } catch (error: any) {
-//     console.error(`Verification failed for order ${orderId}: ${error.message}`, error);
-//     throw error; // Re-throw to ensure the frontend gets the error
-//   } finally {
-//     if (!session) await localSession.endSession();
-//   }
-// }
-
-
 async verifyAndCompleteCheckout(
   orderId: Types.ObjectId,
   paymentId: string,
   method: string,
   amount: number,
-  session: mongoose.ClientSession // Remove optional and rely on passed session
+  session: mongoose.ClientSession 
 ): Promise<{
   order: IOrder;
   payment: IPayment;
@@ -354,7 +163,7 @@ async verifyAndCompleteCheckout(
     if (Math.abs(order.amount - amount) > 0.01) {
       console.error(`Amount mismatch: Expected ${order.amount}, received ${amount}`);
       await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", session);
-      await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
+      //await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
       throw new Error("Payment amount mismatch");
     }
 
@@ -370,7 +179,7 @@ async verifyAndCompleteCheckout(
     if (alreadyEnrolled.length > 0) {
       console.warn(`Already enrolled in courses: ${alreadyEnrolled.map(String)}`);
       await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", session);
-      await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
+      // await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
       const names = await this._checkoutRepo.getCourseNamesByIds(alreadyEnrolled, session);
       throw new Error(`Payment cancelled: Already enrolled in ${names.join(", ")}`);
     }
@@ -403,7 +212,7 @@ async verifyAndCompleteCheckout(
     );
 
     console.log(`Resetting retryInProgress for order ${orderId}`);
-    await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
+    // await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
 
     setImmediate(() => {
       this.processRevenueSharing(updatedOrder.courses, orderId.toString()).catch(console.error);

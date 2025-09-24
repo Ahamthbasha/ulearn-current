@@ -125,14 +125,12 @@ export class WithdrawalRequestRepository
       matchConditions.status = status.trim();
     }
 
-    // Add match stage if there are any conditions
     if (Object.keys(matchConditions).length > 0) {
       aggregationPipeline.push({
         $match: matchConditions,
       });
     }
 
-    // Add sorting and field additions
     aggregationPipeline.push(
       {
         $addFields: {
@@ -151,7 +149,6 @@ export class WithdrawalRequestRepository
       { $sort: { statusOrder: 1, createdAt: -1 } },
     );
 
-    // Get total count for pagination (before skip/limit)
     const countPipeline = [...aggregationPipeline, { $count: "total" }];
     const countResult =
       await WithdrawalRequestModel.aggregate(countPipeline).exec();
@@ -186,5 +183,24 @@ export class WithdrawalRequestRepository
     const result =
       await WithdrawalRequestModel.aggregate(aggregationPipeline).exec();
     return { transactions: result || [], total };
+  }
+
+   async getTotalPendingAmount(instructorId: Types.ObjectId): Promise<number> {
+    const result = await this.aggregate([
+      {
+        $match: {
+          instructorId: instructorId,
+          status: "pending"
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalPending: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    return result.length > 0 ? result[0].totalPending : 0;
   }
 }

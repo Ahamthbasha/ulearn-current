@@ -506,6 +506,7 @@ export class InstructorController implements IInstructorController {
 
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
     try {
+      
       const { name, email } = req.body;
 
       if (!name || !email) {
@@ -538,13 +539,13 @@ export class InstructorController implements IInstructorController {
             .json({
               success: true,
               message: INSTRUCTOR_MESSAGES.GOOGLE_LOGIN_SUCCESS,
-              user: {
+              instructor: {
                 id: instructor._id,
                 email: instructor.email,
                 username: instructor.username,
                 role: instructor.role,
-                // isBlocked:instructor.isBlocked,
-                // isVerified:instructor.isVerified
+                isBlocked:instructor.isBlocked,
+                isVerified:instructor.isVerified
               },
             });
         } else {
@@ -578,13 +579,13 @@ export class InstructorController implements IInstructorController {
           .json({
             success: true,
             message: INSTRUCTOR_MESSAGES.GOOGLE_LOGIN_SUCCESS,
-            user: {
+            instructor: {
               id: existingInstructor._id,
               email: existingInstructor.email,
               username: existingInstructor.username,
               role: existingInstructor.role,
-              // isBlocked:existingInstructor.isBlocked,
-              // isVerified:existingInstructor.isVerified
+              isBlocked:existingInstructor.isBlocked,
+              isVerified:existingInstructor.isVerified
             },
           });
       }
@@ -597,5 +598,4 @@ export class InstructorController implements IInstructorController {
       });
     }
   }
-
 }

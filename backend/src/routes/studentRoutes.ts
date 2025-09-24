@@ -362,6 +362,14 @@ router.post(
   studentOrderController.retryPayment.bind(studentOrderController)
 );
 
+router.post(
+  "/orders/:orderId/markFailed",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentOrderController.markOrderAsFailed.bind(studentOrderController)
+)
+
 //student side instructor Listing
 
 router.get(

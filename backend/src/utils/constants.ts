@@ -179,8 +179,8 @@ export const InstructorErrorMessages = {
 };
 
 export const StudentErrorMessages = {
-
-CHECKOUT_FAILED: "Failed to initiate checkout",
+  FAILED_TO_MARK_ORDER_AS_FAILED: "Failed to mark order as failed",
+  CHECKOUT_FAILED: "Failed to initiate checkout",
   PAYMENT_FAILED: "Payment processing failed",
   FAILED_TO_FETCH_BOOKINGS: "Failed to fetch booking history",
   FAILED_TO_FETCH_BOOKING: "Failed to fetch booking details",
@@ -242,6 +242,7 @@ CHECKOUT_FAILED: "Failed to initiate checkout",
 };
 
 export const StudentSuccessMessages = {
+  ORDER_MARKED_AS_FAILED: "Order marked as failed",
   SIGNUP_SUCCESS: "Signup successful, OTP sent to email.",
   OTP_SENT: "OTP has been sent to your email successfully!",
   USER_CREATED: "User created successfully!",

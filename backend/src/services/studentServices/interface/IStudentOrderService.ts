@@ -46,4 +46,14 @@ export interface IStudentOrderService {
     };
     order?: IOrder;
   }>;
+
+  markOrderAsFailed(
+    orderId: Types.ObjectId,
+    userId: Types.ObjectId,
+    session?: mongoose.ClientSession
+  ): Promise<{
+    success: boolean;
+    message: string;
+    order?: IOrder;
+  }>;
 }

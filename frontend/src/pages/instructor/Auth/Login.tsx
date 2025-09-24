@@ -32,9 +32,6 @@ const loginSchema = Yup.object().shape({
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID)
-
   const initialValues = {
     email: "",
     password: "",
@@ -97,7 +94,6 @@ const LoginPage = () => {
       const response = await googleLogin({
         name: decoded.name,
         email: decoded.email,
-         password: decoded.sub,
         profilePicture: decoded.picture,
         role: "instructor",
       });
@@ -123,6 +119,7 @@ const LoginPage = () => {
           navigate("/instructor/dashboard");
         } else {
           const verifyStatus = await getVerificationRequestByemail(instructor.email);
+          console.log('verifyStatus',verifyStatus)
           if (verifyStatus?.data?.status) {
             navigate(`/instructor/verificationStatus/${instructor.email}`);
           } else {

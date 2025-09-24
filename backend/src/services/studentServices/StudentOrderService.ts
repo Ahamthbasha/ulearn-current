@@ -67,7 +67,6 @@ export class StudentOrderService implements IStudentOrderService {
     return {
       ...toOrderDetailsDTO(orderWithSignedUrls),
       canRetryPayment: order.status === "FAILED",
-      retryInProgress: order.retryInProgress || false,
     };
   }
 
@@ -78,161 +77,157 @@ export class StudentOrderService implements IStudentOrderService {
     return await this._orderRepo.getOrderById(orderId, userId);
   }
 
-async retryPayment(
-  orderId: Types.ObjectId,
-  userId: Types.ObjectId,
-  paymentData?: {
-    paymentId: string;
-    method: string;
-    amount: number;
-    retryAttemptId?: string;
-  },
-  session?: mongoose.ClientSession
-): Promise<{
-  success: boolean;
-  message: string;
-  paymentData?: {
-    orderId: Types.ObjectId;
-    amount: number;
-    currency: string;
-    razorpayOrderId: string;
-    key: string;
-  };
-  order?: IOrder;
-}> {
-  const localSession = session || await mongoose.startSession();
+  async retryPayment(
+    orderId: Types.ObjectId,
+    userId: Types.ObjectId,
+    paymentData?: {
+      paymentId: string;
+      method: string;
+      amount: number;
+    },
+    session?: mongoose.ClientSession
+  ): Promise<{
+    success: boolean;
+    message: string;
+    paymentData?: {
+      orderId: Types.ObjectId;
+      amount: number;
+      currency: string;
+      razorpayOrderId: string;
+      key: string;
+    };
+    order?: IOrder;
+  }> {
+    const localSession = session || await mongoose.startSession();
 
-  try {
-    return await localSession.withTransaction(async () => {
-      const order = await this._orderRepo.getOrderById(orderId, userId, localSession);
-      if (!order) {
-        throw new Error(StudentErrorMessages.ORDER_NOT_FOUND);
-      }
+    try {
+      return await localSession.withTransaction(async () => {
+        const order = await this._orderRepo.getOrderById(orderId, userId, localSession);
+        if (!order) {
+          throw new Error(StudentErrorMessages.ORDER_NOT_FOUND);
+        }
 
-      if (order.status !== "FAILED") {
-        throw new Error("Only failed orders can be retried");
-      }
+        // Check if payment verification data is provided (completing payment)
+        if (paymentData?.paymentId && paymentData?.method && paymentData?.amount) {
+          try {
+            const result = await this._checkoutService.verifyAndCompleteCheckout(
+              orderId,
+              paymentData.paymentId,
+              paymentData.method,
+              paymentData.amount,
+              localSession
+            );
+            return {
+              success: true,
+              message: "Payment retry successful",
+              order: result.order,
+            };
+          } catch (verifyError: any) {
+            // Update status to FAILED if payment verification fails
+            await this._checkoutService.updateOrderStatus(
+              orderId,
+              "FAILED",
+              userId,
+              localSession
+            );
+            throw new Error(verifyError.message || "Payment verification failed");
+          }
+        }
 
-      const staleThreshold = new Date(Date.now() - 15 * 60 * 1000);
-      if (order.retryInProgress && order.updatedAt < staleThreshold) {
-        await this._checkoutService.updateOrder(
-          orderId,
-          { retryInProgress: false },
-          userId,
-          localSession
-        );
-      }
+        // Check if order can be retried
+        if (order.status !== "FAILED") {
+          throw new Error("Only failed orders can be retried");
+        }
 
-      const updatedOrder = await this._orderRepo.getOrderById(orderId, userId, localSession);
-      if (!updatedOrder) {
-        throw new Error("Failed to fetch updated order");
-      }
-
-      console.log(`retryInProgress state: ${updatedOrder.retryInProgress}, paymentData: ${!!paymentData}`);
-
-      if (paymentData?.paymentId && paymentData?.method && paymentData?.amount) {
         try {
-          const result = await this._checkoutService.verifyAndCompleteCheckout(
-            orderId,
-            paymentData.paymentId,
-            paymentData.method,
-            paymentData.amount,
-            localSession // Pass the existing session
-          );
+          const amountInPaise = Math.round(order.amount * 100);
+          if (amountInPaise < 100) {
+            throw new Error("Invalid order amount");
+          }
+
+          const receipt = `retry_${Date.now()}_${order._id.toString().slice(-8)}`;
+
+          const razorpayOrder = await razorpay.orders.create({
+            amount: amountInPaise,
+            currency: "INR",
+            receipt,
+            notes: {
+              order_id: order._id.toString(),
+              retry_attempt: "true",
+            },
+          });
+
+          // Update order status to PENDING and set new gateway order ID
           await this._checkoutService.updateOrder(
             orderId,
-            { retryInProgress: false },
+            { 
+              status: "PENDING",
+              gatewayOrderId: razorpayOrder.id 
+            },
             userId,
             localSession
           );
+
           return {
             success: true,
-            message: "Payment retry successful",
-            order: result.order,
+            message: "Payment retry initiated",
+            paymentData: {
+              orderId: order._id,
+              amount: order.amount,
+              currency: "INR",
+              razorpayOrderId: razorpayOrder.id,
+              key: process.env.RAZORPAY_KEY_ID || "",
+            },
           };
-        } catch (verifyError: any) {
-          await this._checkoutService.updateOrder(
-            orderId,
-            { retryInProgress: false },
-            userId,
-            localSession
-          );
-          await this._checkoutService.updateOrderStatus(
-            orderId,
-            "FAILED",
-            userId,
-            localSession
-          );
-          throw new Error(verifyError.message || "Payment verification failed");
+        } catch (razorpayError: any) {
+          console.error("Razorpay order creation failed:", razorpayError);
+          throw new Error("Failed to create payment order. Please try again.");
         }
-      }
+      });
+    } finally {
+      if (!session) await localSession.endSession();
+    }
+  }
 
-      if (updatedOrder.retryInProgress) {
-        throw new Error("A payment retry is already in progress for this order");
-      }
+  async markOrderAsFailed(
+    orderId: Types.ObjectId,
+    userId: Types.ObjectId,
+    session?: mongoose.ClientSession
+  ): Promise<{
+    success: boolean;
+    message: string;
+    order?: IOrder;
+  }> {
+    const localSession = session || await mongoose.startSession();
 
-      const retryOrder = await this._checkoutService.updateOrder(
-        orderId,
-        { retryInProgress: true },
-        userId,
-        localSession
-      );
-
-      if (!retryOrder) {
-        throw new Error("Failed to update order");
-      }
-
-      try {
-        const amountInPaise = Math.round(updatedOrder.amount * 100);
-        if (amountInPaise < 100) {
-          throw new Error("Invalid order amount");
+    try {
+      return await localSession.withTransaction(async () => {
+        const order = await this._orderRepo.getOrderById(orderId, userId, localSession);
+        if (!order) {
+          throw new Error(StudentErrorMessages.ORDER_NOT_FOUND);
         }
 
-        const receipt = `retry_${Date.now()}_${order._id.toString().slice(-8)}`;
+        if (order.status !== "PENDING") {
+          throw new Error("Only pending orders can be marked as failed");
+        }
 
-        const razorpayOrder = await razorpay.orders.create({ // Await the promise
-          amount: amountInPaise,
-          currency: "INR",
-          receipt,
-          notes: {
-            order_id: order._id.toString(),
-            retry_attempt: "true",
-            retryAttemptId: paymentData?.retryAttemptId ?? null, // Default to null if undefined
-          },
-        });
-
-        await this._checkoutService.updateOrder(
+        await this._checkoutService.updateOrderStatus(
           orderId,
-          { gatewayOrderId: razorpayOrder.id },
+          "FAILED",
           userId,
           localSession
         );
+
+        const updatedOrder = await this._orderRepo.getOrderById(orderId, userId, localSession);
 
         return {
           success: true,
-          message: "Payment retry initiated",
-          paymentData: {
-            orderId: order._id,
-            amount: updatedOrder.amount,
-            currency: "INR",
-            razorpayOrderId: razorpayOrder.id,
-            key: process.env.RAZORPAY_KEY_ID || "",
-          },
+          message: "Order marked as failed successfully",
+          order: updatedOrder || undefined,
         };
-      } catch (razorpayError: any) {
-        await this._checkoutService.updateOrder(
-          orderId,
-          { retryInProgress: false },
-          userId,
-          localSession
-        );
-        console.error("Razorpay order creation failed:", razorpayError);
-        throw new Error("Failed to create payment order. Please try again.");
-      }
-    });
-  } finally {
-    if (!session) await localSession.endSession();
+      });
+    } finally {
+      if (!session) await localSession.endSession();
+    }
   }
-}
-
 }

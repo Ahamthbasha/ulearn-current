@@ -65,7 +65,7 @@ export default function WithdrawalDetailsPage() {
       toast.success(response.message || "Withdrawal request approved successfully");
       fetchWithdrawalRequest();
     } catch (error: any) {
-      toast.error(error.message || "Failed to approve withdrawal request");
+      toast.error("instructor has insufficient wallet balance");
     } finally {
       setLoading(false);
     }

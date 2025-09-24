@@ -210,7 +210,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
     }
   }
 
-async verifyRetryPayment(
+  async verifyRetryPayment(
   bookingId: string,
   studentId: string,
   razorpayPaymentId: string
@@ -317,7 +317,7 @@ async verifyRetryPayment(
   } finally {
     await session.endSession();
   }
-}
+  }
 
   async bookViaWallet(slotId: string, studentId: string): Promise<IBooking> {
     if (!Types.ObjectId.isValid(slotId) || !Types.ObjectId.isValid(studentId)) {
@@ -348,9 +348,10 @@ async verifyRetryPayment(
 
         const slot = availability.slot;
         if (!slot) throw new Error("Slot not found");
+
         if (slot.isBooked) throw new Error("Slot already booked");
         if (!slot.price || isNaN(slot.price)) throw new Error("Invalid slot price");
-
+    
         const amount = slot.price;
         const txnId = `wallet-slot-${Date.now()}`;
 
@@ -366,7 +367,7 @@ async verifyRetryPayment(
 
         // Credit instructor wallet
         await this._walletService.creditWallet(
-          new Types.ObjectId(slot.instructorId.toString()),
+          new Types.ObjectId(slot.instructorId._id.toString()),
           amount,
           `Slot booked by student`,
           txnId,
@@ -610,9 +611,9 @@ async verifyRetryPayment(
   } finally {
     await session.endSession();
   }
-}
+  }
 
-async retryPayment(
+  async retryPayment(
   bookingId: string,
   studentId: string
 ): Promise<{
@@ -705,5 +706,5 @@ async retryPayment(
   } finally {
     await session.endSession();
   }
-}
+  }
 }

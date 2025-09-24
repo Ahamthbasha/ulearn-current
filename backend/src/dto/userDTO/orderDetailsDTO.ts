@@ -12,5 +12,5 @@ export interface OrderDetailsDTO {
     thumbnailUrl: string;
   }[];
   canRetryPayment: boolean;
-  retryInProgress: boolean;
+  // retryInProgress: boolean;
 }

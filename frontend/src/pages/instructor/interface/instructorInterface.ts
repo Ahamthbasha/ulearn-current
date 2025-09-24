@@ -146,15 +146,6 @@ export interface Wallet {
   balance: number;
 }
 
-// export interface IWithdrawalRequest {
-//   _id?: string;
-//   instructorName: string;
-//   date: string;
-//   amount: number;
-//   status: "pending" | "approved" | "rejected";
-//   remarks?: string;
-// }
-
 
 
 //withdrawal
@@ -186,4 +177,14 @@ export interface IWithdrawalRequest {
   bankAccount?: string;
   createdAt?: string;
   reason?: string;
+}
+
+
+export interface InstructorData {
+  id: string;
+  email: string;
+  username: string;
+  role: string;
+  isBlocked: boolean;
+  isVerified: boolean;
 }

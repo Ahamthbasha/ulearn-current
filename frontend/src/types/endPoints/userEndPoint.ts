@@ -53,6 +53,7 @@ const UserRouterEndpoints = {
   userGetOrders: "/api/student/orders",
   userGetOrderDetail: "/api/student/orders",
   userDownloadOrderInvoice: "/api/student/orders",
+  userMarkOrderFailed: "/api/student/orders",
 
   //student side instructor listing
 

@@ -149,7 +149,7 @@ export default function InstructorWalletPage() {
       setShowRetryModal({ show: false, requestId: "", currentAmount: 0 });
       setRetryAmount(0);
     } catch (error: any) {
-      toast.error(error.message || "Failed to retry withdrawal request");
+      toast.error(error?.response?.data?.message || "Failed to retry withdrawal request");
     }
   };
 

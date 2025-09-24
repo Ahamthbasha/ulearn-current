@@ -171,4 +171,52 @@ export class StudentOrderController implements IStudentOrderController {
       });
     }
   }
+
+  async markOrderAsFailed(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const orderId = new Types.ObjectId(req.params.orderId);
+      const userId = new Types.ObjectId(req.user!.id);
+
+      if (!req.params.orderId) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Order ID is required",
+        });
+        return;
+      }
+
+      const order = await this._orderService.getOrderRaw(orderId, userId);
+
+      if (!order) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: StudentErrorMessages.ORDER_NOT_FOUND,
+        });
+        return;
+      }
+
+      if (order.status !== "PENDING") {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Only pending orders can be marked as failed",
+        });
+        return;
+      }
+
+      const result = await this._orderService.markOrderAsFailed(orderId, userId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: StudentSuccessMessages.ORDER_MARKED_AS_FAILED || "Order marked as failed successfully",
+        order: result.order,
+      });
+    } catch (err: any) {
+      console.error("Error marking order as failed:", err);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: err.message || StudentErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED,
+      });
+    }
+  }
+  
 }

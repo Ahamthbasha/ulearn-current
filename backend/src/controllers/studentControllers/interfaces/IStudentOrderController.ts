@@ -6,4 +6,5 @@ export interface IStudentOrderController {
   getOrderDetails(req: AuthenticatedRequest, res: Response): Promise<void>;
   downloadInvoice(req: AuthenticatedRequest, res: Response): Promise<void>;
   retryPayment(req: AuthenticatedRequest, res: Response): Promise<void>;
+  markOrderAsFailed(req:AuthenticatedRequest,res:Response):Promise<void>
 }
