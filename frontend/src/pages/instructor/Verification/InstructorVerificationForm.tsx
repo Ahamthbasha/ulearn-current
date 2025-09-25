@@ -20,6 +20,7 @@ const InstructorVerificationForm: React.FC = () => {
     if (storedInstructor) {
       try {
         const parsedInstructor: InstructorData = JSON.parse(storedInstructor);
+        console.log(parsedInstructor)
         setInstructorData(parsedInstructor);
       } catch (error) {
         console.error("Error parsing instructor data from localStorage:", error);
@@ -99,7 +100,7 @@ const InstructorVerificationForm: React.FC = () => {
 
       <Formik
         initialValues={{
-          name: instructorData.username,
+          name: instructorData.name,
           email: emailFromQuery || instructorData.email,
           degreeCertificate: null,
           resume: null,

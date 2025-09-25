@@ -21,7 +21,7 @@ const AdminCourseManagementPage = () => {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
 
   const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(null);

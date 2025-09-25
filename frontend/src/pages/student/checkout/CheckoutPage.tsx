@@ -94,8 +94,6 @@ const CheckoutPage = () => {
       }
     } else if (errorMessage?.includes("Remove") && errorMessage?.includes("already enrolled")) {
       toast.error(errorMessage);
-      fetchCartCourses();
-      navigate("/user/enrolled");
     } else if (errorMessage?.includes("Order already processed")) {
       toast.success("Payment already completed! Redirecting to enrolled courses.");
       navigate("/user/enrolled");

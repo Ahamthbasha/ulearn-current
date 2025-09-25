@@ -167,22 +167,20 @@ const InstructorProfilePage = () => {
             })}
             onSubmit={async (values, { resetForm }) => {
               try {
-                const res = await instructorUpdatePassword({
+                const response = await instructorUpdatePassword({
                   currentPassword: values.currentPassword,
                   newPassword: values.newPassword,
                 });
 
-                console.log(res)
-
-                if (res.success) {
+                if (response.success) {
                   toast.success("Password updated successfully");
                   resetForm();
                   setShowPasswordForm(false);
                 } else {
-                  toast.error(res.message || "Password update failed");
+                  toast.error(response.message || "Password update failed");
                 }
               } catch (error:any) {
-                toast.error(error.res.message);
+                toast.error(error?.response?.data?.message);
               }
             }}
           >

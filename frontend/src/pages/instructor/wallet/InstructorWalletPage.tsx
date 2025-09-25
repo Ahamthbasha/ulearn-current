@@ -71,6 +71,11 @@ export default function InstructorWalletPage() {
         toast.warning("Enter a valid recharge amount");
         return;
       }
+
+      if(rechargeAmount > 50000){
+        toast.warning("Enter an amount which is less than or equal to 50000")
+        return;
+      }
       setLoading(true);
 
       const orderData = await instructorCreateWalletRechargeOrder({ amount: rechargeAmount });
@@ -114,6 +119,11 @@ export default function InstructorWalletPage() {
     try {
       if (!withdrawalAmount || withdrawalAmount < 1) {
         toast.warning("Enter a valid withdrawal amount");
+        return;
+      }
+
+      if(withdrawalAmount > 50000){
+        toast.warning("Enter a withdrawal amount which is less than or equal to 5000")
         return;
       }
       if (!wallet || wallet.balance < withdrawalAmount) {

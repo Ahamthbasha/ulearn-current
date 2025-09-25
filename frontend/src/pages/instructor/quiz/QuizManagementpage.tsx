@@ -6,7 +6,7 @@ import { Plus, Trash2 } from "lucide-react";
 import Card from "../../../components/common/Card";
 import { Button } from "../../../components/common/Button";
 import EntityTable from "../../../components/common/EntityTable";
-
+import { useDebounce } from "../../../hooks/UseDebounce"; 
 import {
   getPaginatedQuestionsByCourseId,
   deleteQuiz,
@@ -24,9 +24,11 @@ const QuizManagementPage = () => {
   const [quizId, setQuizId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit] = useState(1); // You can make this adjustable
+  const [limit] = useState(5);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchQuestions = async () => {
     if (!courseId) return;
@@ -37,7 +39,7 @@ const QuizManagementPage = () => {
         courseId,
         page,
         limit,
-        search
+        debouncedSearch // Use debounced search
       );
       console.log("Paginated Quiz Response:", response);
 
@@ -85,7 +87,7 @@ const QuizManagementPage = () => {
 
   useEffect(() => {
     fetchQuestions();
-  }, [courseId, page, search]);
+  }, [courseId, page, debouncedSearch]); // Depend on debouncedSearch instead of search
 
   return (
     <div className="px-4 py-6">

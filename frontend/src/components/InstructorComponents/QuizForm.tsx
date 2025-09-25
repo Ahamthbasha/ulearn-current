@@ -9,7 +9,7 @@ const validationSchema = Yup.object().shape({
   questionText: Yup.string()
     .trim()
     .min(10, "Question must be at least 10 characters long")
-    .max(70,"Question length dont exceed 70 characters")
+    .max(100,"Question length dont exceed 70 characters")
     .matches(strongTextRegex, "Question must be meaningful (not just repeated letters)")
     .required("Question text is required"),
 
@@ -18,7 +18,7 @@ const validationSchema = Yup.object().shape({
       Yup.string()
         .trim()
         .min(5, "Option must be at least 10 characters long")
-        .max(40,"Option must not exceed 40 characters")
+        .max(50,"Option must not exceed 40 characters")
         .matches(strongTextRegex, "Option must be meaningful")
         .required("Option is required")
     )
@@ -27,7 +27,7 @@ const validationSchema = Yup.object().shape({
   correctAnswer: Yup.string()
     .trim()
     .min(5, "Correct answer must be at least 10 characters long")
-    .max(40,"Option must not exceed 40 characters")
+    .max(50,"Option must not exceed 40 characters")
     .matches(strongTextRegex, "Correct answer must be meaningful")
     .required("Correct answer is required"),
 });

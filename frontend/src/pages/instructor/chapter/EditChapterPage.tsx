@@ -29,7 +29,7 @@ const chapterSchema = Yup.object().shape({
   description: Yup.string()
     .transform((val) => (typeof val === "string" ? val.trim() : ""))
     .min(10, "Description must be at least 10 characters")
-    .max(200,"Description should not exceed 200 characters")
+    .max(100,"Description should not exceed 100 characters")
     .test(
       "not-blank",
       "Description cannot be only spaces",

@@ -183,7 +183,7 @@ export interface IWithdrawalRequest {
 export interface InstructorData {
   id: string;
   email: string;
-  username: string;
+  name: string;
   role: string;
   isBlocked: boolean;
   isVerified: boolean;

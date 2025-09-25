@@ -46,7 +46,7 @@ const SignUp = () => {
         toast.error(response.message);
       }
     } catch (error: any) {
-      toast.error(error.message || "Unknown error occurred");
+      toast.error(error?.response?.data?.message || "Unknown error occurred");
     }
   };
 

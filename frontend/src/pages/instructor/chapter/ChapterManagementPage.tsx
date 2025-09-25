@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { PlusCircle } from "lucide-react";
-
 import EntityTable from "../../../components/common/EntityTable";
 import Card from "../../../components/common/Card";
-
+import { useDebounce } from "../../../hooks/UseDebounce";
 import {
   getChaptersByCourse,
   deleteChapter,
@@ -22,8 +21,11 @@ const ChapterManagementPage = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(1); // fixed limit
+  const [limit] = useState(5); 
   const [total, setTotal] = useState(0);
+
+  // Debounce the search input
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchChapters = async () => {
     if (!courseId) return;
@@ -31,7 +33,7 @@ const ChapterManagementPage = () => {
       setLoading(true);
       const [courseRes, chapterRes] = await Promise.all([
         instructorGetCourseById(courseId),
-        getChaptersByCourse(courseId, page, limit, search),
+        getChaptersByCourse(courseId, page, limit, debouncedSearch), // Use debounced search
       ]);
 
       setCourseName(courseRes?.data?.courseName || "");
@@ -46,7 +48,7 @@ const ChapterManagementPage = () => {
 
   useEffect(() => {
     fetchChapters();
-  }, [courseId, page, search]);
+  }, [courseId, page, debouncedSearch]); // Depend on debouncedSearch instead of search
 
   const handleEdit = (chapter: Chapter) => {
     navigate(`/instructor/course/${courseId}/chapters/${chapter.chapterId}/edit`);

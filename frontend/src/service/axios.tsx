@@ -8,7 +8,7 @@ import { type AnyAction, type Dispatch } from "@reduxjs/toolkit";
 import { StatusCode, Roles, AuthErrorMsg } from "../utils/enums"; // Adjust path
 
 export const API: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BASEURL || "http://localhost:3001",
+  baseURL: import.meta.env.VITE_BASEURL || "http://localhost:3000",
   headers: {
     "Content-Type": "application/json",
   },

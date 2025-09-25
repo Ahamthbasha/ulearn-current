@@ -28,6 +28,7 @@ const OTPVerification = () => {
   const handleResend = async () => {
     setResendActive(false);
     setCounter(60); // Reset timer
+    setOtp(Array(4).fill("")); // Clear OTP input fields
 
     const email = localStorage.getItem("email");
     if (email) {
@@ -71,16 +72,20 @@ const OTPVerification = () => {
   const handleSubmit = async () => {
     const OTP = otp.join("");
     if (OTP.length === 4) {
-      const response = await verifyOtp(OTP);
-      if (response.success) {
-        toast.success(response.message);
-        localStorage.removeItem("verificationToken");
-        localStorage.removeItem("email");
-        setTimeout(() => {
-          navigate("/user/login");
-        }, 1000);
-      } else {
-        toast.error(response.message);
+      try {
+        const response = await verifyOtp(OTP);
+        if (response.success) {
+          toast.success(response.message);
+          localStorage.removeItem("verificationToken");
+          localStorage.removeItem("email");
+          setTimeout(() => {
+            navigate("/user/login");
+          }, 1000);
+        } else {
+          toast.error(response.message);
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "An error occurred while verifying OTP");
       }
     } else {
       toast.error("Please enter the complete OTP");

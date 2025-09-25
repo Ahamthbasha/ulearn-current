@@ -31,7 +31,7 @@ const chapterSchema = Yup.object().shape({
   description: Yup.string()
     .transform((value) => value.trim())
     .min(10, "Description must be at least 10 characters long")
-    .max(200,'chapter description should not exceed 200 characters')
+    .max(100,'chapter description should not exceed 100 characters')
     .matches(
       textOnlyRegex,
       "Description must contain only letters and single spaces"

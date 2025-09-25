@@ -72,7 +72,9 @@ export class StudentSlotBookingRepository
     searchQuery?: string,
     populate: PopulateOptions[] = [],
   ): Promise<{ data: IBooking[]; total: number }> {
-    const baseFilter = { studentId: new Types.ObjectId(studentId) };
+    const baseFilter = { studentId: new Types.ObjectId(studentId) ,
+       status:{$in:["confirmed","pending","failed"]}
+    };
 
     if (!searchQuery || !searchQuery.trim()) {
       return await this.paginate(
@@ -85,7 +87,7 @@ export class StudentSlotBookingRepository
     }
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
-    const validStatuses = ["confirmed", "pending", "cancelled", "failed"];
+    const validStatuses = ["confirmed", "pending", "failed"];
     const isStatusSearch = validStatuses.includes(trimmedQuery);
     const isValidObjectId =
       Types.ObjectId.isValid(trimmedQuery) && trimmedQuery.length === 24;
