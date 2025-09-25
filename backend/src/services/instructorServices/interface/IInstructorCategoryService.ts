@@ -1,5 +1,7 @@
 import { ICategoryModel } from "../../../models/categoryModel";
 
 export interface IInstructorCategoryService {
-  fetchActiveCategories(): Promise<ICategoryModel[]>;
+  fetchActiveCategories(): Promise<
+    Pick<ICategoryModel, "_id" | "categoryName">[]
+  >;
 }

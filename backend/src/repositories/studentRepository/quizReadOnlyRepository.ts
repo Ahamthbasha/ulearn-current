@@ -1,11 +1,16 @@
-// QuizReadOnlyRepository.ts
 import { IQuizReadOnlyRepository } from "../interfaces/IQuizReadOnlyRepository";
-import { QuizModel } from "../../models/quizModel";
+import { QuizModel, IQuiz } from "../../models/quizModel";
 import mongoose from "mongoose";
-
-export class QuizReadOnlyRepository implements IQuizReadOnlyRepository {
+import { GenericRepository } from "../genericRepository";
+export class QuizReadOnlyRepository
+  extends GenericRepository<IQuiz>
+  implements IQuizReadOnlyRepository
+{
+  constructor() {
+    super(QuizModel);
+  }
   async countQuestionsByCourse(courseId: string): Promise<number> {
-    const quiz = await QuizModel.findOne(
+    const quiz = await this.findOneWithProjection(
       { courseId: new mongoose.Types.ObjectId(courseId) },
       { questions: 1 },
     );

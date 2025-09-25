@@ -10,5 +10,5 @@ export interface IInstructorMembershipOrderController {
   getMembershipOrderDetail(req: Request, res: Response): Promise<void>;
   downloadReceipt(req: Request, res: Response): Promise<void>;
   cancelOrder(req: Request, res: Response): Promise<void>;
-  markOrderAsFailed(req:Request,res:Response):Promise<void>;
+  markOrderAsFailed(req: Request, res: Response): Promise<void>;
 }

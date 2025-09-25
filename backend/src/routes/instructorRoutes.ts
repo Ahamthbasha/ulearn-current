@@ -531,24 +531,30 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorMembershipOrderController.createRazorpayOrder.bind(instructorMembershipOrderController)
-)
+  instructorMembershipOrderController.createRazorpayOrder.bind(
+    instructorMembershipOrderController,
+  ),
+);
 
 router.post(
   "/retryOrder/:orderId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorMembershipOrderController.retryFailedOrder.bind(instructorMembershipOrderController)
-)
+  instructorMembershipOrderController.retryFailedOrder.bind(
+    instructorMembershipOrderController,
+  ),
+);
 
 router.post(
   "/cancelOrder",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorMembershipOrderController.cancelOrder.bind(instructorMembershipOrderController)
-)
+  instructorMembershipOrderController.cancelOrder.bind(
+    instructorMembershipOrderController,
+  ),
+);
 
 router.post(
   "/membership/purchaseWallet/:planId",
@@ -590,12 +596,15 @@ router.get(
   ),
 );
 
-router.post("/markOrderAsFailed",
+router.post(
+  "/markOrderAsFailed",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorMembershipOrderController.markOrderAsFailed.bind(instructorMembershipOrderController)
-)
+  instructorMembershipOrderController.markOrderAsFailed.bind(
+    instructorMembershipOrderController,
+  ),
+);
 
 //slot
 

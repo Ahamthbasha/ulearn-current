@@ -1,59 +1,12 @@
-// import { IOrder, OrderModel } from "../models/orderModel";
-// import { GenericRepository } from "./genericRepository";
-
-// export class OrderRepository extends GenericRepository<IOrder> {
-//   constructor() {
-//     super(OrderModel);
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { IOrder, OrderModel } from "../models/orderModel";
 import { IOrderRepository } from "./interfaces/IOrderRepository";
 import { GenericRepository } from "./genericRepository";
 import { ClientSession } from "mongoose";
 
-export class OrderRepository extends GenericRepository<IOrder> implements IOrderRepository {
+export class OrderRepository
+  extends GenericRepository<IOrder>
+  implements IOrderRepository
+{
   constructor() {
     super(OrderModel);
   }
@@ -70,7 +23,11 @@ export class OrderRepository extends GenericRepository<IOrder> implements IOrder
     await this.model.updateMany(filter, data).exec();
   }
 
-  async updateManyWithSession(filter: object, data: Partial<IOrder>, session: ClientSession): Promise<void> {
+  async updateManyWithSession(
+    filter: object,
+    data: Partial<IOrder>,
+    session: ClientSession,
+  ): Promise<void> {
     await this.model.updateMany(filter, data, { session }).exec();
   }
 }

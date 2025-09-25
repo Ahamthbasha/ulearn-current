@@ -18,7 +18,7 @@ export class StudentOrderService implements IStudentOrderService {
 
   constructor(
     orderRepo: IStudentOrderRepository,
-    checkoutService: IStudentCheckoutService
+    checkoutService: IStudentCheckoutService,
   ) {
     this._orderRepo = orderRepo;
     this._checkoutService = checkoutService;
@@ -28,13 +28,13 @@ export class StudentOrderService implements IStudentOrderService {
     userId: Types.ObjectId,
     page: number,
     limit: number,
-    search?: string
+    search?: string,
   ): Promise<{ orders: OrderHistoryDTO[]; total: number }> {
     const { orders, total } = await this._orderRepo.getUserOrdersPaginated(
       userId,
       page,
       limit,
-      search
+      search,
     );
 
     const orderDTOs = orders.map((order) => ({
@@ -47,7 +47,7 @@ export class StudentOrderService implements IStudentOrderService {
 
   async getOrderDetails(
     orderId: Types.ObjectId,
-    userId: Types.ObjectId
+    userId: Types.ObjectId,
   ): Promise<OrderDetailsDTO | null> {
     const order = await this._orderRepo.getOrderById(orderId, userId);
     if (!order) return null;
@@ -56,7 +56,7 @@ export class StudentOrderService implements IStudentOrderService {
       order.courses.map(async (course: any) => {
         const signedUrl = await getPresignedUrl(course.thumbnailUrl);
         return { ...course.toObject?.(), thumbnailUrl: signedUrl };
-      })
+      }),
     );
 
     const orderWithSignedUrls = {
@@ -72,7 +72,7 @@ export class StudentOrderService implements IStudentOrderService {
 
   async getOrderRaw(
     orderId: Types.ObjectId,
-    userId: Types.ObjectId
+    userId: Types.ObjectId,
   ): Promise<IOrder | null> {
     return await this._orderRepo.getOrderById(orderId, userId);
   }
@@ -85,7 +85,7 @@ export class StudentOrderService implements IStudentOrderService {
       method: string;
       amount: number;
     },
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<{
     success: boolean;
     message: string;
@@ -98,25 +98,34 @@ export class StudentOrderService implements IStudentOrderService {
     };
     order?: IOrder;
   }> {
-    const localSession = session || await mongoose.startSession();
+    const localSession = session || (await mongoose.startSession());
 
     try {
       return await localSession.withTransaction(async () => {
-        const order = await this._orderRepo.getOrderById(orderId, userId, localSession);
+        const order = await this._orderRepo.getOrderById(
+          orderId,
+          userId,
+          localSession,
+        );
         if (!order) {
           throw new Error(StudentErrorMessages.ORDER_NOT_FOUND);
         }
 
         // Check if payment verification data is provided (completing payment)
-        if (paymentData?.paymentId && paymentData?.method && paymentData?.amount) {
+        if (
+          paymentData?.paymentId &&
+          paymentData?.method &&
+          paymentData?.amount
+        ) {
           try {
-            const result = await this._checkoutService.verifyAndCompleteCheckout(
-              orderId,
-              paymentData.paymentId,
-              paymentData.method,
-              paymentData.amount,
-              localSession
-            );
+            const result =
+              await this._checkoutService.verifyAndCompleteCheckout(
+                orderId,
+                paymentData.paymentId,
+                paymentData.method,
+                paymentData.amount,
+                localSession,
+              );
             return {
               success: true,
               message: "Payment retry successful",
@@ -128,9 +137,11 @@ export class StudentOrderService implements IStudentOrderService {
               orderId,
               "FAILED",
               userId,
-              localSession
+              localSession,
             );
-            throw new Error(verifyError.message || "Payment verification failed");
+            throw new Error(
+              verifyError.message || "Payment verification failed",
+            );
           }
         }
 
@@ -160,12 +171,12 @@ export class StudentOrderService implements IStudentOrderService {
           // Update order status to PENDING and set new gateway order ID
           await this._checkoutService.updateOrder(
             orderId,
-            { 
+            {
               status: "PENDING",
-              gatewayOrderId: razorpayOrder.id 
+              gatewayOrderId: razorpayOrder.id,
             },
             userId,
-            localSession
+            localSession,
           );
 
           return {
@@ -192,17 +203,21 @@ export class StudentOrderService implements IStudentOrderService {
   async markOrderAsFailed(
     orderId: Types.ObjectId,
     userId: Types.ObjectId,
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<{
     success: boolean;
     message: string;
     order?: IOrder;
   }> {
-    const localSession = session || await mongoose.startSession();
+    const localSession = session || (await mongoose.startSession());
 
     try {
       return await localSession.withTransaction(async () => {
-        const order = await this._orderRepo.getOrderById(orderId, userId, localSession);
+        const order = await this._orderRepo.getOrderById(
+          orderId,
+          userId,
+          localSession,
+        );
         if (!order) {
           throw new Error(StudentErrorMessages.ORDER_NOT_FOUND);
         }
@@ -215,10 +230,14 @@ export class StudentOrderService implements IStudentOrderService {
           orderId,
           "FAILED",
           userId,
-          localSession
+          localSession,
         );
 
-        const updatedOrder = await this._orderRepo.getOrderById(orderId, userId, localSession);
+        const updatedOrder = await this._orderRepo.getOrderById(
+          orderId,
+          userId,
+          localSession,
+        );
 
         return {
           success: true,

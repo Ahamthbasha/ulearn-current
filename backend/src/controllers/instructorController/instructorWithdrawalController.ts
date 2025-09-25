@@ -104,9 +104,11 @@ export class InstructorWithdrawalController
       });
     } catch (error: any) {
       console.error(error);
-      const statusCode = error.message.includes("not found")
+      const statusCode = error.message.includes(
+        INSTRUCTOR_ERROR_MESSAGE.NOT_FOUND,
+      )
         ? StatusCode.NOT_FOUND
-        : error.message.includes("Only rejected")
+        : error.message.includes(INSTRUCTOR_ERROR_MESSAGE.ONLY_REJECTED)
           ? StatusCode.BAD_REQUEST
           : StatusCode.INTERNAL_SERVER_ERROR;
 

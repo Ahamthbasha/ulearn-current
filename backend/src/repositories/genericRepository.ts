@@ -1,1004 +1,12 @@
-// import {
-//   Model,
-//   Document,
-//   SortOrder,
-//   PopulateOptions,
-//   PipelineStage,
-//   ClientSession,
-//   HydratedDocument,
-// } from "mongoose";
-
-
-// import mongoose from "mongoose";
-// export interface MongooseOptions {
-//   session?: ClientSession;
-//   new?: boolean;
-//   upsert?: boolean;
-//   [key: string]: any;
-// }
-
-// type PopulateArg = PopulateOptions | PopulateOptions[] | string[];
-
-// export interface IGenericRepository<T extends Document> {
-//   create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
-//   create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
-//   createWithSession(data: Partial<T>, session: mongoose.ClientSession): Promise<T>;
-//   createManyWithSession(data: Partial<T>[], session: mongoose.ClientSession): Promise<T[]>;
-  
-//   findOne(
-//     filter: object,
-//     populate?: PopulateArg,
-//     session?: ClientSession,
-//   ): Promise<T | null>;
-  
-//   findById(id: string): Promise<T | null>;
-//   findByIdWithLock(id: string, session: mongoose.ClientSession): Promise<T | null>;
-
-//   findAll(
-//     filter?: object,
-//     populate?: PopulateArg,
-//     sort?: Record<string, SortOrder>,
-//   ): Promise<T[] | null>;
-//   findAllWithSession(filter: any, session: mongoose.ClientSession): Promise<T[] | null>;
-
-//   update(
-//     id: string,
-//     data: Partial<T>,
-//     options?: MongooseOptions,
-//   ): Promise<T | null>;
-//   updateWithSession(id: string, data: Partial<T>, session: mongoose.ClientSession): Promise<T | null>;
-  
-//   updateOne(filter: object, data: Partial<T>): Promise<T | null>;
-  
-//   delete(id: string): Promise<T | null>;
-//   deleteWithSession(id: string, session: mongoose.ClientSession): Promise<T | null>;
-
-//   findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null>;
-//   updateOneWithPopulate(
-//     filter: object,
-//     data: Partial<T> | Record<string, any>,
-//     populate?: PopulateArg,
-//   ): Promise<T | null>;
-//   paginate(
-//     filter: object,
-//     page: number,
-//     limit: number,
-//     sort?: Record<string, SortOrder>,
-//     populate?: PopulateArg,
-//   ): Promise<{ data: T[]; total: number }>;
-//   findOneAndUpdate(
-//     filter: object,
-//     update: object,
-//     options?: MongooseOptions,
-//   ): Promise<T | null>;
-//   aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
-//   find(
-//     filter: object,
-//     populate?: PopulateArg,
-//     sort?: Record<string, SortOrder>,
-//   ): Promise<T[]>;
-//   countDocuments(filter: object): Promise<number>;
-// }
-
-// export class GenericRepository<T extends Document> {
-//   protected model: Model<T>;
-
-//   constructor(model: Model<T>) {
-//     this.model = model;
-//   }
-
-//   async create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
-//   async create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
-//   async create(
-//     payload: Partial<T> | Partial<T>[],
-//     options?: MongooseOptions,
-//   ): Promise<T | T[]> {
-//     if (!Array.isArray(payload)) {
-//       const result = await this.model.create([payload], options);
-//       return result[0] as HydratedDocument<T>;
-//     }
-//     return (await this.model.create(payload, options)) as HydratedDocument<T>[];
-//   }
-
-
-
-
-//   async findOne(
-//     filter: object,
-//     populate?: PopulateArg,
-//     session?: ClientSession,
-//   ): Promise<T | null> {
-//     let query = this.model.findOne(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (session) {
-//       query = query.session(session);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findAll(
-//     filter: object = {},
-//     populate?: PopulateArg,
-//     sort: Record<string, SortOrder> = {},
-//   ): Promise<T[]> {
-//     let query = this.model.find(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (Object.keys(sort).length > 0) {
-//       query = query.sort(sort);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findById(id: string): Promise<T | null> {
-//     return await this.model.findById(id).exec();
-//   }
-
-//   async update(
-//     id: string,
-//     data: Partial<T>,
-//     options: MongooseOptions = { new: true },
-//   ): Promise<T | null> {
-//     return await this.model.findByIdAndUpdate(id, data, options).exec();
-//   }
-
-//   async updateOne(filter: object, data: Partial<T>): Promise<T | null> {
-//     const updatedDoc = await this.model
-//       .findOneAndUpdate(filter, data, {
-//         new: true,
-//         upsert: false,
-//       })
-//       .exec();
-//     if (!updatedDoc) {
-//       console.warn("No document found to update with filter:", filter);
-//     }
-//     return updatedDoc;
-//   }
-
-//   async delete(id: string): Promise<T | null> {
-//     return await this.model.findByIdAndDelete(id).exec();
-//   }
-
-//   async paginate(
-//     filter: object,
-//     page: number,
-//     limit: number,
-//     sort: Record<string, SortOrder> = { createdAt: -1 },
-//     populate?: PopulateArg,
-//   ): Promise<{ data: T[]; total: number }> {
-//     const total = await this.model.countDocuments(filter).exec();
-//     let query = this.model.find(filter).sort(sort);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     const data = await query
-//       .skip((page - 1) * limit)
-//       .limit(limit)
-//       .exec();
-//     return { data, total };
-//   }
-
-//   async findByIdWithPopulate(
-//     id: string,
-//     populate?: PopulateArg,
-//   ): Promise<T | null> {
-//     let query = this.model.findById(id);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     return await query.exec();
-//   }
-
-//   async updateOneWithPopulate(
-//     filter: object,
-//     data: Partial<T> | Record<string, any>,
-//     populate?: PopulateArg,
-//   ): Promise<T | null> {
-//     let query = this.model.findOneAndUpdate(filter, data, {
-//       new: true,
-//       upsert: false,
-//     });
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findOneAndUpdate(
-//     filter: object,
-//     update: object,
-//     options: MongooseOptions = { new: true },
-//   ): Promise<T | null> {
-//     return await this.model.findOneAndUpdate(filter, update, options).exec();
-//   }
-
-//   async aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]> {
-//     return await this.model.aggregate<R>(pipeline).exec();
-//   }
-
-//   async find(
-//     filter: object = {},
-//     populate?: PopulateArg,
-//     sort: Record<string, SortOrder> = {},
-//   ): Promise<T[]> {
-//     let query = this.model.find(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (Object.keys(sort).length > 0) {
-//       query = query.sort(sort);
-//     }
-//     return await query.exec();
-//   }
-
-//   async countDocuments(filter: object): Promise<number> {
-//     return await this.model.countDocuments(filter).exec();
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import {
-//   Model,
-//   Document,
-//   SortOrder,
-//   PopulateOptions,
-//   PipelineStage,
-//   ClientSession,
-//   HydratedDocument,
-// } from "mongoose";
-// import mongoose from "mongoose";
-
-// export interface MongooseOptions {
-//   session?: ClientSession;
-//   new?: boolean;
-//   upsert?: boolean;
-//   [key: string]: any;
-// }
-
-// type PopulateArg = PopulateOptions | PopulateOptions[] | string[];
-
-// export interface IGenericRepository<T extends Document> {
-//   create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
-//   create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
-//   createWithSession(data: Partial<T>, session: mongoose.ClientSession): Promise<T>;
-//   createManyWithSession(data: Partial<T>[], session: mongoose.ClientSession): Promise<T[]>;
-  
-//   findOne(
-//     filter: object,
-//     populate?: PopulateArg,
-//     session?: ClientSession,
-//   ): Promise<T | null>;
-  
-//   findById(id: string): Promise<T | null>;
-//   findByIdWithLock(id: string, session: mongoose.ClientSession): Promise<T | null>;
-
-//   findAll(
-//     filter?: object,
-//     populate?: PopulateArg,
-//     sort?: Record<string, SortOrder>,
-//   ): Promise<T[] | null>;
-//   findAllWithSession(filter: any, session: mongoose.ClientSession): Promise<T[] | null>;
-
-//   update(
-//     id: string,
-//     data: Partial<T>,
-//     options?: MongooseOptions,
-//   ): Promise<T | null>;
-//   updateWithSession(id: string, data: Partial<T>, session: mongoose.ClientSession): Promise<T | null>;
-  
-//   updateOne(filter: object, data: Partial<T>): Promise<T | null>;
-  
-//   delete(id: string): Promise<T | null>;
-//   deleteWithSession(id: string, session: mongoose.ClientSession): Promise<T | null>;
-
-//   findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null>;
-//   updateOneWithPopulate(
-//     filter: object,
-//     data: Partial<T> | Record<string, any>,
-//     populate?: PopulateArg,
-//   ): Promise<T | null>;
-//   paginate(
-//     filter: object,
-//     page: number,
-//     limit: number,
-//     sort?: Record<string, SortOrder>,
-//     populate?: PopulateArg,
-//   ): Promise<{ data: T[]; total: number }>;
-//   findOneAndUpdate(
-//     filter: object,
-//     update: object,
-//     options?: MongooseOptions,
-//   ): Promise<T | null>;
-//   aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
-//   find(
-//     filter: object,
-//     populate?: PopulateArg,
-//     sort?: Record<string, SortOrder>,
-//   ): Promise<T[]>;
-//   countDocuments(filter: object): Promise<number>;
-// }
-
-// export class GenericRepository<T extends Document> implements IGenericRepository<T> {
-//   protected model: Model<T>;
-
-//   constructor(model: Model<T>) {
-//     this.model = model;
-//   }
-
-//   async create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
-//   async create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
-//   async create(
-//     payload: Partial<T> | Partial<T>[],
-//     options?: MongooseOptions,
-//   ): Promise<T | T[]> {
-//     if (!Array.isArray(payload)) {
-//       const result = await this.model.create([payload], options);
-//       return result[0] as HydratedDocument<T>;
-//     }
-//     return (await this.model.create(payload, options)) as HydratedDocument<T>[];
-//   }
-
-//   // ✅ NEW: Transaction-aware create methods
-//   async createWithSession(data: Partial<T>, session: mongoose.ClientSession): Promise<T> {
-//     const result = await this.model.create([data], { session });
-//     return result[0] as HydratedDocument<T>;
-//   }
-
-//   async createManyWithSession(data: Partial<T>[], session: mongoose.ClientSession): Promise<T[]> {
-//     return (await this.model.create(data, { session })) as HydratedDocument<T>[];
-//   }
-
-//   async findOne(
-//     filter: object,
-//     populate?: PopulateArg,
-//     session?: ClientSession,
-//   ): Promise<T | null> {
-//     let query = this.model.findOne(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (session) {
-//       query = query.session(session);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findAll(
-//     filter: object = {},
-//     populate?: PopulateArg,
-//     sort: Record<string, SortOrder> = {},
-//   ): Promise<T[]> {
-//     let query = this.model.find(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (Object.keys(sort).length > 0) {
-//       query = query.sort(sort);
-//     }
-//     return await query.exec();
-//   }
-
-//   // ✅ NEW: Transaction-aware findAll
-//   async findAllWithSession(filter: any, session: mongoose.ClientSession): Promise<T[] | null> {
-//     return this.model.find(filter).session(session).exec();
-//   }
-
-//   async findById(id: string): Promise<T | null> {
-//     return await this.model.findById(id).exec();
-//   }
-
-//   // ✅ NEW: Pessimistic locking with session
-//   async findByIdWithLock(id: string, session: mongoose.ClientSession): Promise<T | null> {
-//     // Use findOneAndUpdate with no actual update to acquire a write lock
-//     return this.model.findOneAndUpdate(
-//       { _id: id },
-//       {},
-//       { 
-//         session,
-//         new: true,
-//         runValidators: false // We're not actually updating anything
-//       }
-//     ).exec();
-//   }
-
-//   async update(
-//     id: string,
-//     data: Partial<T>,
-//     options: MongooseOptions = { new: true },
-//   ): Promise<T | null> {
-//     return await this.model.findByIdAndUpdate(id, data, options).exec();
-//   }
-
-//   // ✅ NEW: Transaction-aware update
-//   async updateWithSession(
-//     id: string, 
-//     data: Partial<T>, 
-//     session: mongoose.ClientSession
-//   ): Promise<T | null> {
-//     return this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
-//   }
-
-//   async updateOne(filter: object, data: Partial<T>): Promise<T | null> {
-//     const updatedDoc = await this.model
-//       .findOneAndUpdate(filter, data, {
-//         new: true,
-//         upsert: false,
-//       })
-//       .exec();
-//     if (!updatedDoc) {
-//       console.warn("No document found to update with filter:", filter);
-//     }
-//     return updatedDoc;
-//   }
-
-//   async delete(id: string): Promise<T | null> {
-//     return await this.model.findByIdAndDelete(id).exec();
-//   }
-
-//   // ✅ NEW: Transaction-aware delete
-//   async deleteWithSession(id: string, session: mongoose.ClientSession): Promise<T | null> {
-//     return this.model.findByIdAndDelete(id, { session }).exec();
-//   }
-
-//   async paginate(
-//     filter: object,
-//     page: number,
-//     limit: number,
-//     sort: Record<string, SortOrder> = { createdAt: -1 },
-//     populate?: PopulateArg,
-//   ): Promise<{ data: T[]; total: number }> {
-//     const total = await this.model.countDocuments(filter).exec();
-//     let query = this.model.find(filter).sort(sort);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     const data = await query
-//       .skip((page - 1) * limit)
-//       .limit(limit)
-//       .exec();
-//     return { data, total };
-//   }
-
-//   async findByIdWithPopulate(
-//     id: string,
-//     populate?: PopulateArg,
-//   ): Promise<T | null> {
-//     let query = this.model.findById(id);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     return await query.exec();
-//   }
-
-//   async updateOneWithPopulate(
-//     filter: object,
-//     data: Partial<T> | Record<string, any>,
-//     populate?: PopulateArg,
-//   ): Promise<T | null> {
-//     let query = this.model.findOneAndUpdate(filter, data, {
-//       new: true,
-//       upsert: false,
-//     });
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findOneAndUpdate(
-//     filter: object,
-//     update: object,
-//     options: MongooseOptions = { new: true },
-//   ): Promise<T | null> {
-//     return await this.model.findOneAndUpdate(filter, update, options).exec();
-//   }
-
-//   async aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]> {
-//     return await this.model.aggregate<R>(pipeline).exec();
-//   }
-
-//   async find(
-//     filter: object = {},
-//     populate?: PopulateArg,
-//     sort: Record<string, SortOrder> = {},
-//   ): Promise<T[]> {
-//     let query = this.model.find(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (Object.keys(sort).length > 0) {
-//       query = query.sort(sort);
-//     }
-//     return await query.exec();
-//   }
-
-//   async countDocuments(filter: object): Promise<number> {
-//     return await this.model.countDocuments(filter).exec();
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import {
-//   Model,
-//   Document,
-//   SortOrder,
-//   PopulateOptions,
-//   PipelineStage,
-//   ClientSession,
-//   HydratedDocument,
-// } from "mongoose";
-// import mongoose from "mongoose";
-
-// export interface MongooseOptions {
-//   session?: ClientSession;
-//   new?: boolean;
-//   upsert?: boolean;
-//   [key: string]: any;
-// }
-
-// type PopulateArg = PopulateOptions | PopulateOptions[] | string[];
-
-// export interface IGenericRepository<T extends Document> {
-//   create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
-//   create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
-//   createWithSession(data: Partial<T>, session: mongoose.ClientSession): Promise<T>;
-//   createManyWithSession(data: Partial<T>[], session: mongoose.ClientSession): Promise<T[]>;
-  
-//   findOne(
-//     filter: object,
-//     populate?: PopulateArg,
-//     session?: ClientSession,
-//   ): Promise<T | null>;
-  
-//   findById(id: string): Promise<T | null>;
-//   findByIdWithLock(id: string, session: mongoose.ClientSession): Promise<T | null>;
-
-//   findAll(
-//     filter?: object,
-//     populate?: PopulateArg,
-//     sort?: Record<string, SortOrder>,
-//   ): Promise<T[] | null>;
-//   findAllWithSession(filter: any, session: mongoose.ClientSession): Promise<T[] | null>;
-
-//   update(
-//     id: string,
-//     data: Partial<T>,
-//     options?: MongooseOptions,
-//   ): Promise<T | null>;
-//   updateWithSession(id: string, data: Partial<T>, session: mongoose.ClientSession): Promise<T | null>;
-  
-//   updateOne(
-//     filter: object,
-//     data: Partial<T>,
-//     options?: MongooseOptions,
-//   ): Promise<T | null>;
-  
-//   delete(id: string): Promise<T | null>;
-//   deleteWithSession(id: string, session: mongoose.ClientSession): Promise<T | null>;
-
-//   findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null>;
-//   updateOneWithPopulate(
-//     filter: object,
-//     data: Partial<T> | Record<string, any>,
-//     populate?: PopulateArg,
-//   ): Promise<T | null>;
-//   paginate(
-//     filter: object,
-//     page: number,
-//     limit: number,
-//     sort?: Record<string, SortOrder>,
-//     populate?: PopulateArg,
-//   ): Promise<{ data: T[]; total: number }>;
-//   findOneAndUpdate(
-//     filter: object,
-//     update: object,
-//     options?: MongooseOptions,
-//   ): Promise<T | null>;
-//   aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
-//   find(
-//     filter: object,
-//     populate?: PopulateArg,
-//     sort?: Record<string, SortOrder>,
-//   ): Promise<T[]>;
-//   countDocuments(filter: object): Promise<number>;
-// }
-
-// export class GenericRepository<T extends Document> implements IGenericRepository<T> {
-//   protected model: Model<T>;
-
-//   constructor(model: Model<T>) {
-//     this.model = model;
-//   }
-
-//   async create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
-//   async create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
-//   async create(
-//     payload: Partial<T> | Partial<T>[],
-//     options?: MongooseOptions,
-//   ): Promise<T | T[]> {
-//     if (!Array.isArray(payload)) {
-//       const result = await this.model.create([payload], options);
-//       return result[0] as HydratedDocument<T>;
-//     }
-//     return (await this.model.create(payload, options)) as HydratedDocument<T>[];
-//   }
-
-//   async createWithSession(data: Partial<T>, session: mongoose.ClientSession): Promise<T> {
-//     const result = await this.model.create([data], { session });
-//     return result[0] as HydratedDocument<T>;
-//   }
-
-//   async createManyWithSession(data: Partial<T>[], session: mongoose.ClientSession): Promise<T[]> {
-//     return (await this.model.create(data, { session })) as HydratedDocument<T>[];
-//   }
-
-//   async findOne(
-//     filter: object,
-//     populate?: PopulateArg,
-//     session?: ClientSession,
-//   ): Promise<T | null> {
-//     let query = this.model.findOne(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (session) {
-//       query = query.session(session);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findAll(
-//     filter: object = {},
-//     populate?: PopulateArg,
-//     sort: Record<string, SortOrder> = {},
-//   ): Promise<T[]> {
-//     let query = this.model.find(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (Object.keys(sort).length > 0) {
-//       query = query.sort(sort);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findAllWithSession(filter: any, session: mongoose.ClientSession): Promise<T[] | null> {
-//     return this.model.find(filter).session(session).exec();
-//   }
-
-//   async findById(id: string): Promise<T | null> {
-//     return await this.model.findById(id).exec();
-//   }
-
-//   async findByIdWithLock(id: string, session: mongoose.ClientSession): Promise<T | null> {
-//     return this.model.findOneAndUpdate(
-//       { _id: id },
-//       {},
-//       { 
-//         session,
-//         new: true,
-//         runValidators: false 
-//       }
-//     ).exec();
-//   }
-
-//   async update(
-//     id: string,
-//     data: Partial<T>,
-//     options: MongooseOptions = { new: true },
-//   ): Promise<T | null> {
-//     return await this.model.findByIdAndUpdate(id, data, options).exec();
-//   }
-
-//   async updateWithSession(
-//     id: string, 
-//     data: Partial<T>, 
-//     session: mongoose.ClientSession
-//   ): Promise<T | null> {
-//     return this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
-//   }
-
-//   async updateOne(
-//     filter: object,
-//     data: Partial<T>,
-//     options?: MongooseOptions,
-//   ): Promise<T | null> {
-//     const updatedDoc = await this.model
-//       .findOneAndUpdate(filter, data, {
-//         new: true,
-//         upsert: false,
-//         ...options,
-//       })
-//       .exec();
-//     if (!updatedDoc) {
-//       console.warn("No document found to update with filter:", filter);
-//     }
-//     return updatedDoc;
-//   }
-
-//   async delete(id: string): Promise<T | null> {
-//     return await this.model.findByIdAndDelete(id).exec();
-//   }
-
-//   async deleteWithSession(id: string, session: mongoose.ClientSession): Promise<T | null> {
-//     return this.model.findByIdAndDelete(id, { session }).exec();
-//   }
-
-//   async paginate(
-//     filter: object,
-//     page: number,
-//     limit: number,
-//     sort: Record<string, SortOrder> = { createdAt: -1 },
-//     populate?: PopulateArg,
-//   ): Promise<{ data: T[]; total: number }> {
-//     const total = await this.model.countDocuments(filter).exec();
-//     let query = this.model.find(filter).sort(sort);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     const data = await query
-//       .skip((page - 1) * limit)
-//       .limit(limit)
-//       .exec();
-//     return { data, total };
-//   }
-
-//   async findByIdWithPopulate(
-//     id: string,
-//     populate?: PopulateArg,
-//   ): Promise<T | null> {
-//     let query = this.model.findById(id);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     return await query.exec();
-//   }
-
-//   async updateOneWithPopulate(
-//     filter: object,
-//     data: Partial<T> | Record<string, any>,
-//     populate?: PopulateArg,
-//   ): Promise<T | null> {
-//     let query = this.model.findOneAndUpdate(filter, data, {
-//       new: true,
-//       upsert: false,
-//     });
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     return await query.exec();
-//   }
-
-//   async findOneAndUpdate(
-//     filter: object,
-//     update: object,
-//     options: MongooseOptions = { new: true },
-//   ): Promise<T | null> {
-//     return await this.model.findOneAndUpdate(filter, update, options).exec();
-//   }
-
-//   async aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]> {
-//     return await this.model.aggregate<R>(pipeline).exec();
-//   }
-
-//   async find(
-//     filter: object = {},
-//     populate?: PopulateArg,
-//     sort: Record<string, SortOrder> = {},
-//   ): Promise<T[]> {
-//     let query = this.model.find(filter);
-//     if (populate) {
-//       query = query.populate(populate);
-//     }
-//     if (Object.keys(sort).length > 0) {
-//       query = query.sort(sort);
-//     }
-//     return await query.exec();
-//   }
-
-//   async countDocuments(filter: object): Promise<number> {
-//     return await this.model.countDocuments(filter).exec();
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import { Model, Document, SortOrder, PopulateOptions, PipelineStage, ClientSession, HydratedDocument } from "mongoose";
+import {
+  Model,
+  Document,
+  SortOrder,
+  PopulateOptions,
+  PipelineStage,
+  ClientSession,
+  HydratedDocument,
+} from "mongoose";
 
 export interface MongooseOptions {
   session?: ClientSession;
@@ -1013,40 +21,100 @@ export interface IGenericRepository<T extends Document> {
   create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
   create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
   createWithSession(data: Partial<T>, session: ClientSession): Promise<T>;
-  createManyWithSession(data: Partial<T>[], session: ClientSession): Promise<T[]>;
-  
-  findOne(filter: object, populate?: PopulateArg, session?: ClientSession): Promise<T | null>;
+  createManyWithSession(
+    data: Partial<T>[],
+    session: ClientSession,
+  ): Promise<T[]>;
+
+  findOne(
+    filter: object,
+    populate?: PopulateArg,
+    session?: ClientSession,
+  ): Promise<T | null>;
   findById(id: string, session?: ClientSession): Promise<T | null>;
   findByIdWithLock(id: string, session: ClientSession): Promise<T | null>;
 
-  findAll(filter?: object, populate?: PopulateArg, sort?: Record<string, SortOrder>): Promise<T[] | null>;
+  findAll(
+    filter?: object,
+    populate?: PopulateArg,
+    sort?: Record<string, SortOrder>,
+  ): Promise<T[] | null>;
   findAllWithSession(filter: any, session: ClientSession): Promise<T[] | null>;
 
-  update(id: string, data: Partial<T>, options?: MongooseOptions): Promise<T | null>;
-  updateWithSession(id: string, data: Partial<T>, session: ClientSession): Promise<T | null>;
-  
-  updateOne(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<T | null>;
-  updateMany(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<void>;
-  
+  update(
+    id: string,
+    data: Partial<T>,
+    options?: MongooseOptions,
+  ): Promise<T | null>;
+  updateWithSession(
+    id: string,
+    data: Partial<T>,
+    session: ClientSession,
+  ): Promise<T | null>;
+
+  updateOne(
+    filter: object,
+    data: Partial<T>,
+    options?: MongooseOptions,
+  ): Promise<T | null>;
+  updateMany(
+    filter: object,
+    data: Partial<T>,
+    options?: MongooseOptions,
+  ): Promise<void>;
+
   delete(id: string): Promise<T | null>;
   deleteWithSession(id: string, session: ClientSession): Promise<T | null>;
 
   findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null>;
-  updateOneWithPopulate(filter: object, data: Partial<T> | Record<string, any>, populate?: PopulateArg): Promise<T | null>;
+  updateOneWithPopulate(
+    filter: object,
+    data: Partial<T> | Record<string, any>,
+    populate?: PopulateArg,
+  ): Promise<T | null>;
   paginate(
     filter: object,
     page: number,
     limit: number,
     sort?: Record<string, SortOrder>,
-    populate?: PopulateArg
+    populate?: PopulateArg,
   ): Promise<{ data: T[]; total: number }>;
-  findOneAndUpdate(filter: object, update: object, options?: MongooseOptions): Promise<T | null>;
+  findOneAndUpdate(
+    filter: object,
+    update: object,
+    options?: MongooseOptions,
+  ): Promise<T | null>;
   aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
-  find(filter: object, populate?: PopulateArg, sort?: Record<string, SortOrder>): Promise<T[]>;
+  find(
+    filter: object,
+    populate?: PopulateArg,
+    sort?: Record<string, SortOrder>,
+  ): Promise<T[]>;
   countDocuments(filter: object): Promise<number>;
+
+  findWithProjection(
+    filter: object,
+    projection: object,
+    populate?: PopulateArg,
+    sort?: Record<string, SortOrder>,
+  ): Promise<T[]>;
+
+  findOneWithProjection(
+    filter: object,
+    projection: object,
+    populate?: PopulateArg,
+    session?: ClientSession,
+  ): Promise<T | null>;
+
+  findOneAndDelete(
+    filter: object,
+    options?: MongooseOptions,
+  ): Promise<T | null>;
 }
 
-export class GenericRepository<T extends Document> implements IGenericRepository<T> {
+export class GenericRepository<T extends Document>
+  implements IGenericRepository<T>
+{
   protected model: Model<T>;
 
   constructor(model: Model<T>) {
@@ -1055,7 +123,10 @@ export class GenericRepository<T extends Document> implements IGenericRepository
 
   async create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
   async create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
-  async create(payload: Partial<T> | Partial<T>[], options?: MongooseOptions): Promise<T | T[]> {
+  async create(
+    payload: Partial<T> | Partial<T>[],
+    options?: MongooseOptions,
+  ): Promise<T | T[]> {
     if (!Array.isArray(payload)) {
       const result = await this.model.create([payload], options);
       return result[0] as HydratedDocument<T>;
@@ -1063,23 +134,39 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     return (await this.model.create(payload, options)) as HydratedDocument<T>[];
   }
 
-  async createWithSession(data: Partial<T>, session: ClientSession): Promise<T> {
+  async createWithSession(
+    data: Partial<T>,
+    session: ClientSession,
+  ): Promise<T> {
     const result = await this.model.create([data], { session });
     return result[0] as HydratedDocument<T>;
   }
 
-  async createManyWithSession(data: Partial<T>[], session: ClientSession): Promise<T[]> {
-    return (await this.model.create(data, { session })) as HydratedDocument<T>[];
+  async createManyWithSession(
+    data: Partial<T>[],
+    session: ClientSession,
+  ): Promise<T[]> {
+    return (await this.model.create(data, {
+      session,
+    })) as HydratedDocument<T>[];
   }
 
-  async findOne(filter: object, populate?: PopulateArg, session?: ClientSession): Promise<T | null> {
+  async findOne(
+    filter: object,
+    populate?: PopulateArg,
+    session?: ClientSession,
+  ): Promise<T | null> {
     let query = this.model.findOne(filter);
     if (populate) query = query.populate(populate);
     if (session) query = query.session(session);
     return await query.exec();
   }
 
-  async findAll(filter: object = {}, populate?: PopulateArg, sort: Record<string, SortOrder> = {}): Promise<T[]> {
+  async findAll(
+    filter: object = {},
+    populate?: PopulateArg,
+    sort: Record<string, SortOrder> = {},
+  ): Promise<T[]> {
     let query = this.model.find(filter);
     if (populate) query = query.populate(populate);
     if (Object.keys(sort).length > 0) query = query.sort(sort);
@@ -1096,21 +183,42 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     return await query.exec();
   }
 
-  async findByIdWithLock(id: string, session: ClientSession): Promise<T | null> {
+  async findByIdWithLock(
+    id: string,
+    session: ClientSession,
+  ): Promise<T | null> {
     return await this.model
-      .findOneAndUpdate({ _id: id }, {}, { session, new: true, runValidators: false })
+      .findOneAndUpdate(
+        { _id: id },
+        {},
+        { session, new: true, runValidators: false },
+      )
       .exec();
   }
 
-  async update(id: string, data: Partial<T>, options: MongooseOptions = { new: true }): Promise<T | null> {
+  async update(
+    id: string,
+    data: Partial<T>,
+    options: MongooseOptions = { new: true },
+  ): Promise<T | null> {
     return await this.model.findByIdAndUpdate(id, data, options).exec();
   }
 
-  async updateWithSession(id: string, data: Partial<T>, session: ClientSession): Promise<T | null> {
-    return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
+  async updateWithSession(
+    id: string,
+    data: Partial<T>,
+    session: ClientSession,
+  ): Promise<T | null> {
+    return await this.model
+      .findByIdAndUpdate(id, data, { new: true, session })
+      .exec();
   }
 
-  async updateOne(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<T | null> {
+  async updateOne(
+    filter: object,
+    data: Partial<T>,
+    options?: MongooseOptions,
+  ): Promise<T | null> {
     const updatedDoc = await this.model
       .findOneAndUpdate(filter, data, { new: true, upsert: false, ...options })
       .exec();
@@ -1120,7 +228,11 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     return updatedDoc;
   }
 
-  async updateMany(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<void> {
+  async updateMany(
+    filter: object,
+    data: Partial<T>,
+    options?: MongooseOptions,
+  ): Promise<void> {
     await this.model.updateMany(filter, data, options).exec();
   }
 
@@ -1128,7 +240,10 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     return await this.model.findByIdAndDelete(id).exec();
   }
 
-  async deleteWithSession(id: string, session: ClientSession): Promise<T | null> {
+  async deleteWithSession(
+    id: string,
+    session: ClientSession,
+  ): Promise<T | null> {
     return await this.model.findByIdAndDelete(id, { session }).exec();
   }
 
@@ -1137,16 +252,22 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     page: number,
     limit: number,
     sort: Record<string, SortOrder> = { createdAt: -1 },
-    populate?: PopulateArg
+    populate?: PopulateArg,
   ): Promise<{ data: T[]; total: number }> {
     const total = await this.model.countDocuments(filter).exec();
     let query = this.model.find(filter).sort(sort);
     if (populate) query = query.populate(populate);
-    const data = await query.skip((page - 1) * limit).limit(limit).exec();
+    const data = await query
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec();
     return { data, total };
   }
 
-  async findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null> {
+  async findByIdWithPopulate(
+    id: string,
+    populate?: PopulateArg,
+  ): Promise<T | null> {
     let query = this.model.findById(id);
     if (populate) query = query.populate(populate);
     return await query.exec();
@@ -1155,14 +276,21 @@ export class GenericRepository<T extends Document> implements IGenericRepository
   async updateOneWithPopulate(
     filter: object,
     data: Partial<T> | Record<string, any>,
-    populate?: PopulateArg
+    populate?: PopulateArg,
   ): Promise<T | null> {
-    let query = this.model.findOneAndUpdate(filter, data, { new: true, upsert: false });
+    let query = this.model.findOneAndUpdate(filter, data, {
+      new: true,
+      upsert: false,
+    });
     if (populate) query = query.populate(populate);
     return await query.exec();
   }
 
-  async findOneAndUpdate(filter: object, update: object, options: MongooseOptions = { new: true }): Promise<T | null> {
+  async findOneAndUpdate(
+    filter: object,
+    update: object,
+    options: MongooseOptions = { new: true },
+  ): Promise<T | null> {
     return await this.model.findOneAndUpdate(filter, update, options).exec();
   }
 
@@ -1170,7 +298,11 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     return await this.model.aggregate<R>(pipeline).exec();
   }
 
-  async find(filter: object = {}, populate?: PopulateArg, sort: Record<string, SortOrder> = {}): Promise<T[]> {
+  async find(
+    filter: object = {},
+    populate?: PopulateArg,
+    sort: Record<string, SortOrder> = {},
+  ): Promise<T[]> {
     let query = this.model.find(filter);
     if (populate) query = query.populate(populate);
     if (Object.keys(sort).length > 0) query = query.sort(sort);
@@ -1179,5 +311,36 @@ export class GenericRepository<T extends Document> implements IGenericRepository
 
   async countDocuments(filter: object): Promise<number> {
     return await this.model.countDocuments(filter).exec();
+  }
+
+  async findWithProjection(
+    filter: object = {},
+    projection: object = {},
+    populate?: PopulateArg,
+    sort: Record<string, SortOrder> = {},
+  ): Promise<T[]> {
+    let query = this.model.find(filter, projection);
+    if (populate) query = query.populate(populate);
+    if (Object.keys(sort).length > 0) query = query.sort(sort);
+    return await query.exec();
+  }
+
+  async findOneWithProjection(
+    filter: object,
+    projection: object,
+    populate?: PopulateArg,
+    session?: ClientSession,
+  ): Promise<T | null> {
+    let query = this.model.findOne(filter, projection);
+    if (populate) query = query.populate(populate);
+    if (session) query = query.session(session);
+    return await query.exec();
+  }
+
+  async findOneAndDelete(
+    filter: object,
+    options?: MongooseOptions,
+  ): Promise<T | null> {
+    return await this.model.findOneAndDelete(filter, options).exec();
   }
 }

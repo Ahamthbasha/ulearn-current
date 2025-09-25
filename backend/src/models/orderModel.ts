@@ -19,7 +19,7 @@ const orderSchema = new Schema<IOrder>(
     amount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["PENDING", "SUCCESS", "FAILED","CANCELLED"],
+      enum: ["PENDING", "SUCCESS", "FAILED", "CANCELLED"],
       default: "PENDING",
     },
     gateway: {

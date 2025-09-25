@@ -18,18 +18,18 @@ export class InstructorCourseRepository
     courseId: string,
     courseData: Partial<ICourse>,
   ): Promise<ICourse | null> {
-    return await this.update(courseId, courseData); // ✅ using GenericRepository method
+    return await this.update(courseId, courseData);
   }
 
   async deleteCourse(courseId: string): Promise<ICourse | null> {
-    return await this.delete(courseId); // ✅ using GenericRepository method
+    return await this.delete(courseId);
   }
 
   async getCourseById(courseId: string): Promise<ICourse | null> {
     return await this.findByIdWithPopulate(courseId, {
       path: "category",
       select: "categoryName",
-    }); // ✅ using GenericRepository method
+    });
   }
 
   async getCoursesByInstructorWithPagination(
@@ -37,22 +37,20 @@ export class InstructorCourseRepository
     page: number,
     limit: number,
     search: string = "",
-    status: string = ""
+    status: string = "",
   ): Promise<{ data: ICourse[]; total: number }> {
     const filter: any = { instructorId };
 
     if (search) {
-      filter.courseName = { $regex: new RegExp(search, "i") }; // case-insensitive search
+      filter.courseName = { $regex: new RegExp(search, "i") };
     }
 
-    // Handle status filter
     if (status) {
       if (status === "published") {
         filter.isPublished = true;
       } else if (status === "unpublished") {
         filter.isPublished = false;
       }
-      // If status is neither "published" nor "unpublished", we don't add any filter (show all)
     }
 
     return await this.paginate(

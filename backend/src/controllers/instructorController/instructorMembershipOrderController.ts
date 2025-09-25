@@ -20,7 +20,7 @@ export class InstructorMembershipOrderController
 
   constructor(
     instructorMembershipOrderService: IInstructorMembershipOrderService,
-    instructorMembershipService: IInstructorMembershipService
+    instructorMembershipService: IInstructorMembershipService,
   ) {
     this._instructorMembershipOrderService = instructorMembershipOrderService;
     this._instructorMembershipService = instructorMembershipService;
@@ -28,7 +28,7 @@ export class InstructorMembershipOrderController
 
   async initiateCheckout(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { planId } = req.params;
@@ -65,17 +65,25 @@ export class InstructorMembershipOrderController
       const result =
         await this._instructorMembershipOrderService.initiateCheckout(
           instructorId,
-          planId
+          planId,
         );
       res.status(StatusCode.OK).json(result);
     } catch (error: any) {
       console.error("Checkout error:", error);
 
-      if (error.message?.includes("already have an active membership")) {
+      if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP,
+        )
+      ) {
         res.status(StatusCode.FORBIDDEN).json({
           message: error.message,
         });
-      } else if (error.message?.includes("Invalid plan")) {
+      } else if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INVALID_PLAN,
+        )
+      ) {
         res.status(StatusCode.BAD_REQUEST).json({
           message: error.message,
         });
@@ -89,7 +97,7 @@ export class InstructorMembershipOrderController
 
   async createRazorpayOrder(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { planId } = req.body;
@@ -126,21 +134,33 @@ export class InstructorMembershipOrderController
       const result =
         await this._instructorMembershipOrderService.createRazorpayOrder(
           instructorId,
-          planId
+          planId,
         );
       res.status(StatusCode.OK).json(result);
     } catch (error: any) {
       console.error("Razorpay order creation error:", error);
 
-      if (error.message?.includes("already have an active membership")) {
+      if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP,
+        )
+      ) {
         res.status(StatusCode.FORBIDDEN).json({
           message: error.message,
         });
-      } else if (error.message?.includes("Invalid plan")) {
+      } else if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INVALID_PLAN,
+        )
+      ) {
         res.status(StatusCode.BAD_REQUEST).json({
           message: error.message,
         });
-      } else if (error.message?.includes("A pending order already exists")) {
+      } else if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PENDING_ORDER_EXIST,
+        )
+      ) {
         const match = error.message.match(/Order ID: (\w+)/);
         const orderId = match ? match[1] : undefined;
         res.status(StatusCode.CONFLICT).json({
@@ -150,22 +170,25 @@ export class InstructorMembershipOrderController
             "Please cancel the pending order or wait 15 minutes to try again.",
         });
       } else if (
-        error.message?.includes("An order for this plan has already been paid")
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_PAID,
+        )
       ) {
         res.status(StatusCode.CONFLICT).json({
           message: error.message,
         });
       } else {
-        res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .json({ message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_CREATE_RAZORPAY_ORDER });
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          message:
+            INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_CREATE_RAZORPAY_ORDER,
+        });
       }
     }
   }
 
   async retryFailedOrder(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { orderId } = req.params;
@@ -202,33 +225,50 @@ export class InstructorMembershipOrderController
       const result =
         await this._instructorMembershipOrderService.retryFailedOrder(
           orderId,
-          instructorId
+          instructorId,
         );
 
       res.status(StatusCode.OK).json(result);
     } catch (error: any) {
       console.error("Retry order error:", error);
 
-      if (error.message?.includes("Order not found")) {
+      if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ORDER_NOT_FOUND,
+        )
+      ) {
         res.status(StatusCode.NOT_FOUND).json({
           message: error.message,
         });
-      } else if (error.message?.includes("Only failed orders can be retried")) {
+      } else if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_ORDERS_ONLY_RETRY,
+        )
+      ) {
         res.status(StatusCode.BAD_REQUEST).json({
           message: error.message,
         });
-      } else if (error.message?.includes("Unauthorized access")) {
+      } else if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.UNAUTHORIZED_ACCESS,
+        )
+      ) {
         res.status(StatusCode.FORBIDDEN).json({
           message: error.message,
         });
-      } else if (error.message?.includes("already have an active membership")) {
+      } else if (
+        error.message?.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP,
+        )
+      ) {
         res.status(StatusCode.FORBIDDEN).json({
           message: error.message,
         });
       } else {
-        res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .json({ message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_RETRY_ORDER });
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          message:
+            INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_RETRY_ORDER,
+        });
       }
     }
   }
@@ -272,7 +312,7 @@ export class InstructorMembershipOrderController
 
   async purchaseWithWallet(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { planId } = req.params;
@@ -308,7 +348,7 @@ export class InstructorMembershipOrderController
 
       await this._instructorMembershipOrderService.purchaseWithWallet(
         instructorId,
-        planId
+        planId,
       );
 
       res
@@ -326,14 +366,15 @@ export class InstructorMembershipOrderController
 
   async getInstructorOrders(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const instructorId = req.user?.id;
       if (!instructorId) {
-        res
-          .status(StatusCode.UNAUTHORIZED)
-          .json({ message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INSTRUCTOR_NOT_FOUND });
+        res.status(StatusCode.UNAUTHORIZED).json({
+          message:
+            INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INSTRUCTOR_NOT_FOUND,
+        });
         return;
       }
 
@@ -346,7 +387,7 @@ export class InstructorMembershipOrderController
           instructorId,
           page,
           limit,
-          search
+          search,
         );
 
       res.status(StatusCode.OK).json({ data, total });
@@ -360,7 +401,7 @@ export class InstructorMembershipOrderController
 
   async getMembershipOrderDetail(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { orderId } = req.params;
@@ -376,7 +417,7 @@ export class InstructorMembershipOrderController
       const order =
         await this._instructorMembershipOrderService.getOrderByOrderId(
           orderId,
-          instructorId
+          instructorId,
         );
       if (!order) {
         res
@@ -400,7 +441,7 @@ export class InstructorMembershipOrderController
 
   async downloadReceipt(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { orderId } = req.params;
@@ -416,7 +457,7 @@ export class InstructorMembershipOrderController
       const order =
         await this._instructorMembershipOrderService.getOrderByOrderId(
           orderId,
-          instructorId
+          instructorId,
         );
       if (!order) {
         res
@@ -433,7 +474,7 @@ export class InstructorMembershipOrderController
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=Receipt_${orderId}.pdf`
+        `attachment; filename=Receipt_${orderId}.pdf`,
       );
       res.send(pdfBuffer);
     } catch (err: unknown) {
@@ -462,33 +503,42 @@ export class InstructorMembershipOrderController
 
       await this._instructorMembershipOrderService.cancelOrder(
         orderId,
-        instructorId
+        instructorId,
       );
 
-      res
-        .status(StatusCode.OK)
-        .json({ message: "Pending order cancelled successfully" });
+      res.status(StatusCode.OK).json({
+        message:
+          INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.ORDER_CANCELLED_SUCCESSFULLY,
+      });
     } catch (error: any) {
       console.error("Cancel order error:", error);
       const errorMessage = error.message || "Failed to cancel order";
       if (
-        errorMessage.includes("Order not found") ||
-        errorMessage.includes("Only pending orders can be cancelled") ||
-        errorMessage.includes("Unauthorized access") ||
-        errorMessage.includes("Order has already been paid on Razorpay")
+        errorMessage.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ORDER_NOT_FOUND,
+        ) ||
+        errorMessage.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PENDING_ORDERS_ONLY_ABLE_TO_CANCEL,
+        ) ||
+        errorMessage.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.UNAUTHORIZED_ACCESS,
+        ) ||
+        errorMessage.includes(
+          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PAID_BY_RAZORPAY,
+        )
       ) {
         res.status(StatusCode.BAD_REQUEST).json({ message: errorMessage });
       } else {
-        res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .json({ message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_CANCEL });
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_CANCEL,
+        });
       }
     }
   }
 
   async markOrderAsFailed(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const { orderId } = req.body;
@@ -503,15 +553,17 @@ export class InstructorMembershipOrderController
 
       await this._instructorMembershipOrderService.markOrderAsFailed(
         orderId,
-        instructorId
+        instructorId,
       );
 
-      res
-        .status(StatusCode.OK)
-        .json({ message: INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.MARKED_AS_FAILED });
+      res.status(StatusCode.OK).json({
+        message: INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.MARKED_AS_FAILED,
+      });
     } catch (error: any) {
       console.error("Mark order as failed error:", error);
-      const errorMessage = error.message || INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_MARK_AS_FAILED;
+      const errorMessage =
+        error.message ||
+        INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_MARK_AS_FAILED;
       res.status(StatusCode.BAD_REQUEST).json({ message: errorMessage });
     }
   }

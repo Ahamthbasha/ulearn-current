@@ -13,7 +13,7 @@ export interface IInstructorCourseRepository {
     page: number,
     limit: number,
     search?: string,
-    status?: string
+    status?: string,
   ): Promise<{ data: ICourse[]; total: number }>;
   findCourseByNameForInstructor(
     courseName: string,

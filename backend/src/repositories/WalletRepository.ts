@@ -28,7 +28,7 @@ export class WalletRepository
     amount: number,
     description: string,
     txnId: string,
-    options?: { session?: import("mongoose").ClientSession }
+    options?: { session?: import("mongoose").ClientSession },
   ): Promise<IWallet | null> {
     return await this.findOneAndUpdate(
       { ownerId },
@@ -53,7 +53,7 @@ export class WalletRepository
     amount: number,
     description: string,
     txnId: string,
-    options?: { session?: import("mongoose").ClientSession }
+    options?: { session?: import("mongoose").ClientSession },
   ): Promise<IWallet | null> {
     const wallet = await this.findOne({ ownerId });
     if (!wallet || wallet.balance < amount) return null;
@@ -81,14 +81,14 @@ export class WalletRepository
     page: number,
     limit: number,
   ): Promise<{ transactions: IWallet["transactions"]; total: number }> {
-    const wallet = await WalletModel.findOne({ ownerId });
+    const wallet = await this.findOne({ ownerId });
 
     if (!wallet) return { transactions: [], total: 0 };
 
     const total = wallet.transactions.length;
 
     const transactions = wallet.transactions
-      .sort((a, b) => b.date.getTime() - a.date.getTime()) // Newest first
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice((page - 1) * limit, page * limit);
 
     return { transactions, total };

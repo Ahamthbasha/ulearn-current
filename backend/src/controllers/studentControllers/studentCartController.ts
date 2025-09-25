@@ -49,7 +49,6 @@ export class StudentCartController implements IStudentCartController {
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.body.courseId);
 
-      // Check if course already exists in cart using raw cart data
       const rawCart = await this._cartService.getCartRaw(userId);
       const alreadyInCart = rawCart?.courses.some(
         (c) => c.toString() === courseId.toString(),

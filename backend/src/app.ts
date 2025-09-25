@@ -35,9 +35,9 @@ const app = express();
 const port: number = Number(process.env.PORT) || 3000;
 
 // Filter only valid string origins
-const allowedOrigins: string[] = [
-  process.env.FRONTEND_URL ?? ""
-].filter((url): url is string => Boolean(url));
+const allowedOrigins: string[] = [process.env.FRONTEND_URL ?? ""].filter(
+  (url): url is string => Boolean(url),
+);
 
 const corsOptions: CorsOptions = {
   credentials: true,
@@ -112,7 +112,10 @@ const start = async () => {
       await redisClient.ping();
       appLogger.info("Redis connected successfully");
     } catch (redisError) {
-      appLogger.warn("Redis connection failed, OTP functionality may be limited", { redisError });
+      appLogger.warn(
+        "Redis connection failed, OTP functionality may be limited",
+        { redisError },
+      );
     }
 
     startMembershipExpiryJob();
@@ -138,7 +141,7 @@ const start = async () => {
       appLogger.info(`Frontend URLs: ${allowedOrigins.join(", ")}`);
       appLogger.info(`Socket.IO is ready for connections`);
       appLogger.info(
-        `HTTP request logging enabled (${process.env.NODE_ENV || "development"} mode)`
+        `HTTP request logging enabled (${process.env.NODE_ENV || "development"} mode)`,
       );
     });
   } catch (error) {

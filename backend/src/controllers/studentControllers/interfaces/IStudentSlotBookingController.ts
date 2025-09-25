@@ -9,64 +9,11 @@ export interface IStudentSlotBookingController {
   getBookingHistory(req: AuthenticatedRequest, res: Response): Promise<void>;
   getBookingDetail(req: AuthenticatedRequest, res: Response): Promise<void>;
   downloadReceipt(req: AuthenticatedRequest, res: Response): Promise<void>;
-  checkSlotAvailability(req:AuthenticatedRequest,res:Response):Promise<void>
-  cancelPendingBooking(req:AuthenticatedRequest,res:Response):Promise<void>
-  handlePaymentFailure(req:AuthenticatedRequest,res:Response):Promise<void>
+  checkSlotAvailability(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void>;
+  cancelPendingBooking(req: AuthenticatedRequest, res: Response): Promise<void>;
+  handlePaymentFailure(req: AuthenticatedRequest, res: Response): Promise<void>;
   retryPayment(req: AuthenticatedRequest, res: Response): Promise<void>;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

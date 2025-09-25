@@ -237,13 +237,13 @@ export class InstructorCourseController implements IInstructorCourseController {
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";
       const status = (req.query.status as string) || "";
-      
+
       const result = await this._courseService.getInstructorCoursesPaginated(
         instructorId,
         page,
         limit,
         search,
-        status
+        status,
       );
 
       res.status(StatusCode.OK).json({

@@ -16,7 +16,7 @@ export class StudentOrderRepository
     userId: Types.ObjectId,
     page: number,
     limit: number,
-    search?: string
+    search?: string,
   ): Promise<{ orders: IOrder[]; total: number }> {
     const baseMatch: any = { userId };
 
@@ -30,13 +30,19 @@ export class StudentOrderRepository
           status: 1,
           createdAt: -1,
         },
-        ["courses"]
+        ["courses"],
       );
       return { orders: data, total };
     }
 
     const trimmedSearch = search.trim().toLowerCase();
-    const validStatuses = ["success", "pending", "failed", "cancelled", "refunded"];
+    const validStatuses = [
+      "success",
+      "pending",
+      "failed",
+      "cancelled",
+      "refunded",
+    ];
     const isStatusSearch = validStatuses.includes(trimmedSearch);
 
     if (isStatusSearch) {
@@ -46,7 +52,7 @@ export class StudentOrderRepository
         page,
         limit,
         { createdAt: -1 },
-        ["courses"]
+        ["courses"],
       );
       return { orders: data, total };
     }
@@ -110,7 +116,7 @@ export class StudentOrderRepository
   async getOrderById(
     orderId: Types.ObjectId,
     userId: Types.ObjectId,
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
     if (session) {
       return await this.model

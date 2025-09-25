@@ -61,14 +61,15 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
       throw new Error("Insufficient wallet balance");
     }
 
-    const totalPendingAmount = await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId)
+    const totalPendingAmount =
+      await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
 
-    const availableBalance = wallet.balance - totalPendingAmount
+    const availableBalance = wallet.balance - totalPendingAmount;
 
-    if(availableBalance < amount){
-       throw new Error(
-        `Insufficient available balance. Available: ${availableBalance}, Requested: ${amount}, Pending withdrawals: ${totalPendingAmount}`
-      )
+    if (availableBalance < amount) {
+      throw new Error(
+        `Insufficient available balance. Available: ${availableBalance}, Requested: ${amount}, Pending withdrawals: ${totalPendingAmount}`,
+      );
     }
 
     return this._withdrawalRequestRepo.createWithdrawalRequest(
@@ -179,25 +180,29 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
         throw new Error("Insufficient wallet balance for the new amount");
       }
 
-      const totalPendingAmount = await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId)
-      const availableBalance = wallet.balance - totalPendingAmount
+      const totalPendingAmount =
+        await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
+      const availableBalance = wallet.balance - totalPendingAmount;
 
-      if(availableBalance < amount){
-        throw new Error( `Insufficient available balance for retry. Available: ${availableBalance}, Requested: ${amount}, Pending withdrawals: ${totalPendingAmount}`)
+      if (availableBalance < amount) {
+        throw new Error(
+          `Insufficient available balance for retry. Available: ${availableBalance}, Requested: ${amount}, Pending withdrawals: ${totalPendingAmount}`,
+        );
       }
-    }else {
+    } else {
       // Even if amount is not changed, check if original amount is still valid
       const wallet = await this._walletService.getWallet(instructorId);
       if (!wallet) {
         throw new Error("Wallet not found");
       }
 
-      const totalPendingAmount = await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
+      const totalPendingAmount =
+        await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
       const availableBalance = wallet.balance - totalPendingAmount;
 
       if (availableBalance < request.amount) {
         throw new Error(
-          `Insufficient available balance to retry original amount. Available: ${availableBalance}, Original amount: ${request.amount}, Pending withdrawals: ${totalPendingAmount}`
+          `Insufficient available balance to retry original amount. Available: ${availableBalance}, Original amount: ${request.amount}, Pending withdrawals: ${totalPendingAmount}`,
         );
       }
     }
@@ -224,8 +229,8 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
       );
     const dtoTransactions = transactions.map(mapWithdrawalRequestToDTO);
 
-    console.log("dto Transactions",dtoTransactions)
-    
+    console.log("dto Transactions", dtoTransactions);
+
     return {
       transactions: dtoTransactions,
       total,
@@ -237,9 +242,9 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
   ): Promise<{ transactions: WithdrawalRequestDTO[]; total: number }> {
     const { transactions, total } =
       await this._withdrawalRequestRepo.getAllRequestsWithPagination(options);
-    const dtoTransactions = transactions.map(mapAdminWithdrawalRequestToDTO)
+    const dtoTransactions = transactions.map(mapAdminWithdrawalRequestToDTO);
     return {
-      transactions:dtoTransactions,
+      transactions: dtoTransactions,
       total,
     };
   }

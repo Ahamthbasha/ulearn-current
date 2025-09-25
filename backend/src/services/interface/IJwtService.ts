@@ -1,5 +1,3 @@
-
-
 export interface IJwtService {
   createToken(payload: Object): Promise<string>;
   accessToken(payload: Object): Promise<string>;

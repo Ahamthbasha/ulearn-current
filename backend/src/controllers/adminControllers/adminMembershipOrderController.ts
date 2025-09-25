@@ -17,23 +17,23 @@ export class AdminMembershipOrderController
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";
       const status = (req.query.status as string) || "";
-      
+
       const { data, total } = await this._membershipOrderService.getAllOrders(
         page,
         limit,
         search,
-        status
+        status,
       );
 
-      res.status(StatusCode.OK).json({ 
-        data, 
+      res.status(StatusCode.OK).json({
+        data,
         total,
         currentPage: page,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       });
     } catch (error: any) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ 
-        message: error.message || "Failed to fetch orders" 
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        message: error.message || "Failed to fetch orders",
       });
     }
   }
@@ -41,12 +41,13 @@ export class AdminMembershipOrderController
   async getOrderDetail(req: Request, res: Response): Promise<void> {
     try {
       const { razorpayOrderId } = req.params;
-      console.log(razorpayOrderId )
-      const order = await this._membershipOrderService.getOrderDetail(razorpayOrderId);
+      console.log(razorpayOrderId);
+      const order =
+        await this._membershipOrderService.getOrderDetail(razorpayOrderId);
       res.status(StatusCode.OK).json({ data: order });
     } catch (error: any) {
-      res.status(StatusCode.NOT_FOUND).json({ 
-        message: error.message || "Order not found" 
+      res.status(StatusCode.NOT_FOUND).json({
+        message: error.message || "Order not found",
       });
     }
   }

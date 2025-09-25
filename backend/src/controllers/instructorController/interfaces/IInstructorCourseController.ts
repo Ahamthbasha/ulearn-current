@@ -4,6 +4,10 @@ export interface IInstructorCourseController {
   updateCourse(req: Request, res: Response, next: NextFunction): Promise<void>;
   deleteCourse(req: Request, res: Response, next: NextFunction): Promise<void>;
   getCourseById(req: Request, res: Response, next: NextFunction): Promise<void>;
-  getInstructorCourses(req: Request, res: Response, next: NextFunction): Promise<void>;
+  getInstructorCourses(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void>;
   publishCourse(req: Request, res: Response, next: NextFunction): Promise<void>;
 }

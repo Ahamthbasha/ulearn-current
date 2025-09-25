@@ -90,8 +90,6 @@ export class StudentEnrollmentController
         }
       }
 
-      console.log("enrollment", enrollment);
-
       res.status(StatusCode.OK).json({ success: true, enrollment });
     } catch (error) {
       console.error(error);

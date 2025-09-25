@@ -6,31 +6,31 @@ export interface IEmail {
     email: string,
     verification: string,
   ): Promise<SentMessageInfo>;
-  
+
   sendRejectionEmail(
     name: string,
     email: string,
     reason: string,
   ): Promise<SentMessageInfo>;
-  
+
   sendVerificationSuccessEmail(
     name: string,
     email: string,
   ): Promise<SentMessageInfo>;
-  
+
   sendMembershipPurchaseEmail(
     name: string,
     email: string,
     planName: string,
     expiryDate: Date,
   ): Promise<SentMessageInfo>;
-  
+
   sendMembershipExpiryReminder(
     name: string,
     email: string,
     expiryDate: Date,
   ): Promise<SentMessageInfo>;
-  
+
   sendSlotBookingConfirmation(
     name: string,
     email: string,

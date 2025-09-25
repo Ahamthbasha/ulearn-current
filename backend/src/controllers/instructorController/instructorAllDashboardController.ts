@@ -50,7 +50,6 @@ export class InstructorAllCourseDashboardController
         }),
       );
 
-      // Return updated data with signed URLs
       const updatedData = {
         ...data,
         topCourses: topCoursesWithUrls,
@@ -169,12 +168,11 @@ export class InstructorAllCourseDashboardController
         return;
       }
 
-      // Fetch all data without pagination for export
       const result = await this._allDashboardService.getDetailedRevenueReport(
         new Types.ObjectId(instructorId),
         range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
-        1, // Start from page 1
-        10000, // Large limit to get all records
+        1,
+        10000,
         startDate ? new Date(startDate as string) : undefined,
         endDate ? new Date(endDate as string) : undefined,
       );

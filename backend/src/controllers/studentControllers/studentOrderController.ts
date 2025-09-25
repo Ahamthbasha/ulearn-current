@@ -5,18 +5,22 @@ import { IStudentOrderService } from "../../services/studentServices/interface/I
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
-import { StudentErrorMessages, StudentSuccessMessages } from "../../utils/constants";
+import {
+  StudentErrorMessages,
+  StudentSuccessMessages,
+} from "../../utils/constants";
 
 export class StudentOrderController implements IStudentOrderController {
   private _orderService: IStudentOrderService;
 
-  constructor(
-    orderService: IStudentOrderService,
-  ) {
+  constructor(orderService: IStudentOrderService) {
     this._orderService = orderService;
   }
 
-  async getOrderHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getOrderHistory(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user!.id);
       const page = parseInt(req.query.page as string) || 1;
@@ -26,21 +30,22 @@ export class StudentOrderController implements IStudentOrderController {
       if (page < 1 || limit < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid pagination parameters",
+          message: StudentErrorMessages.INVALID_PAGINATION_PARAMETERS,
         });
         return;
       }
 
-      const { orders, total } = await this._orderService.getOrderHistoryPaginated(
-        userId,
-        page,
-        limit,
-        search
-      );
+      const { orders, total } =
+        await this._orderService.getOrderHistoryPaginated(
+          userId,
+          page,
+          limit,
+          search,
+        );
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.ORDER_HISTORY_FETCHED || "Order history fetched successfully",
+        message: StudentSuccessMessages.ORDER_HISTORY_FETCHED,
         orders,
         total,
         page,
@@ -56,7 +61,10 @@ export class StudentOrderController implements IStudentOrderController {
     }
   }
 
-  async getOrderDetails(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getOrderDetails(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const orderId = new Types.ObjectId(req.params.orderId);
       const userId = new Types.ObjectId(req.user!.id);
@@ -64,12 +72,15 @@ export class StudentOrderController implements IStudentOrderController {
       if (!req.params.orderId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Order ID is required",
+          message: StudentErrorMessages.ORDER_ID_REQUIRED,
         });
         return;
       }
 
-      const orderDetailsDTO = await this._orderService.getOrderDetails(orderId, userId);
+      const orderDetailsDTO = await this._orderService.getOrderDetails(
+        orderId,
+        userId,
+      );
 
       if (!orderDetailsDTO) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -81,7 +92,7 @@ export class StudentOrderController implements IStudentOrderController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.ORDER_DETAILS_FETCHED || "Order details fetched successfully",
+        message: StudentSuccessMessages.ORDER_DETAILS_FETCHED,
         order: orderDetailsDTO,
       });
     } catch (err) {
@@ -93,7 +104,10 @@ export class StudentOrderController implements IStudentOrderController {
     }
   }
 
-  async downloadInvoice(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async downloadInvoice(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const orderId = new Types.ObjectId(req.params.orderId);
       const userId = new Types.ObjectId(req.user!.id);
@@ -101,7 +115,7 @@ export class StudentOrderController implements IStudentOrderController {
       if (!req.params.orderId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Order ID is required",
+          message: StudentErrorMessages.ORDER_ID_REQUIRED,
         });
         return;
       }
@@ -119,7 +133,8 @@ export class StudentOrderController implements IStudentOrderController {
       if (order.status !== "SUCCESS") {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invoice is only available for successful orders",
+          message:
+            StudentErrorMessages.INVOICE_ONLY_AVAILABLE_FOR_SUCCESS_ORDERS,
         });
         return;
       }
@@ -151,28 +166,39 @@ export class StudentOrderController implements IStudentOrderController {
       if (!req.params.orderId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Order ID is required",
+          message: StudentErrorMessages.ORDER_ID_REQUIRED,
         });
         return;
       }
 
-      const result = await this._orderService.retryPayment(orderId, userId, paymentData);
+      const result = await this._orderService.retryPayment(
+        orderId,
+        userId,
+        paymentData,
+      );
 
       res.status(StatusCode.OK).json(result);
     } catch (err: any) {
       console.error("Error initiating payment retry:", err);
-      res.status(
-        err.message.includes("already in progress")
-          ? StatusCode.CONFLICT
-          : StatusCode.INTERNAL_SERVER_ERROR
-      ).json({
-        success: false,
-        message: err.message || "Failed to initiate payment retry",
-      });
+      res
+        .status(
+          err.message.includes(StudentErrorMessages.ALREADY_IN_PROGRESS)
+            ? StatusCode.CONFLICT
+            : StatusCode.INTERNAL_SERVER_ERROR,
+        )
+        .json({
+          success: false,
+          message:
+            err.message ||
+            StudentErrorMessages.FAILED_TO_INITIATE_PAYMENT_RETRY,
+        });
     }
   }
 
-  async markOrderAsFailed(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async markOrderAsFailed(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const orderId = new Types.ObjectId(req.params.orderId);
       const userId = new Types.ObjectId(req.user!.id);
@@ -180,7 +206,7 @@ export class StudentOrderController implements IStudentOrderController {
       if (!req.params.orderId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Order ID is required",
+          message: StudentErrorMessages.ORDER_ID_REQUIRED,
         });
         return;
       }
@@ -198,25 +224,28 @@ export class StudentOrderController implements IStudentOrderController {
       if (order.status !== "PENDING") {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Only pending orders can be marked as failed",
+          message: StudentErrorMessages.ONLY_PENDING_ORDER_MARKED_AS_FAILED,
         });
         return;
       }
 
-      const result = await this._orderService.markOrderAsFailed(orderId, userId);
+      const result = await this._orderService.markOrderAsFailed(
+        orderId,
+        userId,
+      );
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: StudentSuccessMessages.ORDER_MARKED_AS_FAILED || "Order marked as failed successfully",
+        message: StudentSuccessMessages.ORDER_MARKED_AS_FAILED,
         order: result.order,
       });
     } catch (err: any) {
       console.error("Error marking order as failed:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: err.message || StudentErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED,
+        message:
+          err.message || StudentErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED,
       });
     }
   }
-  
 }

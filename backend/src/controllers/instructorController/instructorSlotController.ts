@@ -28,7 +28,8 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_CREATE_SLOT,
+        message:
+          error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_CREATE_SLOT,
       });
     }
   }
@@ -48,7 +49,8 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_UPDATE_SLOT,
+        message:
+          error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_UPDATE_SLOT,
       });
     }
   }
@@ -64,7 +66,8 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_DELETE_SLOT,
+        message:
+          error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_DELETE_SLOT,
       });
     }
   }
@@ -79,7 +82,8 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_FETCH_SLOT,
+        message:
+          error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_FETCH_SLOT,
       });
     }
   }
@@ -129,7 +133,9 @@ export class InstructorSlotController implements IInstructorSlotController {
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_FETCH_SLOT_STAT,
+        message:
+          error.message ||
+          INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_FETCH_SLOT_STAT,
       });
     }
   }

@@ -26,9 +26,6 @@ export class AdminBookingRepository
     }
   }
 
-  /**
-   * Check if user can be blocked now or needs to wait for session to end
-   */
   async checkUserBlockingStatus(email: string): Promise<IBlockingResult> {
     try {
       // First, check if user exists using AdminUserRepository
@@ -76,9 +73,6 @@ export class AdminBookingRepository
     }
   }
 
-  /**
-   * Get user's current active session (happening RIGHT NOW) by email
-   */
   async getCurrentActiveSession(email: string): Promise<IBooking | null> {
     try {
       // Get userId using AdminUserRepository

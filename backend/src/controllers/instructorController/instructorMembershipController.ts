@@ -19,9 +19,9 @@ export class InstructorMembershipController
       res.status(StatusCode.OK).json(plans);
     } catch (err) {
       console.error("Error fetching membership plans:", err);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG,
+      });
     }
   }
 
@@ -36,18 +36,18 @@ export class InstructorMembershipController
       const instructor =
         await this._membershipService.getInstructorById(instructorId);
       if (!instructor) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.INSTRUCTOR_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.INSTRUCTOR_NOT_FOUND,
+        });
         return;
       }
 
       res.status(StatusCode.OK).json({ isMentor: instructor.isMentor });
     } catch (err) {
       console.error("Error getting mentor status:", err);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG,
+      });
     }
   }
 
@@ -67,9 +67,9 @@ export class InstructorMembershipController
       res.status(StatusCode.OK).json(status);
     } catch (err) {
       console.error("Error fetching membership status:", err);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG,
+      });
     }
   }
 }

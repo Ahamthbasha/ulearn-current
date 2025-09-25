@@ -7,6 +7,7 @@ import { IAdminWithdrawalController } from "./interface/IAdminWithdrawalControll
 import {
   AdminErrorMessages,
   AdminSuccessMessages,
+  AdminWithdrawalMessage,
 } from "../../utils/constants";
 
 export class AdminWithdrawalController implements IAdminWithdrawalController {
@@ -24,7 +25,7 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";
-      const status = (req.query.status as string) || ""; // Add status filter
+      const status = (req.query.status as string) || "";
 
       if (page < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
@@ -42,11 +43,10 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
         return;
       }
 
-      // Validate status filter if provided
-      if (status && !['pending', 'approved', 'rejected'].includes(status)) {
+      if (status && !["pending", "approved", "rejected"].includes(status)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid status filter. Must be 'pending', 'approved', or 'rejected'",
+          message: AdminWithdrawalMessage.STATUS_FILTER,
         });
         return;
       }
@@ -56,7 +56,7 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
           page,
           limit,
           search: search.trim(),
-          status: status.trim(), // Pass status to service
+          status: status.trim(),
         });
 
       res.status(StatusCode.OK).json({
@@ -67,7 +67,7 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
           totalPages: Math.ceil(total / limit),
           total,
           search: search.trim(),
-          status: status.trim(), // Include status in response
+          status: status.trim(),
         },
       });
     } catch (error: any) {

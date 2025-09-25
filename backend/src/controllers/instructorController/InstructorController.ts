@@ -16,11 +16,17 @@ export class InstructorController implements IInstructorController {
   private _jwt: IJwtService;
   private _emailSender: IEmail;
 
-  constructor(instructorService: IInstructorService, otpService: IOtpServices,otpGenerateService:IOtpGenerate,jwtService:IJwtService,emailService:IEmail) {
+  constructor(
+    instructorService: IInstructorService,
+    otpService: IOtpServices,
+    otpGenerateService: IOtpGenerate,
+    jwtService: IJwtService,
+    emailService: IEmail,
+  ) {
     this._instructorService = instructorService;
     this._otpService = otpService;
     this._otpGenerator = otpGenerateService;
-    this._jwt = jwtService
+    this._jwt = jwtService;
     this._emailSender = emailService;
   }
 
@@ -39,7 +45,8 @@ export class InstructorController implements IInstructorController {
       const saltRound = 10;
       const hashedPassword = await bcrypt.hash(password, saltRound);
 
-      const existingInstructor = await this._instructorService.findByEmail(email);
+      const existingInstructor =
+        await this._instructorService.findByEmail(email);
 
       if (existingInstructor) {
         res.status(StatusCode.CONFLICT).json({
@@ -75,7 +82,7 @@ export class InstructorController implements IInstructorController {
         token,
       });
     } catch (error: any) {
-      console.error('SignUp Error:', error);
+      console.error("SignUp Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -100,11 +107,16 @@ export class InstructorController implements IInstructorController {
       if (otpExists) {
         const remainingTime = await this._otpService.getOtpRemainingTime(email);
 
-        if(remainingTime){
-          console.log(`Existing OTP found for ${email}, remaining time: ${remainingTime}`);
+        if (remainingTime) {
+          console.log(
+            `Existing OTP found for ${email}, remaining time: ${remainingTime}`,
+          );
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: INSTRUCTOR_MESSAGES.WAIT_FOR_OTP.replace("{remainingTime}", remainingTime.toString()),
+            message: INSTRUCTOR_MESSAGES.WAIT_FOR_OTP.replace(
+              "{remainingTime}",
+              remainingTime.toString(),
+            ),
           });
         }
         return;
@@ -128,7 +140,7 @@ export class InstructorController implements IInstructorController {
         message: INSTRUCTOR_MESSAGES.OTP_SENT,
       });
     } catch (error: any) {
-      console.error('Resend OTP Error:', error);
+      console.error("Resend OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -190,7 +202,7 @@ export class InstructorController implements IInstructorController {
         });
       }
     } catch (error: any) {
-      console.error('Create User Error:', error);
+      console.error("Create User Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -229,7 +241,10 @@ export class InstructorController implements IInstructorController {
         return;
       }
 
-      const isPasswordValid = await bcrypt.compare(password, instructor.password);
+      const isPasswordValid = await bcrypt.compare(
+        password,
+        instructor.password,
+      );
 
       if (!isPasswordValid) {
         res.status(StatusCode.UNAUTHORIZED).json({
@@ -262,11 +277,11 @@ export class InstructorController implements IInstructorController {
             username: instructor.username,
             role: instructor.role,
             isBlocked: instructor.isBlocked,
-            isVerified:instructor.isVerified
+            isVerified: instructor.isVerified,
           },
         });
     } catch (error: any) {
-      console.error('Login Error:', error);
+      console.error("Login Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -289,7 +304,7 @@ export class InstructorController implements IInstructorController {
         message: INSTRUCTOR_MESSAGES.LOGOUT_SUCCESS,
       });
     } catch (error: any) {
-      console.error('Logout Error:', error);
+      console.error("Logout Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -341,7 +356,7 @@ export class InstructorController implements IInstructorController {
         });
       }
     } catch (error: any) {
-      console.error('Verify Email Error:', error);
+      console.error("Verify Email Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -383,7 +398,7 @@ export class InstructorController implements IInstructorController {
         });
       }
     } catch (error: any) {
-      console.error('Verify Reset OTP Error:', error);
+      console.error("Verify Reset OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -408,11 +423,16 @@ export class InstructorController implements IInstructorController {
       if (otpExists) {
         const remainingTime = await this._otpService.getOtpRemainingTime(email);
 
-        if(remainingTime){
-          console.log(`Existing OTP found for ${email}, remaining time: ${remainingTime}`);
+        if (remainingTime) {
+          console.log(
+            `Existing OTP found for ${email}, remaining time: ${remainingTime}`,
+          );
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: INSTRUCTOR_MESSAGES.WAIT_FOR_OTP.replace("{remainingTime}", remainingTime.toString()),
+            message: INSTRUCTOR_MESSAGES.WAIT_FOR_OTP.replace(
+              "{remainingTime}",
+              remainingTime.toString(),
+            ),
           });
         }
         return;
@@ -436,7 +456,7 @@ export class InstructorController implements IInstructorController {
         message: INSTRUCTOR_MESSAGES.OTP_SENT,
       });
     } catch (error: any) {
-      console.error('Forgot Resend OTP Error:', error);
+      console.error("Forgot Resend OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -477,7 +497,10 @@ export class InstructorController implements IInstructorController {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const passwordReset = await this._instructorService.resetPassword(data.email, hashedPassword);
+      const passwordReset = await this._instructorService.resetPassword(
+        data.email,
+        hashedPassword,
+      );
 
       if (passwordReset) {
         await this._otpService.deleteOtp(data.email);
@@ -495,7 +518,7 @@ export class InstructorController implements IInstructorController {
         });
       }
     } catch (error: any) {
-      console.error('Reset Password Error:', error);
+      console.error("Reset Password Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -506,7 +529,6 @@ export class InstructorController implements IInstructorController {
 
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
     try {
-      
       const { name, email } = req.body;
 
       if (!name || !email) {
@@ -517,16 +539,24 @@ export class InstructorController implements IInstructorController {
         return;
       }
 
-      const existingInstructor = await this._instructorService.findByEmail(email);
+      const existingInstructor =
+        await this._instructorService.findByEmail(email);
 
       if (!existingInstructor) {
-        const instructor = await this._instructorService.googleLogin(name, email);
+        const instructor = await this._instructorService.googleLogin(
+          name,
+          email,
+        );
 
         if (instructor) {
           const role = instructor.role;
           const id = instructor._id;
           const accessToken = await this._jwt.accessToken({ email, id, role });
-          const refreshToken = await this._jwt.refreshToken({ email, id, role });
+          const refreshToken = await this._jwt.refreshToken({
+            email,
+            id,
+            role,
+          });
 
           res
             .status(StatusCode.OK)
@@ -544,8 +574,8 @@ export class InstructorController implements IInstructorController {
                 email: instructor.email,
                 username: instructor.username,
                 role: instructor.role,
-                isBlocked:instructor.isBlocked,
-                isVerified:instructor.isVerified
+                isBlocked: instructor.isBlocked,
+                isVerified: instructor.isVerified,
               },
             });
         } else {
@@ -584,13 +614,13 @@ export class InstructorController implements IInstructorController {
               email: existingInstructor.email,
               username: existingInstructor.username,
               role: existingInstructor.role,
-              isBlocked:existingInstructor.isBlocked,
-              isVerified:existingInstructor.isVerified
+              isBlocked: existingInstructor.isBlocked,
+              isVerified: existingInstructor.isVerified,
             },
           });
       }
     } catch (error: any) {
-      console.error('Google Login Error:', error);
+      console.error("Google Login Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_MESSAGES.INTERNAL_SERVER_ERROR,

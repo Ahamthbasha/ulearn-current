@@ -16,21 +16,23 @@ export class AdminMembershipOrderService
     page: number,
     limit: number,
     search?: string,
-    status?: string
+    status?: string,
   ): Promise<{ data: AdminMembershipOrderListDTO[]; total: number }> {
     const { data, total } = await this._orderRepo.findAllPaginated(
       page,
       limit,
       search,
-      status
+      status,
     );
     const mappedData = mapMembershipOrdersToListDTO(data);
     return { data: mappedData, total };
   }
 
-  async getOrderDetail(razorpayOrderId : string): Promise<InstructorMembershipOrderDTO> {
-    const order = await this._orderRepo.findByTxnId(razorpayOrderId );
-    console.log(order)
+  async getOrderDetail(
+    razorpayOrderId: string,
+  ): Promise<InstructorMembershipOrderDTO> {
+    const order = await this._orderRepo.findByTxnId(razorpayOrderId);
+    console.log(order);
     if (!order) {
       throw new Error("Order not found");
     }

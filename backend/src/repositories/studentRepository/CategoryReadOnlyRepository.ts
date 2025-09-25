@@ -13,6 +13,6 @@ export class CategoryReadOnlyRepository
     const categories = await this.findAll({ isListed: true }, undefined, {
       categoryName: 1,
     });
-    return categories ?? []; // return empty array if null
+    return categories ?? [];
   }
 }

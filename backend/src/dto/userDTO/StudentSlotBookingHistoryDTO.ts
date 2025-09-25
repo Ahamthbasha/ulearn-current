@@ -1,4 +1,3 @@
-// src/dtos/StudentSlotBookingHistoryDTO.ts
 export interface StudentSlotBookingHistoryDTO {
   orderId: string;
   date: string;

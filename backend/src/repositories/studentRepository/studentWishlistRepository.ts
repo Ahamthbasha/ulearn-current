@@ -22,14 +22,13 @@ export class StudentWishlistRepository
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
   ): Promise<void> {
-    await WishlistModel.findOneAndDelete({ userId, courseId });
+    await this.findOneAndDelete({ userId, courseId });
   }
 
   async getWishlistCourses(userId: Types.ObjectId): Promise<IWishlist[]> {
-    return (await this.findAll(
-      { userId },
-      [{ path: "courseId" }], // or use populate option array if needed
-    )) as IWishlist[]; // type assertion
+    return (await this.findAll({ userId }, [
+      { path: "courseId" },
+    ])) as IWishlist[];
   }
 
   async isCourseInWishlist(

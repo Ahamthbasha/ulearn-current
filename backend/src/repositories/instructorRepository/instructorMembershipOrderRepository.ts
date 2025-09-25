@@ -1,4 +1,7 @@
-import { IInstructorMembershipOrder, InstructorMembershipOrderModel } from "../../models/instructorMembershipOrderModel"; 
+import {
+  IInstructorMembershipOrder,
+  InstructorMembershipOrderModel,
+} from "../../models/instructorMembershipOrderModel";
 import { GenericRepository } from "../genericRepository";
 import { IInstructorMembershipOrderRepository } from "./interface/IInstructorMembershipOrderRepository";
 import { Types, PipelineStage } from "mongoose";
@@ -21,17 +24,20 @@ export class InstructorMembershipOrderRepository
       startDate?: Date;
       endDate?: Date;
     },
-    session?: import("mongoose").ClientSession
+    session?: import("mongoose").ClientSession,
   ) {
-    return await this.create({
-      instructorId: new Types.ObjectId(data.instructorId),
-      membershipPlanId: new Types.ObjectId(data.planId),
-      price: data.amount,
-      razorpayOrderId: data.razorpayOrderId,
-      paymentStatus: data.status,
-      startDate: data.startDate || new Date(),
-      endDate: data.endDate || new Date(),
-    }, session);
+    return await this.create(
+      {
+        instructorId: new Types.ObjectId(data.instructorId),
+        membershipPlanId: new Types.ObjectId(data.planId),
+        price: data.amount,
+        razorpayOrderId: data.razorpayOrderId,
+        paymentStatus: data.status,
+        startDate: data.startDate || new Date(),
+        endDate: data.endDate || new Date(),
+      },
+      session,
+    );
   }
 
   async findByOrderId(orderId: string) {
@@ -41,7 +47,7 @@ export class InstructorMembershipOrderRepository
   async updateOrderStatus(
     orderId: string,
     data: Partial<IInstructorMembershipOrder>,
-    session?: import("mongoose").ClientSession
+    session?: import("mongoose").ClientSession,
   ) {
     await this.updateOne({ orderId }, data, { session });
   }
@@ -50,7 +56,7 @@ export class InstructorMembershipOrderRepository
     instructorId: string,
     page: number = 1,
     limit: number = 10,
-    search?: string
+    search?: string,
   ): Promise<{ data: IInstructorMembershipOrder[]; total: number }> {
     const baseFilter: any = {
       instructorId: new Types.ObjectId(instructorId),
@@ -151,7 +157,9 @@ export class InstructorMembershipOrderRepository
     return { data: dataResult, total };
   }
 
-  async findOneByOrderId(orderId: string): Promise<IInstructorMembershipOrder | null> {
+  async findOneByOrderId(
+    orderId: string,
+  ): Promise<IInstructorMembershipOrder | null> {
     const pipeline: PipelineStage[] = [
       { $match: { orderId } },
       {
@@ -207,32 +215,37 @@ export class InstructorMembershipOrderRepository
   async findExistingOrder(
     instructorId: string,
     planId: string,
-    session?: import("mongoose").ClientSession
+    session?: import("mongoose").ClientSession,
   ): Promise<IInstructorMembershipOrder | null> {
     const timeoutMinutes = 15;
     const timeoutThreshold = new Date(Date.now() - timeoutMinutes * 60 * 1000);
 
-    return await this.findOne({
-      instructorId: new Types.ObjectId(instructorId),
-      membershipPlanId: new Types.ObjectId(planId),
-      paymentStatus: { $in: ["pending", "paid"] },
-      createdAt: { $gte: timeoutThreshold },
-    }, undefined, session);
+    return await this.findOne(
+      {
+        instructorId: new Types.ObjectId(instructorId),
+        membershipPlanId: new Types.ObjectId(planId),
+        paymentStatus: { $in: ["pending", "paid"] },
+        createdAt: { $gte: timeoutThreshold },
+      },
+      undefined,
+      session,
+    );
   }
 
   async cancelOrder(
     orderId: string,
-    session?: import("mongoose").ClientSession
+    session?: import("mongoose").ClientSession,
   ): Promise<void> {
     await this.updateOne(
       { orderId, paymentStatus: "pending" },
       { paymentStatus: "cancelled" },
-      { session }
+      { session },
     );
   }
 
-  // In InstructorMembershipOrderRepository
-async findByRazorpayOrderId(razorpayOrderId: string): Promise<IInstructorMembershipOrder | null> {
-  return await this.findOne({ razorpayOrderId });
-}
+  async findByRazorpayOrderId(
+    razorpayOrderId: string,
+  ): Promise<IInstructorMembershipOrder | null> {
+    return await this.findOne({ razorpayOrderId });
+  }
 }

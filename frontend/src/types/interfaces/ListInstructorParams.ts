@@ -2,11 +2,10 @@ export interface ListInstructorParams {
   page?: number;
   limit?: number;
   search?: string;
-  sort?: "asc" | "desc"; // ✅ Add this
+  sort?: "asc" | "desc"; 
   skill?: string;
   expertise?: string;
 }
-
 
 export interface RetryPaymentResponse {
   success: boolean;

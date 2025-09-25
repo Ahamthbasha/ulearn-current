@@ -14,11 +14,14 @@ export class InstructorProfileController
   implements IInstructorProfileController
 {
   private _profileService: IInstructorProfileService;
-  private _jwt :IJwtService;
+  private _jwt: IJwtService;
 
-  constructor(profileService: IInstructorProfileService,jwtService:IJwtService) {
+  constructor(
+    profileService: IInstructorProfileService,
+    jwtService: IJwtService,
+  ) {
     this._profileService = profileService;
-    this._jwt = jwtService
+    this._jwt = jwtService;
   }
 
   async getProfile(req: Request, res: Response): Promise<void> {

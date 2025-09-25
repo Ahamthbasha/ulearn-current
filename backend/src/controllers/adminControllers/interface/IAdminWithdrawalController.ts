@@ -11,12 +11,12 @@ export interface IAdminWithdrawalController {
     req: AuthenticatedRequest,
     res: Response,
   ): Promise<void>;
-  
+
   rejectWithdrawalRequest(
     req: AuthenticatedRequest,
     res: Response,
   ): Promise<void>;
-  
+
   getWithdrawalRequestById(
     req: AuthenticatedRequest,
     res: Response,

@@ -29,7 +29,7 @@ export class InstructorMembershipOrderService
     instructorRepo: IInstructorRepository,
     razorpay: Razorpay,
     walletService: IWalletService,
-    emailService: IEmail
+    emailService: IEmail,
   ) {
     this._membershipOrderRepo = membershipOrderRepo;
     this._planRepo = planRepo;
@@ -96,12 +96,12 @@ export class InstructorMembershipOrderService
       const existingOrder = await this._membershipOrderRepo.findExistingOrder(
         instructorId,
         planId,
-        session
+        session,
       );
       if (existingOrder) {
         if (existingOrder.paymentStatus === "pending") {
           throw new Error(
-            `A pending order already exists for this plan (Order ID: ${existingOrder.orderId}). Please cancel it or wait 15 minutes before trying again.`
+            `A pending order already exists for this plan (Order ID: ${existingOrder.orderId}). Please cancel it or wait 15 minutes before trying again.`,
           );
         } else {
           throw new Error("An order for this plan has already been paid.");
@@ -122,7 +122,7 @@ export class InstructorMembershipOrderService
           amount: plan.price,
           status: "pending",
         },
-        session
+        session,
       );
 
       await session.commitTransaction();
@@ -142,7 +142,7 @@ export class InstructorMembershipOrderService
 
   async retryFailedOrder(
     orderId: string,
-    instructorId: string
+    instructorId: string,
   ): Promise<{
     razorpayOrderId: string;
     amount: number;
@@ -178,7 +178,7 @@ export class InstructorMembershipOrderService
       }
 
       const plan = (await this._planRepo.findById(
-        failedOrder.membershipPlanId.toString()
+        failedOrder.membershipPlanId.toString(),
       )) as IMembershipPlan;
       if (!plan) throw new Error("Invalid plan");
 
@@ -196,7 +196,7 @@ export class InstructorMembershipOrderService
           startDate: undefined,
           endDate: undefined,
         },
-        session
+        session,
       );
 
       await session.commitTransaction();
@@ -263,7 +263,7 @@ export class InstructorMembershipOrderService
 
       const now = new Date();
       const expiryDate = new Date(
-        now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
+        now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000,
       );
 
       await this._membershipOrderRepo.updateOrderStatus(
@@ -273,7 +273,7 @@ export class InstructorMembershipOrderService
           startDate: now,
           endDate: expiryDate,
         },
-        session
+        session,
       );
 
       await this._instructorRepo.update(
@@ -283,7 +283,7 @@ export class InstructorMembershipOrderService
           membershipExpiryDate: expiryDate,
           membershipPlanId: new Types.ObjectId(plan._id),
         },
-        session
+        session,
       );
 
       await this._walletService.creditAdminWalletByEmail(
@@ -291,14 +291,14 @@ export class InstructorMembershipOrderService
         plan.price,
         `Instructor Membership (Razorpay): ${plan.name}`,
         order.orderId,
-        { session }
+        { session },
       );
 
       await this._emailService.sendMembershipPurchaseEmail(
         instructor.username || "Instructor",
         instructor.email || "",
         plan.name,
-        expiryDate
+        expiryDate,
       );
 
       await session.commitTransaction();
@@ -312,7 +312,7 @@ export class InstructorMembershipOrderService
 
   async purchaseWithWallet(
     instructorId: string,
-    planId: string
+    planId: string,
   ): Promise<void> {
     const session: ClientSession = await startSession();
     session.startTransaction();
@@ -337,12 +337,12 @@ export class InstructorMembershipOrderService
       const existingOrder = await this._membershipOrderRepo.findExistingOrder(
         instructorId,
         planId,
-        session
+        session,
       );
       if (existingOrder) {
         if (existingOrder.paymentStatus === "pending") {
           throw new Error(
-            `A pending order already exists for this plan (Order ID: ${existingOrder.orderId}). Please cancel it or wait 15 minutes before trying again.`
+            `A pending order already exists for this plan (Order ID: ${existingOrder.orderId}). Please cancel it or wait 15 minutes before trying again.`,
           );
         } else {
           throw new Error("An order for this plan has already been paid.");
@@ -354,7 +354,7 @@ export class InstructorMembershipOrderService
         amount,
         `Membership Purchase: ${plan.name}`,
         orderId,
-        { session }
+        { session },
       );
 
       if (!instructorWallet) {
@@ -367,7 +367,7 @@ export class InstructorMembershipOrderService
           amount,
           `Instructor Membership: ${plan.name}`,
           orderId,
-          { session }
+          { session },
         );
       } catch (err) {
         await this._walletService.creditWallet(
@@ -375,14 +375,14 @@ export class InstructorMembershipOrderService
           amount,
           `Refund: Failed admin credit`,
           `refund_${orderId}`,
-          { session }
+          { session },
         );
         throw new Error("Admin credit failed. Transaction rolled back.");
       }
 
       const now = new Date();
       const expiry = new Date(
-        now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000
+        now.getTime() + plan.durationInDays * 24 * 60 * 60 * 1000,
       );
 
       await this._membershipOrderRepo.createOrder(
@@ -395,7 +395,7 @@ export class InstructorMembershipOrderService
           startDate: now,
           endDate: expiry,
         },
-        session
+        session,
       );
 
       await this._instructorRepo.update(
@@ -405,14 +405,14 @@ export class InstructorMembershipOrderService
           membershipExpiryDate: expiry,
           membershipPlanId: new Types.ObjectId(plan._id),
         },
-        session
+        session,
       );
 
       await this._emailService.sendMembershipPurchaseEmail(
         instructor.username,
         instructor.email,
         plan.name,
-        expiry
+        expiry,
       );
 
       await session.commitTransaction();
@@ -428,14 +428,14 @@ export class InstructorMembershipOrderService
     instructorId: string,
     page: number = 1,
     limit: number = 10,
-    search?: string
+    search?: string,
   ): Promise<{ data: InstructorMembershipOrderListDTO[]; total: number }> {
     const { data, total } =
       await this._membershipOrderRepo.findAllByInstructorId(
         instructorId,
         page,
         limit,
-        search
+        search,
       );
 
     const dtoData: InstructorMembershipOrderListDTO[] = data.map((order) => ({
@@ -451,7 +451,7 @@ export class InstructorMembershipOrderService
 
   async getOrderByOrderId(
     orderId: string,
-    instructorId: string
+    instructorId: string,
   ): Promise<InstructorMembershipOrderDTO | null> {
     const order = await this._membershipOrderRepo.findOneByOrderId(orderId);
     if (!order) throw new Error("Order not found");
@@ -503,7 +503,7 @@ export class InstructorMembershipOrderService
       }
 
       const razorpayOrder = await this._razorpay.orders.fetch(
-        order.razorpayOrderId
+        order.razorpayOrderId,
       );
       if (razorpayOrder.status === "paid") {
         throw new Error("Order has already been paid on Razorpay");
@@ -520,50 +520,9 @@ export class InstructorMembershipOrderService
     }
   }
 
-  // async markOrderAsFailed(
-  //   orderId: string,
-  //   instructorId: string
-  // ): Promise<void> {
-  //   const session: ClientSession = await startSession();
-  //   session.startTransaction();
-
-  //   try {
-  //     const order = await this._membershipOrderRepo.findByOrderId(orderId);
-
-  //     console.log('orderId',orderId)
-
-  //     console.log('order',order)
-
-  //     if (!order) {
-  //       throw new Error("Order not found");
-  //     }
-
-  //     if (order.instructorId.toString() !== instructorId) {
-  //       throw new Error("Unauthorized access");
-  //     }
-
-  //     if (order.paymentStatus !== "pending") {
-  //       throw new Error("Order is not in pending status");
-  //     }
-
-  //     await this._membershipOrderRepo.updateOrderStatus(orderId, {
-  //       paymentStatus: "failed"
-  //     }, session);
-
-  //     await session.commitTransaction();
-  //     console.log(`Order ${orderId} marked as failed for instructor ${instructorId}`);
-  //   } catch (error) {
-  //     await session.abortTransaction();
-  //     throw error;
-  //   } finally {
-  //     session.endSession();
-  //   }
-  // }
-
-  // In InstructorMembershipOrderService
   async markOrderAsFailed(
     orderId: string,
-    instructorId: string
+    instructorId: string,
   ): Promise<void> {
     const session: ClientSession = await startSession();
     session.startTransaction();
@@ -592,12 +551,12 @@ export class InstructorMembershipOrderService
         {
           paymentStatus: "failed",
         },
-        session
+        session,
       );
 
       await session.commitTransaction();
       console.log(
-        `Order ${order.orderId} marked as failed for instructor ${instructorId}`
+        `Order ${order.orderId} marked as failed for instructor ${instructorId}`,
       );
     } catch (error) {
       await session.abortTransaction();

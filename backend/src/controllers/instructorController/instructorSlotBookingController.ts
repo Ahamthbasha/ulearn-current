@@ -31,7 +31,9 @@ export class InstructorSlotBookingController
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || INSTRUCTOR_SLOT_BOOKING_ERROR_MESSAGE.FAILED_TO_FETCH_BOOKING_DETAILS,
+        message:
+          error.message ||
+          INSTRUCTOR_SLOT_BOOKING_ERROR_MESSAGE.FAILED_TO_FETCH_BOOKING_DETAILS,
       });
     }
   }

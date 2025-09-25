@@ -1,16 +1,15 @@
 export interface OrderDetailsDTO {
   customerName: string;
   customerEmail: string;
-  payment: string; // razorpay or wallet
+  payment: string;
   totalAmount: number;
   status: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
   orderId: string;
-  orderDate: string; // day-month-year hh:mm AM/PM
+  orderDate: string;
   courses: {
     courseName: string;
     price: number;
     thumbnailUrl: string;
   }[];
   canRetryPayment: boolean;
-  // retryInProgress: boolean;
 }

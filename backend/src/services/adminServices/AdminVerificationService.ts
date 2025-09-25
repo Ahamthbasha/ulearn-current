@@ -44,7 +44,6 @@ export class AdminVerificationService implements IAdminVerificationService {
       await this._verificationRepository.getRequestDataByEmail(email);
     if (!request) return null;
 
-    // ✅ generate presigned URLs in service layer
     const resumeUrl = await getViewableUrl(request.resumeUrl);
     const degreeCertificateUrl = await getViewableUrl(
       request.degreeCertificateUrl,

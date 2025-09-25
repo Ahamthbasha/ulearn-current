@@ -4,7 +4,7 @@ export interface InstructorSlice {
   email: string | null;
   role: string | null;
   isBlocked: string | null;
-  isVerified: boolean | null; // ✅ Added this
+  isVerified: boolean | null; 
   profilePicture: string | null;
 }
 

@@ -14,10 +14,11 @@ export enum Roles {
   ADMIN = "admin",
   INSTRUCTOR = "instructor",
   STUDENT = "student",
+  ADMINWALLET = "Admin",
 }
 
 export enum Model {
   ADMIN = "Admin",
   USER = "User",
-  INSTRUCTOR = "Instructor"
+  INSTRUCTOR = "Instructor",
 }

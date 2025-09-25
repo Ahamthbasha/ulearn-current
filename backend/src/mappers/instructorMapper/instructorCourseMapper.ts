@@ -1,4 +1,3 @@
-// mappers/course.mapper.ts
 import { ICourse } from "../../models/courseModel";
 import { InstructorCourseDTO } from "../../dto/instructorDTO/instructorCourseDTO";
 

@@ -1,4 +1,3 @@
-// src/mappers/student/toOrderHistoryDTO.ts
 import { IOrder } from "../../models/orderModel";
 import { OrderHistoryDTO } from "../../dto/userDTO/orderHistoryDTO";
 
@@ -12,7 +11,7 @@ export const toOrderHistoryDTO = (order: IOrder): OrderHistoryDTO => {
     orderId: order._id.toString(),
     amount: order.amount,
     gateway: order.gateway,
-    date: `${day}-${month}-${year}`, 
-    status:order.status
+    date: `${day}-${month}-${year}`,
+    status: order.status,
   };
 };

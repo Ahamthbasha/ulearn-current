@@ -6,7 +6,7 @@ import {
 export interface IInstructorMembershipOrderService {
   initiateCheckout(
     instructorId: string,
-    planId: string
+    planId: string,
   ): Promise<{
     amount: number;
     currency: string;
@@ -18,7 +18,7 @@ export interface IInstructorMembershipOrderService {
 
   createRazorpayOrder(
     instructorId: string,
-    planId: string
+    planId: string,
   ): Promise<{
     razorpayOrderId: string;
     amount: number;
@@ -27,7 +27,7 @@ export interface IInstructorMembershipOrderService {
 
   retryFailedOrder(
     orderId: string,
-    instructorId: string
+    instructorId: string,
   ): Promise<{
     razorpayOrderId: string;
     amount: number;
@@ -49,16 +49,15 @@ export interface IInstructorMembershipOrderService {
     instructorId: string,
     page?: number,
     limit?: number,
-    search?: string
+    search?: string,
   ): Promise<{ data: InstructorMembershipOrderListDTO[]; total: number }>;
 
   getOrderByOrderId(
     orderId: string,
-    instructorId: string
+    instructorId: string,
   ): Promise<InstructorMembershipOrderDTO | null>;
 
   cancelOrder(orderId: string, instructorId: string): Promise<void>;
 
   markOrderAsFailed(orderId: string, instructorId: string): Promise<void>;
-
 }

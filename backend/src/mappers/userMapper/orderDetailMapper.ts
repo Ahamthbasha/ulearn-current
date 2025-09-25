@@ -14,7 +14,6 @@ export const toOrderDetailsDTO = (order: IOrder): OrderDetailsDTO => {
     hour12: true,
   });
 
-  // Safely narrow userId
   const user = order.userId as unknown as IUser;
   if (!user.username || !user.email) {
     throw new Error("Order userId is not populated with user details");
@@ -38,7 +37,6 @@ export const toOrderDetailsDTO = (order: IOrder): OrderDetailsDTO => {
       price: course.price,
       thumbnailUrl: course.thumbnailUrl,
     })),
-    canRetryPayment:order.status === "FAILED",
-    // retryInProgress:order.retryInProgress || false
+    canRetryPayment: order.status === "FAILED",
   };
 };

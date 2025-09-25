@@ -15,7 +15,7 @@ export interface IInstructorCourseService {
     page: number,
     limit: number,
     search?: string,
-    status?: string
+    status?: string,
   ): Promise<{ data: InstructorCourseDTO[]; total: number }>;
   isCourseAlreadyCreatedByInstructor(
     courseName: string,

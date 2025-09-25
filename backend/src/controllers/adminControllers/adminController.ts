@@ -16,7 +16,7 @@ export class AdminController implements IAdminController {
   private _adminService: IAdminService;
   private _JWT: IJwtService;
 
-  constructor(adminService: IAdminService,jwtService:IJwtService) {
+  constructor(adminService: IAdminService, jwtService: IJwtService) {
     this._adminService = adminService;
     this._JWT = jwtService;
   }
@@ -52,9 +52,9 @@ export class AdminController implements IAdminController {
 
       const refreshToken = await this._JWT.refreshToken({
         email,
-        role:Roles.ADMIN,
-        id:admin?._id
-      })
+        role: Roles.ADMIN,
+        id: admin?._id,
+      });
 
       res
         .cookie("accessToken", accessToken, {

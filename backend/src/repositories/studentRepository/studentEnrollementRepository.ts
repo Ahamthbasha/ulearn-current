@@ -79,7 +79,7 @@ export class StudentEnrollmentRepository
 
     const enrollment = await this.findOne({ userId, courseId });
     if (!enrollment) {
-      console.log("❌ Enrollment not found during quiz submission");
+      console.log("Enrollment not found during quiz submission");
       return null;
     }
 
@@ -102,7 +102,7 @@ export class StudentEnrollmentRepository
     await enrollment.save();
 
     if (quizData.scorePercentage < 50) {
-      console.log("❌ Score is below 50%, certificate will not be generated.");
+      console.log("Score is below 50%, certificate will not be generated.");
       return enrollment;
     }
 
@@ -115,7 +115,7 @@ export class StudentEnrollmentRepository
     );
 
     if (!fullEnrollment || !fullEnrollment.courseId) {
-      console.log("❌ Full enrollment or course data is missing.");
+      console.log("Full enrollment or course data is missing.");
       return enrollment;
     }
 
@@ -130,19 +130,19 @@ export class StudentEnrollmentRepository
 
     if (!allChaptersCompleted) {
       console.log(
-        "❌ Not all chapters are completed. Certificate will not be generated.",
+        "Not all chapters are completed. Certificate will not be generated.",
       );
       return enrollment;
     }
 
     if (fullEnrollment.certificateGenerated) {
-      console.log("ℹ️ Certificate already generated. Skipping generation.");
+      console.log("Certificate already generated. Skipping generation.");
       return enrollment;
     }
 
     const student = await this._studentRepository.findById(userId);
     if (!student || !student.username) {
-      console.log("❌ Student or student username not found");
+      console.log("Student or student username not found");
       return enrollment;
     }
 
@@ -151,7 +151,7 @@ export class StudentEnrollmentRepository
     );
     const instructorName = instructor?.username || "Course Instructor";
 
-    console.log("🎉 All conditions met. Generating certificate...");
+    console.log("All conditions met. Generating certificate...");
 
     const certificateUrl = await generateCertificate({
       studentName: student.username,
@@ -161,7 +161,7 @@ export class StudentEnrollmentRepository
       courseId: courseId.toString(),
     });
 
-    console.log("✅ Certificate generated:", certificateUrl);
+    console.log("Certificate generated:", certificateUrl);
 
     await this.updateOne(
       { userId, courseId },
@@ -172,7 +172,7 @@ export class StudentEnrollmentRepository
       },
     );
 
-    console.log("✅ Enrollment updated with certificate data.");
+    console.log("Enrollment updated with certificate data.");
 
     return await this.findOne({ userId, courseId });
   }

@@ -76,7 +76,7 @@ export class AdminCourseRepository
     const newVerificationStatus = !course.isVerified;
     const updatedCourse = await this.update(courseId, {
       isVerified: newVerificationStatus,
-      isListed: newVerificationStatus, // only allow listing if verified
+      isListed: newVerificationStatus,
     });
 
     return updatedCourse;

@@ -19,26 +19,26 @@ export class InstructorSlotRepository
     slotId: Types.ObjectId,
     data: Partial<ISlot>,
   ): Promise<ISlot | null> {
-    return await this.update(slotId.toString(), data); // use generic update by ID
+    return await this.update(slotId.toString(), data);
   }
 
   async deleteSlot(slotId: Types.ObjectId): Promise<void> {
-    await this.delete(slotId.toString()); // use generic delete
+    await this.delete(slotId.toString());
   }
 
   async getSlotById(slotId: Types.ObjectId): Promise<ISlot | null> {
-    return await this.findById(slotId.toString()); // use generic findById
+    return await this.findById(slotId.toString());
   }
 
   async getSlotsByInstructor(instructorId: Types.ObjectId): Promise<ISlot[]> {
-    return await this.find({ instructorId }, undefined, { startTime: 1 }); // use generic find
+    return await this.find({ instructorId }, undefined, { startTime: 1 });
   }
 
   async checkOverlap(
     instructorId: Types.ObjectId,
     startTime: Date,
     endTime: Date,
-    excludeSlotId?: Types.ObjectId, // optional
+    excludeSlotId?: Types.ObjectId,
   ): Promise<boolean> {
     const filter: any = {
       instructorId,
@@ -51,7 +51,7 @@ export class InstructorSlotRepository
     };
 
     if (excludeSlotId) {
-      filter._id = { $ne: excludeSlotId }; // exclude the current slot
+      filter._id = { $ne: excludeSlotId };
     }
 
     const overlappingSlot = await this.findOne(filter);

@@ -12,6 +12,6 @@ export interface IStudentOrderRepository {
   getOrderById(
     orderId: Types.ObjectId,
     userId: Types.ObjectId,
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<IOrder | null>;
 }

@@ -9,11 +9,17 @@ export class RedisOtpService implements IOtpServices {
     return `${this.OTP_PREFIX}${email.toLowerCase()}`;
   }
 
-  async createOtp(email: string, otp: string, expirationSeconds: number = this.DEFAULT_EXPIRATION * 60): Promise<boolean> {
+  async createOtp(
+    email: string,
+    otp: string,
+    expirationSeconds: number = this.DEFAULT_EXPIRATION * 60,
+  ): Promise<boolean> {
     try {
       const key = this.getOtpKey(email);
       await redisClient.setex(key, expirationSeconds, otp);
-      console.log(`OTP created for ${email}: ${otp} (expires in ${expirationSeconds} seconds)`);
+      console.log(
+        `OTP created for ${email}: ${otp} (expires in ${expirationSeconds} seconds)`,
+      );
       return true;
     } catch (error) {
       console.error("Error creating OTP:", error);

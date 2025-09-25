@@ -1,4 +1,3 @@
-// mappers/walletMapper.ts
 import { IWallet } from "../../models/walletModel";
 import { WalletDto } from "../../dto/common/walletDTO";
 

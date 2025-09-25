@@ -16,8 +16,6 @@ export class AdminWalletController implements IAdminWalletController {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
       const wallet = await this._walletService.getWallet(ownerId);
-
-      console.log("admin wallet", wallet);
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
       console.error(error);

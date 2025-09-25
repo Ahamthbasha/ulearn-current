@@ -54,7 +54,7 @@ export class StudentInstructorListingRepository
 
     const [data, total] = await Promise.all([
       this.aggregate<IInstructor>(pipeline),
-      this.countDocuments(match), // ✅ use repository method
+      this.countDocuments(match),
     ]);
 
     return { data, total };

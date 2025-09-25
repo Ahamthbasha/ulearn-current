@@ -7,10 +7,15 @@ export class InstructorCategoryRepository
   implements IInstructorCategoryRepository
 {
   constructor() {
-    super(CategoryModel); // ✅ Pass the model to GenericRepository
+    super(CategoryModel);
   }
 
-  async getListedCategories(): Promise<ICategoryModel[]> {
-    return await CategoryModel.find({ isListed: true }).select("categoryName");
+  async getListedCategories(): Promise<
+    Pick<ICategoryModel, "_id" | "categoryName">[]
+  > {
+    return (await this.findWithProjection(
+      { isListed: true },
+      { _id: 1, categoryName: 1 },
+    )) as Pick<ICategoryModel, "_id" | "categoryName">[];
   }
 }

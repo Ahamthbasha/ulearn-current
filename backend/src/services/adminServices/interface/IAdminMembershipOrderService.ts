@@ -6,8 +6,10 @@ export interface IAdminMembershipOrderService {
     page: number,
     limit: number,
     search?: string,
-    status?:string
+    status?: string,
   ): Promise<{ data: AdminMembershipOrderListDTO[]; total: number }>;
 
-  getOrderDetail(razorpayOrderId : string): Promise<InstructorMembershipOrderDTO>;
+  getOrderDetail(
+    razorpayOrderId: string,
+  ): Promise<InstructorMembershipOrderDTO>;
 }

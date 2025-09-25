@@ -1,4 +1,3 @@
-// Dashboard Types
 export interface ITopSellingCourse {
   _id: string;
   courseName: string;

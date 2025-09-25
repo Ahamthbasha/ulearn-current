@@ -3,5 +3,5 @@ export interface OrderHistoryDTO {
   amount: number;
   gateway: string;
   date: string;
-  status:string;
+  status: string;
 }

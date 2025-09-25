@@ -9,7 +9,7 @@ interface ReportData {
   coursePrice: number;
   instructorEarning: number;
   orderId: string;
-  totalEnrollments: number; // Kept for compatibility with incoming data, but used only for summary
+  totalEnrollments: number;
 }
 
 export async function generateExcelReport(

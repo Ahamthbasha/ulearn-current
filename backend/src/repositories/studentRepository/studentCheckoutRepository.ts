@@ -19,7 +19,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     orderRepo: IOrderRepository,
     paymentRepo: IPaymentRepository,
     enrollmentRepo: IEnrollmentRepository,
-    courseRepo: ICourseRepository
+    courseRepo: ICourseRepository,
   ) {
     this._courseRepo = courseRepo;
     this._orderRepo = orderRepo;
@@ -32,7 +32,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     courseIds: Types.ObjectId[],
     amount: number,
     razorpayOrderId: string,
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<IOrder> {
     const orderData = {
       userId,
@@ -52,10 +52,14 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   async updateOrderStatus(
     orderId: Types.ObjectId,
     status: "SUCCESS" | "FAILED" | "CANCELLED" | "PENDING",
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
     if (session) {
-      return this._orderRepo.updateWithSession(orderId.toString(), { status }, session);
+      return this._orderRepo.updateWithSession(
+        orderId.toString(),
+        { status },
+        session,
+      );
     }
     return this._orderRepo.update(orderId.toString(), { status });
   }
@@ -63,15 +67,22 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   async updateOrder(
     orderId: Types.ObjectId,
     updates: Partial<IOrder>,
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
     if (session) {
-      return this._orderRepo.updateWithSession(orderId.toString(), updates, session);
+      return this._orderRepo.updateWithSession(
+        orderId.toString(),
+        updates,
+        session,
+      );
     }
     return this._orderRepo.update(orderId.toString(), updates);
   }
 
-  async savePayment(data: Partial<IPayment>, session?: mongoose.ClientSession): Promise<IPayment> {
+  async savePayment(
+    data: Partial<IPayment>,
+    session?: mongoose.ClientSession,
+  ): Promise<IPayment> {
     if (session) {
       return this._paymentRepo.createWithSession(data, session);
     }
@@ -81,7 +92,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   async createEnrollments(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<IEnrollment[]> {
     const enrollments = courseIds.map((courseId) => ({
       userId,
@@ -92,14 +103,17 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     }));
 
     if (session) {
-      return this._enrollmentRepo.createManyWithSession(enrollments as Partial<IEnrollment>[], session);
+      return this._enrollmentRepo.createManyWithSession(
+        enrollments as Partial<IEnrollment>[],
+        session,
+      );
     }
     return this._enrollmentRepo.create(enrollments as Partial<IEnrollment>[]);
   }
 
   async getCourseNamesByIds(
     courseIds: Types.ObjectId[],
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<string[]> {
     const filter = { _id: { $in: courseIds } };
     let courses;
@@ -115,13 +129,16 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
 
   async getEnrolledCourseIds(
     userId: Types.ObjectId,
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<Types.ObjectId[]> {
     const filter = { userId };
     let enrollments;
 
     if (session) {
-      enrollments = await this._enrollmentRepo.findAllWithSession(filter, session);
+      enrollments = await this._enrollmentRepo.findAllWithSession(
+        filter,
+        session,
+      );
     } else {
       enrollments = await this._enrollmentRepo.findAll(filter);
     }
@@ -132,7 +149,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   async findPendingOrderForCourses(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
     const filter = {
       userId,
@@ -149,7 +166,10 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     return orders && orders.length > 0 ? orders[0] : null;
   }
 
-  async getOrderByIdWithLock(orderId: Types.ObjectId, session: mongoose.ClientSession): Promise<IOrder | null> {
+  async getOrderByIdWithLock(
+    orderId: Types.ObjectId,
+    session: mongoose.ClientSession,
+  ): Promise<IOrder | null> {
     return this._orderRepo.findByIdWithLock(orderId.toString(), session);
   }
 
@@ -164,7 +184,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   async markStalePendingOrdersAsFailed(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<void> {
     const staleThreshold = new Date(Date.now() - 15 * 60 * 1000);
     const filter = {
@@ -175,7 +195,11 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     };
 
     if (session) {
-      await this._orderRepo.updateManyWithSession(filter, { status: "FAILED" }, session);
+      await this._orderRepo.updateManyWithSession(
+        filter,
+        { status: "FAILED" },
+        session,
+      );
     } else {
       await this._orderRepo.updateMany(filter, { status: "FAILED" });
     }

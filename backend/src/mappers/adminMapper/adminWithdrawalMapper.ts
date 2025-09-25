@@ -1,15 +1,14 @@
 import { AdminWithdrawalRequestDTO } from "../../dto/adminDTO/adminWithdrawalRequest";
 import { IWithdrawalRequest } from "../../models/withdrawalRequestModel";
-import {Types} from "mongoose"
-
+import { Types } from "mongoose";
 
 export function mapAdminWithdrawalRequestToDTO(
-  request: IWithdrawalRequest & { 
+  request: IWithdrawalRequest & {
     instructor?: {
       _id: Types.ObjectId;
       username: string;
       email: string;
-    }
+    };
   },
 ): AdminWithdrawalRequestDTO {
   const createdAtDate = new Date(request.createdAt);
@@ -22,7 +21,6 @@ export function mapAdminWithdrawalRequestToDTO(
       minute: "2-digit",
     });
 
-
   const instructorName = request.instructor?.username || "";
   const instructorEmail = request.instructor?.email || "";
 
@@ -34,6 +32,6 @@ export function mapAdminWithdrawalRequestToDTO(
     status: request.status,
     bankAccount: request.bankAccount ? "Linked" : "Not Linked",
     createdAt: formattedDate,
-    reason: request.remarks || ""
+    reason: request.remarks || "",
   };
 }

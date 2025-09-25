@@ -33,7 +33,7 @@ export interface IStudentOrderService {
       method: string;
       amount: number;
     },
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<{
     success: boolean;
     message: string;
@@ -50,7 +50,7 @@ export interface IStudentOrderService {
   markOrderAsFailed(
     orderId: Types.ObjectId,
     userId: Types.ObjectId,
-    session?: mongoose.ClientSession
+    session?: mongoose.ClientSession,
   ): Promise<{
     success: boolean;
     message: string;

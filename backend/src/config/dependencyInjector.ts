@@ -1,16 +1,15 @@
 import { IJwtService } from "../services/interface/IJwtService";
-import { JwtService } from "../services/jwtService"
-const jwtService : IJwtService = new JwtService()
+import { JwtService } from "../services/jwtService";
+const jwtService: IJwtService = new JwtService();
 
 import { SendEmail } from "../utils/sendOtpEmail";
 import { IEmail } from "../types/Email";
 const emailService: IEmail = new SendEmail();
 
-
 import { IOtpGenerate } from "../types/types";
 import { OtpGenerate } from "../utils/otpGenerator";
 
-const otpGenerateService : IOtpGenerate = new OtpGenerate()
+const otpGenerateService: IOtpGenerate = new OtpGenerate();
 
 import { IStudentRepository } from "../repositories/studentRepository/interface/IStudentRepository";
 import { StudentRepository } from "../repositories/studentRepository/studentRepository";
@@ -47,7 +46,7 @@ const studentController: IStudentController = new StudentController(
   otpService,
   otpGenerateService,
   jwtService,
-  emailService
+  emailService,
 );
 
 ///////INSTRUCTOR REPOSITORY//////////
@@ -81,7 +80,10 @@ const adminRespository: IAdminRepository = new AdminRespository(
   adminInstructorRepository,
 );
 const adminService: IAdminService = new AdminService(adminRespository);
-const adminController: IAdminController = new AdminController(adminService,jwtService);
+const adminController: IAdminController = new AdminController(
+  adminService,
+  jwtService,
+);
 
 //////////////////////admin verification //////////////////////////////////////////
 import { IAdminVerificationRepository } from "../repositories/adminRepository/interface/IAdminVerificationRepository";
@@ -96,7 +98,7 @@ const adminVerificationRepository: IAdminVerificationRepository =
 const adminVerificationService: IAdminVerificationService =
   new AdminVerificationService(adminVerificationRepository, instructorService);
 const adminVerificationController: IAdminVerificationController =
-  new AdminVerificationController(adminVerificationService,emailService);
+  new AdminVerificationController(adminVerificationService, emailService);
 
 /////////////////////////Instructor verification/////////////////////////////////////
 
@@ -147,7 +149,7 @@ const instructorProfileRepo: IInstructorProfileRepository =
 const instructorProfileService: IInstructorProfileService =
   new InstructorProfileService(instructorProfileRepo);
 const instructorProfileController: IInstructorProfileController =
-  new InstructorProfileController(instructorProfileService,jwtService);
+  new InstructorProfileController(instructorProfileService, jwtService);
 
 //////////////////////ADMIN CATEGORY CONTROLLER////////////////////////////////////////
 
@@ -573,7 +575,7 @@ const studentOrderRepository: IStudentOrderRepository =
 
 const studentOrderService: IStudentOrderService = new StudentOrderService(
   studentOrderRepository,
-  studentCheckoutService
+  studentCheckoutService,
 );
 
 const studentOrderController: IStudentOrderController =
@@ -631,9 +633,6 @@ import { InstructorMembershipOrderService } from "../services/instructorServices
 import { IInstructorMembershipOrderController } from "../controllers/instructorController/interfaces/IInstructorMembershipOrderController";
 import { InstructorMembershipOrderController } from "../controllers/instructorController/instructorMembershipOrderController";
 import { razorpay } from "../utils/razorpay";
-
-
-
 
 const instructorMembershipOrderRepository: IInstructorMembershipOrderRepository =
   new InstructorMembershipOrderRepository();
@@ -756,7 +755,7 @@ const studentSlotBookingService: IStudentSlotBookingService =
     studentSlotBookingRepository,
     studentSlotRepository,
     walletService,
-    emailService
+    emailService,
   );
 
 const studentSlotBookingController: IStudentSlotBookingController =

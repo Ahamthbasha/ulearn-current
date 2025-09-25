@@ -5,11 +5,10 @@ import { StudentSlotBookingHistoryDTO } from "../../../dto/userDTO/StudentSlotBo
 import { StudentBookingDetailDTO } from "../../../dto/userDTO/studentBookingDetailDTO";
 import { SlotAvailabilityResult } from "../../../types/ISlotAvailabilityResult";
 
-
 export interface IStudentSlotBookingService {
   initiateCheckout(
     slotId: string,
-    studentId: string
+    studentId: string,
   ): Promise<{
     booking: {
       slotId: ISlot;
@@ -22,13 +21,13 @@ export interface IStudentSlotBookingService {
   verifyPayment(
     slotId: string,
     studentId: string,
-    razorpayPaymentId: string
+    razorpayPaymentId: string,
   ): Promise<IBooking>;
 
   verifyRetryPayment(
     bookingId: string,
     studentId: string,
-    razorpayPaymentId: string
+    razorpayPaymentId: string,
   ): Promise<IBooking>;
 
   bookViaWallet(slotId: string, studentId: string): Promise<IBooking>;
@@ -37,30 +36,33 @@ export interface IStudentSlotBookingService {
     studentId: string,
     page: number,
     limit: number,
-    searchQuery?: string
+    searchQuery?: string,
   ): Promise<{ data: StudentSlotBookingHistoryDTO[]; total: number }>;
 
   getStudentBookingById(bookingId: string): Promise<IBooking | null>;
 
   getStudentBookingDetail(
-    bookingId: string
+    bookingId: string,
   ): Promise<StudentBookingDetailDTO | null>;
 
-  cancelPendingBooking(bookingId: string, studentId: string): Promise<boolean>
+  cancelPendingBooking(bookingId: string, studentId: string): Promise<boolean>;
 
-  checkSlotAvailabilityForStudent(slotId: string, studentId: string):Promise<SlotAvailabilityResult>
+  checkSlotAvailabilityForStudent(
+    slotId: string,
+    studentId: string,
+  ): Promise<SlotAvailabilityResult>;
 
-  handlePaymentFailure(bookingId:string,studentId:string):Promise<void>
+  handlePaymentFailure(bookingId: string, studentId: string): Promise<void>;
 
   retryPayment(
-    bookingId:string,
-    studentId:string
-  ):Promise<{
-    booking:{
-      slotId:ISlot;
-      instructorId:IInstructor;
-      bookingId:string;
-    }
-    razorpayOrder:any
-  }>
+    bookingId: string,
+    studentId: string,
+  ): Promise<{
+    booking: {
+      slotId: ISlot;
+      instructorId: IInstructor;
+      bookingId: string;
+    };
+    razorpayOrder: any;
+  }>;
 }

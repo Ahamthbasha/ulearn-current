@@ -9,7 +9,7 @@ export class StudentRepository
   implements IStudentRepository
 {
   constructor() {
-    super(UserModel); // parent class is generic repository.We call parent class constructor and give model to work with
+    super(UserModel);
   }
 
   async findByEmail(email: string): Promise<IUser | null> {

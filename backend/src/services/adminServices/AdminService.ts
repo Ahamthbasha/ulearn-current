@@ -34,7 +34,7 @@ export class AdminService implements IAdminService {
       limit,
       search,
     );
-    const userDTOs = toUserListDTOs(users); // ✅ mapping in service
+    const userDTOs = toUserListDTOs(users);
     return { users: userDTOs, total };
   }
 
@@ -45,7 +45,7 @@ export class AdminService implements IAdminService {
   ): Promise<{ instructors: InstructorDTO[]; total: number }> {
     const { instructors, total } =
       await this._adminRepository.getAllInstructors(page, limit, search);
-    const instructorDTOs = mapInstructorsToDTO(instructors); // ✅ mapping in service
+    const instructorDTOs = mapInstructorsToDTO(instructors);
     return { instructors: instructorDTOs, total };
   }
 

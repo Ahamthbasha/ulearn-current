@@ -1,6 +1,7 @@
 export const INSTRUCTOR_MESSAGES = {
   // General Messages
-  EMAIL_PASSWORD_USERNAME_REQUIRED: "Email, password, and username are required",
+  EMAIL_PASSWORD_USERNAME_REQUIRED:
+    "Email, password, and username are required",
   EMAIL_REQUIRED: "Email is required",
   OTP_REQUIRED: "OTP is required",
   NAME_EMAIL_REQUIRED: "Name and email are required",
@@ -29,13 +30,11 @@ export const INSTRUCTOR_MESSAGES = {
   TOKEN_INVALID: "Invalid or missing token",
   GOOGLE_LOGIN_FAILED: "Google login failed",
   FAILED_TO_RESET_PASSWORD: "Failed to reset password",
-  WAIT_FOR_OTP: "Please wait {remainingTime} seconds before requesting a new OTP",
+  WAIT_FOR_OTP:
+    "Please wait {remainingTime} seconds before requesting a new OTP",
   INTERNAL_SERVER_ERROR: "Internal server error",
   BLOCK_CHECK: "Failed to check block status",
 };
-
-
-
 
 export const AdminErrorMessages = {
   INVALID_CREDENTIALS: "Invalid email or password.",
@@ -173,19 +172,43 @@ export const InstructorErrorMessages = {
   PASSWORD_UPDATE_FAILED: "password updation failed",
   OTP_EXPIRED: "otp is expired.Request new One",
   OTP_NOT_FOUND: "otp is not found",
-
-  //bank
   BANK_ACCOUNT_UPDATE_FAILED: "bank account updation failed",
+
+  INSTRUCTOR_ID_MISSING_UNAUTHORIZED: "Unauthorized: Instructor ID missing.",
+  ACCESS_DENIED:
+    "Access denied. You must be a mentor to use this functionality.",
+};
+
+export const AdminWithdrawalMessage = {
+  STATUS_FILTER:
+    "Invalid status filter. Must be 'pending', 'approved', or 'rejected'",
 };
 
 export const StudentErrorMessages = {
+  SLOT_RETRY_PAYMENT_FAILED: "Failed to retry payment",
+  PENDING_BOOKING_EXISTS_SLOT: "PENDING_BOOKING_EXISTS:",
+  PENDING_BOOKING_EXISTS_MESSAGE: "PENDING_BOOKING_EXISTS",
+  PENDING_BOOKING_INFO:
+    "You have a pending booking for this slot. Please cancel it first or wait for it to expire.",
+
+  PENDING_BOOKING_BY_OTHERS: "PENDING_BOOKING_BY_OTHERS",
+  PENDING_BOOKING_BY_OTHERS_ERROR_MSG: "PENDING_BOOKING_BY_OTHERS",
+  ANOTHER_USER_PROCESSING:
+    "This slot is currently being processed by another user. Please try again later.",
+
+  SLOT_ALREADY_BOOKED_MSG: "SLOT_ALREADY_BOOKED",
+  SLOT_ALREADY_BOOKED_ERROR_MSG: "SLOT_ALREADY_BOOKED",
+  SLOT_ALREADY_BOOKED_MESSAGE: "This slot has already been booked.",
+  FAILED_TO_CHECK_SLOT_AVAILABILITY: "Failed to check slot availability",
+
   FAILED_TO_MARK_ORDER_AS_FAILED: "Failed to mark order as failed",
   CHECKOUT_FAILED: "Failed to initiate checkout",
   PAYMENT_FAILED: "Payment processing failed",
   FAILED_TO_FETCH_BOOKINGS: "Failed to fetch booking history",
   FAILED_TO_FETCH_BOOKING: "Failed to fetch booking details",
   SLOT_ALREADY_BOOKED: "Slot is already booked",
-  PENDING_BOOKING_EXISTS: "A pending or confirmed booking already exists for this slot",
+  PENDING_BOOKING_EXISTS:
+    "A pending or confirmed booking already exists for this slot",
   PENDING_BOOKING_NOT_FOUND: "Pending booking not found",
   INSUFFICIENT_WALLET_BALANCE: "Insufficient wallet balance",
 
@@ -239,9 +262,33 @@ export const StudentErrorMessages = {
   PAYMENT_VERIFICATION_FAILED: "Payment verification failed",
   USERID_NOT_FOUND: "User ID not found",
   INVALID_TOKEN: "Invalid token",
+  INVALID_PAGE_NUMBER: "Invalid page number",
+  INVALID_LIMIT_VALUE: "Invalid limit value",
+  COURSE_ID_REQUIRED: "Course ID is required",
+  COURSE_NOT_FOUND: "Course not found",
+
+  INVALID_PAGINATION_PARAMETERS: "Invalid pagination parameters",
+  ORDER_ID_REQUIRED: "Order id is required",
+  INVOICE_ONLY_AVAILABLE_FOR_SUCCESS_ORDERS:
+    "Invoice is only available for successful orders",
+  ALREADY_IN_PROGRESS: "already in progress",
+  FAILED_TO_INITIATE_PAYMENT_RETRY: "Failed to initiate payment retry",
+  ONLY_PENDING_ORDER_MARKED_AS_FAILED:
+    "Only pending orders can be marked as failed",
+
+  FAILED_TO_CANCEL_PENDING_BOOKING: "Failed to cancel pending booking",
+  SLOT_BOOKED_BY_OTHERS: "Slot already booked by another user",
+  SLOT_ALREADY_BOOKED_CONFIRM: "SLOT_ALREADY_BOOKED",
+  SLOT_BOOKED_BY_OTHERS_MSG:
+    "This slot has already been booked by another user.",
+
+  FAILED_TO_MARK_BOOKING_AS_FAILED: "Failed to mark booking as failed",
 };
 
 export const StudentSuccessMessages = {
+  PENDING_BOOKING_CANCELLED: "Pending booking cancelled successfully",
+  BOOKING_MARKED_AS_FAILED: "Booking marked as failed",
+
   ORDER_MARKED_AS_FAILED: "Order marked as failed",
   SIGNUP_SUCCESS: "Signup successful, OTP sent to email.",
   OTP_SENT: "OTP has been sent to your email successfully!",
@@ -275,10 +322,10 @@ export const OtpResponses = {
 };
 
 export const AuthErrorMsg = {
-  INTERNAL_SERVER_ERROR :"internal server error",
-  ACCOUNT_BLOCKED : "Account is blocked",
-  USER_NOT_FOUND : "user is not found",
-  INVALID_ROLE : "Invalid role",
+  INTERNAL_SERVER_ERROR: "internal server error",
+  ACCOUNT_BLOCKED: "Account is blocked",
+  USER_NOT_FOUND: "user is not found",
+  INVALID_ROLE: "Invalid role",
   NO_ACCESS_TOKEN: "Unauthorized access. Please provide a valid token OR LOGIN",
   NO_REFRESH_TOKEN: "Unauthorized access. Session verification required.",
   INVALID_ACCESS_TOKEN: "Unauthorized access. Please authenticate again.",
@@ -514,11 +561,19 @@ export const CheckoutErrorMessages = {
   USER_NOT_AUTHENTICATED: "User not authenticated.",
   CHECKOUT_FAILED: "Checkout initiation failed.",
   PAYMENT_FAILED: "Checkout completion failed.",
+  ALREADY_ENROLLED: "already enrolled",
+  INSUFFICIENT_WALLET: "Insufficient wallet",
+  PENDING_ORDER_EXISTS: "A pending order already exists",
+  ORDER_ID_REQUIRED: "Order ID is required",
+  FAILED_TO_CANCEL_ORDER: "Failed to cancel pending order",
+  FAILED_TO_MARK_ORDER_AS_FAILED: "Failed to mark order as failed",
 };
 
 export const CheckoutSuccessMessage = {
   ORDER_CREATED: "Order created successfully",
   PAYMENT_SUCCESS_COURSE_ENROLLED: "Payment successful and courses enrolled",
+  ORDER_CANCELLED_SUCCESSFULLY: "Pending order cancelled successfully",
+  ORDER_MARKED_AS_FAILED_SUCCESSFULLY: "Order marked as failed successfully",
 };
 
 export const EnrolledErrorMessage = {
@@ -558,43 +613,54 @@ export const ResponseMessages = {
 export const INSTRUCTOR_REVENUE_SHARE = 0.9;
 
 export const INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE = {
-  SOMETHING_WENT_WRONG : "Something went wrong.",
-  INSTRUCTOR_NOT_FOUND:"Instructor not found",
-}
+  SOMETHING_WENT_WRONG: "Something went wrong.",
+  INSTRUCTOR_NOT_FOUND: "Instructor not found",
+};
 
 export const INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE = {
-  MARKED_AS_FAILED:"Order marked as failed successfully"
-
-}
+  MARKED_AS_FAILED: "Order marked as failed successfully",
+  ORDER_CANCELLED_SUCCESSFULLY: "Pending order cancelled successfully",
+};
 
 export const INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE = {
-  FAILED_TO_CREATE_RAZORPAY_ORDER:"Failed to create Razorpay order",
-  FAILED_TO_RETRY_ORDER:"Failed to retry order",
-  INSTRUCTOR_NOT_FOUND:"Instructor not found",
-  FAILED_TO_CANCEL:"Failed to cancel order",
-  FAILED_TO_MARK_AS_FAILED:"Failed to mark order as failed"
-}
+  FAILED_TO_CREATE_RAZORPAY_ORDER: "Failed to create Razorpay order",
+  FAILED_TO_RETRY_ORDER: "Failed to retry order",
+  INSTRUCTOR_NOT_FOUND: "Instructor not found",
+  FAILED_TO_CANCEL: "Failed to cancel order",
+  FAILED_TO_MARK_AS_FAILED: "Failed to mark order as failed",
+  ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP: "already have an active membership",
+  INVALID_PLAN: "Invalid plan",
+  PENDING_ORDER_EXIST: "A pending order already exists",
+  ALREADY_PAID: "An order for this plan has already been paid",
+  ORDER_NOT_FOUND: "Order not found",
+  FAILED_ORDERS_ONLY_RETRY: "Only failed orders can be retried",
+  UNAUTHORIZED_ACCESS: "Unauthorized access",
+  PENDING_ORDERS_ONLY_ABLE_TO_CANCEL: "Only pending orders can be cancelled",
+  PAID_BY_RAZORPAY: "Order has already been paid on Razorpay",
+};
 
 export const INSTRUCTOR_SLOT_BOOKING_ERROR_MESSAGE = {
-  FAILED_TO_FETCH_BOOKING_DETAILS:"Failed to fetch booking detail",
-}
+  FAILED_TO_FETCH_BOOKING_DETAILS: "Failed to fetch booking detail",
+};
 
 export const INSTRUCTOR_SLOT_ERROR_MESSAGE = {
-  FAILED_TO_FETCH_SLOT_STAT:"Failed to fetch slot stats",
-  FAILED_TO_FETCH_SLOT:"Failed to fetch slots",
-  FAILED_TO_DELETE_SLOT:"Failed to delete slot",
-  FAILED_TO_UPDATE_SLOT:"Failed to update slot",
-  FAILED_TO_CREATE_SLOT:"Failed to create slot"
-}
+  FAILED_TO_FETCH_SLOT_STAT: "Failed to fetch slot stats",
+  FAILED_TO_FETCH_SLOT: "Failed to fetch slots",
+  FAILED_TO_DELETE_SLOT: "Failed to delete slot",
+  FAILED_TO_UPDATE_SLOT: "Failed to update slot",
+  FAILED_TO_CREATE_SLOT: "Failed to create slot",
+};
 
 export const INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER = {
-  FAILED_TO_FETCH_COURSE_DASHBOARD:"Failed to fetch course dashboard",
-  INVALID_COURSE_ID:"Invalid Course ID",
-}
+  FAILED_TO_FETCH_COURSE_DASHBOARD: "Failed to fetch course dashboard",
+  INVALID_COURSE_ID: "Invalid Course ID",
+};
 
 export const INSTRUCTOR_ERROR_MESSAGE = {
-  UNAUTHORIZED_ID:"Unauthorized: Instructor ID not found.",
-  INTERNAL_SERVER_ERROR:"Internal Server Error",
+  NOT_FOUND: "not found",
+  ONLY_REJECTED: "Only rejected",
+  UNAUTHORIZED_ID: "Unauthorized: Instructor ID not found.",
+  INTERNAL_SERVER_ERROR: "Internal Server Error",
   INSTRUCTOR_UNAUTHORIZED: "Unauthorized",
   INVALID_RANGE: "Invalid or missing range",
   INVALID_PAGE_LIMIT: "Invalid page or limit",
@@ -650,9 +716,8 @@ export const SERVER_ERROR = {
   INTERNAL_SERVER_ERROR: "internal server error",
 };
 
-
-
 export const MESSAGES = {
+  RESET_TOKEN_REQUIRED: "Reset token is required",
   // General Messages
   EMAIL_REQUIRED: "Email is required",
   PASSWORD_REQUIRED: "Password is required",

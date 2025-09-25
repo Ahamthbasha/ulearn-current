@@ -17,7 +17,6 @@ export class StudentProfileController implements IStudentProfileController {
     this._studentProfileService = studentProfileService;
   }
 
-  // ✅ GET PROFILE
   public async getProfile(
     req: AuthenticatedRequest,
     res: Response,
@@ -56,7 +55,6 @@ export class StudentProfileController implements IStudentProfileController {
     }
   }
 
-  // ✅ UPDATE PROFILE
   public async updateProfile(
     req: AuthenticatedRequest,
     res: Response,
@@ -116,7 +114,6 @@ export class StudentProfileController implements IStudentProfileController {
     }
   }
 
-  // ✅ UPDATE PASSWORD
   public async updatePassword(
     req: AuthenticatedRequest,
     res: Response,

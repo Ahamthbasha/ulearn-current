@@ -1,6 +1,6 @@
 import { IWithdrawalRequest } from "../../models/withdrawalRequestModel";
-import { IInstructor } from "../../models/instructorModel"; 
-import { Types } from "mongoose"; 
+import { IInstructor } from "../../models/instructorModel";
+import { Types } from "mongoose";
 import { WithdrawalRequestDTO } from "../../dto/instructorDTO/withdrawalRequestDTO";
 
 export function mapWithdrawalRequestToDTO(
@@ -16,7 +16,6 @@ export function mapWithdrawalRequestToDTO(
       minute: "2-digit",
     });
 
-  // Type guard to safely access instructorId properties
   const instructor = request.instructorId as IInstructor | undefined;
   const instructorName = instructor?.username || "";
   const instructorEmail = instructor?.email || "";
@@ -29,6 +28,6 @@ export function mapWithdrawalRequestToDTO(
     status: request.status,
     bankAccount: request.bankAccount ? "Linked" : "Not Linked",
     createdAt: formattedDate,
-    reason:request.remarks || ""
+    reason: request.remarks || "",
   };
 }

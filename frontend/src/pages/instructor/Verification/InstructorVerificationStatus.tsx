@@ -6,7 +6,7 @@ import { Button } from "../../../components/common/Button";
 import type { IVerificationRequest } from "../../../types/IVerificationRequest";
 
 const InstructorVerificationStatus = () => {
-  const { email } = useParams<{ email: string }>(); // 👈 extract from URL
+  const { email } = useParams<{ email: string }>(); 
   const [request, setRequest] = useState<IVerificationRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();

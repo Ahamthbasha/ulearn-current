@@ -5,50 +5,65 @@ import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { PopulatedBooking } from "../../types/PopulatedBooking";
 import { generateSlotReceiptPdf } from "../../utils/generateSlotReceiptPdf";
-import { StudentErrorMessages } from "../../utils/constants";
+import {
+  StudentErrorMessages,
+  StudentSuccessMessages,
+} from "../../utils/constants";
 
-export class StudentSlotBookingController implements IStudentSlotBookingController {
+export class StudentSlotBookingController
+  implements IStudentSlotBookingController
+{
   private _bookingService: IStudentSlotBookingService;
 
   constructor(bookingService: IStudentSlotBookingService) {
     this._bookingService = bookingService;
   }
 
-  async initiateCheckout(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async initiateCheckout(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const { slotId } = req.params;
       const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
 
-      const result = await this._bookingService.initiateCheckout(slotId, studentId);
+      const result = await this._bookingService.initiateCheckout(
+        slotId,
+        studentId,
+      );
       res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (err: any) {
       console.error("initiateCheckout error:", err);
-      
-      if (err.message.startsWith("PENDING_BOOKING_EXISTS:")) {
+
+      if (
+        err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
+      ) {
         const bookingId = err.message.split(":")[1];
         res.status(StatusCode.CONFLICT).json({
           success: false,
-          error: "PENDING_BOOKING_EXISTS",
-          message: "You have a pending booking for this slot. Please cancel it first or wait for it to expire.",
+          error: StudentErrorMessages.PENDING_BOOKING_EXISTS_MESSAGE,
+          message: StudentErrorMessages.PENDING_BOOKING_INFO,
           bookingId: bookingId,
           actions: {
-            cancel: `/api/student/bookings/${bookingId}/cancel`
-          }
+            cancel: `/api/student/bookings/${bookingId}/cancel`,
+          },
         });
         return;
-      } else if (err.message === "PENDING_BOOKING_BY_OTHERS") {
+      } else if (
+        err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS
+      ) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
-          error: "PENDING_BOOKING_BY_OTHERS",
-          message: "This slot is currently being processed by another user. Please try again later."
+          error: StudentErrorMessages.PENDING_BOOKING_BY_OTHERS_ERROR_MSG,
+          message: StudentErrorMessages.ANOTHER_USER_PROCESSING,
         });
         return;
-      } else if (err.message === "SLOT_ALREADY_BOOKED") {
+      } else if (err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
-          error: "SLOT_ALREADY_BOOKED",
-          message: "This slot has already been booked."
+          error: StudentErrorMessages.SLOT_ALREADY_BOOKED_ERROR_MSG,
+          message: StudentErrorMessages.SLOT_ALREADY_BOOKED_MESSAGE,
         });
         return;
       }
@@ -60,51 +75,66 @@ export class StudentSlotBookingController implements IStudentSlotBookingControll
     }
   }
 
-  async checkSlotAvailability(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async checkSlotAvailability(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const { slotId } = req.params;
       const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
 
-      const availability = await this._bookingService.checkSlotAvailabilityForStudent(slotId, studentId);
-      
-      res.status(StatusCode.OK).json({ 
-        success: true, 
-        ...availability 
+      const availability =
+        await this._bookingService.checkSlotAvailabilityForStudent(
+          slotId,
+          studentId,
+        );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        ...availability,
       });
     } catch (err: any) {
       console.error("checkSlotAvailability error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || "Failed to check slot availability",
+        message:
+          err.message || StudentErrorMessages.FAILED_TO_CHECK_SLOT_AVAILABILITY,
       });
     }
   }
 
-  async cancelPendingBooking(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async cancelPendingBooking(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const { bookingId } = req.params;
       const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
 
-      const cancelled = await this._bookingService.cancelPendingBooking(bookingId, studentId);
-      
+      const cancelled = await this._bookingService.cancelPendingBooking(
+        bookingId,
+        studentId,
+      );
+
       if (cancelled) {
         res.status(StatusCode.OK).json({
           success: true,
-          message: "Pending booking cancelled successfully"
+          message: StudentSuccessMessages.PENDING_BOOKING_CANCELLED,
         });
       } else {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Failed to cancel pending booking"
+          message: StudentErrorMessages.FAILED_TO_CANCEL_PENDING_BOOKING,
         });
       }
     } catch (err: any) {
       console.error("cancelPendingBooking error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || "Failed to cancel pending booking",
+        message:
+          err.message || StudentErrorMessages.FAILED_TO_CANCEL_PENDING_BOOKING,
       });
     }
   }
@@ -120,7 +150,7 @@ export class StudentSlotBookingController implements IStudentSlotBookingControll
       const booking = await this._bookingService.verifyPayment(
         slotId,
         studentId,
-        razorpay_payment_id
+        razorpay_payment_id,
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
@@ -132,38 +162,42 @@ export class StudentSlotBookingController implements IStudentSlotBookingControll
     }
   }
 
-async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
-  try {
-    const { bookingId, razorpay_payment_id } = req.body ?? {};
-    const studentId = req.user?.id;
-    if (!studentId) throw new Error("Unauthorized");
-    if (!bookingId || !razorpay_payment_id)
-      throw new Error("Missing payment details");
+  async verifyRetryPayment(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const { bookingId, razorpay_payment_id } = req.body ?? {};
+      const studentId = req.user?.id;
+      if (!studentId) throw new Error("Unauthorized");
+      if (!bookingId || !razorpay_payment_id)
+        throw new Error("Missing payment details");
 
-    const booking = await this._bookingService.verifyRetryPayment(
-      bookingId,
-      studentId,
-      razorpay_payment_id
-    );
-    res.status(StatusCode.CREATED).json({ success: true, booking });
-  } catch (err: any) {
-    console.error("verifyRetryPayment error:", err);
-    
-    if (err.message === "Slot already booked by another user") {
-      res.status(StatusCode.CONFLICT).json({
+      const booking = await this._bookingService.verifyRetryPayment(
+        bookingId,
+        studentId,
+        razorpay_payment_id,
+      );
+      res.status(StatusCode.CREATED).json({ success: true, booking });
+    } catch (err: any) {
+      console.error("verifyRetryPayment error:", err);
+
+      if (err.message === StudentErrorMessages.SLOT_BOOKED_BY_OTHERS) {
+        res.status(StatusCode.CONFLICT).json({
+          success: false,
+          error: StudentErrorMessages.SLOT_ALREADY_BOOKED_CONFIRM,
+          message: StudentErrorMessages.SLOT_BOOKED_BY_OTHERS_MSG,
+        });
+        return;
+      }
+
+      res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        error: "SLOT_ALREADY_BOOKED",
-        message: "This slot has already been booked by another user."
+        message:
+          err.message || StudentErrorMessages.PAYMENT_VERIFICATION_FAILED,
       });
-      return;
     }
-    
-    res.status(StatusCode.BAD_REQUEST).json({
-      success: false,
-      message: err.message || "Payment verification failed",
-    });
   }
-}
 
   async bookViaWallet(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
@@ -171,36 +205,43 @@ async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void
       const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
 
-      const booking = await this._bookingService.bookViaWallet(slotId, studentId);
+      const booking = await this._bookingService.bookViaWallet(
+        slotId,
+        studentId,
+      );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
       console.error("bookViaWallet error:", err);
 
-      if (err.message.startsWith("PENDING_BOOKING_EXISTS:")) {
+      if (
+        err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
+      ) {
         const bookingId = err.message.split(":")[1];
         res.status(StatusCode.CONFLICT).json({
           success: false,
-          error: "PENDING_BOOKING_EXISTS",
-          message: "You have a pending booking for this slot. Please cancel it first or wait for it to expire.",
+          error: StudentErrorMessages.PENDING_BOOKING_EXISTS_MESSAGE,
+          message: StudentErrorMessages.PENDING_BOOKING_INFO,
           bookingId: bookingId,
           actions: {
             cancel: `/api/bookings/${bookingId}/cancel`,
-            checkStatus: `/api/bookings/${bookingId}/status`
-          }
+            checkStatus: `/api/bookings/${bookingId}/status`,
+          },
         });
         return;
-      } else if (err.message === "PENDING_BOOKING_BY_OTHERS") {
+      } else if (
+        err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS
+      ) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
-          error: "PENDING_BOOKING_BY_OTHERS",
-          message: "This slot is currently being processed by another user. Please try again later."
+          error: StudentErrorMessages.PENDING_BOOKING_BY_OTHERS_ERROR_MSG,
+          message: StudentErrorMessages.ANOTHER_USER_PROCESSING,
         });
         return;
-      } else if (err.message === "SLOT_ALREADY_BOOKED") {
+      } else if (err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
-          error: "SLOT_ALREADY_BOOKED",
-          message: "This slot has already been booked."
+          error: StudentErrorMessages.SLOT_ALREADY_BOOKED_ERROR_MSG,
+          message: StudentErrorMessages.SLOT_ALREADY_BOOKED_MESSAGE,
         });
         return;
       }
@@ -212,7 +253,10 @@ async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void
     }
   }
 
-  async getBookingHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getBookingHistory(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const studentId = req.user?.id;
       if (!studentId) throw new Error("Unauthorized");
@@ -221,12 +265,13 @@ async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void
       const limit = parseInt(req.query.limit as string) || 10;
       const searchQuery = req.query.search as string;
 
-      const result = await this._bookingService.getStudentBookingHistoryPaginated(
-        studentId,
-        page,
-        limit,
-        searchQuery
-      );
+      const result =
+        await this._bookingService.getStudentBookingHistoryPaginated(
+          studentId,
+          page,
+          limit,
+          searchQuery,
+        );
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -242,12 +287,16 @@ async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void
     }
   }
 
-  async getBookingDetail(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getBookingDetail(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const bookingId = req.params.bookingId;
       if (!bookingId) throw new Error("Booking ID is required");
 
-      const bookingDetail = await this._bookingService.getStudentBookingDetail(bookingId);
+      const bookingDetail =
+        await this._bookingService.getStudentBookingDetail(bookingId);
 
       if (!bookingDetail) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -267,12 +316,16 @@ async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void
     }
   }
 
-  async downloadReceipt(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async downloadReceipt(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const bookingId = req.params.bookingId;
       if (!bookingId) throw new Error("Booking ID is required");
 
-      const booking = await this._bookingService.getStudentBookingById(bookingId);
+      const booking =
+        await this._bookingService.getStudentBookingById(bookingId);
       if (
         !booking ||
         typeof booking.slotId === "string" ||
@@ -287,7 +340,7 @@ async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=slot-receipt-${bookingId}.pdf`
+        `attachment; filename=slot-receipt-${bookingId}.pdf`,
       );
       generateSlotReceiptPdf(res, populatedBooking);
     } catch (err: any) {
@@ -299,61 +352,68 @@ async verifyRetryPayment(req: AuthenticatedRequest, res: Response): Promise<void
     }
   }
 
-  async handlePaymentFailure(req: AuthenticatedRequest, res: Response): Promise<void> {
-  try {
-    const { bookingId } = req.params;
-    const studentId = req.user?.id;
-    if (!studentId) throw new Error("Unauthorized");
-    if (!bookingId) throw new Error("Booking ID is required");
+  async handlePaymentFailure(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const { bookingId } = req.params;
+      const studentId = req.user?.id;
+      if (!studentId) throw new Error("Unauthorized");
+      if (!bookingId) throw new Error("Booking ID is required");
 
-    console.log('handle paymet failure',bookingId)
+      console.log("handle paymet failure", bookingId);
 
-    await this._bookingService.handlePaymentFailure(bookingId, studentId);
-    res.status(StatusCode.OK).json({
-      success: true,
-      message: "Booking marked as failed",
-    });
-  } catch (err: any) {
-    console.error("handlePaymentFailure error:", err);
-    res.status(StatusCode.BAD_REQUEST).json({
-      success: false,
-      message: err.message || "Failed to mark booking as failed",
-    });
-  }
-}
-
-async retryPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
-  try {
-    const { bookingId } = req.params;
-    const studentId = req.user?.id;
-    if (!studentId) throw new Error("Unauthorized");
-    if (!bookingId) throw new Error("Booking ID is required");
-
-    const result = await this._bookingService.retryPayment(bookingId, studentId);
-    res.status(StatusCode.OK).json({ success: true, ...result });
-  } catch (err: any) {
-    console.error("retryPayment error:", err);
-
-    if (err.message === "PENDING_BOOKING_BY_OTHERS") {
-      res.status(StatusCode.CONFLICT).json({
-        success: false,
-        error: "PENDING_BOOKING_BY_OTHERS",
-        message: "This slot is currently being processed by another user. Please try again later.",
+      await this._bookingService.handlePaymentFailure(bookingId, studentId);
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: StudentSuccessMessages.BOOKING_MARKED_AS_FAILED,
       });
-      return;
-    } else if (err.message === "SLOT_ALREADY_BOOKED") {
-      res.status(StatusCode.CONFLICT).json({
+    } catch (err: any) {
+      console.error("handlePaymentFailure error:", err);
+      res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        error: "SLOT_ALREADY_BOOKED",
-        message: "This slot has already been booked.",
+        message:
+          err.message || StudentErrorMessages.FAILED_TO_MARK_BOOKING_AS_FAILED,
       });
-      return;
     }
-
-    res.status(StatusCode.BAD_REQUEST).json({
-      success: false,
-      message: err.message || "Failed to retry payment",
-    });
   }
-}
+
+  async retryPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { bookingId } = req.params;
+      const studentId = req.user?.id;
+      if (!studentId) throw new Error("Unauthorized");
+      if (!bookingId) throw new Error("Booking ID is required");
+
+      const result = await this._bookingService.retryPayment(
+        bookingId,
+        studentId,
+      );
+      res.status(StatusCode.OK).json({ success: true, ...result });
+    } catch (err: any) {
+      console.error("retryPayment error:", err);
+
+      if (err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS) {
+        res.status(StatusCode.CONFLICT).json({
+          success: false,
+          error: StudentErrorMessages.PENDING_BOOKING_BY_OTHERS_ERROR_MSG,
+          message: StudentErrorMessages.ANOTHER_USER_PROCESSING,
+        });
+        return;
+      } else if (err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
+        res.status(StatusCode.CONFLICT).json({
+          success: false,
+          error: StudentErrorMessages.SLOT_ALREADY_BOOKED_ERROR_MSG,
+          message: StudentErrorMessages.SLOT_ALREADY_BOOKED_MESSAGE,
+        });
+        return;
+      }
+
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: err.message || StudentErrorMessages.SLOT_RETRY_PAYMENT_FAILED,
+      });
+    }
+  }
 }

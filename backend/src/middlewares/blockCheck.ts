@@ -2,8 +2,8 @@ import { Response, NextFunction } from "express";
 import { StatusCode, Roles } from "../utils/enums";
 import { AuthErrorMsg } from "../utils/constants";
 import { StudentRepository } from "../repositories/studentRepository/studentRepository";
-import InstructorRepository from "../repositories/instructorRepository/instructorRepository"; 
-import { AuthenticatedRequest } from "./authenticatedRoutes"; 
+import InstructorRepository from "../repositories/instructorRepository/instructorRepository";
+import { AuthenticatedRequest } from "./authenticatedRoutes";
 
 export const restrictBlockedUser = async (
   req: AuthenticatedRequest,
@@ -17,7 +17,7 @@ export const restrictBlockedUser = async (
       res
         .status(StatusCode.UNAUTHORIZED)
         .json({ message: AuthErrorMsg.INVALID_ACCESS_TOKEN });
-        return
+      return;
     }
 
     // Select repository based on role
@@ -26,7 +26,7 @@ export const restrictBlockedUser = async (
       const studentRepo = new StudentRepository();
       user = await studentRepo.findById(req.user.id);
     } else if (req.user.role === Roles.INSTRUCTOR) {
-      const instructorRepo = new InstructorRepository()
+      const instructorRepo = new InstructorRepository();
       user = await instructorRepo.findById(req.user.id);
     } else if (req.user.role === Roles.ADMIN) {
       // Admins may not have block checks, or handle differently
@@ -35,7 +35,7 @@ export const restrictBlockedUser = async (
       res
         .status(StatusCode.UNAUTHORIZED)
         .json({ message: AuthErrorMsg.INVALID_ROLE });
-        return
+      return;
     }
 
     // Check if user exists
@@ -45,7 +45,7 @@ export const restrictBlockedUser = async (
       res
         .status(StatusCode.UNAUTHORIZED)
         .json({ message: AuthErrorMsg.USER_NOT_FOUND });
-        return
+      return;
     }
 
     // Check if user is blocked
@@ -55,7 +55,7 @@ export const restrictBlockedUser = async (
       res
         .status(StatusCode.FORBIDDEN)
         .json({ message: AuthErrorMsg.ACCOUNT_BLOCKED });
-    return
+      return;
     }
     next();
   } catch (error: any) {

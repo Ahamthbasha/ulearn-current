@@ -7,7 +7,7 @@ import {
   IAdminCourseSalesReportItem,
   IAdminMembershipReportItem,
 } from "../../types/dashboardTypes";
-import { PipelineStage } from "mongoose"; // Use Mongoose's PipelineStage
+import { PipelineStage } from "mongoose";
 
 export class AdminDashboardRepository implements IAdminDashboardRepository {
   private _instructorRepo: IInstructorRepository;

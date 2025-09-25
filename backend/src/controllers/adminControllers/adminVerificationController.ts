@@ -12,7 +12,10 @@ export class AdminVerificationController {
   private _verificationService: IAdminVerificationService;
   private _emailService: IEmail;
 
-  constructor(verificationService: IAdminVerificationService,emailService:IEmail) {
+  constructor(
+    verificationService: IAdminVerificationService,
+    emailService: IEmail,
+  ) {
     this._verificationService = verificationService;
     this._emailService = emailService;
   }

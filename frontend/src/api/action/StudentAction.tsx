@@ -259,7 +259,6 @@ export const markFailed = async(orderId:string)=>{
   }
 }
 
-
 //boughted courses actions
 
 export const getEnrolledCourses = async () => {
@@ -734,79 +733,6 @@ export const slotReport = async (filter: {
     throw error;
   }
 };
-
-// export const exportCourseReport = async (
-//   format: "pdf" | "excel",
-//   filter?: {
-//     type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
-//     startDate?: string;
-//     endDate?: string;
-//     page?: number;
-//   }
-// ) => {
-//   try {
-//     const response = await API.get(UserRouterEndpoints.userExportCourseReport, {
-//       params: {
-//         format,
-//         filter: filter?.type,
-//         startDate: filter?.startDate,
-//         endDate: filter?.endDate,
-//         page: filter?.page,
-//         limit: 5, // Fixed limit of 5
-//       },
-//       responseType: "blob",
-//     });
-
-//     const filename =
-//       format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
-//     const blob = new Blob([response.data], {
-//       type:
-//         format === "pdf"
-//           ? "application/pdf"
-//           : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-//     });
-//     fileDownload(blob, filename);
-//   } catch (error) {
-//     console.error("Error exporting course report:", error);
-//     throw error;
-//   }
-// };
-
-// export const exportSlotReport = async (
-//   format: "pdf" | "excel",
-//   filter?: {
-//     type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
-//     startDate?: string;
-//     endDate?: string;
-//     page?: number;
-//   }
-// ) => {
-//   try {
-//     const response = await API.get(UserRouterEndpoints.userExportSlotReport, {
-//       params: {
-//         format,
-//         filter: filter?.type,
-//         startDate: filter?.startDate,
-//         endDate: filter?.endDate,
-//         page: filter?.page,
-//         limit: 5, // Fixed limit of 5
-//       },
-//       responseType: "blob",
-//     });
-
-//     const filename = format === "pdf" ? "slot-report.pdf" : "slot-report.xlsx";
-//     const blob = new Blob([response.data], {
-//       type:
-//         format === "pdf"
-//           ? "application/pdf"
-//           : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-//     });
-//     fileDownload(blob, filename);
-//   } catch (error) {
-//     console.error("Error exporting slot report:", error);
-//     throw error;
-//   }
-// };
 
 export const exportCourseReport = async (
   format: "pdf" | "excel",

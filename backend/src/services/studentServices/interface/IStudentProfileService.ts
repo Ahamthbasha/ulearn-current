@@ -8,5 +8,5 @@ export interface IStudentProfileService {
     data: Partial<IUser>,
   ): Promise<StudentProfileDTO | null>;
   updatePassword(email: string, password: string): Promise<boolean>;
-  getUserByEmail(email: string): Promise<IUser | null>; // raw user (for password validation only)
+  getUserByEmail(email: string): Promise<IUser | null>;
 }

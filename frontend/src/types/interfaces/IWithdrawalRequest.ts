@@ -7,8 +7,6 @@ export interface IWithdrawalRequest {
   remarks?: string;
 }
 
-
-
 export interface WithdrawalRequestDto {
   requestId: string;
   instructorName: string;

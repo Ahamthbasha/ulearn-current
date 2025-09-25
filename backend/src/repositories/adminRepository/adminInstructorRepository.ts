@@ -25,12 +25,7 @@ export class AdminInstructorRespository
 
       const total = await this.countDocuments(query);
 
-      const result = await this.paginate(
-        query,
-        page,
-        limit,
-        { createdAt: -1 }, // sort by createdAt descending
-      );
+      const result = await this.paginate(query, page, limit, { createdAt: -1 });
 
       return { instructors: result.data, total };
     } catch (error) {

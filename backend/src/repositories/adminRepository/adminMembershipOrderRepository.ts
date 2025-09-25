@@ -13,7 +13,7 @@ export class AdminMembershipOrderRepository
     page: number,
     limit: number,
     search?: string,
-    status?: string
+    status?: string,
   ): Promise<{ data: InstructorMembershipOrderDTO[]; total: number }> {
     const skip = (page - 1) * limit;
 
@@ -25,8 +25,8 @@ export class AdminMembershipOrderRepository
           from: "instructors", // Make sure this matches your instructor collection name
           localField: "instructorId",
           foreignField: "_id",
-          as: "instructorData"
-        }
+          as: "instructorData",
+        },
       },
       // Lookup membership plan details
       {
@@ -34,12 +34,19 @@ export class AdminMembershipOrderRepository
           from: "membershipplans", // Make sure this matches your membership plan collection name
           localField: "membershipPlanId",
           foreignField: "_id",
-          as: "membershipPlanData"
-        }
+          as: "membershipPlanData",
+        },
       },
       // Unwind the arrays
-      { $unwind: { path: "$instructorData", preserveNullAndEmptyArrays: true } },
-      { $unwind: { path: "$membershipPlanData", preserveNullAndEmptyArrays: true } }
+      {
+        $unwind: { path: "$instructorData", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $unwind: {
+          path: "$membershipPlanData",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
     ];
 
     // Build match conditions
@@ -56,7 +63,7 @@ export class AdminMembershipOrderRepository
       matchConditions.$or = [
         { txnId: searchRegex },
         { "instructorData.username": searchRegex },
-        { "instructorData.email": searchRegex }
+        { "instructorData.email": searchRegex },
       ];
     }
 
@@ -70,7 +77,8 @@ export class AdminMembershipOrderRepository
 
     // Get total count first
     const countPipeline = [...pipeline, { $count: "total" }];
-    const countResult = await InstructorMembershipOrderModel.aggregate(countPipeline);
+    const countResult =
+      await InstructorMembershipOrderModel.aggregate(countPipeline);
     const total = countResult[0]?.total || 0;
 
     // Add pagination to main pipeline
@@ -80,7 +88,7 @@ export class AdminMembershipOrderRepository
     const orders = await InstructorMembershipOrderModel.aggregate(pipeline);
 
     const data: InstructorMembershipOrderDTO[] = orders.map((order) => ({
-      orderId:order.orderId,
+      orderId: order.orderId,
       instructor: {
         name: order.instructorData?.username ?? "",
         email: order.instructorData?.email ?? "",
@@ -101,9 +109,11 @@ export class AdminMembershipOrderRepository
   }
 
   async findByTxnId(
-    razorpayOrderId : string,
+    razorpayOrderId: string,
   ): Promise<InstructorMembershipOrderDTO | null> {
-    const order = await InstructorMembershipOrderModel.findOne({ razorpayOrderId  })
+    const order = await InstructorMembershipOrderModel.findOne({
+      razorpayOrderId,
+    })
       .populate<{
         instructorId: InstructorPopulated;
       }>("instructorId", "username email")
@@ -112,12 +122,12 @@ export class AdminMembershipOrderRepository
       }>("membershipPlanId", "name durationInDays description benefits")
       .lean();
 
-      console.log(order)
+    console.log(order);
 
     if (!order) return null;
 
     return {
-      orderId:order.orderId,
+      orderId: order.orderId,
       instructor: {
         name: order.instructorId?.username ?? "",
         email: order.instructorId?.email ?? "",

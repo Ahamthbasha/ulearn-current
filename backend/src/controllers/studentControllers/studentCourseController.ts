@@ -21,9 +21,7 @@ export class StudentCourseController implements IStudentCourseController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message:
-          StudentSuccessMessages.COURSES_FETCHED ||
-          "Courses fetched successfully",
+        message: StudentSuccessMessages.COURSES_FETCHED,
         data: courses,
       });
     } catch (error) {
@@ -45,8 +43,6 @@ export class StudentCourseController implements IStudentCourseController {
         category = "",
       } = req.query;
 
-      console.log("filtered courses", req.query);
-
       const parsedPage = parseInt(page as string);
       const parsedLimit = parseInt(limit as string);
       const searchTerm = search.toString();
@@ -57,11 +53,10 @@ export class StudentCourseController implements IStudentCourseController {
         | "price-desc";
       const categoryId = category ? category.toString() : undefined;
 
-      // Validate pagination parameters
       if (isNaN(parsedPage) || parsedPage < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid page number",
+          message: StudentErrorMessages.INVALID_PAGE_NUMBER,
         });
         return;
       }
@@ -69,7 +64,7 @@ export class StudentCourseController implements IStudentCourseController {
       if (isNaN(parsedLimit) || parsedLimit < 1) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid limit value",
+          message: StudentErrorMessages.INVALID_LIMIT_VALUE,
         });
         return;
       }
@@ -85,9 +80,7 @@ export class StudentCourseController implements IStudentCourseController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message:
-          StudentSuccessMessages.COURSES_FETCHED ||
-          "Courses fetched successfully",
+        message: StudentSuccessMessages.COURSES_FETCHED,
         data: result.data,
         total: result.total,
         page: parsedPage,
@@ -110,7 +103,7 @@ export class StudentCourseController implements IStudentCourseController {
       if (!courseId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Course ID is required",
+          message: StudentErrorMessages.COURSE_ID_REQUIRED,
         });
         return;
       }
@@ -121,16 +114,14 @@ export class StudentCourseController implements IStudentCourseController {
       if (!courseDTO) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: "Course not found",
+          message: StudentErrorMessages.COURSE_NOT_FOUND,
         });
         return;
       }
 
       res.status(StatusCode.OK).json({
         success: true,
-        message:
-          StudentSuccessMessages.COURSE_DETAILS_FETCHED ||
-          "Course details fetched successfully",
+        message: StudentSuccessMessages.COURSE_DETAILS_FETCHED,
         data: courseDTO,
       });
     } catch (error) {

@@ -91,7 +91,7 @@ export class InstructorQuizRepository
     const quiz = await this.findById(quizId);
     if (!quiz) return null;
 
-    quiz.questions.pull({ _id: questionId }); // ✅ Replace .remove() with .pull()
+    quiz.questions.pull({ _id: questionId });
     return await quiz.save();
   }
 

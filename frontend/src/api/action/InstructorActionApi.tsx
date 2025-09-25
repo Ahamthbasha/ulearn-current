@@ -629,7 +629,7 @@ export const instructorCreditWallet = async (data: {
   }
 };
 
-// ✅ Debit wallet
+
 export const instructorDebitWallet = async (data: {
   amount: number;
   description: string;
@@ -646,7 +646,6 @@ export const instructorDebitWallet = async (data: {
   }
 };
 
-// ✅ Create Razorpay order for wallet recharge
 export const instructorCreateWalletRechargeOrder = async (data: {
   amount: number;
 }) => {
@@ -661,7 +660,6 @@ export const instructorCreateWalletRechargeOrder = async (data: {
   }
 };
 
-// ✅ Verify Razorpay payment and credit wallet
 export const instructorVerifyPayment = async (data: {
   razorpay_order_id: string;
   razorpay_payment_id: string;
@@ -807,7 +805,6 @@ export const markOrderAsFailed = async (orderId: string) => {
   }
 }
 
-// 🔧 Update this function to accept payload
 export const verifyMembershipPurchase = async (payload: {
   razorpayOrderId: string;
   paymentId: string;

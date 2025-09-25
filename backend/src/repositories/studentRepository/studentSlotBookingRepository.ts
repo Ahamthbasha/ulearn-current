@@ -13,7 +13,7 @@ export class StudentSlotBookingRepository
 
   async createBooking(
     booking: Partial<IBooking>,
-    session?: ClientSession
+    session?: ClientSession,
   ): Promise<IBooking> {
     if (session) {
       return await this.createWithSession(booking, session);
@@ -24,7 +24,7 @@ export class StudentSlotBookingRepository
   async updateBookingStatus(
     id: string,
     update: Partial<IBooking>,
-    session?: ClientSession
+    session?: ClientSession,
   ): Promise<void> {
     if (session) {
       await this.updateWithSession(id, update, session);
@@ -36,7 +36,7 @@ export class StudentSlotBookingRepository
   async findBookingById(
     id: string,
     populate: PopulateOptions[] = [],
-    session?: ClientSession
+    session?: ClientSession,
   ): Promise<IBooking | null> {
     let query = this.model.findById(id);
     if (populate.length) query = query.populate(populate);
@@ -47,16 +47,16 @@ export class StudentSlotBookingRepository
   async findOne(
     filter: object,
     populate: PopulateOptions[] = [],
-    session?: ClientSession
+    session?: ClientSession,
   ): Promise<IBooking | null> {
     return await super.findOne(filter, populate, session);
   }
 
   async markStalePendingBookingsAsFailed(
     slotId: Types.ObjectId,
-    session?: ClientSession
+    session?: ClientSession,
   ): Promise<void> {
-    const staleThreshold = new Date(Date.now() - 15 * 60 * 1000); // 15 minutes
+    const staleThreshold = new Date(Date.now() - 15 * 60 * 1000);
     const filter = {
       slotId,
       status: "pending",
@@ -70,7 +70,7 @@ export class StudentSlotBookingRepository
     page: number,
     limit: number,
     searchQuery?: string,
-    populate: PopulateOptions[] = []
+    populate: PopulateOptions[] = [],
   ): Promise<{ data: IBooking[]; total: number }> {
     const baseFilter = { studentId: new Types.ObjectId(studentId) };
 
@@ -80,14 +80,15 @@ export class StudentSlotBookingRepository
         page,
         limit,
         { createdAt: -1 },
-        populate
+        populate,
       );
     }
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
     const validStatuses = ["confirmed", "pending", "cancelled", "failed"];
     const isStatusSearch = validStatuses.includes(trimmedQuery);
-    const isValidObjectId = Types.ObjectId.isValid(trimmedQuery) && trimmedQuery.length === 24;
+    const isValidObjectId =
+      Types.ObjectId.isValid(trimmedQuery) && trimmedQuery.length === 24;
 
     let matchCondition: any = { ...baseFilter };
 
@@ -132,7 +133,7 @@ export class StudentSlotBookingRepository
       page,
       limit,
       { createdAt: -1 },
-      populate
+      populate,
     );
   }
 }

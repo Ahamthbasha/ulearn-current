@@ -68,7 +68,6 @@ export class StudentInstructorListingController
     try {
       const filters =
         await this._instructorListingService.getAvailableFilters();
-      console.log("filters", filters);
       res.status(StatusCode.OK).json({ success: true, ...filters });
     } catch (error) {
       console.log(error);

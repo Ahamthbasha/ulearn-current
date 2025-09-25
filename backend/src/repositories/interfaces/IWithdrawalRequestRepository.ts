@@ -8,9 +8,9 @@ export interface IWithdrawalRequestRepository {
     amount: number,
     bankAccount: IWithdrawalRequest["bankAccount"],
   ): Promise<IWithdrawalRequest>;
-  
+
   findById(requestId: string): Promise<IWithdrawalRequest | null>;
-  
+
   findByInstructorIdWithPagination(
     instructorId: Types.ObjectId,
     options: IPaginationOptions,
@@ -30,5 +30,5 @@ export interface IWithdrawalRequestRepository {
     options: IPaginationOptions,
   ): Promise<{ transactions: IWithdrawalRequest[]; total: number }>;
 
-  getTotalPendingAmount(instructorId: Types.ObjectId):Promise<number>
+  getTotalPendingAmount(instructorId: Types.ObjectId): Promise<number>;
 }

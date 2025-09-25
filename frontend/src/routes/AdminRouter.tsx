@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom";
 import LoginPage from "../pages/admin/Auth/Login";
-import Home from "../pages/admin/Home";
 import AdminLayout from "../layouts/AdminLayout";
 import AdminSessionRoute from "../Protecter/AdminSessionRoute";
 import PrivateRoute from "../Protecter/AdminPrivateRoute";
@@ -46,7 +45,6 @@ const AdminRouter = () => {
       {/* Protected routes */}
       <Route element={<PrivateRoute />}>
         <Route element={<AdminLayout />}>
-          <Route path="home" element={<Home />} />
           <Route path="users" element={<UserList />} />
           <Route path="instructors" element={<InstructorList />} />
           <Route path="verification" element={<VerificationPage />} />

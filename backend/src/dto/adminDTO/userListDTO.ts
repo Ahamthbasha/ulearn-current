@@ -1,4 +1,3 @@
-// src/dto/UserListDTO.ts
 export interface UserListDTO {
   _id: string;
   name: string;

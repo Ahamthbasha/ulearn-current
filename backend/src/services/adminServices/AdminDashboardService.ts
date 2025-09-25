@@ -66,8 +66,6 @@ export class AdminDashboardService implements IAdminDashboardService {
         limit,
       );
 
-    // FIX 1: Calculate totalAdminShare from all items, not just current page
-    // For pagination, we need to get total admin share for the entire dataset
     const allItemsForTotal =
       await this._dashboardRepo.getCourseSalesReportFiltered(filter); // No pagination for total calculation
     const totalAdminShare = allItemsForTotal.items.reduce(

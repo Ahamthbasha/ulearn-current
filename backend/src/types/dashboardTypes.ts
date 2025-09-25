@@ -87,5 +87,4 @@ export type AggregationPipelineStage = {
   $sort?: { [key: string]: any };
   $skip?: number;
   $limit?: number;
-  // Add other stages as needed (e.g., $facet, $out, etc.)
 };

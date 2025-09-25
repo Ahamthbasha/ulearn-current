@@ -9,7 +9,9 @@ export class InstructorCategoryService implements IInstructorCategoryService {
     this._categoryRepo = categoryRepo;
   }
 
-  async fetchActiveCategories(): Promise<ICategoryModel[]> {
+  async fetchActiveCategories(): Promise<
+    Pick<ICategoryModel, "_id" | "categoryName">[]
+  > {
     return await this._categoryRepo.getListedCategories();
   }
 }

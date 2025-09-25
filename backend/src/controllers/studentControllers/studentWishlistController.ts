@@ -81,7 +81,6 @@ export class StudentWishlistController implements IStudentWishlistController {
     try {
       const userId = new Types.ObjectId(req.user?.id);
 
-      // Service now handles DTO mapping and presigned URL generation
       const wishlistDTO =
         await this._wishlistService.getWishlistCourses(userId);
 

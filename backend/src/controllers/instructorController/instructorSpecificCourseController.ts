@@ -7,7 +7,10 @@ import {
   generatePdfReport,
   generateExcelReport,
 } from "../../utils/specificReportGenerator";
-import { INSTRUCTOR_ERROR_MESSAGE, INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER } from "../../utils/constants";
+import {
+  INSTRUCTOR_ERROR_MESSAGE,
+  INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER,
+} from "../../utils/constants";
 
 export class InstructorSpecificCourseDashboardController
   implements IInstructorCourseSpecificDashboardController
@@ -22,9 +25,10 @@ export class InstructorSpecificCourseDashboardController
       const { courseId } = req.params;
 
       if (!Types.ObjectId.isValid(courseId)) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ success: false, message: INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER.INVALID_COURSE_ID});
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER.INVALID_COURSE_ID,
+        });
         return;
       }
 
@@ -40,7 +44,8 @@ export class InstructorSpecificCourseDashboardController
       );
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER.FAILED_TO_FETCH_COURSE_DASHBOARD,
+        message:
+          INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER.FAILED_TO_FETCH_COURSE_DASHBOARD,
       });
     }
   }
@@ -141,13 +146,12 @@ export class InstructorSpecificCourseDashboardController
       const rawData = await this._dashboardService.getCourseRevenueReport(
         new Types.ObjectId(courseId),
         range as any,
-        1, // Default page for export (irrelevant since no pagination)
-        10000, // Large limit to fetch all records
+        1,
+        10000,
         start,
         end,
       );
 
-      // Transform to ReportData
       const reportData = rawData.data.map((item) => ({
         orderId: item.orderId,
         createdAt: item.purchaseDate,

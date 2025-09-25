@@ -13,6 +13,5 @@ export interface IStudentCartService {
     courseId: Types.ObjectId,
   ): Promise<CartCourseDTO[] | null>;
   clearCart(userId: Types.ObjectId): Promise<boolean>;
-  // For internal use when raw cart data is needed
   getCartRaw(userId: Types.ObjectId): Promise<ICart | null>;
 }

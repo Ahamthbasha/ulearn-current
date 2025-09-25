@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { EnvErrorMsg,JwtErrorMsg } from "../utils/constants";
+import { EnvErrorMsg, JwtErrorMsg } from "../utils/constants";
 import { IJwtService } from "./interface/IJwtService";
 import dotenv from "dotenv";
 
@@ -58,7 +58,7 @@ export class JwtService implements IJwtService {
 
       return data;
     } catch (error) {
-      console.error("❌ Token verification failed:", error);
+      console.error("Token verification failed:", error);
       throw error;
     }
   }

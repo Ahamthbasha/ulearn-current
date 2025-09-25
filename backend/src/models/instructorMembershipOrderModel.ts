@@ -1,153 +1,3 @@
-// import { Schema, model, Types, Document } from "mongoose";
-
-// export interface IInstructorMembershipOrder extends Document {
-//   instructorId: Types.ObjectId;
-//   membershipPlanId: Types.ObjectId;
-//   price: number;
-//   paymentStatus: "pending" | "paid" | "failed";
-//   startDate: Date;
-//   endDate: Date;
-//   txnId: string;
-//   createdAt: Date;
-// }
-
-// export interface InstructorPopulated {
-//   username: string;
-//   email: string;
-// }
-
-// export interface MembershipPlanPopulated {
-//   name: string;
-//   durationInDays: number;
-//   description?: string;
-//   benefits?: string[];
-// }
-
-// export interface InstructorMembershipOrderDTO {
-//   instructor: {
-//     name: string;
-//     email: string;
-//   };
-//   membershipPlan: {
-//     name: string;
-//     durationInDays: number;
-//     description?: string;
-//     benefits?: string[];
-//   };
-//   price: number;
-//   paymentStatus: "pending" | "paid" | "failed";
-//   startDate: Date;
-//   endDate: Date;
-//   txnId: string;
-//   createdAt: Date;
-// }
-
-// export interface InstructorMembershipOrderListDTO {
-//   orderId: string;
-//   planName: string;
-//   amount: number;
-//   status: "pending" | "paid" | "failed";
-//   purchaseDate: Date;
-// }
-
-// const InstructorMembershipOrderSchema = new Schema<IInstructorMembershipOrder>(
-//   {
-//     instructorId: {
-//       type: Schema.Types.ObjectId,
-//       ref: "Instructor",
-//       required: true,
-//     },
-//     membershipPlanId: {
-//       type: Schema.Types.ObjectId,
-//       ref: "MembershipPlan",
-//       required: true,
-//     },
-//     price: { type: Number, required: true },
-//     paymentStatus: {
-//       type: String,
-//       enum: ["pending", "paid", "failed"],
-//       default: "pending",
-//     },
-//     startDate: { type: Date },
-//     endDate: { type: Date },
-//     txnId: { type: String },
-//   },
-//   { timestamps: true },
-// );
-
-// InstructorMembershipOrderSchema.index(
-//   { instructorId: 1, membershipPlanId: 1, paymentStatus: 1 },
-//   { unique: true, partialFilterExpression: { paymentStatus: { $in: ["pending", "paid"] } } }
-// );
-
-// export const InstructorMembershipOrderModel = model<IInstructorMembershipOrder>(
-//   "InstructorMembershipOrder",
-//   InstructorMembershipOrderSchema,
-// );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { Schema, model, Types, Document } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
@@ -191,7 +41,7 @@ export interface InstructorMembershipOrderDTO {
   paymentStatus: "pending" | "paid" | "failed" | "cancelled";
   startDate: Date;
   endDate: Date;
-  razorpayOrderId: string; 
+  razorpayOrderId: string;
   createdAt: Date;
 }
 
@@ -236,7 +86,10 @@ const InstructorMembershipOrderSchema = new Schema<IInstructorMembershipOrder>(
 
 InstructorMembershipOrderSchema.index(
   { instructorId: 1, membershipPlanId: 1, paymentStatus: 1 },
-  { unique: true, partialFilterExpression: { paymentStatus: { $in: ["pending", "paid"] } } }
+  {
+    unique: true,
+    partialFilterExpression: { paymentStatus: { $in: ["pending", "paid"] } },
+  },
 );
 
 export const InstructorMembershipOrderModel = model<IInstructorMembershipOrder>(
