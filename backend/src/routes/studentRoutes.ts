@@ -15,6 +15,7 @@ import {
   studentSlotController,
   studentSlotBookingController,
   studentDashboardController,
+  studentCouponController
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 import authenticateToken from "../middlewares/authenticatedRoutes";
@@ -549,5 +550,20 @@ router.get(
   isStudent,
   studentDashboardController.exportSlotReport.bind(studentDashboardController),
 );
+
+
+
+router.get(
+  "/getCoupons",
+  authenticateToken,
+  restrictBlockedUser,
+  isStudent,
+  studentCouponController.getAvailableCoupons.bind(studentCouponController)
+)
+
+
+
+
+
 
 export default router;

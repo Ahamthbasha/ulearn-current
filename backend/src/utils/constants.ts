@@ -748,3 +748,8 @@ export const MESSAGES = {
   STATUS_CHECK_FAILED: "Status check failed",
   FAILED_TO_RESET_PASSWORD: "Failed to reset password",
 };
+
+export const COUPONMESSAGE = {
+  COUPON_NOT_FOUND:"Coupon not found",
+  COUPON_DELETED_SUCCESSFULLY:"Coupon deleted successfully",
+}

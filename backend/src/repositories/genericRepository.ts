@@ -110,6 +110,7 @@ export interface IGenericRepository<T extends Document> {
     filter: object,
     options?: MongooseOptions,
   ): Promise<T | null>;
+
 }
 
 export class GenericRepository<T extends Document>
@@ -313,6 +314,8 @@ export class GenericRepository<T extends Document>
     return await this.model.countDocuments(filter).exec();
   }
 
+
+
   async findWithProjection(
     filter: object = {},
     projection: object = {},
@@ -343,4 +346,5 @@ export class GenericRepository<T extends Document>
   ): Promise<T | null> {
     return await this.model.findOneAndDelete(filter, options).exec();
   }
+
 }

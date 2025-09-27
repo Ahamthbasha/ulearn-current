@@ -26,6 +26,9 @@ import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
 import AdminCourseDetailPage from "../pages/admin/course/AdminCourseDetailPage";
 import Withdrawal from "../pages/admin/withdrawal/Withdrawal";
 import WithdrawalDetailsPage from "../pages/admin/withdrawal/WithdrawalDetails";
+import CouponListPage from "../pages/admin/Coupon/CouponManagementPage";
+import AddCouponPage from "../pages/admin/Coupon/AddCoupon";
+import EditCouponPage from "../pages/admin/Coupon/EditCoupon";
 
 //wallet
 
@@ -82,7 +85,15 @@ const AdminRouter = () => {
           {/* withdrawal request */}
           <Route path="withdrawal" element={<Withdrawal/>}/>
           <Route path="withdrawals/:requestId" element={<WithdrawalDetailsPage/>}/>
+
+          {/* coupon */}
+          <Route path="coupons" element={<CouponListPage/>}/>
+          <Route path="coupons/add" element={<AddCouponPage/>}/>
+          <Route path="coupons/edit/:couponId" element={<EditCouponPage/>}/>
+        
+        
         </Route>
+
       </Route>
       <Route path="*" element={<NotFound/>}/>
     </Routes>

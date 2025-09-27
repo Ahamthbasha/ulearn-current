@@ -24,6 +24,10 @@ const UserRouterEndpoints = {
   userRemoveWishlist: "/api/student/removeWishlistCourse",
   userCheckCourseExistInWishlist: "/api/student/check",
 
+  //coupon
+
+  userShowAllCoupon : "/api/student/getCoupons",
+
   //checkout
   userInitiateCheckout: "/api/student/checkout", 
   userCompleteCheckout: "/api/student/complete",

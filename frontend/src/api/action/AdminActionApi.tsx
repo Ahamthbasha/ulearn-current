@@ -5,6 +5,7 @@ import { type IMembershipPayload } from "../../types/interfaces/IMembershipPaylo
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
 import { type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
+import type { CouponData } from "../../types/interfaces/IAdminInterface";
 
 export const getAllUser = async (
   page = 1,
@@ -14,15 +15,8 @@ export const getAllUser = async (
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetUsers}?page=${page}&limit=${limit}&search=${search}`,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
-    );
-    console.log("API Call Params =>", { page, limit, search });
-
-    console.log("getAll users in adminAction api", response.data);
-    return response.data; // contains {users, total}
+      );
+    return response.data;
   } catch (error) {
     throw error;
   }
@@ -32,13 +26,7 @@ export const blockUser = async (email: string) => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminBlockUser}/${email}`,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-
-    console.log("block user in adminAction", response.data);
 
     return response.data;
   } catch (error) {
@@ -54,15 +42,8 @@ export const getAllInstructor = async (
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetInstructors}?page=${page}&limit=${limit}&search=${search}`,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
 
-    console.log("Instructor API Call Params =>", { page, limit, search });
-
-    console.log("getall instructors", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -73,14 +54,7 @@ export const blockInstructor = async (email: string): Promise<any> => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminBlockInstructor}/${email}`,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-
-    console.log("block instructor", response.data);
-
     return response.data;
   } catch (error) {
     throw error;
@@ -95,15 +69,7 @@ export const getAllVerificationRequests = async (
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetVerifcationsRequest}?page=${page}&limit=${limit}&search=${search}`,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-
-    console.log("Verification API Call Params =>", { page, limit, search });
-    console.log("Verification request response =>", response.data);
-
     return response.data;
   } catch (error) {
     throw error;
@@ -114,16 +80,7 @@ export const getVerificationRequestByemail = async (email: string) => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetVerificationByEamil}/${email}`,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-    console.log(
-      "getspecific verification request in adminAction api",
-      response.data
-    );
-
     return response.data;
   } catch (error) {
     throw error;
@@ -148,13 +105,7 @@ export const updateVerificationStatus = async (
     const response = await API.post(
       AdminRoutersEndPoints.adminApproveVerification,
       body,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-
-    console.log("approved/rejected request", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -171,8 +122,6 @@ export const getAllCategories = async (
       AdminRoutersEndPoints.adminGetAllCategories,
       {
         params: { page, limit, search },
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
       }
     );
     return response.data;
@@ -185,12 +134,7 @@ export const getCategoryById = async (categoryId: string): Promise<any> => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetCategoryById}/${categoryId}`,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-    console.log("Fetched category by ID:", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -202,12 +146,7 @@ export const addCategory = async (categoryName: string): Promise<any> => {
     const response = await API.post(
       AdminRoutersEndPoints.adminCreateCategory,
       { categoryName },
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-    console.log("Category added:", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -222,12 +161,7 @@ export const editCategory = async (
     const response = await API.put(
       AdminRoutersEndPoints.adminEditCategory,
       { id, categoryName },
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-    console.log("Category edited:", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -239,12 +173,7 @@ export const toggleCategoryStatus = async (id: string): Promise<any> => {
     const response = await API.put(
       `${AdminRoutersEndPoints.adminListOrUnListCategory}/${id}`,
       {},
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
-    console.log("Toggled category listing:", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -710,5 +639,74 @@ export const exportReport = async (
     return { success: true };
   } catch (error) {
     throw error;
+  }
+};
+
+
+export const createCoupon = async (couponData: CouponData)=> {
+  try {
+    const response = await API.post(AdminRoutersEndPoints.adminCreateCoupon, couponData);
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create coupon");
+  }
+};
+
+export const getCoupon = async (page: number = 1, limit: number = 10,searchCode?:string) => {
+  try {
+    let url = `${AdminRoutersEndPoints.adminGetCoupons}?page=${page}&limit=${limit}`;
+    if(searchCode && searchCode.trim()){
+      url += `&search=${encodeURIComponent(searchCode.trim())}`
+    }
+
+    const response = await API.get(url)
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch coupons");
+  }
+};
+
+export const getCouponById = async (couponId: string) => {
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminGetSpecificCoupon}/${couponId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch coupon");
+  }
+};
+
+export const editCoupon = async (couponId: string, couponData: Partial<CouponData>) => {
+  try {
+    const response = await API.put(`${AdminRoutersEndPoints.adminEditCoupon}/${couponId}`, couponData);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update coupon");
+  }
+};
+
+export const deleteCoupon = async (couponId: string): Promise<void> => {
+  try {
+    const response = await API.delete(`${AdminRoutersEndPoints.adminDeleteCoupon}/${couponId}`);
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete coupon");
+  }
+};
+
+export const getCouponByCode = async (code: string)=> {
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminGetCouponByCode}/${code}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch coupon by code");
+  }
+};
+
+export const toggleStatus = async (couponId: string, status: boolean) => {
+  try {
+    const response = await API.patch(`${AdminRoutersEndPoints.adminModifyStatus}/${couponId}/status`, { status });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to toggle coupon status");
   }
 };

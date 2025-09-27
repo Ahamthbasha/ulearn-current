@@ -84,4 +84,5 @@ export class InstructorCourseRepository
   async publishCourse(courseId: string): Promise<ICourse | null> {
     return await this.update(courseId, { isPublished: true });
   }
+  
 }

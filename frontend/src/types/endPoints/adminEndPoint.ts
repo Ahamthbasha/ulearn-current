@@ -60,6 +60,17 @@ const AdminRoutersEndPoints = {
   adminExportReport : "/api/admin/dashboard/exportCourseReport",
   adminExportMembershipReport : "/api/admin/dashboard/exportMembershipReport",
 
+  //adminCoupon
+
+  adminCreateCoupon : "/api/admin/coupons",
+  adminGetCoupons : "/api/admin/coupons",
+  adminGetSpecificCoupon : "/api/admin/coupons",
+  adminEditCoupon : "/api/admin/coupons",
+  adminDeleteCoupon : "/api/admin/coupons",
+  adminGetCouponByCode : "/api/admin/couponCode",
+  adminModifyStatus : "/api/admin/coupons"
+
+
 };
 
 export default AdminRoutersEndPoints;

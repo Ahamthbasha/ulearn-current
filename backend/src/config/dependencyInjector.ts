@@ -375,6 +375,26 @@ const studentWishlistService: IStudentWishlistService =
 const studentWishlistController: IStudentWishlistController =
   new StudentWishlistController(studentWishlistService);
 
+
+/// coupon management ///
+
+import { IStudentCouponRepo } from "../repositories/studentRepository/interface/IStudentCouponRepo";
+import { StudentCouponRepo } from "../repositories/studentRepository/studentCouponRepo";
+
+import { IStudentCouponService } from "../services/studentServices/interface/IStudentCouponService";
+import { StudentCouponService } from "../services/studentServices/studentCouponService";
+
+import { IStudentCouponController } from "../controllers/studentControllers/interfaces/IStudentCouponController";
+import { StudentCouponController } from "../controllers/studentControllers/studentCouponController";
+
+
+const studentCouponRepo : IStudentCouponRepo = new StudentCouponRepo()
+
+const studentCouponService : IStudentCouponService = new StudentCouponService(studentCouponRepo)
+
+const studentCouponController : IStudentCouponController = new StudentCouponController(studentCouponService)
+
+
 /////////STUDENT CHECKOUT MANAGEMENT///////////////////
 
 import { IStudentCheckoutRepository } from "../repositories/studentRepository/interface/IStudentCheckoutRepository";
@@ -866,6 +886,39 @@ import { AdminWithdrawalController } from "../controllers/adminControllers/admin
 const adminWithdrawalController: IAdminWithdrawalController =
   new AdminWithdrawalController(withdrawalService);
 
+
+
+//////////admin coupon management
+
+
+import { IAdminCouponRepo } from "../repositories/adminRepository/interface/IAdminCouponRepo";
+import { AdminCouponRepo } from "../repositories/adminRepository/adminCouponRepo";
+
+import { IAdminCouponService } from "../services/adminServices/interface/IAdminCouponService";
+import { AdminCouponService } from "../services/adminServices/adminCouponService";
+
+import { IAdminCouponController } from "../controllers/adminControllers/interface/IAdminCouponController";
+import { AdminCouponController } from "../controllers/adminControllers/adminCouponController";
+
+
+const adminCouponRepo : IAdminCouponRepo = new AdminCouponRepo()
+
+const adminCouponService : IAdminCouponService = new AdminCouponService(adminCouponRepo)
+
+const adminCouponController : IAdminCouponController = new AdminCouponController(adminCouponService)
+
+
+
+
+
+
+
+
+
+
+
+
+
 export {
   studentController,
   instructorController,
@@ -894,9 +947,13 @@ export {
   studentCartController,
   //student wishlist controller
   studentWishlistController,
+  //student coupon controller
+  studentCouponController,
   //student checkout controller
   studentCheckoutController,
+  //instructorDashaboard
   instructorDashboardController,
+  //instructor specific dashboard controller
   specificCourseDashboardController,
   //student enrolled controller
   studentEnrollmentController,
@@ -945,4 +1002,9 @@ export {
 
   //admin withdrawal controller
   adminWithdrawalController,
+
+  //admin coupon controller
+  adminCouponController,
+
+  
 };

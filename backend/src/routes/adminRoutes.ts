@@ -10,6 +10,7 @@ import {
   adminMembershipOrderController,
   adminDashboardController,
   adminWithdrawalController,
+  adminCouponController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 
@@ -322,6 +323,57 @@ router.get(
     adminDashboardController,
   ),
 );
+
+  //adminCouponController
+
+  router.post(
+    "/coupons",
+    authenticateToken,
+    isAdmin,
+    adminCouponController.createCoupon.bind(adminCouponController)
+  )
+
+  router.get(
+    "/coupons",
+    authenticateToken,
+    isAdmin,
+    adminCouponController.getAllCoupons.bind(adminCouponController)
+  )
+
+  router.get(
+    "/coupons/:couponId",
+    authenticateToken,
+    isAdmin,
+    adminCouponController.getCouponById.bind(adminCouponController)
+  )
+
+  router.put(
+    "/coupons/:couponId",
+    authenticateToken,
+    isAdmin,
+    adminCouponController.updateCoupon.bind(adminCouponController)
+  )
+
+  router.delete(
+    "/coupons/:couponId",
+    authenticateToken,
+    isAdmin,
+    adminCouponController.deleteCoupon.bind(adminCouponController)
+  )
+
+  router.get(
+    "/couponCode/:code",
+    authenticateToken,
+    isAdmin,
+    adminCouponController.getCouponByCode.bind(adminCouponController)
+  )
+
+  router.patch(
+    "/coupons/:couponId/status",
+    authenticateToken,
+    isAdmin,
+    adminCouponController.toggleCouponStatus.bind(adminCouponController)
+  )
 
 const adminRoutes = router;
 

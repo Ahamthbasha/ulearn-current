@@ -198,6 +198,18 @@ export const courseAlreadyExistInWishlist = async (courseId: string) => {
   }
 };
 
+//coupon action
+
+export const getAllCoupons = async()=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userShowAllCoupon}`)
+
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
 //checkout actions
 
 export const initiateCheckout = async (
