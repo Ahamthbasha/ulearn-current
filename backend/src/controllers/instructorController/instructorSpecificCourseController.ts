@@ -72,7 +72,6 @@ export class InstructorSpecificCourseDashboardController
         return;
       }
 
-      // Parse pagination parameters with defaults
       const pageNum = parseInt(page as string) || 1;
       const limitNum = parseInt(limit as string) || 5;
 
@@ -152,14 +151,19 @@ export class InstructorSpecificCourseDashboardController
         end,
       );
 
+      console.log("rawData",rawData)
+
       const reportData = rawData.data.map((item) => ({
-        orderId: item.orderId,
-        createdAt: item.purchaseDate,
-        courseName: item.courseName,
-        coursePrice: item.coursePrice,
-        instructorEarning: item.instructorRevenue,
-        totalEnrollments: item.totalEnrollments,
-      }));
+      orderId: item.orderId,
+      purchaseDate: item.purchaseDate,
+      courseName: item.courseName,
+      originalCoursePrice: item.originalCoursePrice,
+      couponUsed: item.couponUsed,
+      couponDeductionAmount: item.couponDeductionAmount,
+      finalCoursePrice: item.finalCoursePrice,
+      instructorRevenue: item.instructorRevenue,
+      totalEnrollments: item.totalEnrollments,
+    }));
 
       if (format === "pdf") {
         await generatePdfReport(reportData, res);

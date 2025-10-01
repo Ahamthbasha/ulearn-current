@@ -1,11 +1,12 @@
-import { Types } from "mongoose";
 import { IInstructorCourseSpecificDashboardRepository } from "../../repositories/instructorRepository/interface/IInstructorSpecificCourseDashboardRepository";
 import { IInstructorSpecificCourseDashboardService } from "./interface/IInstructorSpecificCourseService";
+import {Types} from "mongoose"
 
 export class InstructorSpecificCourseDashboardService
   implements IInstructorSpecificCourseDashboardService
 {
   private _dashboardRepository: IInstructorCourseSpecificDashboardRepository;
+
   constructor(
     dashboardRepository: IInstructorCourseSpecificDashboardRepository,
   ) {

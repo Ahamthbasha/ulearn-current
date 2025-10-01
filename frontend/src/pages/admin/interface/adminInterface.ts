@@ -78,15 +78,16 @@ export interface ReportFilter {
   endDate?: Date;
 }
 
-// Updated to match the grouped structure from the backend
 export interface CourseReportRow {
   orderId: string;
   date: Date;
+  couponCode:boolean;
   courses: {
     courseName: string;
     instructorName: string;
     coursePrice: number;
     adminShare: number;
+    discountedPrice:number;
   }[];
   totalPrice: number;
   totalAdminShare: number;

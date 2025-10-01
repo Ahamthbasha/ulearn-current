@@ -12,6 +12,7 @@ export interface IStudentCheckoutRepository {
     amount: number,
     razorpayOrderId: string,
     session?: mongoose.ClientSession,
+    couponId?:Types.ObjectId
   ): Promise<IOrder>;
 
   updateOrderStatus(

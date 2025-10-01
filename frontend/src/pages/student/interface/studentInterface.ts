@@ -98,6 +98,11 @@ export interface IStudentCourseReportItem {
   courseName: string[] | string;
   price: number[] | number;
   totalCost: number;
+  couponCode:string | boolean;
+  couponDiscountPercent:number;
+  originalTotalPrice:number;
+  couponDiscountAmount:number;
+  finalTotalPrice:number;
 }
 
 export interface IStudentSlotReportItem {
@@ -221,10 +226,13 @@ export interface Order {
   orderId: string;
   orderDate: string;
   courses: CourseOrder[];
-  canRetryPayment:boolean
-  retryInProgress:boolean
+  canRetryPayment:boolean;
+  retryInProgress:boolean;
+  totalAmountWithoutDiscount:number;
+  couponCode?: string;
+  couponDiscountPercentage?: number;
+  couponDiscountAmount?: number;
 }
-
 
 export interface OrderHistory {
   orderId: string;
@@ -232,6 +240,7 @@ export interface OrderHistory {
   gateway: string;
   date: string;
   status: string;
+  
 }
 
 export interface DisplayOrder extends OrderHistory {

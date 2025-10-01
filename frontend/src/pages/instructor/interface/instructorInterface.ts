@@ -131,6 +131,10 @@ export interface ReportItem {
   coursePrice: number;
   instructorRevenue: number;
   totalEnrollments: number;
+  originalCoursePrice: number;
+  couponUsed:string;
+  couponDeductionAmount:number;
+  finalCoursePrice:number
 }
 
 

@@ -15,37 +15,96 @@ export async function generateCourseSalesExcelReport(
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Course Sales Report");
 
+  // Define columns
   sheet.columns = [
     { header: "Order ID", key: "orderId", width: 25 },
     { header: "Date", key: "date", width: 15 },
     { header: "Course Name", key: "courseName", width: 30 },
     { header: "Instructor", key: "instructorName", width: 20 },
     { header: "Course Price", key: "coursePrice", width: 15 },
-    { header: "Total Price", key: "totalPrice", width: 15 },
+    { header: "Coupon Used", key: "couponUsed", width: 15 },
+    { header: "Discounted Price", key: "discountedPrice", width: 18 },
     { header: "Admin Share", key: "adminShare", width: 15 },
+    { header: "Total Price", key: "totalPrice", width: 15 },
+    { header: "Total Admin Share", key: "totalAdminShare", width: 18 },
   ];
 
+  // Style header row
+  const headerRow = sheet.getRow(1);
+  headerRow.font = { bold: true, size: 11 };
+  headerRow.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF4472C4" },
+  };
+  headerRow.alignment = { vertical: "middle", horizontal: "center" };
+  headerRow.height = 25;
+
+  // Add data rows
   data.forEach((item) => {
     item.courses.forEach((course, index) => {
-      sheet.addRow({
+      const row = sheet.addRow({
         orderId: index === 0 ? item.orderId : "",
         date: index === 0 ? new Date(item.date).toLocaleDateString() : "",
         courseName: course.courseName,
         instructorName: course.instructorName,
         coursePrice: course.coursePrice,
+        couponUsed: index === 0 ? (item.couponCode ? "Yes" : "No") : "",
+        discountedPrice: course.discountedPrice,
+        adminShare: course.adminShare,
         totalPrice: index === item.courses.length - 1 ? item.totalPrice : "",
-        adminShare:
+        totalAdminShare:
           index === item.courses.length - 1 ? item.totalAdminShare : "",
       });
+
+      // Apply row styling
+      row.alignment = { vertical: "middle", horizontal: "left" };
+      row.height = 20;
+
+      // Center align numeric columns
+      [5, 6, 7, 8, 9, 10].forEach((colNum) => {
+        const cell = row.getCell(colNum);
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+      });
+
+      // Add borders
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
     });
-    sheet.addRow({}); // Add a blank row between orders
+
+    // Add a blank separator row
+    sheet.addRow({});
   });
 
+  // Add overall total row
   sheet.addRow({});
-  sheet.addRow({
-    courseName: "Overall Total Admin Share:",
-    adminShare: totalAdminShare,
+  const totalRow = sheet.addRow({
+    orderId: "",
+    date: "",
+    courseName: "",
+    instructorName: "",
+    coursePrice: "",
+    couponUsed: "",
+    discountedPrice: "",
+    adminShare: "",
+    totalPrice: "Overall Total Admin Share:",
+    totalAdminShare: totalAdminShare,
   });
+
+  totalRow.font = { bold: true, size: 12 };
+  totalRow.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFD9E1F2" },
+  };
+  totalRow.alignment = { vertical: "middle", horizontal: "center" };
+  totalRow.height = 25;
 
   res.setHeader(
     "Content-Type",
@@ -64,7 +123,11 @@ export async function generateCourseSalesPdfReport(
   totalAdminShare: number,
   res: Response,
 ): Promise<void> {
-  const doc = new PDFDocument({ margin: 40 });
+  const doc = new PDFDocument({
+    margin: 30,
+    size: "A4",
+    layout: "landscape",
+  });
   const stream = new PassThrough();
 
   res.setHeader("Content-Type", "application/pdf");
@@ -75,9 +138,22 @@ export async function generateCourseSalesPdfReport(
 
   doc.pipe(stream);
 
-  // Title
-  doc.fontSize(20).text("Course Sales Report", { align: "center" });
-  doc.moveDown(1.5);
+  // Title with background
+  const pageWidth = doc.page.width - 60;
+  doc
+    .rect(30, 30, pageWidth, 40)
+    .fillAndStroke("#4472C4", "#4472C4");
+  
+  doc
+    .fontSize(18)
+    .fillColor("#FFFFFF")
+    .font("Helvetica-Bold")
+    .text("Course Sales Report", 30, 45, {
+      width: pageWidth,
+      align: "center",
+    });
+
+  doc.moveDown(2);
 
   const headers = [
     "Order ID",
@@ -85,14 +161,18 @@ export async function generateCourseSalesPdfReport(
     "Course Name",
     "Instructor",
     "Course Price",
-    "Total Price",
+    "Coupon",
+    "Disc. Price",
     "Admin Share",
+    "Total Price",
+    "Total Admin",
   ];
-  const colWidths = [80, 60, 100, 80, 60, 60, 60]; // Adjusted total width
+  
+  const colWidths = [100, 55, 150, 85, 60, 45, 60, 65, 60, 70];
 
-  const startX = doc.x;
-  let y = doc.y;
-  const lineHeight = 14;
+  const startX = 30;
+  let y = 100;
+  const lineHeight = 16;
 
   const drawRow = (
     row: string[],
@@ -101,71 +181,122 @@ export async function generateCourseSalesPdfReport(
     options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
-    doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");
+    
+    if (isHeader) {
+      doc.rect(startX, yOffset, pageWidth, height).fillAndStroke("#4472C4", "#4472C4");
+      doc.fontSize(9).fillColor("#FFFFFF").font("Helvetica-Bold");
+    } else if (isTotal) {
+      doc.rect(startX, yOffset, pageWidth, height).fillAndStroke("#D9E1F2", "#4472C4");
+      doc.fontSize(10).fillColor("#000000").font("Helvetica-Bold");
+    } else {
+      doc.fontSize(8).fillColor("#000000").font("Helvetica");
+    }
 
     let x = startX;
     row.forEach((text, i) => {
-      doc.text(text, x + 4, yOffset + 4, {
-        width: colWidths[i] - 8,
-        align: "left",
+      const cellWidth = colWidths[i];
+      const padding = 3;
+      
+      doc.text(text, x + padding, yOffset + (height - 8) / 2, {
+        width: cellWidth - padding * 2,
+        align: i === 2 || i === 3 ? "left" : "center", // Left align for Course Name and Instructor
+        ellipsis: true,
       });
-      x += colWidths[i];
-    });
 
-    // Draw borders
-    x = startX;
-    colWidths.forEach((width) => {
-      doc.rect(x, yOffset, width, height).stroke();
-      x += width;
+      if (!isHeader && !isTotal) {
+        doc.rect(x, yOffset, cellWidth, height).stroke("#CCCCCC");
+      }
+      
+      x += cellWidth;
     });
   };
 
   // Draw header
-  drawRow(headers, y, 30, { isHeader: true });
-  y += 30;
+  drawRow(headers, y, 28, { isHeader: true });
+  y += 28;
+
+  // Alternating row colors
+  let rowIndex = 0;
 
   data.forEach((item) => {
     item.courses.forEach((course, index) => {
+      const orderIdStr = String(item.orderId); // Removed truncation for Order ID
+      const truncatedCourseName = course.courseName.length > 30 ? course.courseName.substring(0, 30) + ".." : course.courseName; // Increased to 30 chars
+      
       const row = [
-        index === 0 ? item.orderId : "",
+        index === 0 ? orderIdStr : "",
         index === 0 ? new Date(item.date).toLocaleDateString() : "",
-        course.courseName,
-        course.instructorName,
-        `Rs. ${course.coursePrice.toFixed(2)}`,
-        index === item.courses.length - 1
-          ? `Rs. ${item.totalPrice.toFixed(2)}`
-          : "",
-        index === item.courses.length - 1
-          ? `Rs. ${item.totalAdminShare.toFixed(2)}`
-          : "",
+        truncatedCourseName,
+        course.instructorName.length > 16 ? course.instructorName.substring(0, 16) + ".." : course.instructorName,
+        course.coursePrice.toFixed(2),
+        index === 0 ? (item.couponCode ? "Yes" : "No") : "",
+        course.discountedPrice.toFixed(2),
+        course.adminShare.toFixed(2),
+        index === item.courses.length - 1 ? item.totalPrice.toFixed(2) : "",
+        index === item.courses.length - 1 ? item.totalAdminShare.toFixed(2) : "",
       ];
 
-      const rowHeight = lineHeight + 8;
+      const rowHeight = lineHeight + 6;
 
+      // Check if we need a new page
       if (y + rowHeight > doc.page.height - 60) {
-        doc.addPage();
-        y = doc.y;
-        drawRow(headers, y, 30, { isHeader: true });
-        y += 30;
+        doc.addPage({ layout: "landscape" });
+        y = 30;
+        drawRow(headers, y, 28, { isHeader: true });
+        y += 28;
+        rowIndex = 0;
+      }
+
+      // Alternate row background
+      if (rowIndex % 2 === 0) {
+        doc.rect(startX, y, pageWidth, rowHeight).fill("#F9F9F9");
       }
 
       drawRow(row, y, rowHeight);
       y += rowHeight;
+      rowIndex++;
     });
-    y += lineHeight; // Add space between orders
+    
+    y += 4; // Small gap between orders
   });
 
   // Overall Total Row
+  y += 8;
+  if (y > doc.page.height - 80) {
+    doc.addPage({ layout: "landscape" });
+    y = 30;
+  }
+
   const totalRow = [
     "",
     "",
     "",
     "",
     "",
-    "Overall Total Admin Share:",
-    `Rs. ${totalAdminShare.toFixed(2)}`,
+    "",
+    "",
+    "",
+    "Overall Total:",
+    totalAdminShare.toFixed(2),
   ];
-  drawRow(totalRow, y, 30, { isTotal: true });
+  
+  drawRow(totalRow, y, 32, { isTotal: true });
+
+  // Footer
+  const pageCount = doc.bufferedPageRange().count;
+  for (let i = 0; i < pageCount; i++) {
+    doc.switchToPage(i);
+    doc
+      .fontSize(8)
+      .fillColor("#666666")
+      .font("Helvetica")
+      .text(
+        `Page ${i + 1} of ${pageCount} | Generated on ${new Date().toLocaleDateString()}`,
+        30,
+        doc.page.height - 40,
+        { align: "center", width: pageWidth }
+      );
+  }
 
   doc.end();
   stream.pipe(res);

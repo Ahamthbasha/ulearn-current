@@ -24,6 +24,8 @@ export interface IDashboardData {
   monthlySales: IMonthlySales[];
   totalRevenue: number;
   totalCourseSales: number;
+  publishedCourses:number;
+  categoryWiseCount:number
 }
 
 

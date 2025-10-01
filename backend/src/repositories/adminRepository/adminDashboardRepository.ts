@@ -39,15 +39,6 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
     return await this._courseRepo.countDocuments({});
   }
 
-  async getTotalCourseRevenue(): Promise<number> {
-    const result = await this._orderRepo.aggregate([
-      { $match: { status: "SUCCESS" } },
-      { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
-    const totalRevenue = result[0]?.total || 0;
-    return totalRevenue * 0.1;
-  }
-
   async getTotalMembershipRevenue(): Promise<number> {
     const result = await this._membershipOrderRepo.aggregate([
       { $match: { paymentStatus: "paid" } },
@@ -56,31 +47,145 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
     return result[0]?.total || 0;
   }
 
-  async getMonthlyCourseSales(): Promise<
-    { month: number; year: number; total: number }[]
-  > {
-    return await this._orderRepo.aggregate([
-      { $match: { status: "SUCCESS" } },
-      {
-        $group: {
-          _id: {
-            month: { $month: "$createdAt" },
-            year: { $year: "$createdAt" },
+async getMonthlyCourseSales(): Promise<
+  { month: number; year: number; total: number }[]
+> {
+  return await this._orderRepo.aggregate([
+    { $match: { status: "SUCCESS" } },
+    { $unwind: "$courses" },
+    {
+      $lookup: {
+        from: "courses",
+        localField: "courses",
+        foreignField: "_id",
+        as: "courseDetails",
+      },
+    },
+    { $unwind: "$courseDetails" },
+    {
+      $group: {
+        _id: "$_id",
+        month: { $first: { $month: "$createdAt" } },
+        year: { $first: { $year: "$createdAt" } },
+        totalCoursePrice: { $sum: "$courseDetails.price" },
+        orderAmount: { $first: "$amount" },
+        courseCount: { $sum: 1 },
+        coursePrices: { $push: "$courseDetails.price" }
+      },
+    },
+    {
+      $addFields: {
+        discountAmount: { $subtract: ["$totalCoursePrice", "$orderAmount"] },
+      },
+    },
+    {
+      $addFields: {
+        eachCourseDeductionAmount: {
+          $cond: {
+            if: { $gt: ["$courseCount", 0] },
+            then: { $divide: ["$discountAmount", "$courseCount"] },
+            else: 0,
           },
-          total: { $sum: { $multiply: ["$amount", 0.1] } },
         },
       },
-      { $sort: { "_id.year": 1, "_id.month": 1 } },
-      {
-        $project: {
-          _id: 0,
-          month: "$_id.month",
-          year: "$_id.year",
-          total: 1,
+    },
+    { $unwind: "$coursePrices" },
+    {
+      $addFields: {
+        finalCoursePrice: { $subtract: ["$coursePrices", "$eachCourseDeductionAmount"] },
+      },
+    },
+    {
+      $addFields: {
+        adminShare: { $multiply: ["$finalCoursePrice", 0.1] },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          month: "$month",
+          year: "$year",
+        },
+        total: { $sum: "$adminShare" },
+      },
+    },
+    { $sort: { "_id.year": 1, "_id.month": 1 } },
+    {
+      $project: {
+        _id: 0,
+        month: "$_id.month",
+        year: "$_id.year",
+        total: 1,
+      },
+    },
+  ]);
+}
+
+
+async getTotalCourseRevenue(): Promise<number> {
+  const result = await this._orderRepo.aggregate([
+    { $match: { status: "SUCCESS" } },
+    { $unwind: "$courses" },
+    {
+      $lookup: {
+        from: "courses",
+        localField: "courses",
+        foreignField: "_id",
+        as: "courseDetails",
+      },
+    },
+    { $unwind: "$courseDetails" },
+    {
+      $group: {
+        _id: "$_id",
+        totalCoursePrice: { $sum: "$courseDetails.price" },
+        orderAmount: { $first: "$amount" },
+        courseCount: { $sum: 1 },
+        courses: { $push: "$courseDetails.price" }
+      },
+    },
+    {
+      $project: {
+        totalCoursePrice: 1,
+        orderAmount: 1,
+        courseCount: 1,
+        courses: 1,
+        discountAmount: { $subtract: ["$totalCoursePrice", "$orderAmount"] },
+      },
+    },
+    {
+      $project: {
+        courseCount: 1,
+        courses: 1,
+        eachCourseDeductionAmount: {
+          $cond: {
+            if: { $gt: ["$courseCount", 0] },
+            then: { $divide: ["$discountAmount", "$courseCount"] },
+            else: 0,
+          },
         },
       },
-    ]);
-  }
+    },
+    { $unwind: "$courses" },
+    {
+      $project: {
+        finalCoursePrice: { $subtract: ["$courses", "$eachCourseDeductionAmount"] },
+      },
+    },
+    {
+      $project: {
+        adminShare: { $multiply: ["$finalCoursePrice", 0.1] },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: "$adminShare" },
+      },
+    },
+  ]);
+  return result[0]?.total || 0;
+}
 
   async getMonthlyMembershipSales(): Promise<
     { month: number; year: number; total: number }[]
@@ -158,9 +263,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
           createdAt: { $gte: start, $lte: end },
         },
       },
-      {
-        $unwind: "$courses",
-      },
+      { $unwind: "$courses" },
       {
         $lookup: {
           from: "courses",
@@ -180,32 +283,115 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
       },
       { $unwind: "$instructor" },
       {
+        $lookup: {
+          from: "coupons",
+          localField: "couponId",
+          foreignField: "_id",
+          as: "couponDetails",
+        },
+      },
+      { $unwind: { path: "$couponDetails", preserveNullAndEmptyArrays: true } },
+      {
         $group: {
           _id: "$_id",
           orderId: { $first: "$_id" },
           date: { $first: "$createdAt" },
+          totalCoursePrice: { $sum: "$courseDetails.price" },
+          orderAmount: { $first: "$amount" },
+          courseCount: { $sum: 1 },
+          couponCode: { $first: "$couponDetails.code" },
           courses: {
             $push: {
               courseName: "$courseDetails.courseName",
               instructorName: "$instructor.username",
               coursePrice: "$courseDetails.price",
-              adminShare: { $multiply: ["$courseDetails.price", 0.1] },
             },
-          },
-          totalPrice: { $sum: "$courseDetails.price" },
-          totalAdminShare: {
-            $sum: { $multiply: ["$courseDetails.price", 0.1] },
           },
         },
       },
       {
         $project: {
-          _id: 0,
           orderId: 1,
           date: 1,
           courses: 1,
+          totalPrice: "$totalCoursePrice",
+          discountAmount: { $subtract: ["$totalCoursePrice", "$orderAmount"] },
+          courseCount: 1,
+          couponCode: 1,
+        },
+      },
+      {
+        $project: {
+          orderId: 1,
+          date: 1,
+          courses: {
+            $map: {
+              input: "$courses",
+              as: "course",
+              in: {
+                courseName: "$$course.courseName",
+                instructorName: "$$course.instructorName",
+                coursePrice: "$$course.coursePrice",
+                discountedPrice: {
+                  $subtract: [
+                    "$$course.coursePrice",
+                    {
+                      $cond: {
+                        if: { $gt: ["$courseCount", 0] },
+                        then: { $divide: ["$discountAmount", "$courseCount"] },
+                        else: 0,
+                      },
+                    },
+                  ],
+                },
+                adminShare: {
+                  $multiply: [
+                    {
+                      $subtract: [
+                        "$$course.coursePrice",
+                        {
+                          $cond: {
+                            if: { $gt: ["$courseCount", 0] },
+                            then: { $divide: ["$discountAmount", "$courseCount"] },
+                            else: 0,
+                          },
+                        },
+                      ],
+                    },
+                    0.1,
+                  ],
+                },
+              },
+            },
+          },
           totalPrice: 1,
-          totalAdminShare: 1,
+          discountAmount: 1,
+          couponCode: 1,
+          totalAdminShare: {
+            $sum: {
+              $map: {
+                input: "$courses",
+                as: "course",
+                in: {
+                  $multiply: [
+                    {
+                      $subtract: [
+                        "$$course.coursePrice",
+                        {
+                          $cond: {
+                            if: { $gt: ["$courseCount", 0] },
+                            then: { $divide: ["$discountAmount", "$courseCount"] },
+                            else: 0,
+                          },
+                        },
+                      ],
+                    },
+                    0.1,
+                  ],
+                },
+              },
+            },
+          },
         },
       },
     ];

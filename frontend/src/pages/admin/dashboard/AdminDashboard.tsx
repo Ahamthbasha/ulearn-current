@@ -773,80 +773,110 @@ const AdminDashboard = () => {
                   {/* Desktop Table View */}
                   <div className="hidden sm:block overflow-x-auto mb-4">
                     <table className="min-w-full table-auto border-collapse border border-gray-200 rounded-lg">
-                      <thead className="bg-blue-50">
-                        <tr>
-                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
-                            Order ID
-                          </th>
-                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
-                            Date
-                          </th>
-                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
-                            Course Name
-                          </th>
-                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
-                            Instructor
-                          </th>
-                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
-                            Course Price
-                          </th>
-                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
-                            Total Price
-                          </th>
-                          <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
-                            Admin Share
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {courseReport.map((order) =>
-                          order.courses.map((course, courseIdx) => (
-                            <tr
-                              key={`${order.orderId}-${courseIdx}`}
-                              className={
-                                courseIdx === order.courses.length - 1
-                                  ? "bg-gray-100"
-                                  : "hover:bg-gray-50 transition-colors"
-                              }
-                            >
-                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-mono text-xs sm:text-sm">
-                                {courseIdx === 0 ? order.orderId : ""}
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
-                                {courseIdx === 0
-                                  ? new Date(order.date)
-                                      .toLocaleDateString("en-GB")
-                                      .replace(/\//g, "-")
-                                  : ""}
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-medium text-xs sm:text-sm">
-                                <div className="break-words max-w-[150px] sm:max-w-none">
-                                  {course.courseName}
-                                </div>
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
-                                <div className="break-words max-w-[100px] sm:max-w-none">
-                                  {course.instructorName}
-                                </div>
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-green-600 text-xs sm:text-sm">
-                                ₹{course.coursePrice.toLocaleString()}
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-blue-600 text-xs sm:text-sm">
-                                {courseIdx === order.courses.length - 1
-                                  ? `₹${order.totalPrice.toLocaleString()}`
-                                  : ""}
-                              </td>
-                              <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-blue-600 text-xs sm:text-sm">
-                                {courseIdx === order.courses.length - 1
-                                  ? `₹${order.totalAdminShare.toLocaleString()}`
-                                  : ""}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+  <thead className="bg-blue-50">
+    <tr>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Order ID
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Date
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Course Name
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Instructor
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Course Price
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Coupon Used
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Discounted Price
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Admin Share
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Total Price
+      </th>
+      <th className="px-3 sm:px-4 py-3 border border-gray-200 text-left font-semibold text-gray-700 text-xs sm:text-sm">
+        Total Admin Share
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    {courseReport.map((order) =>
+      order.courses.map((course, courseIdx) => (
+        <tr
+          key={`${order.orderId}-${courseIdx}`}
+          className={
+            courseIdx === order.courses.length - 1
+              ? "bg-gray-100"
+              : "hover:bg-gray-50 transition-colors"
+          }
+        >
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 font-mono text-xs sm:text-sm">
+            {courseIdx === 0 ? order.orderId : ""}
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
+            {courseIdx === 0
+              ? new Date(order.date)
+                  .toLocaleDateString("en-GB")
+                  .replace(/\//g, "-")
+              : ""}
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 font-medium text-xs sm:text-sm">
+            <div className="break-words max-w-[150px] sm:max-w-none">
+              {course.courseName}
+            </div>
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 text-gray-600 text-xs sm:text-sm">
+            <div className="break-words max-w-[100px] sm:max-w-none">
+              {course.instructorName}
+            </div>
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-green-600 text-xs sm:text-sm">
+            ₹{course.coursePrice.toLocaleString()}
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 text-xs sm:text-sm">
+            {courseIdx === 0 ? (
+              order.couponCode ? (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Yes
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  No
+                </span>
+              )
+            ) : (
+              ""
+            )}
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-purple-600 text-xs sm:text-sm">
+            ₹{course.discountedPrice.toLocaleString()}
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-orange-600 text-xs sm:text-sm">
+            ₹{course.adminShare.toLocaleString()}
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-blue-600 text-xs sm:text-sm">
+            {courseIdx === order.courses.length - 1
+              ? `₹${order.totalPrice.toLocaleString()}`
+              : ""}
+          </td>
+          <td className="px-3 sm:px-4 py-3 border border-gray-200 font-semibold text-blue-600 text-xs sm:text-sm">
+            {courseIdx === order.courses.length - 1
+              ? `₹${order.totalAdminShare.toLocaleString()}`
+              : ""}
+          </td>
+        </tr>
+      ))
+    )}
+  </tbody>
+</table>
                   </div>
 
                   {/* Course Pagination Controls */}

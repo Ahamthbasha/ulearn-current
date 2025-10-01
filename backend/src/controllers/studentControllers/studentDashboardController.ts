@@ -154,21 +154,8 @@ export class StudentDashboardController implements IStudentDashboardController {
       });
 
       if (exportFormat === "pdf") {
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader(
-          "Content-Disposition",
-          "attachment; filename=course_report.pdf",
-        );
         await generateStudentCourseReportPdf(reports, res);
       } else {
-        res.setHeader(
-          "Content-Type",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        );
-        res.setHeader(
-          "Content-Disposition",
-          "attachment; filename=course_report.xlsx",
-        );
         await generateStudentCourseReportExcel(reports, res);
       }
     } catch (error) {

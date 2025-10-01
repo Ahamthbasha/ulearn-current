@@ -11,5 +11,9 @@ export interface OrderDetailsDTO {
     price: number;
     thumbnailUrl: string;
   }[];
+  totalAmountWithoutDiscount:number;
   canRetryPayment: boolean;
+  couponCode?: string;
+  couponDiscountPercentage?: number;
+  couponDiscountAmount?: number;
 }
