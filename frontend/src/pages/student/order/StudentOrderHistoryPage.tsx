@@ -94,6 +94,8 @@ export default function StudentOrderHistoryPage() {
         return 'bg-green-100 text-green-800';
       case 'failed':
         return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-600';
     }
@@ -221,6 +223,7 @@ export default function StudentOrderHistoryPage() {
                 <option value="">All Status</option>
                 <option value="success">Success</option>
                 <option value="failed">Failed</option>
+                <option value="pending">Pending</option>
               </select>
             </div>
 

@@ -8,6 +8,7 @@ import { ITopSellingCourse } from "../../interface/instructorInterface/IInstruct
 import {
   generateExcelReport,
   generatePdfReport,
+  ReportData,
 } from "../../utils/reportGenerator";
 import { StatusCode } from "../../utils/enums";
 import { INSTRUCTOR_ERROR_MESSAGE, SERVER_ERROR } from "../../utils/constants";
@@ -133,69 +134,85 @@ export class InstructorAllCourseDashboardController
     }
   }
 
-  async exportRevenueReport(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
-    try {
-      const instructorId = req.user?.id;
-      const { range, startDate, endDate, format } = req.query;
+  
 
-      if (!instructorId) {
-        res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
-        });
-        return;
-      }
+   async exportRevenueReport(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  try {
+    const instructorId = req.user?.id;
+    const { range, startDate, endDate, format } = req.query;
 
-      const allowedRanges = ["daily", "weekly", "monthly", "yearly", "custom"];
-      const allowedFormats = ["pdf", "excel"];
-
-      if (!range || !allowedRanges.includes(range as string)) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE,
-        });
-        return;
-      }
-
-      if (!format || !allowedFormats.includes(format as string)) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_FORMAT,
-        });
-        return;
-      }
-
-      const result = await this._allDashboardService.getDetailedRevenueReport(
-        new Types.ObjectId(instructorId),
-        range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
-        1,
-        10000,
-        startDate ? new Date(startDate as string) : undefined,
-        endDate ? new Date(endDate as string) : undefined,
-      );
-
-      if (result.data.length === 0) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.NO_DATA_FOUND,
-        });
-        return;
-      }
-
-      if (format === "excel") {
-        return generateExcelReport(result.data, res);
-      } else {
-        return generatePdfReport(result.data, res);
-      }
-    } catch (error: unknown) {
-      console.error("Export Error:", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+    if (!instructorId) {
+      res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
-        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
       });
+      return;
     }
+
+    const allowedRanges = ["daily", "weekly", "monthly", "yearly", "custom"];
+    const allowedFormats = ["pdf", "excel"];
+
+    if (!range || !allowedRanges.includes(range as string)) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE,
+      });
+      return;
+    }
+
+    if (!format || !allowedFormats.includes(format as string)) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: INSTRUCTOR_ERROR_MESSAGE.INVALID_FORMAT,
+      });
+      return;
+    }
+
+    const result = await this._allDashboardService.getDetailedRevenueReport(
+      new Types.ObjectId(instructorId),
+      range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
+      1,
+      10000,
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? new Date(endDate as string) : undefined,
+    );
+
+    if (result.data.length === 0) {
+      res.status(StatusCode.NOT_FOUND).json({
+        success: false,
+        message: INSTRUCTOR_ERROR_MESSAGE.NO_DATA_FOUND,
+      });
+      return;
+    }
+
+    // Map IRevenueReportItem to ReportData to ensure type compatibility
+    const reportData: ReportData[] = result.data.map((item: any) => ({
+      orderId: item.orderId.toString(),
+      createdAt: item.createdAt,
+      courseName: item.courseName,
+      courseOriginalPrice: item.courseOriginalPrice || 0,
+      couponCode: item.couponCode || "N/A",
+      couponDiscount: item.couponDiscount || 0,
+      courseDiscountAmount: item.courseDiscountAmount || 0,
+      finalCoursePrice: item.finalCoursePrice || item.coursePrice || 0,
+      instructorEarning: item.instructorEarning || 0,
+      paymentMethod: item.paymentMethod || "N/A",
+    }));
+
+    if (format === "excel") {
+      return generateExcelReport(reportData, res);
+    } else {
+      return generatePdfReport(reportData, res);
+    }
+  } catch (error: unknown) {
+    console.error("Export Error:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+    });
   }
+}
 }

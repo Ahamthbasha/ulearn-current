@@ -3,12 +3,14 @@ import { IOrder } from "../../../models/orderModel";
 import { IPayment } from "../../../models/paymentModel";
 import { IEnrollment } from "../../../models/enrollmentModel";
 import mongoose from "mongoose";
+
 export interface IStudentCheckoutService {
   initiateCheckout(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
     totalAmount: number,
     paymentMethod: "wallet" | "razorpay",
+    couponId?: Types.ObjectId,
   ): Promise<IOrder>;
 
   verifyAndCompleteCheckout(

@@ -18,9 +18,12 @@ export interface IInstructorCourseSpecificDashboardRepository {
   ): Promise<{
     data: {
       orderId: string;
+      purchaseDate: string;
       courseName: string;
-      purchaseDate: Date;
-      coursePrice: number;
+      originalCoursePrice: number;
+      couponUsed: boolean;
+      couponDeductionAmount: number;
+      finalCoursePrice: number;
       instructorRevenue: number;
       totalEnrollments: number;
     }[];

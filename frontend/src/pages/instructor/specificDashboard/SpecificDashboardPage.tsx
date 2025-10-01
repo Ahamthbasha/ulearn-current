@@ -18,7 +18,7 @@ import {
 import { DollarSign, Users, Tag, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
-import { type MonthlyData,type ReportItem } from "../interface/instructorInterface";
+import { type MonthlyData, type ReportItem } from "../interface/instructorInterface";
 
 const monthMap = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -45,9 +45,8 @@ const SpecificDashboardPage = () => {
   const [exportLoading, setExportLoading] = useState({ pdf: false, excel: false });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [limit] = useState(5); // Default items per page
+  const [limit] = useState(5);
 
-  // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -81,7 +80,6 @@ const SpecificDashboardPage = () => {
           return;
         }
 
-        // Validate dates
         const today = new Date().toISOString().split('T')[0];
 
         if (startDate > today) {
@@ -103,11 +101,9 @@ const SpecificDashboardPage = () => {
       setReportLoading(true);
       const response = await specificCourseReport(courseId, filter, startDate, endDate, page, limit);
 
-      // Detailed logging for debugging
       console.log("Raw Response:", JSON.stringify(response, null, 2));
       console.log("Response Data:", JSON.stringify(response.data, null, 2));
 
-      // Check response structure
       if (!response || !response.data) {
         throw new Error("Invalid response from server");
       }
@@ -115,13 +111,10 @@ const SpecificDashboardPage = () => {
       let reportItems: ReportItem[];
       let total: number;
 
-      // Handle both possible response structures
       if (Array.isArray(response.data)) {
-        // Backward compatibility: response.data is ReportItem[]
         reportItems = response.data;
         total = reportItems.length;
       } else {
-        // Expected structure: { success: boolean, data: ReportItem[], total: number }
         const { success, data, total: responseTotal, message } = response.data;
         if (!success) {
           throw new Error(message || "Server returned an error");
@@ -137,7 +130,6 @@ const SpecificDashboardPage = () => {
       setTotalRecords(total);
       setCurrentPage(page);
 
-      // Calculate total revenue from the report data
       const calculatedTotalRevenue = reportItems.reduce(
         (sum: number, item: ReportItem) => sum + item.instructorRevenue,
         0
@@ -212,7 +204,6 @@ const SpecificDashboardPage = () => {
           Course Dashboard
         </h1>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl shadow-sm border">
             <div className="flex justify-between items-center">
@@ -263,7 +254,6 @@ const SpecificDashboardPage = () => {
           </div>
         </div>
 
-        {/* Monthly Revenue Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border mb-10">
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Monthly Instructor Revenue</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -278,7 +268,6 @@ const SpecificDashboardPage = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Revenue Report Filter */}
         <div className="bg-white p-6 rounded-xl shadow-sm border">
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Generate Revenue Report</h2>
           <div className="flex flex-wrap gap-4 items-center mb-6">
@@ -286,7 +275,7 @@ const SpecificDashboardPage = () => {
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value as typeof filter);
-                setCurrentPage(1); // Reset to page 1 on filter change
+                setCurrentPage(1);
               }}
               className="border px-3 py-2 rounded-md"
               disabled={reportLoading}
@@ -364,8 +353,11 @@ const SpecificDashboardPage = () => {
                   <tr>
                     <th className="p-3">Order ID</th>
                     <th className="p-3">Date</th>
-                    <th className="p-3">Course</th>
-                    <th className="p-3">Total Price</th>
+                    <th className="p-3">Course Name</th>
+                    <th className="p-3">Original Price</th>
+                    <th className="p-3">Coupon Used</th>
+                    <th className="p-3">Discount Amount</th>
+                    <th className="p-3">Final Price</th>
                     <th className="p-3">Instructor Revenue</th>
                   </tr>
                 </thead>
@@ -375,23 +367,37 @@ const SpecificDashboardPage = () => {
                       <td className="p-3 text-blue-600">#{item.orderId}</td>
                       <td className="p-3">{format(new Date(item.purchaseDate), "dd-MM-yyyy")}</td>
                       <td className="p-3">{item.courseName}</td>
-                      <td className="p-3">₹{item.coursePrice.toLocaleString()}</td>
-                      <td className="p-3 text-green-600">₹{item.instructorRevenue.toLocaleString()}</td>
+                      <td className="p-3">₹{item.originalCoursePrice.toLocaleString()}</td>
+                      <td className="p-3">
+                        {item.couponUsed ? (
+                          <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                            No
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 text-orange-600">
+                        {item.couponUsed ? `₹${item.couponDeductionAmount.toLocaleString()}` : '₹0'}
+                      </td>
+                      <td className="p-3 text-green-600 font-semibold">₹{item.finalCoursePrice.toLocaleString()}</td>
+                      <td className="p-3 text-green-700 font-bold">₹{item.instructorRevenue.toLocaleString()}</td>
                     </tr>
                   ))}
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={4} className="p-3 text-right">Total Instructor Revenue</td>
-                    <td className="p-3 text-green-700">₹{totalRevenue.toLocaleString()}</td>
+                    <td colSpan={7} className="p-3 text-right">Total Instructor Revenue</td>
+                    <td className="p-3 text-green-700 font-bold">₹{totalRevenue.toLocaleString()}</td>
                   </tr>
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={4} className="p-3 text-right">Total Enrollments</td>
-                    <td className="p-3 text-green-700">{dashboard?.enrollments || 0}</td>
+                    <td colSpan={7} className="p-3 text-right">Total Enrollments</td>
+                    <td className="p-3 text-green-700 font-bold">{reportData.length}</td>
                   </tr>
                 </tbody>
               </table>
 
-              {/* Pagination Controls */}
-              <div className="flex items-center justify-between mt-4 px-3">
+              <div className="flex items-center justify-between mt-4 px-3 pb-4">
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}

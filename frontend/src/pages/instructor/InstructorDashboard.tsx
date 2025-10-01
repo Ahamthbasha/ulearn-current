@@ -19,15 +19,6 @@ import {
 } from "../../api/action/InstructorActionApi";
 import { type IDashboardData } from "../../types/interfaces/IdashboardTypes";
 
-// Utility function to format date as DD-MM-YYYY
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Months are 0-based
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
 const InstructorDashboard = () => {
   const [dashboardData, setDashboardData] = useState<IDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,6 +124,8 @@ const InstructorDashboard = () => {
     monthlySales,
     totalRevenue,
     totalCourseSales,
+    publishedCourses,
+    categoryWiseCount,
   } = dashboardData;
 
   const monthlyData = monthlySales.map((item) => ({
@@ -146,8 +139,6 @@ const InstructorDashboard = () => {
     value: item.totalSales,
     percentage: Math.round((item.totalSales / totalCourseSales) * 100),
   }));
-
-  const totalCategories = categorySales.length;
 
   const COLORS = [
     "#3B82F6",
@@ -208,10 +199,10 @@ const InstructorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-gray-600">
-                  Active Courses
+                  Published Courses
                 </p>
                 <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                  {topCourses.length}
+                  {publishedCourses}
                 </p>
               </div>
               <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -223,9 +214,11 @@ const InstructorDashboard = () => {
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Categories</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  Categories Used
+                </p>
                 <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                  {totalCategories}
+                  {categoryWiseCount}
                 </p>
               </div>
               <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-orange-100 rounded-full flex items-center justify-center">
@@ -331,71 +324,35 @@ const InstructorDashboard = () => {
                   <tr>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Order ID</th>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Date</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Courses</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Total Price</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Instructor Revenue</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Course Name</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Course Price</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Coupon Used</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Discount Amount</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Final Price</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Instructor Earnings</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(
-                    reportData.reduce<
-                      Record<
-                        string,
-                        {
-                          date: string;
-                          courses: string[];
-                          totalPrice: number;
-                          totalInstructorEarning: number;
-                        }
-                      >
-                    >((acc, curr) => {
-                      const orderId = curr.orderId.toString();
-                      if (!acc[orderId]) {
-                        acc[orderId] = {
-                          date: curr.createdAt,
-                          courses: [],
-                          totalPrice: 0,
-                          totalInstructorEarning: 0,
-                        };
-                      }
-                      acc[orderId].courses.push(curr.courseName);
-                      acc[orderId].totalPrice += curr.coursePrice;
-                      acc[orderId].totalInstructorEarning += curr.instructorEarning;
-                      return acc;
-                    }, {})
-                  ).map(([orderId, data], idx) => (
+                  {reportData.map((item, idx) => (
                     <tr key={idx} className="border-t">
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">#{orderId}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{formatDate(data.date)}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{data.courses.join(", ")}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        ₹{data.totalPrice.toFixed(2)}
-                      </td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700">
-                        ₹{data.totalInstructorEarning.toFixed(2)}
-                      </td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">#{item.orderId}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.createdAt}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.courseName}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.courseOriginalPrice.toFixed(2)}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.couponCode}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.courseDiscountAmount.toFixed(2)}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.finalCoursePrice.toFixed(2)}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700">₹{item.instructorEarning.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={4} className="px-2 sm:px-4 py-1 sm:py-2 text-right text-xs sm:text-sm">
-                      Total Instructor Revenue
+                    <td colSpan={7} className="px-2 sm:px-4 py-1 sm:py-2 text-right text-xs sm:text-sm">
+                      Total Instructor Earnings
                     </td>
                     <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700">
-                      ₹
-                      {(
-                        Object.values(
-                          reportData.reduce((acc, curr) => {
-                            const orderId = curr.orderId.toString();
-                            acc[orderId] = acc[orderId] || 0;
-                            acc[orderId] += curr.instructorEarning;
-                            return acc;
-                          }, {} as Record<string, number>)
-                        ) as number[]
-                      )
-                        .reduce((sum, val) => sum + val, 0)
-                        .toFixed(2)}
+                      ₹{reportData.reduce((sum, item) => sum + item.instructorEarning, 0).toFixed(2)}
                     </td>
                   </tr>
                 </tfoot>

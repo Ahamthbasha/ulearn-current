@@ -34,6 +34,8 @@ export interface IInstructorDashboard {
   monthlySales: IMonthlySales[];
   totalRevenue: number;
   totalCourseSales: number;
+  publishedCourses : number;
+  categoryWiseCount : number;
 }
 
 export interface IDetailedRevenueReport {

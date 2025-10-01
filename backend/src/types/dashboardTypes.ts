@@ -23,13 +23,16 @@ export interface IMonthlySales {
 export interface IAdminCourseSalesReportItem {
   orderId: string;
   date: Date;
+  couponCode?: string;
   courses: {
     courseName: string;
     coursePrice: number;
     adminShare: number;
     instructorName: string;
+    discountedPrice:number;
   }[];
   totalPrice: number;
+  discountAmount:number;
   totalAdminShare: number;
 }
 
@@ -54,10 +57,15 @@ export interface IAdminMembershipReportItem {
 export type FilterType = "daily" | "weekly" | "monthly" | "custom";
 export interface IStudentCourseReportItem {
   orderId: string;
-  date: Date;
-  courseName: string;
-  price: number;
+  date: string;
+  courseName: string[];
+  price: number[];
   totalCost: number;
+   couponCode?: string;
+  couponDiscountPercent?: number;
+  originalTotalPrice: number;
+  finalTotalPrice: number;
+  couponDiscountAmount: number;
 }
 
 export interface IStudentSlotReportItem {

@@ -321,6 +321,26 @@ export default function StudentOrderDetailPage() {
           </div>
         </div>
 
+        {order.couponCode && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Coupon Details</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Coupon Code:</span>
+                <span className="text-gray-800 font-semibold">{order.couponCode}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Discount Percentage:</span>
+                <span className="text-gray-800 font-semibold">{order.couponDiscountPercentage}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Discount Amount:</span>
+                <span className="text-gray-800 font-semibold">₹{order.couponDiscountAmount?.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-xl font-semibold text-gray-800">Purchased Courses</h3>
@@ -371,9 +391,25 @@ export default function StudentOrderDetailPage() {
               </div>
             ))}
           </div>
-          <div className="bg-gray-50 p-6 border-t border-gray-200 flex justify-between items-center">
-            <span className="text-lg font-semibold text-gray-700">Total Amount:</span>
-            <span className="text-2xl font-bold text-gray-800">₹{order.totalAmount.toLocaleString()}</span>
+          <div className="bg-gray-50 p-6 border-t border-gray-200">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-700">Original Amount:</span>
+                <span className="text-lg font-semibold text-gray-800">₹{order.totalAmountWithoutDiscount.toLocaleString()}</span>
+              </div>
+              {order.couponCode && (
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-700">Coupon Discount:</span>
+                  <span className="text-lg font-semibold text-green-600">
+                    -₹{order.couponDiscountAmount?.toLocaleString()}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-2 border-t border-gray-300">
+                <span className="text-lg font-semibold text-gray-700">Total Amount:</span>
+                <span className="text-2xl font-bold text-gray-800">₹{order.totalAmount.toLocaleString()}</span>
+              </div>
+            </div>
           </div>
         </div>
 

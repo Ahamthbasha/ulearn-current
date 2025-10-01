@@ -21,7 +21,7 @@ export class StudentOrderRepository
     const baseMatch: any = { userId };
 
     if (!search || !search.trim()) {
-      baseMatch.status = { $in: ["SUCCESS", "FAILED"] };
+      baseMatch.status = { $in: ["SUCCESS", "FAILED", "PENDING"] };
       const { data, total } = await this.paginate(
         baseMatch,
         page,
@@ -30,7 +30,7 @@ export class StudentOrderRepository
           status: 1,
           createdAt: -1,
         },
-        ["courses"],
+        ["courses", "couponId"],
       );
       return { orders: data, total };
     }
@@ -52,7 +52,7 @@ export class StudentOrderRepository
         page,
         limit,
         { createdAt: -1 },
-        ["courses"],
+        ["courses", "couponId"],
       );
       return { orders: data, total };
     }
@@ -67,8 +67,9 @@ export class StudentOrderRepository
               branches: [
                 { case: { $eq: ["$status", "SUCCESS"] }, then: 1 },
                 { case: { $eq: ["$status", "FAILED"] }, then: 2 },
+                { case: { $eq: ["$status", "PENDING"] }, then: 3 },
               ],
-              default: 3,
+              default: 4,
             },
           },
         },
@@ -93,6 +94,20 @@ export class StudentOrderRepository
           localField: "courses",
           foreignField: "_id",
           as: "courses",
+        },
+      },
+      {
+        $lookup: {
+          from: "coupons",
+          localField: "couponId",
+          foreignField: "_id",
+          as: "couponId",
+        },
+      },
+      {
+        $unwind: {
+          path: "$couponId",
+          preserveNullAndEmptyArrays: true,
         },
       },
     ];
@@ -121,10 +136,10 @@ export class StudentOrderRepository
     if (session) {
       return await this.model
         .findOne({ _id: orderId, userId })
-        .populate("courses userId")
+        .populate("courses userId couponId")
         .session(session)
         .exec();
     }
-    return await this.findOne({ _id: orderId, userId }, ["courses", "userId"]);
+    return await this.findOne({ _id: orderId, userId }, ["courses", "userId", "couponId"]);
   }
 }

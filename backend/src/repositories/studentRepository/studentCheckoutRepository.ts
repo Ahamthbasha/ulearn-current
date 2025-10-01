@@ -33,6 +33,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     amount: number,
     razorpayOrderId: string,
     session?: mongoose.ClientSession,
+    couponId?: Types.ObjectId,
   ): Promise<IOrder> {
     const orderData = {
       userId,
@@ -41,6 +42,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
       status: "PENDING" as const,
       gateway: "razorpay" as const,
       gatewayOrderId: razorpayOrderId,
+      couponId,
     } as Partial<IOrder>;
 
     if (session) {

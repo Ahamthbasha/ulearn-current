@@ -2,6 +2,7 @@ import { IOrder } from "../../models/orderModel";
 import { OrderDetailsDTO } from "../../dto/userDTO/orderDetailsDTO";
 import { IUser } from "../../models/userModel";
 import { ICourse } from "../../models/courseModel";
+import { ICoupon } from "../../models/couponModel";
 
 export const toOrderDetailsDTO = (order: IOrder): OrderDetailsDTO => {
   const date = new Date(order.createdAt);
@@ -24,6 +25,18 @@ export const toOrderDetailsDTO = (order: IOrder): OrderDetailsDTO => {
     ICourse & { price: number }
   >;
 
+  const originalTotalAmount = populatedCourses.reduce(
+    (sum, course) => sum + (course.price || 0),
+    0,
+  );
+
+  const couponDiscountAmount =
+    order.couponId && originalTotalAmount > order.amount
+      ? originalTotalAmount - order.amount
+      : 0;
+
+  const coupon = order.couponId as unknown as ICoupon | undefined;
+
   return {
     customerName: user.username,
     customerEmail: user.email,
@@ -37,6 +50,10 @@ export const toOrderDetailsDTO = (order: IOrder): OrderDetailsDTO => {
       price: course.price,
       thumbnailUrl: course.thumbnailUrl,
     })),
+    totalAmountWithoutDiscount:originalTotalAmount,
     canRetryPayment: order.status === "FAILED",
+    couponCode: coupon?.code,
+    couponDiscountPercentage: coupon?.discount,
+    couponDiscountAmount: couponDiscountAmount > 0 ? couponDiscountAmount : undefined,
   };
 };

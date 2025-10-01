@@ -215,13 +215,15 @@ export const getAllCoupons = async()=>{
 export const initiateCheckout = async (
   courseIds: string[],
   totalAmount: number,
-  paymentMethod: "razorpay" | "wallet"
+  paymentMethod: "razorpay" | "wallet",
+  couponId?:string
 ) => {
   try {
     const response = await API.post(UserRouterEndpoints.userInitiateCheckout, {
       courseIds,
       totalAmount,
       paymentMethod,
+      couponId
     });
     return response.data;
   } catch (error) {

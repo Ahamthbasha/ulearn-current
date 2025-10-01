@@ -14,6 +14,10 @@ export interface IInstructorAllCourseDashboardRepository {
   getMonthlySalesGraph(instructorId: Types.ObjectId): Promise<IMonthlySales[]>;
   getTotalRevenue(instructorId: Types.ObjectId): Promise<number>;
   getTotalCourseSales(instructorId: Types.ObjectId): Promise<number>;
+  getPublishedCoursesCount(instructorId: Types.ObjectId): Promise<number>
+  getCategoryWiseCreatedCourses(
+    instructorId: Types.ObjectId,
+  ): Promise<number>
   getDetailedRevenueReport(
     instructorId: Types.ObjectId,
     range: "daily" | "weekly" | "monthly" | "yearly" | "custom",

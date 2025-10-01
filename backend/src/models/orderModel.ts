@@ -8,6 +8,7 @@ export interface IOrder extends Document {
   status: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
   gateway: "razorpay" | "stripe";
   gatewayOrderId?: string;
+  couponId?:Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +29,11 @@ const orderSchema = new Schema<IOrder>(
       default: "razorpay",
     },
     gatewayOrderId: { type: String, required: true },
+    couponId:{
+      type:Schema.Types.ObjectId,
+      ref:"coupons",
+      required:false
+    }
   },
   { timestamps: true },
 );

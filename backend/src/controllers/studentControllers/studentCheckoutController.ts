@@ -11,6 +11,7 @@ import { Types } from "mongoose";
 
 export class StudentCheckoutController implements IStudentCheckoutController {
   private _checkoutService: IStudentCheckoutService;
+
   constructor(checkoutService: IStudentCheckoutService) {
     this._checkoutService = checkoutService;
   }
@@ -20,7 +21,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
     res: Response,
   ): Promise<void> {
     try {
-      const { courseIds, totalAmount, paymentMethod } = req.body;
+      const { courseIds, totalAmount, paymentMethod, couponId } = req.body;
       const userId = new Types.ObjectId(req.user?.id);
 
       if (!userId || !paymentMethod) {
@@ -31,11 +32,44 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         return;
       }
 
+      if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "At least one course ID is required",
+        });
+        return;
+      }
+
+      if (typeof totalAmount !== "number" || totalAmount <= 0) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Total amount must be a positive number",
+        });
+        return;
+      }
+
+      if (!["wallet", "razorpay"].includes(paymentMethod)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid payment method",
+        });
+        return;
+      }
+
+      if (couponId && !Types.ObjectId.isValid(couponId)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid coupon ID",
+        });
+        return;
+      }
+
       const order = await this._checkoutService.initiateCheckout(
         userId,
-        courseIds,
+        courseIds.map((id: string) => new Types.ObjectId(id)),
         totalAmount,
         paymentMethod,
+        couponId ? new Types.ObjectId(couponId) : undefined,
       );
 
       res.status(StatusCode.OK).json({
@@ -44,12 +78,16 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         order,
       });
     } catch (error: any) {
-      console.log("Initiate checkout error:", error);
+      console.error("Initiate checkout error:", error);
       const errorMsg = error.message || CheckoutErrorMessages.CHECKOUT_FAILED;
 
       if (
-        errorMsg.includes(CheckoutErrorMessages.ALREADY_ENROLLED) ||
-        errorMsg.includes(CheckoutErrorMessages.INSUFFICIENT_WALLET)
+        errorMsg.includes("already enrolled") ||
+        errorMsg.includes("Insufficient wallet balance") ||
+        errorMsg.includes("Invalid coupon") ||
+        errorMsg.includes("Coupon is expired or inactive") ||
+        errorMsg.includes("Minimum purchase amount") ||
+        errorMsg.includes("Coupon already used by this user")
       ) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
@@ -58,7 +96,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         return;
       }
 
-      if (errorMsg.includes(CheckoutErrorMessages.PENDING_ORDER_EXISTS)) {
+      if (errorMsg.includes("A pending order already exists")) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: errorMsg,
@@ -78,8 +116,40 @@ export class StudentCheckoutController implements IStudentCheckoutController {
     try {
       const { orderId, paymentId, method, amount } = req.body;
 
+      if (!Types.ObjectId.isValid(orderId)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid order ID",
+        });
+        return;
+      }
+
+      if (!paymentId || typeof paymentId !== "string") {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid payment ID",
+        });
+        return;
+      }
+
+      if (!["wallet", "razorpay"].includes(method)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid payment method",
+        });
+        return;
+      }
+
+      if (typeof amount !== "number" || amount <= 0) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Amount must be a positive number",
+        });
+        return;
+      }
+
       const result = await this._checkoutService.verifyAndCompleteCheckout(
-        orderId,
+        new Types.ObjectId(orderId),
         paymentId,
         method,
         amount,
@@ -90,8 +160,24 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         message: CheckoutSuccessMessage.PAYMENT_SUCCESS_COURSE_ENROLLED,
         data: result,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment Completion Error:", error);
+      const errorMsg = error.message || CheckoutErrorMessages.PAYMENT_FAILED;
+
+      if (
+        errorMsg.includes("Order not found") ||
+        errorMsg.includes("Order already processed") ||
+        errorMsg.includes("Order cannot be processed") ||
+        errorMsg.includes("Payment amount mismatch") ||
+        errorMsg.includes("already enrolled")
+      ) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: errorMsg,
+        });
+        return;
+      }
+
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: CheckoutErrorMessages.PAYMENT_FAILED,
@@ -115,10 +201,10 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         return;
       }
 
-      if (!orderId) {
+      if (!orderId || !Types.ObjectId.isValid(orderId)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: CheckoutErrorMessages.ORDER_ID_REQUIRED,
+          message: "Invalid order ID",
         });
         return;
       }
@@ -134,9 +220,23 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       });
     } catch (error: any) {
       console.error("Cancel Order Error:", error);
+      const errorMsg = error.message || CheckoutErrorMessages.FAILED_TO_CANCEL_ORDER;
+
+      if (
+        errorMsg.includes("Order not found") ||
+        errorMsg.includes("Unauthorized to cancel this order") ||
+        errorMsg.includes("Only pending orders can be cancelled")
+      ) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: errorMsg,
+        });
+        return;
+      }
+
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: error.message || CheckoutErrorMessages.FAILED_TO_CANCEL_ORDER,
+        message: CheckoutErrorMessages.FAILED_TO_CANCEL_ORDER,
       });
     }
   }
@@ -157,10 +257,10 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         return;
       }
 
-      if (!orderId) {
+      if (!orderId || !Types.ObjectId.isValid(orderId)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: CheckoutErrorMessages.ORDER_ID_REQUIRED,
+          message: "Invalid order ID",
         });
         return;
       }
@@ -176,10 +276,23 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       });
     } catch (error: any) {
       console.error("Mark Order as Failed Error:", error);
+      const errorMsg = error.message || CheckoutErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED;
+
+      if (
+        errorMsg.includes("Order not found") ||
+        errorMsg.includes("Unauthorized to mark this order as failed") ||
+        errorMsg.includes("Only pending orders can be marked as failed")
+      ) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: errorMsg,
+        });
+        return;
+      }
+
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message:
-          error.message || CheckoutErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED,
+        message: CheckoutErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED,
       });
     }
   }

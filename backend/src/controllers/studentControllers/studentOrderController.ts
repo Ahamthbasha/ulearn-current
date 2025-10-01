@@ -120,8 +120,8 @@ export class StudentOrderController implements IStudentOrderController {
         return;
       }
 
-      const order = await this._orderService.getOrderRaw(orderId, userId);
-
+      const order = await this._orderService.getOrderDetails(orderId, userId);
+      console.log("orderDetail",order)
       if (!order) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
@@ -143,7 +143,7 @@ export class StudentOrderController implements IStudentOrderController {
 
       res.set({
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename=invoice-${order._id}.pdf`,
+        "Content-Disposition": `attachment; filename=invoice-${order.orderId}.pdf`,
         "Content-Length": pdfBuffer.length.toString(),
       });
 

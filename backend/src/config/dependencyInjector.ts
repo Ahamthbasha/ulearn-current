@@ -436,6 +436,7 @@ const studentCheckoutService: IStudentCheckoutService =
     studentCheckoutRepository,
     studentCartRepository,
     walletService,
+    studentCouponRepo
   );
 
 const studentCheckoutController: IStudentCheckoutController =
@@ -457,13 +458,18 @@ import {
   IGenericRepository,
 } from "../repositories/genericRepository";
 import { OrderModel, IOrder } from "../models/orderModel";
+import { CourseModel, ICourse } from "../models/courseModel";
 
 const orderRepo: IGenericRepository<IOrder> = new GenericRepository<IOrder>(
   OrderModel,
 );
 
+const courseRepo : IGenericRepository<ICourse> = new GenericRepository<ICourse>(CourseModel)
+
+
+
 const instructorDashboardRepo: IInstructorAllCourseDashboardRepository =
-  new InstructorAllCourseDashboardRepository(orderRepo);
+  new InstructorAllCourseDashboardRepository(orderRepo,courseRepo);
 
 const instructorDashboardService: IInstructorAllCourseDashboardService =
   new InstructorAllCourseDashboardService(instructorDashboardRepo);

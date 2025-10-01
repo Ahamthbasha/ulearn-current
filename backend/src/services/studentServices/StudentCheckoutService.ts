@@ -2,26 +2,31 @@ import { IStudentCheckoutService } from "./interface/IStudentCheckoutService";
 import { IStudentCheckoutRepository } from "../../repositories/studentRepository/interface/IStudentCheckoutRepository";
 import { IStudentCartRepository } from "../../repositories/interfaces/IStudentCartRepository";
 import { IWalletService } from "../interface/IWalletService";
+import { IStudentCouponRepo } from "../../repositories/studentRepository/interface/IStudentCouponRepo";
 import { razorpay } from "../../utils/razorpay";
 import { Types } from "mongoose";
 import { IOrder } from "../../models/orderModel";
 import { IPayment } from "../../models/paymentModel";
 import { IEnrollment } from "../../models/enrollmentModel";
+import { ICoupon } from "../../models/couponModel";
 import mongoose from "mongoose";
 
 export class StudentCheckoutService implements IStudentCheckoutService {
   private _checkoutRepo: IStudentCheckoutRepository;
   private _cartRepo: IStudentCartRepository;
   private _walletService: IWalletService;
+  private _couponRepo: IStudentCouponRepo;
 
   constructor(
     checkoutRepo: IStudentCheckoutRepository,
     cartRepo: IStudentCartRepository,
     walletService: IWalletService,
+    couponRepo: IStudentCouponRepo,
   ) {
     this._checkoutRepo = checkoutRepo;
     this._cartRepo = cartRepo;
     this._walletService = walletService;
+    this._couponRepo = couponRepo;
   }
 
   async initiateCheckout(
@@ -29,6 +34,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     courseIds: Types.ObjectId[],
     totalAmount: number,
     paymentMethod: "wallet" | "razorpay",
+    couponId?: Types.ObjectId,
   ): Promise<IOrder> {
     const session = await mongoose.startSession();
 
@@ -81,21 +87,77 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           );
         }
 
+        const courseRepo = this._checkoutRepo.getCourseRepo();
+        const courses = await Promise.all(
+          courseIds.map((courseId) => courseRepo.findById(courseId.toString())),
+        );
+        const validCourses = courses.filter((course) => course !== null);
+        if (validCourses.length !== courseIds.length) {
+          throw new Error("One or more courses not found");
+        }
+
+        const originalTotalAmount = validCourses.reduce(
+          (sum, course) => sum + (course!.price || 0),
+          0,
+        );
+
+        let finalAmount = originalTotalAmount;
+        let appliedCoupon: ICoupon | null = null;
+        let perCourseDeduction = 0;
+
+        if (couponId) {
+          appliedCoupon = await this._couponRepo.getCouponById(couponId, session);
+          if (!appliedCoupon) {
+            throw new Error("Invalid coupon");
+          }
+          if (!appliedCoupon.status || appliedCoupon.expiryDate < new Date()) {
+            throw new Error("Coupon is expired or inactive");
+          }
+          if (originalTotalAmount < appliedCoupon.minPurchase) {
+            throw new Error(
+              `Minimum purchase amount of ₹${appliedCoupon.minPurchase} required for this coupon`,
+            );
+          }
+          if (appliedCoupon.usedBy.includes(userId)) {
+            throw new Error("Coupon already used by this user");
+          }
+          const discountAmount = (originalTotalAmount * appliedCoupon.discount) / 100;
+          finalAmount = originalTotalAmount - discountAmount;
+          if (appliedCoupon.maxDiscount && finalAmount < originalTotalAmount - appliedCoupon.maxDiscount) {
+            finalAmount = originalTotalAmount - appliedCoupon.maxDiscount;
+          }
+          
+          const totalDiscount = originalTotalAmount - finalAmount;
+          perCourseDeduction = courseIds.length > 0 ? totalDiscount / courseIds.length : 0;
+        }
+
+        if (Math.abs(totalAmount - originalTotalAmount) > 0.01) {
+          console.warn(
+            `Total amount mismatch: Frontend sent ${totalAmount}, calculated ${originalTotalAmount}`,
+          );
+        }
+
+        let order: IOrder;
         if (paymentMethod === "wallet") {
-          return await this.processWalletPayment(
+          order = await this.processWalletPayment(
             userId,
             courseIds,
-            totalAmount,
+            finalAmount,
+            couponId,
             session,
+            perCourseDeduction,
           );
         } else {
-          return await this.processRazorpayOrder(
+          order = await this.processRazorpayOrder(
             userId,
             courseIds,
-            totalAmount,
+            finalAmount,
+            couponId,
             session,
           );
         }
+
+        return order;
       });
     } finally {
       await session.endSession();
@@ -106,7 +168,9 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
     totalAmount: number,
+    couponId: Types.ObjectId | undefined,
     session: mongoose.ClientSession,
+    perCourseDeduction: number,
   ): Promise<IOrder> {
     const wallet = await this._walletService.getWallet(userId);
     if (!wallet || wallet.balance < totalAmount) {
@@ -119,6 +183,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       totalAmount,
       "wallet_txn_" + Date.now(),
       session,
+      couponId,
     );
 
     await this._walletService.debitWallet(
@@ -144,7 +209,12 @@ export class StudentCheckoutService implements IStudentCheckoutService {
 
     await this._checkoutRepo.createEnrollments(userId, courseIds, session);
 
-    await this.processRevenueSharing(courseIds, order._id.toString());
+    if (couponId) {
+      await this._couponRepo.addUserToCoupon(couponId, userId, session);
+    }
+
+    // Process revenue sharing after successful wallet payment
+    await this.processRevenueSharing(courseIds, order._id.toString(), perCourseDeduction);
 
     await this._cartRepo.clear(userId);
     return order;
@@ -154,10 +224,11 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
     totalAmount: number,
+    couponId: Types.ObjectId | undefined,
     session: mongoose.ClientSession,
   ): Promise<IOrder> {
     const razorpayOrder = await razorpay.orders.create({
-      amount: totalAmount * 100,
+      amount: Math.round(totalAmount * 100),
       currency: "INR",
       receipt: `receipt_order_${Date.now()}`,
     });
@@ -168,6 +239,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       totalAmount,
       razorpayOrder.id,
       session,
+      couponId,
     );
   }
 
@@ -206,7 +278,6 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           `Amount mismatch: Expected ${order.amount}, received ${amount}`,
         );
         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", session);
-        //await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
         throw new Error("Payment amount mismatch");
       }
 
@@ -224,7 +295,6 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           `Already enrolled in courses: ${alreadyEnrolled.map(String)}`,
         );
         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", session);
-        // await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
         const names = await this._checkoutRepo.getCourseNamesByIds(
           alreadyEnrolled,
           session,
@@ -266,15 +336,30 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         session,
       );
 
-      console.log(`Resetting retryInProgress for order ${orderId}`);
-      // await this._checkoutRepo.updateOrder(orderId, { retryInProgress: false }, session);
+      if (updatedOrder.couponId) {
+        await this._couponRepo.addUserToCoupon(updatedOrder.couponId, updatedOrder.userId, session);
+      }
 
-      setImmediate(() => {
-        this.processRevenueSharing(
-          updatedOrder.courses,
-          orderId.toString(),
-        ).catch(console.error);
-      });
+      
+      let perCourseDeduction = 0;
+      if (updatedOrder.couponId) {
+        const coupon = await this._couponRepo.getCouponById(updatedOrder.couponId, session);
+        if (coupon) {
+          const courseRepo = this._checkoutRepo.getCourseRepo();
+          const courses = await Promise.all(
+            updatedOrder.courses.map((courseId) => courseRepo.findById(courseId.toString())),
+          );
+          const validCourses = courses.filter((course) => course !== null);
+          const originalTotalAmount = validCourses.reduce(
+            (sum, course) => sum + (course!.price || 0),
+            0,
+          );
+          const totalDiscount = originalTotalAmount - updatedOrder.amount;
+          perCourseDeduction = updatedOrder.courses.length > 0 ? totalDiscount / updatedOrder.courses.length : 0;
+        }
+      }
+
+      await this.processRevenueSharing(updatedOrder.courses, orderId.toString(), perCourseDeduction);
 
       await this._cartRepo.clear(updatedOrder.userId);
 
@@ -440,6 +525,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
   private async processRevenueSharing(
     courseIds: Types.ObjectId[],
     txnId: string,
+    perCourseDeduction: number = 0,
   ): Promise<void> {
     const courseRepo = this._checkoutRepo.getCourseRepo();
 
@@ -448,12 +534,12 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         const course = await courseRepo.findById(courseId.toString());
         if (!course || !course.instructorId) continue;
 
-        const instructorId = new Types.ObjectId(course.instructorId);
-        const instructorShare = (course.price * 90) / 100;
-        const adminShare = (course.price * 10) / 100;
+        const effectivePrice = course.price - perCourseDeduction;
+        const instructorShare = (effectivePrice * 90) / 100;
+        const adminShare = (effectivePrice * 10) / 100;
 
-        let instructorWallet =
-          await this._walletService.getWallet(instructorId);
+        const instructorId = new Types.ObjectId(course.instructorId);
+        let instructorWallet = await this._walletService.getWallet(instructorId);
         if (!instructorWallet) {
           instructorWallet = await this._walletService.initializeWallet(
             instructorId,
@@ -468,12 +554,14 @@ export class StudentCheckoutService implements IStudentCheckoutService {
             instructorShare,
             `Revenue for ${course.courseName}`,
             txnId,
+
           ),
           this._walletService.creditAdminWalletByEmail(
             process.env.ADMINEMAIL!,
             adminShare,
             `Admin share for ${course.courseName}`,
             txnId,
+  
           ),
         ]);
       } catch (error) {

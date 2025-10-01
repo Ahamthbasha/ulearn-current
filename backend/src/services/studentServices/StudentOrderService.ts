@@ -64,10 +64,7 @@ export class StudentOrderService implements IStudentOrderService {
       courses: coursesWithSignedUrls,
     };
 
-    return {
-      ...toOrderDetailsDTO(orderWithSignedUrls),
-      canRetryPayment: order.status === "FAILED",
-    };
+    return toOrderDetailsDTO(orderWithSignedUrls);
   }
 
   async getOrderRaw(

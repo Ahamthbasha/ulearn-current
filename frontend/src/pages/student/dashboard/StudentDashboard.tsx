@@ -577,79 +577,87 @@ const StudentDashboard = () => {
                 </h3>
                 {courseReportData.length > 0 ? (
                   <div>
-                    <div className="space-y-4 mb-4 sm:mb-6">
-                      {courseReportData.map((item) => {
-                        const courses = Array.isArray(item.courseName)
-                          ? item.courseName
-                          : [item.courseName || ""];
-                        const prices = Array.isArray(item.price)
-                          ? item.price
-                          : [item.price || 0];
+                    <div className="overflow-x-auto mb-4 sm:mb-6">
+                      <table className="min-w-full table-auto border-collapse border border-gray-200 rounded-lg">
+                        <thead className="bg-blue-50">
+                          <tr>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Order ID
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Date
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Course Name with Price
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Coupon Used
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Coupon Discount
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Original Total Price
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Coupon Discount
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Final Total Price
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {courseReportData.map((item) => {
+                            const courses = Array.isArray(item.courseName)
+                              ? item.courseName
+                              : [item.courseName || ""];
+                            const prices = Array.isArray(item.price)
+                              ? item.price
+                              : [item.price || 0];
+                            const coursePricePairs = courses.map((course, index) => ({
+                              course,
+                              price: prices[index] || 0,
+                            }));
 
-                        return (
-                          <div
-                            key={item.orderId}
-                            className="border border-gray-200 rounded-lg overflow-hidden"
-                          >
-                            <div className="bg-blue-50 px-3 sm:px-4 py-2 sm:py-3 border-b border-blue-200">
-                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                                <div>
-                                  <span className="text-sm font-medium text-blue-600">
-                                    Order ID:{" "}
-                                  </span>
-                                  <span className="text-sm font-bold text-blue-900">
-                                    {item.orderId}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-sm font-medium text-blue-600">
-                                    Date:{" "}
-                                  </span>
-                                  <span className="text-sm font-bold text-blue-900">
-                                    {new Date(item.date).toLocaleDateString("en-GB")}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <table className="w-full">
-                              <thead className="bg-gray-50">
-                                <tr>
-                                  <th className="px-3 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700">
-                                    Course Name
-                                  </th>
-                                  <th className="px-3 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700">
-                                    Price
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {courses.map((course, index) => (
-                                  <tr
-                                    key={`${item.orderId}-${index}`}
-                                    className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
-                                  >
-                                    <td className="px-3 sm:px-4 py-2 text-sm text-gray-800 font-medium">
-                                      {course}
-                                    </td>
-                                    <td className="px-3 sm:px-4 py-2 text-sm text-green-600 font-semibold">
-                                      ₹{(prices[index] || 0).toLocaleString()}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-
-                            <div className="bg-blue-50 px-3 sm:px-4 py-2 sm:py-3 border-t border-blue-200">
-                              <div className="text-right">
-                                <span className="text-lg font-bold text-blue-600">
-                                  Total Cost: ₹{item.totalCost.toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                            return (
+                              <tr
+                                key={item.orderId}
+                                className="hover:bg-gray-50 transition-colors"
+                              >
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 font-mono text-sm">
+                                  {item.orderId}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 font-mono text-sm">
+                                  {item.date}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
+                                  {coursePricePairs.map((pair, index) => (
+                                    <div key={index}>
+                                      {pair.course}: ₹{pair.price.toLocaleString()}
+                                    </div>
+                                  ))}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
+                                  {item.couponCode || "False"}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
+                                  {item.couponDiscountPercent || "False"}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-green-600">
+                                  ₹{item.originalTotalPrice.toLocaleString()}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-red-600">
+                                  ₹{item.couponDiscountAmount.toLocaleString()}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-blue-600">
+                                  ₹{item.finalTotalPrice.toLocaleString()}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
 
                     {/* Pagination Controls for Course Report */}
