@@ -753,3 +753,10 @@ export const COUPONMESSAGE = {
   COUPON_NOT_FOUND:"Coupon not found",
   COUPON_DELETED_SUCCESSFULLY:"Coupon deleted successfully",
 }
+
+
+export const COURSE_OFFER_MESSAGE = {
+  COURSE_OFFER_CREATED:"Course offer created successfully",
+  COURSE_OFFER_EDITED:"Course offer edited successfully",
+   COURSE_OFFER_DELETED:"Course offer deleted successfully"
+}
