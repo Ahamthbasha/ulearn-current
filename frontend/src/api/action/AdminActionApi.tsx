@@ -5,7 +5,7 @@ import { type IMembershipPayload } from "../../types/interfaces/IMembershipPaylo
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
 import { type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
-import type { CouponData } from "../../types/interfaces/IAdminInterface";
+import type { CouponData , ICourseOffer} from "../../types/interfaces/IAdminInterface";
 
 export const getAllUser = async (
   page = 1,
@@ -708,5 +708,115 @@ export const toggleStatus = async (couponId: string, status: boolean) => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to toggle coupon status");
+  }
+};
+
+
+export const getPublishedCourses = async () => {
+  try {
+    const response = await API.get(
+      AdminRoutersEndPoints.adminGetCoursesForSelection
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch published courses");
+  }
+};
+
+export const getCourseOffers = async (
+  page: number = 1,
+  limit: number = 10,
+  search?: string
+): Promise<{ data: ICourseOffer[]; total: number }> => {
+  try {
+    const response = await API.get(
+      AdminRoutersEndPoints.adminGetAllCourseOffer,
+      {
+        params: {
+          page,
+          limit,
+          search,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch course offers");
+  }
+};
+
+export const getCourseOfferById = async (offerId: string): Promise<ICourseOffer> => {
+  try {
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminGetCourseOfferById}/${offerId}`
+    );
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch course offer");
+  }
+};
+
+export const createCourseOffer = async (
+  courseId: string,
+  discountPercentage: number,
+  startDate: Date,
+  endDate: Date
+): Promise<ICourseOffer> => {
+  try {
+    const response = await API.post(
+      AdminRoutersEndPoints.adminCreateCourseOffer,
+      {
+        courseId,
+        discountPercentage,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create course offer");
+  }
+};
+
+export const editCourseOffer = async (
+  offerId: string,
+  discountPercentage: number,
+  startDate: Date,
+  endDate: Date
+): Promise<ICourseOffer> => {
+  try {
+    const response = await API.put(
+      AdminRoutersEndPoints.adminEditCourseOffer,
+      {
+        offerId,
+        discountPercentage,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to edit course offer");
+  }
+};
+
+export const toggleCourseOfferActive = async (offerId: string): Promise<ICourseOffer> => {
+  try {
+    const response = await API.patch(
+      `${AdminRoutersEndPoints.adminToggleCourseOffer}/${offerId}`
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to toggle course offer");
+  }
+};
+
+export const deleteCourseOffer = async (offerId: string): Promise<void> => {
+  try {
+    await API.delete(
+      `${AdminRoutersEndPoints.adminDeleteCourseOffer}/${offerId}`
+    );
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete course offer");
   }
 };

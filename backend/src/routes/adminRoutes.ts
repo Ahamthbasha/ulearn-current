@@ -11,6 +11,7 @@ import {
   adminDashboardController,
   adminWithdrawalController,
   adminCouponController,
+  adminCourseOfferController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 
@@ -374,6 +375,58 @@ router.get(
     isAdmin,
     adminCouponController.toggleCouponStatus.bind(adminCouponController)
   )
+
+  //admin courseOffer controller
+
+  router.get(
+    "/courses",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.getPublishedCourses.bind(adminCourseOfferController)
+  )
+
+  router.get(
+    "/courseOffers",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.getCourseOffers.bind(adminCourseOfferController)
+  )
+
+  router.get(
+    "/courseOffer/:offerId",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.getCourseOfferById.bind(adminCourseOfferController)
+  )
+
+  router.post(
+    "/createCourseOffer",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.createCourseOffer.bind(adminCourseOfferController)
+  )
+
+  router.put(
+    "/editCourseOffer",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.editCourseOffer.bind(adminCourseOfferController)
+  )
+
+  router.patch(
+    "/courseOffer/:offerId",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.toggleCourseOfferActive.bind(adminCourseOfferController)
+  )
+
+  router.delete(
+    "/courseOffer/:offerId",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.deleteCourseOffer.bind(adminCourseOfferController)
+  )
+
 
 const adminRoutes = router;
 

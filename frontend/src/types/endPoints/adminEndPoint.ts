@@ -68,8 +68,17 @@ const AdminRoutersEndPoints = {
   adminEditCoupon : "/api/admin/coupons",
   adminDeleteCoupon : "/api/admin/coupons",
   adminGetCouponByCode : "/api/admin/couponCode",
-  adminModifyStatus : "/api/admin/coupons"
+  adminModifyStatus : "/api/admin/coupons",
 
+  //adminCourseOffer
+
+  adminGetCoursesForSelection : "/api/admin/courses",
+  adminGetAllCourseOffer : "/api/admin/courseOffers",
+  adminCreateCourseOffer : "/api/admin/createCourseOffer",
+  adminEditCourseOffer : "/api/admin/editCourseOffer",
+  adminToggleCourseOffer : "/api/admin/courseOffer",
+  adminDeleteCourseOffer : "/api/admin/courseOffer",
+  adminGetCourseOfferById : "/api/admin/courseOffer",
 
 };
 

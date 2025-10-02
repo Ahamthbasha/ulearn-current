@@ -29,6 +29,9 @@ import WithdrawalDetailsPage from "../pages/admin/withdrawal/WithdrawalDetails";
 import CouponListPage from "../pages/admin/Coupon/CouponManagementPage";
 import AddCouponPage from "../pages/admin/Coupon/AddCoupon";
 import EditCouponPage from "../pages/admin/Coupon/EditCoupon";
+import CourseOffersPage from "../pages/admin/courseOffer/CourseOffersPage";
+import AddCourseOfferPage from "../pages/admin/courseOffer/AddCourseOfferPage";
+import EditCourseOfferPage from "../pages/admin/courseOffer/EditCourseOfferPage";
 
 //wallet
 
@@ -90,8 +93,13 @@ const AdminRouter = () => {
           <Route path="coupons" element={<CouponListPage/>}/>
           <Route path="coupons/add" element={<AddCouponPage/>}/>
           <Route path="coupons/edit/:couponId" element={<EditCouponPage/>}/>
-        
-        
+
+          {/* course offer */}
+
+          <Route path="courseOffers" element={<CourseOffersPage/>}/>
+          <Route path="addCourseOffer" element={<AddCourseOfferPage/>}/>
+          <Route path="editCourseOffer/:offerId" element={<EditCourseOfferPage/>}/>
+          
         </Route>
 
       </Route>

@@ -36,6 +36,7 @@ const AdminLayout = () => {
     { name: "Courses", icon: <BookOpen />, path: "courses" },
     { name: "Category", icon: <TreePine />, path: "category" },
     { name: "Coupon", icon: <Image />, path: "coupons" },
+    { name: "CourseOffer", icon: <Image />, path: "courseOffers" },
     { name: "Verification", icon: <ShieldCheck />, path: "verification" },
     { name: "Order Management", icon: <ShoppingCart />, path: "orders" },
     { name: "Wallet", icon: <CreditCard />, path: "wallet" },
