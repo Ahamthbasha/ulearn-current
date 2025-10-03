@@ -69,7 +69,7 @@ const WishlistPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 flex items-center">
-          <Heart className="mr-2 text-red-500" /> ❤️ My Wishlist
+          ❤️ My Wishlist
         </h2>
 
         {wishlist.length === 0 ? (

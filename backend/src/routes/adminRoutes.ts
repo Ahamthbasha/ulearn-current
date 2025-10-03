@@ -12,6 +12,7 @@ import {
   adminWithdrawalController,
   adminCouponController,
   adminCourseOfferController,
+  adminCategoryOfferController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 
@@ -427,6 +428,56 @@ router.get(
     adminCourseOfferController.deleteCourseOffer.bind(adminCourseOfferController)
   )
 
+  //admin category Offer controller
+
+  router.get(
+    "/getCategories",
+    authenticateToken,
+    isAdmin,
+    adminCategoryOfferController.getListedCategories.bind(adminCategoryOfferController)
+  )
+
+  router.get(
+    "/getCategoryOffers",
+    authenticateToken,
+    isAdmin,
+    adminCategoryOfferController.getCategoryOffers.bind(adminCategoryOfferController)
+  )
+
+  router.get(
+    "/categoryOffers/:categoryOfferId",
+    authenticateToken,
+    isAdmin,
+    adminCategoryOfferController.getCategoryOfferById.bind(adminCategoryOfferController)
+  )
+
+  router.post(
+    "/createCategoryOffer",
+    authenticateToken,
+    isAdmin,
+    adminCategoryOfferController.createCategoryOffer.bind(adminCategoryOfferController)
+  )
+
+  router.put(
+    "/updateCategoryOffer",
+    authenticateToken,
+    isAdmin,
+    adminCategoryOfferController.editCategoryOffer.bind(adminCategoryOfferController)
+  )
+
+  router.patch(
+    "/toggleCategoryOffer/:categoryOfferId",
+    authenticateToken,
+    isAdmin,
+    adminCategoryOfferController.toggleCategoryOfferActive.bind(adminCategoryOfferController)
+  )
+
+  router.delete(
+    "/deleteCategoryOffer/:categoryOfferId",
+    authenticateToken,
+    isAdmin,
+    adminCategoryOfferController.deleteCategoryOffer.bind(adminCategoryOfferController)
+  )
 
 const adminRoutes = router;
 

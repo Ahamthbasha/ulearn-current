@@ -299,6 +299,12 @@ import { StudentCourseService } from "../services/studentServices/studentCourseS
 import { IStudentCourseController } from "../controllers/studentControllers/interfaces/IStudentCourseController";
 import { StudentCourseController } from "../controllers/studentControllers/studentCourseController";
 
+import { IStudentCourseOfferRepository } from "../repositories/studentRepository/interface/IStudentCourseOfferRepo";
+
+import { StudentCourseOfferRepository } from "../repositories/studentRepository/studentCourseOfferRepo";
+
+const studentCourseOfferRepo : IStudentCourseOfferRepository = new StudentCourseOfferRepository()
+
 const chapterReadOnlyRepository: IChapterReadOnlyRepository =
   new ChapterReadOnlyRepository();
 const quizReadOnlyRepository: IQuizReadOnlyRepository =
@@ -308,6 +314,7 @@ const studentCourseRepository: IStudentCourseRepository =
   new StudentCourseRepository(
     chapterReadOnlyRepository,
     quizReadOnlyRepository,
+    studentCourseOfferRepo
   );
 
 const studentCourseService: IStudentCourseService = new StudentCourseService(
@@ -351,6 +358,7 @@ const studentCartRepository: IStudentCartRepository =
 
 const studentCartService: IStudentCartService = new StudentCartService(
   studentCartRepository,
+  studentCourseRepository
 );
 
 const studentCartController: IStudentCartController = new StudentCartController(
@@ -938,7 +946,29 @@ const adminCourseOfferService:IAdminCourseOfferService = new AdminCourseOfferSer
 
 const adminCourseOfferController:IAdminCourseOfferController = new AdminCourseOfferController(adminCourseOfferService)
 
+/////////// admin category offer controller
 
+import { IAdminCategoryOfferRepo } from "../repositories/adminRepository/interface/IAdminCategoryOfferRepo";
+import { AdminCategoryOfferRepo } from "../repositories/adminRepository/adminCategoryOfferRepo";
+
+
+import { IAdminCategoryOfferService } from "../services/adminServices/interface/IAdminCategoryOfferService";
+import { AdminCategoryOfferService } from "../services/adminServices/adminCategoryOfferService";
+
+import { IAdminCategoryOfferController } from "../controllers/adminControllers/interface/IAdminCategoryOfferController";
+import { AdminCategoryOfferController } from "../controllers/adminControllers/adminCategoryOfferController";
+
+
+const adminCategoryOfferRepo : IAdminCategoryOfferRepo = new AdminCategoryOfferRepo()
+
+const adminCategoryOfferService : IAdminCategoryOfferService = new AdminCategoryOfferService(
+  new CourseRepository(),
+  adminCategoryOfferRepo,
+  adminCategoryRepository,
+  adminCourseOfferRepo
+)
+
+const adminCategoryOfferController : IAdminCategoryOfferController = new AdminCategoryOfferController(adminCategoryOfferService)
 
 export {
   studentController,
@@ -1030,4 +1060,6 @@ export {
   //admin course offer controller
   adminCourseOfferController,
   
+  //admin categoryOffer controller
+  adminCategoryOfferController,
 };

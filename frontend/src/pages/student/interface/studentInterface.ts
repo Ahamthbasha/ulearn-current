@@ -32,6 +32,7 @@ export interface CourseList {
   description: string;
   level: string;
   price: number;
+  originalPrice : number;
 }
 
 export interface Category {
@@ -64,6 +65,7 @@ export interface CourseDetail {
   description: string;
   level: string;
   price: number;
+  originalPrice : number;
 }
 
 export interface CartItem {
@@ -313,6 +315,7 @@ export interface LandingPageCourse {
   description: string;
   level: string;
   price: number;
+  originalPrice:number;
 }
 
 

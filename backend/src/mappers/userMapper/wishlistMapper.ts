@@ -10,7 +10,7 @@ export const mapWishlistToDTO = (
     return {
       courseId: course._id.toString(),
       courseName: course.courseName,
-      price: course.price,
+      price: course.effectivePrice ?? course.price, 
       thumbnailUrl: course.thumbnailUrl || "",
     };
   });

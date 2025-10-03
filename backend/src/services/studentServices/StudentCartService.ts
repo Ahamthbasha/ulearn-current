@@ -5,12 +5,16 @@ import { IStudentCartRepository } from "../../repositories/interfaces/IStudentCa
 import { CartCourseDTO } from "../../dto/userDTO/cartCourseDTO";
 import { mapCartToDTO } from "../../mappers/userMapper/cartMapper";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { IStudentCourseRepository } from "../../repositories/studentRepository/interface/IStudentCourseRepository";
+import { PopulatedCartCourse } from "../../types/PopulatedCartCourse";
 
 export class StudentCartService implements IStudentCartService {
   private _cartRepository: IStudentCartRepository;
+  private _courseRepository: IStudentCourseRepository;
 
-  constructor(cartRepository: IStudentCartRepository) {
+  constructor(cartRepository: IStudentCartRepository, courseRepository: IStudentCourseRepository) {
     this._cartRepository = cartRepository;
+    this._courseRepository = courseRepository;
   }
 
   async getCart(userId: Types.ObjectId): Promise<CartCourseDTO[] | null> {
@@ -20,12 +24,41 @@ export class StudentCartService implements IStudentCartService {
       return null;
     }
 
-    const cartDTO = mapCartToDTO(cart);
+    const courseIds = cart.courses.map((course) => {
+      if (typeof course === 'object' && course !== null && '_id' in course) {
+        return ((course as unknown) as PopulatedCartCourse)._id.toString();
+      }
+      return (course as Types.ObjectId).toString();
+    });
+    
+    const courseDetailsPromises = courseIds.map((id) => this._courseRepository.getCourseDetails(id));
+    const courseDetailsResults = await Promise.all(courseDetailsPromises);
 
-    // Handle presigned URLs for course thumbnails
+    const courseDetailsMap = new Map<string, { price: number; thumbnailUrl: string }>();
+    courseDetailsResults.forEach((details) => {
+      if (details.course) {
+        courseDetailsMap.set(details.course._id.toString(), {
+          price: details.course.price,
+          thumbnailUrl: details.course.thumbnailUrl || "",
+        });
+      }
+    });
+
+    const cartDTO = mapCartToDTO(cart, courseDetailsMap);
+
     for (const course of cartDTO) {
       if (course.thumbnailUrl) {
-        course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+        const populatedCourse = cart.courses.find((c) => {
+          if (typeof c === 'object' && c !== null && '_id' in c) {
+            return ((c as unknown) as PopulatedCartCourse)._id.toString() === course.courseId;
+          }
+          return false;
+        });
+        
+        const rawThumbnailUrl = populatedCourse && typeof populatedCourse === 'object' && 'thumbnailUrl' in populatedCourse
+          ? ((populatedCourse as unknown) as PopulatedCartCourse).thumbnailUrl
+          : course.thumbnailUrl;
+        course.thumbnailUrl = await getPresignedUrl(rawThumbnailUrl);
       }
     }
 
@@ -42,12 +75,32 @@ export class StudentCartService implements IStudentCartService {
       return null;
     }
 
-    const cartDTO = mapCartToDTO(updatedCart);
+    const courseDetails = await this._courseRepository.getCourseDetails(courseId.toString());
+    if (!courseDetails.course) {
+      throw new Error("Course not found");
+    }
 
-    // Handle presigned URLs for course thumbnails
+    const courseDetailsMap = new Map<string, { price: number; thumbnailUrl: string }>();
+    courseDetailsMap.set(courseId.toString(), {
+      price: courseDetails.course.price,
+      thumbnailUrl: courseDetails.course.thumbnailUrl || "",
+    });
+
+    const cartDTO = mapCartToDTO(updatedCart, courseDetailsMap);
+
     for (const course of cartDTO) {
       if (course.thumbnailUrl) {
-        course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+        const populatedCourse = updatedCart.courses.find((c) => {
+          if (typeof c === 'object' && c !== null && '_id' in c) {
+            return ((c as unknown) as PopulatedCartCourse)._id.toString() === course.courseId;
+          }
+          return false;
+        });
+        
+        const rawThumbnailUrl = populatedCourse && typeof populatedCourse === 'object' && 'thumbnailUrl' in populatedCourse
+          ? ((populatedCourse as unknown) as PopulatedCartCourse).thumbnailUrl
+          : course.thumbnailUrl;
+        course.thumbnailUrl = await getPresignedUrl(rawThumbnailUrl);
       }
     }
 
@@ -69,10 +122,19 @@ export class StudentCartService implements IStudentCartService {
 
     const cartDTO = mapCartToDTO(updatedCart);
 
-    // Handle presigned URLs for course thumbnails
     for (const course of cartDTO) {
       if (course.thumbnailUrl) {
-        course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+        const populatedCourse = updatedCart.courses.find((c) => {
+          if (typeof c === 'object' && c !== null && '_id' in c) {
+            return ((c as unknown) as PopulatedCartCourse)._id.toString() === course.courseId;
+          }
+          return false;
+        });
+        
+        const rawThumbnailUrl = populatedCourse && typeof populatedCourse === 'object' && 'thumbnailUrl' in populatedCourse
+          ? ((populatedCourse as unknown) as PopulatedCartCourse).thumbnailUrl
+          : course.thumbnailUrl;
+        course.thumbnailUrl = await getPresignedUrl(rawThumbnailUrl);
       }
     }
 
@@ -84,7 +146,6 @@ export class StudentCartService implements IStudentCartService {
     return !!clearedCart;
   }
 
-  // For internal use when raw cart data is needed
   async getCartRaw(userId: Types.ObjectId): Promise<ICart | null> {
     return await this._cartRepository.findCartByUserId(userId);
   }

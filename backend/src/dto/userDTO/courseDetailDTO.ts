@@ -11,4 +11,5 @@ export interface CourseDetailDTO {
   description: string;
   level: string;
   price: number;
+  originalPrice:number;
 }

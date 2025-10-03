@@ -32,6 +32,9 @@ import EditCouponPage from "../pages/admin/Coupon/EditCoupon";
 import CourseOffersPage from "../pages/admin/courseOffer/CourseOffersPage";
 import AddCourseOfferPage from "../pages/admin/courseOffer/AddCourseOfferPage";
 import EditCourseOfferPage from "../pages/admin/courseOffer/EditCourseOfferPage";
+import CategoryOfferPage from "../pages/admin/categoryOffer/CategoryOfferPage";
+import AddCategoryOfferPage from "../pages/admin/categoryOffer/AddCategoryOffer";
+import EditCategoryOfferPage from "../pages/admin/categoryOffer/EditCategoryOffer";
 
 //wallet
 
@@ -100,6 +103,11 @@ const AdminRouter = () => {
           <Route path="addCourseOffer" element={<AddCourseOfferPage/>}/>
           <Route path="editCourseOffer/:offerId" element={<EditCourseOfferPage/>}/>
           
+          {/* category offer */}
+
+          <Route path="categoryOffers" element={<CategoryOfferPage/>}/>
+          <Route path="addCategoryOffer" element={<AddCategoryOfferPage/>}/>
+          <Route path="editCategoryOffer/:categoryOfferId" element={<EditCategoryOfferPage/>}/>
         </Route>
 
       </Route>

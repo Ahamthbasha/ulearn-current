@@ -2,7 +2,7 @@ import { ICart } from "../../models/cartModel";
 import { CartCourseDTO } from "../../dto/userDTO/cartCourseDTO";
 import { PopulatedCartCourse } from "../../types/PopulatedCartCourse";
 
-export const mapCartToDTO = (cart: ICart): CartCourseDTO[] => {
+export const mapCartToDTO = (cart: ICart, courseDetailsMap?: Map<string, { price: number; thumbnailUrl: string }>): CartCourseDTO[] => {
   if (!cart?.courses) return [];
 
   return (cart.courses as unknown[])
@@ -10,10 +10,17 @@ export const mapCartToDTO = (cart: ICart): CartCourseDTO[] => {
       (course): course is PopulatedCartCourse =>
         typeof (course as PopulatedCartCourse).courseName === "string",
     )
-    .map((course) => ({
-      courseId: course._id.toString(),
-      courseName: course.courseName,
-      price: course.price,
-      thumbnailUrl: course.thumbnailUrl,
-    }));
+    .map((course) => {
+      const courseId = course._id.toString();
+      const details = courseDetailsMap?.get(courseId) || {
+        price: course.price,
+        thumbnailUrl: course.thumbnailUrl,
+      };
+      return {
+        courseId,
+        courseName: course.courseName,
+        price: details.price,
+        thumbnailUrl: details.thumbnailUrl,
+      };
+    });
 };

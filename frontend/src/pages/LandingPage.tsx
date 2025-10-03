@@ -66,6 +66,7 @@ const LandingPage = () => {
                   title={course.courseName}
                   description={course.description}
                   price={course.price}
+                  originalPrice={course.originalPrice}
                   duration={course.duration}
                   level={course.level}
                   thumbnailUrl={course.thumbnailUrl}

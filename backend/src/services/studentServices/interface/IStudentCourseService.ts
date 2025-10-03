@@ -17,7 +17,6 @@ export interface IStudentCourseService {
 
   getCourseDetailsById(courseId: string): Promise<CourseDetailDTO | null>;
 
-  // For internal use when raw course data is needed
   getCourseRaw(courseId: string): Promise<{
     course: ICourse | null;
     chapterCount: number;

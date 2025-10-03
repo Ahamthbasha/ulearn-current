@@ -5,7 +5,7 @@ import { type IMembershipPayload } from "../../types/interfaces/IMembershipPaylo
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
 import { type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
-import type { CouponData , ICourseOffer} from "../../types/interfaces/IAdminInterface";
+import type { CouponData , ICourseOffer, ICategoryModel,ICategoryOffer} from "../../types/interfaces/IAdminInterface";
 
 export const getAllUser = async (
   page = 1,
@@ -818,5 +818,103 @@ export const deleteCourseOffer = async (offerId: string): Promise<void> => {
     );
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to delete course offer");
+  }
+};
+
+//category offer action
+
+export const getListedCategories = async (): Promise<ICategoryModel[]> => {
+  try {
+    const response = await API.get(AdminRoutersEndPoints.adminGetCategories);
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch listed categories");
+  }
+};
+
+export const getCategoryOffers = async (
+  page: number = 1,
+  limit: number = 10,
+  search?: string
+): Promise<{ data: ICategoryOffer[]; total: number }> => {
+  try {
+    const response = await API.get(AdminRoutersEndPoints.adminGetCategoryOffers, {
+      params: {
+        page,
+        limit,
+        search,
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch category offers");
+  }
+};
+
+export const getCategoryOfferById = async (categoryOfferId: string): Promise<ICategoryOffer> => {
+  try {
+    const response = await API.get(
+      `${AdminRoutersEndPoints.adminGetCategoryOfferById}/${categoryOfferId}`
+    );
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch category offer");
+  }
+};
+
+export const createCategoryOffer = async (
+  categoryId: string,
+  discountPercentage: number,
+  startDate: Date,
+  endDate: Date
+): Promise<ICategoryOffer> => {
+  try {
+    const response = await API.post(AdminRoutersEndPoints.adminCreateCategoryOffer, {
+      categoryId,
+      discountPercentage,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create category offer");
+  }
+};
+
+export const editCategoryOffer = async (
+  categoryOfferId: string,
+  discountPercentage: number,
+  startDate: Date,
+  endDate: Date
+): Promise<ICategoryOffer> => {
+  try {
+    const response = await API.put(AdminRoutersEndPoints.adminUpdateCategoryOffer, {
+      categoryOfferId,
+      discountPercentage,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to edit category offer");
+  }
+};
+
+export const toggleCategoryOfferActive = async (categoryOfferId: string): Promise<ICategoryOffer> => {
+  try {
+    const response = await API.patch(
+      `${AdminRoutersEndPoints.adminToggleCategoryOffer}/${categoryOfferId}`
+    );
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to toggle category offer");
+  }
+};
+
+export const deleteCategoryOffer = async (categoryOfferId: string): Promise<void> => {
+  try {
+    await API.delete(`${AdminRoutersEndPoints.adminDeleteCategoryOffer}/${categoryOfferId}`);
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete category offer");
   }
 };

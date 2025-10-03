@@ -26,5 +26,6 @@ export const mapCourseToDetailDTO = (
     description: course.description,
     level: course.level,
     price: course.price,
+    originalPrice:course.originalPrice || course.price
   };
 };

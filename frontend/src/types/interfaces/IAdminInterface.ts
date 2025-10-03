@@ -1,3 +1,4 @@
+type ObjectId = string
 export interface CouponData {
   code: string;
   discount: number;
@@ -43,4 +44,25 @@ export interface ICourseAdmin {
   category?: string;
   instructorId?: string;
   offer?: string;
+}
+
+export interface ICategoryModel {
+  _id: ObjectId;
+  categoryName: string;
+  description?: string;
+  isListed: boolean;
+  createdAt?: string; // ISO date string
+  updatedAt?: string; // ISO date string
+}
+
+export interface ICategoryOffer {
+  _id: ObjectId;
+  categoryId: { _id: ObjectId; categoryName: string };
+  discountPercentage: number;
+  startDate: string; // ISO date string
+  endDate: string; // ISO date string
+  isActive: boolean;
+  courseOffers: ObjectId[]; // Array of ICourseOffer _id values
+  createdAt?: string; // ISO date string
+  updatedAt?: string; // ISO date string
 }

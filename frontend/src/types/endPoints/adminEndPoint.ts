@@ -80,6 +80,16 @@ const AdminRoutersEndPoints = {
   adminDeleteCourseOffer : "/api/admin/courseOffer",
   adminGetCourseOfferById : "/api/admin/courseOffer",
 
+  //admin Category Offer
+
+  adminGetCategories: "/api/admin/getCategories",
+  adminGetCategoryOffers: "/api/admin/getCategoryOffers",
+  adminGetCategoryOfferById: "/api/admin/categoryOffers",
+  adminCreateCategoryOffer: "/api/admin/createCategoryOffer",
+  adminUpdateCategoryOffer: "/api/admin/updateCategoryOffer",
+  adminToggleCategoryOffer: "/api/admin/toggleCategoryOffer",
+  adminDeleteCategoryOffer: "/api/admin/deleteCategoryOffer",
+
 };
 
 export default AdminRoutersEndPoints;

@@ -32,15 +32,17 @@ export class StudentWishlistService implements IStudentWishlistService {
   ): Promise<WishlistCourseDTO[]> {
     const wishlist = await this._wishlistRepository.getWishlistCourses(userId);
 
-    // Generate presigned URLs for thumbnails
+    // Generate presigned URLs for thumbnails and populate offers
     for (const item of wishlist) {
       const course = item.courseId as ICourse;
       if (course?.thumbnailUrl) {
         course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
       }
+      if (course?.offer) {
+        await course.populate("offer");
+      }
     }
 
-    // Map to DTO and return
     return mapWishlistToDTO(wishlist);
   }
 
