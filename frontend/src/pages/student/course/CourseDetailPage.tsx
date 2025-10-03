@@ -102,6 +102,8 @@ const CourseDetailPage = () => {
       <div className="text-center py-6 sm:py-8 md:py-10 text-red-500 text-lg sm:text-xl">Course not found</div>
     );
 
+  const hasOffer = course.originalPrice !== course.price && course.originalPrice > course.price;
+
   return (
     <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 font-sans">
       {/* Course Card */}
@@ -138,7 +140,17 @@ const CourseDetailPage = () => {
               <p><strong>Category:</strong> {course.categoryName}</p>
               <p><strong>Duration:</strong> {course.duration} hrs</p>
               <p><strong>Level:</strong> {course.level}</p>
-              <p><strong>Price:</strong> ₹{course.price}</p>
+              <div className="flex items-center gap-2">
+                {hasOffer && (
+                  <p><strong>Price:</strong> <span className="text-gray-500 line-through">₹{course.originalPrice.toLocaleString()}</span></p>
+                )}
+                <p><strong>Price:</strong> <span className={hasOffer ? "text-green-600 font-bold text-lg" : "text-gray-800 font-bold text-lg"}>₹{course.price.toLocaleString()}</span></p>
+                {hasOffer && (
+                  <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full ml-2">
+                    Offer Available
+                  </span>
+                )}
+              </div>
               <p><strong>Chapters:</strong> {course.chapterCount}</p>
               <p><strong>Quiz Questions:</strong> {course.quizQuestionCount}</p>
             </div>

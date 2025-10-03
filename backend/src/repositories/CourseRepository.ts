@@ -12,4 +12,10 @@ export class CourseRepository extends GenericRepository<ICourse> {
       .findByIdAndUpdate(courseId, { $unset: { offer: 1 } }, { new: true })
       .exec();
   }
+
+  async updateById(courseId: string, data: Partial<ICourse>): Promise<ICourse | null> {
+    return await this.model
+      .findByIdAndUpdate(courseId, { $set: data }, { new: true })
+      .exec();
+  }
 }

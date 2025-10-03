@@ -173,8 +173,13 @@ const CourseOffersPage: React.FC = () => {
         message={
           offerToToggle
             ? `Are you sure you want to ${offerToToggle.isActive ? "deactivate" : "activate"} this course offer?`
-            : "Are you sure you want to delete this course offer? This action cannot be undone."
+            : offerToDelete
+            ? "Are you sure you want to delete this course offer? This action cannot be undone."
+            : ""
         }
+        title={offerToToggle ? "TOGGLE COURSE OFFER" : "DELETE COURSE OFFER"}
+        confirmText={offerToToggle ? (offerToToggle.isActive ? "Deactivate" : "Activate") : "Delete"}
+        cancelText="Cancel"
         onConfirm={offerToToggle ? confirmToggle : confirmDelete}
         onCancel={cancelAction}
       />

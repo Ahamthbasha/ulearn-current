@@ -4,6 +4,8 @@ import { GenericRepository } from "../genericRepository";
 import { IChapterReadOnlyRepository } from "../interfaces/IChapterReadOnlyRepository";
 import { IQuizReadOnlyRepository } from "../interfaces/IQuizReadOnlyRepository";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { ICourseOffer } from "../../models/courseOfferModel";
+import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo"; 
 
 export class StudentCourseRepository
   extends GenericRepository<ICourse>
@@ -11,14 +13,17 @@ export class StudentCourseRepository
 {
   private _chapterRepo: IChapterReadOnlyRepository;
   private _quizRepo: IQuizReadOnlyRepository;
+  private _courseOfferRepo: IStudentCourseOfferRepository;
 
   constructor(
     chapterRepo: IChapterReadOnlyRepository,
     quizRepo: IQuizReadOnlyRepository,
+    courseOfferRepo: IStudentCourseOfferRepository,
   ) {
     super(CourseModel);
     this._chapterRepo = chapterRepo;
     this._quizRepo = quizRepo;
+    this._courseOfferRepo = courseOfferRepo;
   }
 
   async getAllListedCourses(): Promise<
@@ -32,17 +37,20 @@ export class StudentCourseRepository
     const result = await Promise.all(
       listedCourses.map(async (course) => {
         const courseId = course._id.toString();
-        const chapterCount =
-          await this._chapterRepo.countChaptersByCourse(courseId);
-        const quizQuestionCount =
-          await this._quizRepo.countQuestionsByCourse(courseId);
-
+        const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
+        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+
+        // Fetch and apply offer if valid
+        const offer = await this._courseOfferRepo.findValidOfferByCourseId(courseId);
+        const effectivePrice = this.calculateEffectivePrice(course.price, offer);
 
         return {
           course: {
             ...course.toObject(),
             thumbnailUrl: signedThumbnailUrl,
+            price: effectivePrice,
+            originalPrice: course.price, // Add original price for frontend display
           },
           chapterCount,
           quizQuestionCount,
@@ -60,11 +68,7 @@ export class StudentCourseRepository
     sort: "name-asc" | "name-desc" | "price-asc" | "price-desc" = "name-asc",
     categoryId?: string,
   ): Promise<{
-    data: {
-      course: ICourse;
-      chapterCount: number;
-      quizQuestionCount: number;
-    }[];
+    data: { course: ICourse; chapterCount: number; quizQuestionCount: number }[];
     total: number;
   }> {
     const filter: any = {
@@ -117,10 +121,16 @@ export class StudentCourseRepository
         );
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
+        // Fetch and apply offer if valid
+        const offer = await this._courseOfferRepo.findValidOfferByCourseId(course._id.toString());
+        const effectivePrice = this.calculateEffectivePrice(course.price, offer);
+
         return {
           course: {
             ...course.toObject(),
             thumbnailUrl: signedThumbnailUrl,
+            price: effectivePrice,
+            originalPrice: course.price, // Add original price for frontend display
           },
           chapterCount,
           quizQuestionCount,
@@ -132,27 +142,45 @@ export class StudentCourseRepository
   }
 
   async getCourseDetails(courseId: string): Promise<{
-    course: ICourse | null;
-    chapterCount: number;
-    quizQuestionCount: number;
-  }> {
-    const course = await this.findByIdWithPopulate(courseId, [
-      "category",
-      "instructorId",
-    ]);
-    if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
+  course: ICourse | null;
+  chapterCount: number;
+  quizQuestionCount: number;
+}> {
+  const course = await this.findByIdWithPopulate(courseId, [
+    "category",
+    "instructorId",
+  ]);
+  if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
 
-    const chapterCount =
-      await this._chapterRepo.countChaptersByCourse(courseId);
-    const quizQuestionCount =
-      await this._quizRepo.countQuestionsByCourse(courseId);
+  const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
+  const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
 
-    const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
-    const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);
+  const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+  const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);
 
-    course.thumbnailUrl = signedThumbnailUrl;
-    course.demoVideo.url = signedDemoVideoUrl;
+  // Fetch and apply offer if valid
+  const offer = await this._courseOfferRepo.findValidOfferByCourseId(courseId);
+  const effectivePrice = this.calculateEffectivePrice(course.price, offer);
 
-    return { course, chapterCount, quizQuestionCount };
+  // Set originalPrice to the course's original price and price to the effective price
+  course.thumbnailUrl = signedThumbnailUrl;
+  course.demoVideo.url = signedDemoVideoUrl;
+  course.originalPrice = course.price; // Set originalPrice to the original price
+  course.price = effectivePrice; // Update price to the effective (discounted) price
+
+  return { course, chapterCount, quizQuestionCount };
+}
+
+  private calculateEffectivePrice(originalPrice: number, offer: ICourseOffer | null): number {
+    if (!offer || !offer.isActive) return originalPrice;
+
+    const now = new Date(); // Use current system time dynamically
+    const startDate = new Date(offer.startDate);
+    const endDate = new Date(offer.endDate);
+
+    if (now >= startDate && now <= endDate) {
+      return originalPrice - (originalPrice * offer.discountPercentage / 100);
+    }
+    return originalPrice;
   }
 }

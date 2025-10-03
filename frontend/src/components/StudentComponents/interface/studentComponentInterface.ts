@@ -3,6 +3,7 @@ export interface CourseCardProps {
   title: string;
   description: string;
   price: number;
+  originalPrice:number;
   duration: string;
   level: string;
   thumbnailUrl: string;

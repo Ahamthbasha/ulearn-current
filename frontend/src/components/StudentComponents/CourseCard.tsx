@@ -17,9 +17,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
   title,
   description,
   price,
+  originalPrice,
   duration,
   level,
   thumbnailUrl,
+  categoryName,
 }) => {
   const navigate = useNavigate();
   const [isInCart, setIsInCart] = useState(false);
@@ -86,6 +88,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
     }
   };
 
+  const hasOffer = originalPrice !== price && originalPrice > price;
+
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border flex flex-col max-w-sm mx-auto sm:max-w-md lg:max-w-lg overflow-hidden">
       <div className="relative group h-40 sm:h-48 lg:h-52 overflow-hidden">
@@ -100,7 +104,9 @@ const CourseCard: React.FC<CourseCardProps> = ({
       <div className="p-4 sm:p-5 flex flex-col flex-grow gap-3">
         <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-800 line-clamp-1">{title}</h3>
         <p className="text-sm sm:text-base text-gray-600 line-clamp-2 leading-relaxed">{description}</p>
-
+        {categoryName && (
+          <p className="text-sm text-gray-500">Category: {categoryName}</p>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-gray-700">
           <span className="flex items-center gap-1">
             <span className="text-gray-500">🕒</span> {duration} hrs
@@ -108,9 +114,19 @@ const CourseCard: React.FC<CourseCardProps> = ({
           <span className="flex items-center gap-1">
             <span className="text-gray-500">🎯</span> {level}
           </span>
-          <span className="flex items-center gap-1">
-            <span className="text-gray-500">💰</span> ₹{price}
-          </span>
+          <div className="flex items-center gap-2">
+            {hasOffer && (
+              <span className="text-gray-500 line-through">₹{originalPrice.toLocaleString()}</span>
+            )}
+            <span className={hasOffer ? "text-green-600 font-bold text-lg" : "text-gray-800 font-bold text-lg"}>
+              ₹{price.toLocaleString()}
+            </span>
+            {hasOffer && (
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full">
+                Offer Available
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-2 sm:gap-3 mt-auto">

@@ -760,3 +760,9 @@ export const COURSE_OFFER_MESSAGE = {
   COURSE_OFFER_EDITED:"Course offer edited successfully",
    COURSE_OFFER_DELETED:"Course offer deleted successfully"
 }
+
+export const CATEGORY_OFFER_MESSAGE = {
+  CATEGORY_OFFER_CREATED: "Category offer created successfully",
+  CATEGORY_OFFER_EDITED: "Category offer updated successfully",
+  CATEGORY_OFFER_DELETED: "Category offer deleted successfully",
+};

@@ -5,6 +5,7 @@ import { type ICoupon } from '../../../types/interfaces/IAdminInterface';
 import { getCoupon, deleteCoupon, toggleStatus } from '../../../api/action/AdminActionApi';
 import { Pencil, Trash2, ToggleLeft, ToggleRight, X } from 'lucide-react';
 import { useDebounce } from '../../../hooks/UseDebounce';
+import ConfirmationModal from '../../../components/common/ConfirmationModal';
 
 const CouponListPage: React.FC = () => {
   const [coupons, setCoupons] = useState<ICoupon[]>([]);
@@ -15,7 +16,9 @@ const CouponListPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState<string>('');
   const navigate = useNavigate();
   const limit = 5;
-
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
+  const [couponToToggle, setCouponToToggle] = useState<ICoupon | null>(null); // Track the coupon to toggle
+  const [couponToDelete, setCouponToDelete] = useState<ICoupon | null>(null); // Track the coupon to delete
 
   const debouncedSearchValue = useDebounce(searchValue, 500);
 
@@ -23,9 +26,7 @@ const CouponListPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      
       const response = await getCoupon(page, limit, searchCode);
-      
       const couponsData = Array.isArray(response.data.coupons) ? response.data.coupons : [];
       setCoupons(couponsData);
       setTotalPages(Math.ceil((response.data.total || 0) / limit));
@@ -48,58 +49,63 @@ const CouponListPage: React.FC = () => {
     setCurrentPage(1); // Reset to first page on search
   };
 
-  // Handle delete with proper error handling and UI updates
-  const handleDelete = async (coupon: ICoupon) => {
-    if (window.confirm('Are you sure you want to delete this coupon?')) {
+  // Handle toggle with modal
+  const handleToggleStatus = (coupon: ICoupon) => {
+    setCouponToToggle(coupon);
+    setIsModalOpen(true);
+  };
+
+  const confirmToggleStatus = async () => {
+    if (couponToToggle) {
+      // Optimistic update
+      const newStatus = !couponToToggle.status;
+      setCoupons((prev) =>
+        prev.map((c) =>
+          c._id === couponToToggle._id ? { ...c, status: newStatus } : c
+        )
+      );
+
       try {
-        await deleteCoupon(coupon._id);
-        
-        // Remove the deleted coupon from local state
-        setCoupons((prev) => prev.filter((c) => c._id !== coupon._id));
-        
-        // Check if current page becomes empty after deletion
-        const remainingCoupons = coupons.length - 1;
-        if (remainingCoupons === 0 && currentPage > 1) {
-          // If current page is empty and not the first page, go to previous page
-          const newPage = currentPage - 1;
-          setCurrentPage(newPage);
-        } else if (remainingCoupons === 0) {
-          // If we're on the first page and no coupons left, will be handled by useEffect
-        }
+        const updatedCoupon = await toggleStatus(couponToToggle._id, newStatus);
+        setCoupons((prev) =>
+          prev.map((c) => (c._id === updatedCoupon._id ? updatedCoupon : c))
+        );
       } catch (err: any) {
-        setError(err.message || 'Failed to delete coupon');
+        // Revert optimistic update on error
+        setCoupons((prev) =>
+          prev.map((c) =>
+            c._id === couponToToggle._id ? { ...c, status: couponToToggle.status } : c
+          )
+        );
+        setError(err.message || 'Failed to toggle coupon status');
+      } finally {
+        setIsModalOpen(false);
+        setCouponToToggle(null);
       }
     }
   };
 
-  // Handle toggle status with optimistic updates
-  const handleToggleStatus = async (coupon: ICoupon) => {
-    // Optimistic update
-    const newStatus = !coupon.status;
-    setCoupons((prev) =>
-      prev.map((c) => 
-        c._id === coupon._id 
-          ? { ...c, status: newStatus } 
-          : c
-      )
-    );
+  // Handle delete with modal
+  const handleDelete = (coupon: ICoupon) => {
+    setCouponToDelete(coupon);
+    setIsModalOpen(true);
+  };
 
-    try {
-      const updatedCoupon = await toggleStatus(coupon._id, newStatus);
-      // Update with server response
-      setCoupons((prev) =>
-        prev.map((c) => (c._id === updatedCoupon._id ? updatedCoupon : c))
-      );
-    } catch (err: any) {
-      // Revert optimistic update on error
-      setCoupons((prev) =>
-        prev.map((c) => 
-          c._id === coupon._id 
-            ? { ...c, status: coupon.status } 
-            : c
-        )
-      );
-      setError(err.message || 'Failed to toggle coupon status');
+  const confirmDelete = async () => {
+    if (couponToDelete) {
+      try {
+        await deleteCoupon(couponToDelete._id);
+        setCoupons((prev) => prev.filter((c) => c._id !== couponToDelete._id));
+        const remainingCoupons = coupons.length - 1;
+        if (remainingCoupons === 0 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to delete coupon');
+      } finally {
+        setIsModalOpen(false);
+        setCouponToDelete(null);
+      }
     }
   };
 
@@ -225,6 +231,13 @@ const CouponListPage: React.FC = () => {
     onPageChange: handlePageChange,
   };
 
+  // Cancel action for modal
+  const cancelAction = () => {
+    setIsModalOpen(false);
+    setCouponToToggle(null);
+    setCouponToDelete(null);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <DataTable
@@ -265,6 +278,21 @@ const CouponListPage: React.FC = () => {
             )}
           </div>
         }
+      />
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        message={
+          couponToToggle
+            ? `Are you sure you want to ${couponToToggle.status ? 'deactivate' : 'activate'} this coupon?`
+            : couponToDelete
+            ? 'Are you sure you want to delete this coupon? This action cannot be undone.'
+            : ''
+        }
+        title={couponToToggle ? 'TOGGLE COUPON STATUS' : 'DELETE COUPON'}
+        confirmText={couponToToggle ? (couponToToggle.status ? 'Deactivate' : 'Activate') : 'Delete'}
+        cancelText="Cancel"
+        onConfirm={couponToToggle ? confirmToggleStatus : confirmDelete}
+        onCancel={cancelAction}
       />
     </div>
   );

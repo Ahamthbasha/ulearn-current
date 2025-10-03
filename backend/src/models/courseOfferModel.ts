@@ -1,6 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface ICourseOffer extends Document {
+  _id:Types.ObjectId;
   courseId: Types.ObjectId;
   discountPercentage: number;
   startDate: Date;

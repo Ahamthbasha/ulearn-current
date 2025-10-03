@@ -6,7 +6,9 @@ import {
   GraduationCap,
   BookOpen,
   TreePine,
-  Image,
+  Ticket,
+  Tag,
+  Tags,
   CreditCard,
   Crown,
   BadgePercent,
@@ -30,19 +32,20 @@ const AdminLayout = () => {
   const isActive = (path: string) => location.pathname.includes(path);
 
   const navItems = [
-    { name: "Dashboard", icon: <LayoutDashboard />, path: "dashboard" },
-    { name: "Users", icon: <Users />, path: "users" },
-    { name: "Instructors", icon: <GraduationCap />, path: "instructors" },
-    { name: "Courses", icon: <BookOpen />, path: "courses" },
-    { name: "Category", icon: <TreePine />, path: "category" },
-    { name: "Coupon", icon: <Image />, path: "coupons" },
-    { name: "CourseOffer", icon: <Image />, path: "courseOffers" },
-    { name: "Verification", icon: <ShieldCheck />, path: "verification" },
-    { name: "Order Management", icon: <ShoppingCart />, path: "orders" },
-    { name: "Wallet", icon: <CreditCard />, path: "wallet" },
-    { name: "Membership", icon: <Crown />, path: "membership" },
-    { name: "Withdrawal", icon: <BadgePercent />, path: "withdrawal" },
-  ];
+  { name: "Dashboard", icon: <LayoutDashboard />, path: "dashboard" },
+  { name: "Users", icon: <Users />, path: "users" },
+  { name: "Instructors", icon: <GraduationCap />, path: "instructors" },
+  { name: "Courses", icon: <BookOpen />, path: "courses" },
+  { name: "Category", icon: <TreePine />, path: "category" },
+  { name: "Coupon", icon: <Ticket />, path: "coupons" },
+  { name: "CourseOffer", icon: <Tag />, path: "courseOffers" },
+  { name: "CategoryOffer", icon: <Tags />, path: "categoryOffers" },
+  { name: "Verification", icon: <ShieldCheck />, path: "verification" },
+  { name: "Order Management", icon: <ShoppingCart />, path: "orders" },
+  { name: "Wallet", icon: <CreditCard />, path: "wallet" },
+  { name: "Membership", icon: <Crown />, path: "membership" },
+  { name: "Withdrawal", icon: <BadgePercent />, path: "withdrawal" },
+];
 
   const handleLogout = async () => {
     try {

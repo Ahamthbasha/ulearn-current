@@ -27,6 +27,7 @@ const CheckoutPage = () => {
   const [availableCoupons, setAvailableCoupons] = useState<ICoupon[]>([]);
   const [selectedCoupon, setSelectedCoupon] = useState<ICoupon | null>(null);
   const [discountedAmount, setDiscountedAmount] = useState<number | null>(null);
+  const [isCouponDropdownOpen, setIsCouponDropdownOpen] = useState(false); // New state for dropdown
   const navigate = useNavigate();
   const razorpayInstanceRef = useRef<any>(null);
 
@@ -358,6 +359,10 @@ const CheckoutPage = () => {
     toast.info("Coupon removed.");
   };
 
+  const toggleCouponDropdown = () => {
+    setIsCouponDropdownOpen((prev) => !prev);
+  };
+
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h2 className="text-2xl font-bold mb-6">🧾 Checkout Summary</h2>
@@ -513,14 +518,14 @@ const CheckoutPage = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Apply Coupon</h3>
             <div
               className="cursor-pointer p-3 border rounded-lg transition-colors hover:bg-gray-50"
-              onClick={() => setAvailableCoupons(availableCoupons.length > 0 ? [] : availableCoupons)}
+              onClick={toggleCouponDropdown}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium">Select a Coupon</span>
-                <span>{availableCoupons.length > 0 ? "▲" : "▼"}</span>
+                <span>{isCouponDropdownOpen ? "▲" : "▼"}</span>
               </div>
             </div>
-            {availableCoupons.length > 0 && (
+            {isCouponDropdownOpen && availableCoupons.length > 0 && (
               <div className="mt-4 space-y-2">
                 {availableCoupons.map((coupon) => (
                   <div

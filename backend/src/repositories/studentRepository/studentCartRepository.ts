@@ -12,8 +12,7 @@ export class StudentCartRepository
   }
 
   async findCartByUserId(userId: Types.ObjectId): Promise<ICart | null> {
-    const cart = await this.findOne({ userId });
-    return cart ? await CartModel.populate(cart, { path: "courses" }) : null;
+    return await this.findOne({ userId }, [{ path: "courses" }]);
   }
 
   async addCourse(
@@ -23,17 +22,22 @@ export class StudentCartRepository
     let cart = await this.findOne({ userId });
 
     if (!cart) {
-      cart = new CartModel({ userId, courses: [courseId] });
+      // Create new cart using the model from GenericRepository
+      const newCart = await this.create({ userId, courses: [courseId] } as Partial<ICart>);
+      return newCart;
     } else {
       const alreadyExists = cart.courses.some(
         (c) => c.toString() === courseId.toString(),
       );
       if (!alreadyExists) {
         cart.courses.push(courseId);
+        await cart.save();
       }
     }
 
-    return await cart.save();
+    // Return the cart with populated courses
+    const populatedCart = await this.findOne({ userId }, [{ path: "courses" }]);
+    return populatedCart!;
   }
 
   async removeCourse(
@@ -43,7 +47,7 @@ export class StudentCartRepository
     return await this.updateOneWithPopulate(
       { userId },
       { $pull: { courses: courseId } } as any,
-      ["courses"],
+      [{ path: "courses" }],
     );
   }
 
@@ -51,7 +55,7 @@ export class StudentCartRepository
     return await this.updateOneWithPopulate(
       { userId },
       { $set: { courses: [] } } as any,
-      ["courses"],
+      [{ path: "courses" }],
     );
   }
 }

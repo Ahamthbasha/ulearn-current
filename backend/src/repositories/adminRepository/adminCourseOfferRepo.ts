@@ -38,18 +38,53 @@ export class AdminCourseOfferRepo
     limit: number,
     search?: string,
   ): Promise<{ data: ICourseOffer[]; total: number }> {
-    const filter: any = {};
-    if (search) {
-      filter["$or"] = [
-        { "courseId.courseName": { $regex: search, $options: "i" } },
-      ];
-    }
-
-    const populate = [
-      { path: "courseId", select: "courseName" },
+    const pipeline: any[] = [
+      {
+        $lookup: {
+          from: "courses",
+          localField: "courseId",
+          foreignField: "_id",
+          as: "courseId",
+        },
+      },
+      {
+        $unwind: "$courseId",
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $facet: {
+          data: [{ $skip: (page - 1) * limit }, { $limit: limit }],
+          total: [{ $count: "count" }],
+        },
+      },
+      {
+        $project: {
+          data: 1,
+          total: { $arrayElemAt: ["$total.count", 0] },
+        },
+      },
     ];
 
-    return this.paginate(filter, page, limit, { createdAt: -1 }, populate);
+    // Add $match stage only if search is provided and non-empty
+    if (search && search.trim().length > 0) {
+      pipeline.splice(2, 0, {
+        $match: {
+          $expr: {
+            $regexMatch: {
+              input: "$courseId.courseName", // Directly use the courseName field
+              regex: search,
+              options: "i",
+            },
+          },
+        },
+      });
+    }
+
+    const result = await this.model.aggregate(pipeline).exec();
+    const { data, total } = result[0] || { data: [], total: 0 };
+    return { data, total: total || 0 };
   }
 
   async getCourseOfferById(offerId: string): Promise<ICourseOffer | null> {
