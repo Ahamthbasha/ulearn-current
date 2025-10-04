@@ -1,7 +1,8 @@
+import { Types } from "mongoose";
+
 export interface OrderHistoryDTO {
-  orderId: string;
-  amount: number;
-  gateway: string;
-  date: string;
-  status: string;
+  orderId: Types.ObjectId;
+  orderDate: string; // Formatted as "DD-MM-YYYY"
+  finalPrice: number;
+  status: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
 }

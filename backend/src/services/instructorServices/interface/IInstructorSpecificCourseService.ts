@@ -21,6 +21,8 @@ export interface IInstructorSpecificCourseDashboardService {
       purchaseDate: string;
       courseName: string;
       originalCoursePrice: number;
+      courseOfferPrice: number;
+      couponCode: string | null;
       couponUsed: boolean;
       couponDeductionAmount: number;
       finalCoursePrice: number;

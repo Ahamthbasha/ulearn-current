@@ -348,7 +348,7 @@ import { IStudentCartRepository } from "../repositories/interfaces/IStudentCartR
 import { StudentCartRepository } from "../repositories/studentRepository/studentCartRepository";
 
 import { IStudentCartService } from "../services/studentServices/interface/IStudentCartService";
-import { StudentCartService } from "../services/studentServices/studentCartService";
+import { StudentCartService } from "../services/studentServices/StudentCartService"; 
 
 import { IStudentCartController } from "../controllers/studentControllers/interfaces/IStudentCartController";
 import { StudentCartController } from "../controllers/studentControllers/studentCartController";
@@ -371,7 +371,7 @@ import { IStudentWishlistRepository } from "../repositories/studentRepository/in
 import { StudentWishlistRepository } from "../repositories/studentRepository/studentWishlistRepository";
 
 import { IStudentWishlistService } from "../services/studentServices/interface/IStudentWishlistService";
-import { StudentWishlistService } from "../services/studentServices/studentWishlistService";
+import { StudentWishlistService } from "../services/studentServices/StudentWishlistService"; 
 
 import { IStudentWishlistController } from "../controllers/studentControllers/interfaces/IStudentWishlistController";
 import { StudentWishlistController } from "../controllers/studentControllers/studentWishlistController";
@@ -498,7 +498,6 @@ import { InstructorSpecificCourseDashboardController } from "../controllers/inst
 
 const specificCourseDahboardRepository: IInstructorCourseSpecificDashboardRepository =
   new InstructorSpecificCourseDashboardRepository(
-    new PaymentRepository(),
     new EnrollmentRepository(),
     new CourseRepository(),
     new OrderRepository(),

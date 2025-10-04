@@ -98,10 +98,6 @@ export class InstructorSpecificCourseDashboardController
 
       res.status(StatusCode.OK).json({ success: true, data, total });
     } catch (error) {
-      console.error(
-        "[InstructorSpecificCourseDashboardController] Report Error:",
-        error,
-      );
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_COURSE_REVENUE_REPORT,
@@ -151,13 +147,12 @@ export class InstructorSpecificCourseDashboardController
         end,
       );
 
-      console.log("rawData",rawData)
-
       const reportData = rawData.data.map((item) => ({
       orderId: item.orderId,
       purchaseDate: item.purchaseDate,
       courseName: item.courseName,
       originalCoursePrice: item.originalCoursePrice,
+      courseOfferPrice:item.courseOfferPrice,
       couponUsed: item.couponUsed,
       couponDeductionAmount: item.couponDeductionAmount,
       finalCoursePrice: item.finalCoursePrice,
@@ -171,10 +166,6 @@ export class InstructorSpecificCourseDashboardController
         await generateExcelReport(reportData, res);
       }
     } catch (error) {
-      console.error(
-        "[InstructorSpecificCourseDashboardController] Export Error:",
-        error,
-      );
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_EXPORT_REVENUE_REPORT,

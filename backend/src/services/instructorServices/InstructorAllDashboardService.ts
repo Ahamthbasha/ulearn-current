@@ -25,7 +25,7 @@ export class InstructorAllCourseDashboardService
       totalRevenue,
       totalCourseSales,
       publishedCourses,
-      categoryWiseCount
+      categoryWiseCount,
     ] = await Promise.all([
       this._dashboardRepo.getTopSellingCourses(instructorId),
       this._dashboardRepo.getCategoryWiseSales(instructorId),
@@ -33,7 +33,7 @@ export class InstructorAllCourseDashboardService
       this._dashboardRepo.getTotalRevenue(instructorId),
       this._dashboardRepo.getTotalCourseSales(instructorId),
       this._dashboardRepo.getPublishedCoursesCount(instructorId),
-      this._dashboardRepo.getCategoryWiseCreatedCourses(instructorId)
+      this._dashboardRepo.getCategoryWiseCreatedCourses(instructorId),
     ]);
 
     return {
@@ -43,7 +43,7 @@ export class InstructorAllCourseDashboardService
       totalRevenue,
       totalCourseSales,
       publishedCourses,
-      categoryWiseCount
+      categoryWiseCount,
     };
   }
 

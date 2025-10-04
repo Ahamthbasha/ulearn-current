@@ -17,7 +17,9 @@ import {
   getRevenueDashboard,
   exportRevenueReport,
 } from "../../api/action/InstructorActionApi";
-import { type IDashboardData } from "../../types/interfaces/IdashboardTypes";
+
+import type { IDashboardData,IRevenueReportItem } from "../../types/interfaces/IdashboardTypes";
+
 
 const InstructorDashboard = () => {
   const [dashboardData, setDashboardData] = useState<IDashboardData | null>(null);
@@ -26,7 +28,7 @@ const InstructorDashboard = () => {
   const [reportRange, setReportRange] = useState<
     "daily" | "weekly" | "monthly" | "yearly" | "custom"
   >("daily");
-  const [reportData, setReportData] = useState<any[]>([]);
+  const [reportData, setReportData] = useState<IRevenueReportItem[]>([]);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [limit] = useState<number>(5); // Matches backend default limit
@@ -324,11 +326,8 @@ const InstructorDashboard = () => {
                   <tr>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Order ID</th>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Date</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Course Name</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Course Price</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Coupon Used</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Discount Amount</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Final Price</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Courses</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Total Order Amount</th>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Instructor Earnings</th>
                   </tr>
                 </thead>
@@ -336,19 +335,30 @@ const InstructorDashboard = () => {
                   {reportData.map((item, idx) => (
                     <tr key={idx} className="border-t">
                       <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">#{item.orderId}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.createdAt}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.courseName}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.courseOriginalPrice.toFixed(2)}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.couponCode}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.courseDiscountAmount.toFixed(2)}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.finalCoursePrice.toFixed(2)}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.orderDate}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
+                        <ul className="list-disc list-inside">
+                          {item.courses.map((course, courseIdx) => (
+                            <li key={courseIdx} className="mb-1">
+                              <span className="font-medium">{course.courseName}</span>
+                              <br />
+                              Original: ₹{course.courseOriginalPrice.toFixed(2)}, Offer: ₹{course.courseOfferPrice.toFixed(2)}
+                              <br />
+                              Coupon: {course.couponCode} ({course.couponDiscount}%), Discount: ₹{course.couponDiscountAmount.toFixed(2)}
+                              <br />
+                              Final Price: ₹{course.finalCoursePrice.toFixed(2)}
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.totalOrderAmount.toFixed(2)}</td>
                       <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700">₹{item.instructorEarning.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={7} className="px-2 sm:px-4 py-1 sm:py-2 text-right text-xs sm:text-sm">
+                    <td colSpan={4} className="px-2 sm:px-4 py-1 sm:py-2 text-right text-xs sm:text-sm">
                       Total Instructor Earnings
                     </td>
                     <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700">

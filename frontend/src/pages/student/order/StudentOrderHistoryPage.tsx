@@ -30,8 +30,7 @@ export default function StudentOrderHistoryPage() {
       
       const formattedOrders: DisplayOrder[] = res.orders.map((order: OrderHistory) => ({
         ...order,
-        formattedAmount: `₹${order.amount.toFixed(2)}`,
-        formattedGateway: order.gateway.toUpperCase(),
+        formattedAmount: `₹${order.finalPrice.toFixed(2)}`,
         statusDisplay: order.status.toUpperCase(),
       }));
       
@@ -126,11 +125,7 @@ export default function StudentOrderHistoryPage() {
       label: "Amount",
     },
     {
-      key: "formattedGateway" as keyof DisplayOrder,
-      label: "Gateway",
-    },
-    {
-      key: "date" as keyof DisplayOrder,
+      key: "orderDate" as keyof DisplayOrder,
       label: "Date",
     },
     {

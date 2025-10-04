@@ -1,6 +1,6 @@
 import { IGenericRepository } from "../genericRepository";
 import { IOrder } from "../../models/orderModel";
-import { ClientSession } from "mongoose";
+import { ClientSession, PipelineStage } from "mongoose";
 
 export interface IOrderRepository extends IGenericRepository<IOrder> {
   findPendingOrdersByUser(userId: string): Promise<IOrder[]>;
@@ -11,4 +11,7 @@ export interface IOrderRepository extends IGenericRepository<IOrder> {
     data: Partial<IOrder>,
     session: ClientSession,
   ): Promise<void>;
+  findSuccessfulOrdersLean(): Promise<IOrder[]>;
+  performAggregation<T = any>(pipeline: PipelineStage[]): Promise<T[]>;
+  countDocumentsMatching(query: object): Promise<number>;
 }

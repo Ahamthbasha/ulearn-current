@@ -7,7 +7,7 @@ import {
   MarkCourseOrderAsFailed as markOrderAsFailed,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
-import { type Order } from "../interface/studentInterface";
+import type { Order } from "../interface/studentInterface";
 
 export default function StudentOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -123,7 +123,7 @@ export default function StudentOrderDetailPage() {
             escape: true,
             backdrop_close: false,
           },
-          prefill: { name: order?.customerName || "", email: order?.customerEmail || "" },
+          prefill: { name: order?.userInfo.username || "", email: order?.userInfo.email || "" },
           theme: { color: "#2563eb" },
           retry: { enabled: true, max_count: 3 },
         };
@@ -207,7 +207,12 @@ export default function StudentOrderDetailPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Order Details</h1>
-              <p className="text-gray-600 text-sm sm:text-base">Order placed on {order.orderDate}</p>
+              <p className="text-gray-600 text-sm sm:text-base">Order ID: {order.orderId}</p>
+              <p className="text-gray-600 text-sm sm:text-base">Order Date: {order.orderDate}</p>
+              <p className="text-gray-600 text-sm sm:text-base">Customer: {order.userInfo.username} ({order.userInfo.email})</p>
+              <p className="text-sm sm:text-base">
+                Status: <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>{order.status}</span>
+              </p>
             </div>
             <div className="flex gap-4">
               {order.status === "SUCCESS" && (
@@ -221,7 +226,7 @@ export default function StudentOrderDetailPage() {
                   Download Invoice
                 </button>
               )}
-              {order.canRetryPayment && (
+              {order.status === "FAILED" && (
                 <button
                   onClick={handleRetryPayment}
                   disabled={isRetrying}
@@ -278,7 +283,7 @@ export default function StudentOrderDetailPage() {
               )}
             </div>
           </div>
-          {paymentDismissed && order?.retryInProgress && (
+          {paymentDismissed && order.status === "PENDING" && (
             <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -297,51 +302,7 @@ export default function StudentOrderDetailPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Customer</h3>
-            <p className="text-gray-700 font-medium">{order.customerName || "N/A"}</p>
-            <p className="text-gray-600 text-sm">{order.customerEmail || "N/A"}</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Payment</h3>
-            <p className="text-gray-700 font-medium capitalize">{order.payment}</p>
-            <p className="text-2xl font-bold text-gray-800">₹{order.totalAmount.toLocaleString()}</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Status</h3>
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
-                order.status
-              )}`}
-            >
-              {order.status}
-            </span>
-            <p className="text-sm text-gray-600 mt-1">Order ID: {order.orderId}</p>
-          </div>
-        </div>
-
-        {order.couponCode && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Coupon Details</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600 font-medium">Coupon Code:</span>
-                <span className="text-gray-800 font-semibold">{order.couponCode}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 font-medium">Discount Percentage:</span>
-                <span className="text-gray-800 font-semibold">{order.couponDiscountPercentage}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 font-medium">Discount Amount:</span>
-                <span className="text-gray-800 font-semibold">₹{order.couponDiscountAmount?.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-xl font-semibold text-gray-800">Purchased Courses</h3>
           </div>
@@ -350,17 +311,22 @@ export default function StudentOrderDetailPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left py-4 px-6 font-semibold text-gray-700">Course</th>
-                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Price</th>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Original Price</th>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer (%)</th>
+                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer Price</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {order.courses.map((course, idx) => (
+                {order.coursesInfo.map((course, idx) => (
                   <tr key={idx} className="hover:bg-gray-50 transition">
                     <td className="py-4 px-6 flex items-center gap-4">
                       <img
                         src={course.thumbnailUrl}
                         alt={course.courseName}
                         className="w-16 h-16 rounded-lg object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.png"; // Fallback image
+                        }}
                       />
                       <div>
                         <h4 className="font-medium text-gray-800">{course.courseName}</h4>
@@ -368,7 +334,13 @@ export default function StudentOrderDetailPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6 text-right font-semibold text-gray-800">
-                      ₹{course.price.toLocaleString()}
+                      ₹{course.courseOriginalPrice.toLocaleString()}
+                    </td>
+                    <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                      {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}
+                    </td>
+                    <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                      ₹{course.courseOfferPrice.toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -376,17 +348,22 @@ export default function StudentOrderDetailPage() {
             </table>
           </div>
           <div className="md:hidden divide-y divide-gray-200">
-            {order.courses.map((course, idx) => (
+            {order.coursesInfo.map((course, idx) => (
               <div key={idx} className="p-4 flex gap-4 items-center">
                 <img
                   src={course.thumbnailUrl}
                   alt={course.courseName}
                   className="w-16 h-16 rounded-lg object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.png"; // Fallback image
+                  }}
                 />
                 <div className="flex-1">
                   <h4 className="font-medium text-gray-800">{course.courseName}</h4>
                   <p className="text-sm text-gray-600">Digital Course</p>
-                  <p className="text-lg font-semibold text-gray-800">₹{course.price.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600">Original Price: ₹{course.courseOriginalPrice.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600">Offer: {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}</p>
+                  <p className="text-lg font-semibold text-gray-800">₹{course.courseOfferPrice.toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -394,22 +371,41 @@ export default function StudentOrderDetailPage() {
           <div className="bg-gray-50 p-6 border-t border-gray-200">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700">Original Amount:</span>
-                <span className="text-lg font-semibold text-gray-800">₹{order.totalAmountWithoutDiscount.toLocaleString()}</span>
+                <span className="text-lg font-semibold text-gray-700">Total Course Price:</span>
+                <span className="text-lg font-semibold text-gray-800">₹{order.sumOfAllCourseOriginalPrice.toLocaleString()}</span>
               </div>
-              {order.couponCode && (
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-700">Coupon Discount:</span>
-                  <span className="text-lg font-semibold text-green-600">
-                    -₹{order.couponDiscountAmount?.toLocaleString()}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between items-center pt-2 border-t border-gray-300">
-                <span className="text-lg font-semibold text-gray-700">Total Amount:</span>
-                <span className="text-2xl font-bold text-gray-800">₹{order.totalAmount.toLocaleString()}</span>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-700">Final Price (Including Offers):</span>
+                <span className="text-lg font-semibold text-gray-800">₹{order.sumOfAllCourseIncludingOfferPrice.toLocaleString()}</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {order.couponInfo && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Coupon Details</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Coupon Code:</span>
+                <span className="text-gray-800 font-semibold">{order.couponInfo.couponCode}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Discount Percentage:</span>
+                <span className="text-gray-800 font-semibold">{order.couponInfo.couponDiscountPercentage}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Discount Amount:</span>
+                <span className="text-gray-800 font-semibold">₹{order.couponInfo.discountAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold text-gray-700">Final Price:</span>
+            <span className="text-2xl font-bold text-gray-800">₹{order.finalPrice.toLocaleString()}</span>
           </div>
         </div>
 

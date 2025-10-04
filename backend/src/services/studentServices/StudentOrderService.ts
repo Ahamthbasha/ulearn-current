@@ -6,11 +6,10 @@ import { IStudentCheckoutService } from "../studentServices/interface/IStudentCh
 import { IOrder } from "../../models/orderModel";
 import { OrderHistoryDTO } from "../../dto/userDTO/orderHistoryDTO";
 import { OrderDetailsDTO } from "../../dto/userDTO/orderDetailsDTO";
-import { toOrderHistoryDTO } from "../../mappers/userMapper/orderHistoryMapper";
-import { toOrderDetailsDTO } from "../../mappers/userMapper/orderDetailMapper";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { mapCourses, mapCoupon, mapUserInfo } from "../../mappers/userMapper/orderMapper";
 import { razorpay } from "../../utils/razorpay";
 import { StudentErrorMessages } from "../../utils/constants";
+import { formatDate } from "../../utils/dateFormat";
 
 export class StudentOrderService implements IStudentOrderService {
   private _orderRepo: IStudentOrderRepository;
@@ -37,9 +36,11 @@ export class StudentOrderService implements IStudentOrderService {
       search,
     );
 
-    const orderDTOs = orders.map((order) => ({
-      ...toOrderHistoryDTO(order),
-      canRetryPayment: order.status === "FAILED",
+    const orderDTOs: OrderHistoryDTO[] = orders.map((order) => ({
+      orderId: order._id,
+      orderDate: formatDate(new Date(order.createdAt)),
+      finalPrice: order.amount,
+      status: order.status,
     }));
 
     return { orders: orderDTOs, total };
@@ -52,19 +53,22 @@ export class StudentOrderService implements IStudentOrderService {
     const order = await this._orderRepo.getOrderById(orderId, userId);
     if (!order) return null;
 
-    const coursesWithSignedUrls = await Promise.all(
-      order.courses.map(async (course: any) => {
-        const signedUrl = await getPresignedUrl(course.thumbnailUrl);
-        return { ...course.toObject?.(), thumbnailUrl: signedUrl };
-      }),
-    );
+    const coursesInfo = await mapCourses(order.courses, true);
+    const sumOfAllCourseOriginalPrice = coursesInfo.reduce((sum, course) => sum + course.courseOriginalPrice, 0);
+    const sumOfAllCourseIncludingOfferPrice = coursesInfo.reduce((sum, course) => sum + course.courseOfferPrice, 0);
+    const couponInfo = order.coupon ? mapCoupon(order.coupon) : undefined;
 
-    const orderWithSignedUrls = {
-      ...order.toObject?.(),
-      courses: coursesWithSignedUrls,
+    return {
+      orderId: order._id,
+      userInfo: mapUserInfo(order.userId),
+      coursesInfo,
+      couponInfo,
+      sumOfAllCourseOriginalPrice,
+      sumOfAllCourseIncludingOfferPrice,
+      finalPrice: order.amount,
+      status: order.status,
+      orderDate: formatDate(new Date(order.createdAt)),
     };
-
-    return toOrderDetailsDTO(orderWithSignedUrls);
   }
 
   async getOrderRaw(
@@ -108,7 +112,6 @@ export class StudentOrderService implements IStudentOrderService {
           throw new Error(StudentErrorMessages.ORDER_NOT_FOUND);
         }
 
-        // Check if payment verification data is provided (completing payment)
         if (
           paymentData?.paymentId &&
           paymentData?.method &&
@@ -129,7 +132,6 @@ export class StudentOrderService implements IStudentOrderService {
               order: result.order,
             };
           } catch (verifyError: any) {
-            // Update status to FAILED if payment verification fails
             await this._checkoutService.updateOrderStatus(
               orderId,
               "FAILED",
@@ -142,7 +144,6 @@ export class StudentOrderService implements IStudentOrderService {
           }
         }
 
-        // Check if order can be retried
         if (order.status !== "FAILED") {
           throw new Error("Only failed orders can be retried");
         }
@@ -165,7 +166,6 @@ export class StudentOrderService implements IStudentOrderService {
             },
           });
 
-          // Update order status to PENDING and set new gateway order ID
           await this._checkoutService.updateOrder(
             orderId,
             {
@@ -247,3 +247,4 @@ export class StudentOrderService implements IStudentOrderService {
     }
   }
 }
+

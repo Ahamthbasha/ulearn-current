@@ -7,12 +7,8 @@ import { ICourseRepository } from "../../../repositories/interfaces/ICourseRepos
 
 export interface IStudentCheckoutRepository {
   createOrder(
-    userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
-    amount: number,
-    razorpayOrderId: string,
+    orderData: Partial<IOrder>,
     session?: mongoose.ClientSession,
-    couponId?:Types.ObjectId
   ): Promise<IOrder>;
 
   updateOrderStatus(

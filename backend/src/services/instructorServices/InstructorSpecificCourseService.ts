@@ -1,6 +1,6 @@
 import { IInstructorCourseSpecificDashboardRepository } from "../../repositories/instructorRepository/interface/IInstructorSpecificCourseDashboardRepository";
 import { IInstructorSpecificCourseDashboardService } from "./interface/IInstructorSpecificCourseService";
-import {Types} from "mongoose"
+import { Types } from "mongoose";
 
 export class InstructorSpecificCourseDashboardService
   implements IInstructorSpecificCourseDashboardService
@@ -33,7 +33,22 @@ export class InstructorSpecificCourseDashboardService
     limit: number,
     startDate?: Date,
     endDate?: Date,
-  ) {
+  ): Promise<{
+    data: {
+      orderId: string;
+      purchaseDate: string;
+      courseName: string;
+      originalCoursePrice: number;
+      courseOfferPrice: number;
+      couponCode: string | null;
+      couponUsed: boolean;
+      couponDeductionAmount: number;
+      finalCoursePrice: number;
+      instructorRevenue: number;
+      totalEnrollments: number;
+    }[];
+    total: number;
+  }> {
     return this._dashboardRepository.getCourseRevenueReport(
       courseId,
       range,
