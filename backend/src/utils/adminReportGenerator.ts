@@ -48,7 +48,7 @@ export async function generateCourseSalesExcelReport(
         date: index === 0 ? new Date(item.date).toLocaleDateString() : "",
         courseName: course.courseName,
         instructorName: course.instructorName,
-        coursePrice: course.coursePrice,
+        coursePrice: course.offerPrice != null ? course.offerPrice : course.coursePrice, // Use offerPrice if available
         couponUsed: index === 0 ? (item.couponCode ? "Yes" : "No") : "",
         discountedPrice: course.discountedPrice,
         adminShare: course.adminShare,
@@ -220,15 +220,15 @@ export async function generateCourseSalesPdfReport(
 
   data.forEach((item) => {
     item.courses.forEach((course, index) => {
-      const orderIdStr = String(item.orderId); // Removed truncation for Order ID
-      const truncatedCourseName = course.courseName.length > 30 ? course.courseName.substring(0, 30) + ".." : course.courseName; // Increased to 30 chars
+      const orderIdStr = String(item.orderId);
+      const truncatedCourseName = course.courseName.length > 30 ? course.courseName.substring(0, 30) + ".." : course.courseName;
       
       const row = [
         index === 0 ? orderIdStr : "",
         index === 0 ? new Date(item.date).toLocaleDateString() : "",
         truncatedCourseName,
         course.instructorName.length > 16 ? course.instructorName.substring(0, 16) + ".." : course.instructorName,
-        course.coursePrice.toFixed(2),
+        (course.offerPrice != null ? course.offerPrice : course.coursePrice).toFixed(2), // Use offerPrice if available
         index === 0 ? (item.couponCode ? "Yes" : "No") : "",
         course.discountedPrice.toFixed(2),
         course.adminShare.toFixed(2),

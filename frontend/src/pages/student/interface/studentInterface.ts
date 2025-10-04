@@ -214,40 +214,46 @@ export interface InstructorDetail {
 
 
 export interface CourseOrder {
+  courseId: string;
   courseName: string;
   thumbnailUrl: string;
-  price: number;
+  courseOriginalPrice: number;
+  courseOfferDiscount?: number;
+  courseOfferPrice: number;
+}
+
+export interface CouponInfo {
+  couponId: string;
+  couponCode: string;
+  couponDiscountPercentage: number;
+  discountAmount: number;
+}
+
+export interface UserInfo {
+  username: string;
+  email: string;
 }
 
 export interface Order {
-  customerName: string;
-  customerEmail: string;
-  payment: string;
-  totalAmount: number;
-  status: string;
   orderId: string;
   orderDate: string;
-  courses: CourseOrder[];
-  canRetryPayment:boolean;
-  retryInProgress:boolean;
-  totalAmountWithoutDiscount:number;
-  couponCode?: string;
-  couponDiscountPercentage?: number;
-  couponDiscountAmount?: number;
+  userInfo: UserInfo;
+  coursesInfo: CourseOrder[];
+  couponInfo?: CouponInfo;
+  sumOfAllCourseOriginalPrice: number;
+  sumOfAllCourseIncludingOfferPrice: number;
+  finalPrice: number;
+  status: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
 }
-
 export interface OrderHistory {
   orderId: string;
-  amount: number;
-  gateway: string;
-  date: string;
+  orderDate: string;
+  finalPrice: number;
   status: string;
-  
 }
 
 export interface DisplayOrder extends OrderHistory {
   formattedAmount: string;
-  formattedGateway: string;
   statusDisplay: string;
 }
 

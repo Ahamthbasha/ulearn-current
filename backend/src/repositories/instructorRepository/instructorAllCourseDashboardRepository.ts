@@ -27,21 +27,12 @@ export class InstructorAllCourseDashboardRepository
     return this._orderRepo.aggregate<ITopSellingCourse>([
       { $match: { status: "SUCCESS" } },
       { $unwind: "$courses" },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseInfo",
-        },
-      },
-      { $unwind: "$courseInfo" },
-      { $match: { "courseInfo.instructorId": instructorId } },
+      { $match: { "courses.instructorId": instructorId } },
       {
         $group: {
-          _id: "$courses",
-          courseName: { $first: "$courseInfo.courseName" },
-          thumbnailUrl: { $first: "$courseInfo.thumbnailUrl" },
+          _id: "$courses.courseId",
+          courseName: { $first: "$courses.courseName" },
+          thumbnailUrl: { $first: "$courses.thumbnailUrl" },
           count: { $sum: 1 },
         },
       },
@@ -56,16 +47,16 @@ export class InstructorAllCourseDashboardRepository
     return this._orderRepo.aggregate<ICategorySales>([
       { $match: { status: "SUCCESS" } },
       { $unwind: "$courses" },
+      { $match: { "courses.instructorId": instructorId } },
       {
         $lookup: {
           from: "courses",
-          localField: "courses",
+          localField: "courses.courseId",
           foreignField: "_id",
           as: "courseInfo",
         },
       },
       { $unwind: "$courseInfo" },
-      { $match: { "courseInfo.instructorId": instructorId } },
       {
         $group: {
           _id: "$courseInfo.category",
@@ -84,6 +75,7 @@ export class InstructorAllCourseDashboardRepository
         $project: {
           categoryName: { $arrayElemAt: ["$categoryInfo.categoryName", 0] },
           totalSales: 1,
+          _id: 0,
         },
       },
       { $sort: { totalSales: -1 } },
@@ -100,51 +92,41 @@ export class InstructorAllCourseDashboardRepository
           totalCourseCount: { $size: "$courses" },
         },
       },
-      // Lookup all courses first to calculate total order price
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "allCoursesInfo",
-        },
-      },
-      {
-        $addFields: {
-          totalOrderPrice: {
-            $sum: "$allCoursesInfo.price",
-          },
-        },
-      },
-      {
-        $addFields: {
-          totalDiscountAmount: {
-            $subtract: ["$totalOrderPrice", "$amount"],
-          },
-        },
-      },
+      { $unwind: "$courses" },
+      { $match: { "courses.instructorId": instructorId } },
       {
         $addFields: {
           perCourseDiscount: {
-            $cond: {
-              if: { $gt: ["$totalCourseCount", 0] },
-              then: { $divide: ["$totalDiscountAmount", "$totalCourseCount"] },
-              else: 0,
-            },
+            $round: [
+              {
+                $cond: {
+                  if: { $gt: ["$totalCourseCount", 0] },
+                  then: { $divide: [{ $ifNull: ["$coupon.discountAmount", 0] }, "$totalCourseCount"] },
+                  else: 0,
+                },
+              },
+              2,
+            ],
+          },
+          effectiveCoursePrice: {
+            $round: [
+              {
+                $subtract: [
+                  { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
+                  {
+                    $cond: {
+                      if: { $gt: ["$totalCourseCount", 0] },
+                      then: { $divide: [{ $ifNull: ["$coupon.discountAmount", 0] }, "$totalCourseCount"] },
+                      else: 0,
+                    },
+                  },
+                ],
+              },
+              2,
+            ],
           },
         },
       },
-      { $unwind: "$courses" },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseInfo",
-        },
-      },
-      { $unwind: "$courseInfo" },
-      { $match: { "courseInfo.instructorId": instructorId } },
       {
         $group: {
           _id: {
@@ -153,10 +135,7 @@ export class InstructorAllCourseDashboardRepository
           },
           totalRevenue: {
             $sum: {
-              $multiply: [
-                { $subtract: ["$courseInfo.price", "$perCourseDiscount"] },
-                0.9,
-              ],
+              $round: [{ $multiply: ["$effectiveCoursePrice", 0.9] }, 2],
             },
           },
           totalSales: { $sum: 1 },
@@ -166,7 +145,7 @@ export class InstructorAllCourseDashboardRepository
         $project: {
           year: "$_id.year",
           month: "$_id.month",
-          totalRevenue: 1,
+          totalRevenue: { $round: ["$totalRevenue", 2] },
           totalSales: 1,
           _id: 0,
         },
@@ -183,60 +162,47 @@ export class InstructorAllCourseDashboardRepository
           totalCourseCount: { $size: "$courses" },
         },
       },
-      // Lookup all courses first to calculate total order price
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "allCoursesInfo",
-        },
-      },
-      {
-        $addFields: {
-          totalOrderPrice: {
-            $sum: "$allCoursesInfo.price",
-          },
-        },
-      },
-      {
-        $addFields: {
-          totalDiscountAmount: {
-            $subtract: ["$totalOrderPrice", "$amount"],
-          },
-        },
-      },
+      { $unwind: "$courses" },
+      { $match: { "courses.instructorId": instructorId } },
       {
         $addFields: {
           perCourseDiscount: {
-            $cond: {
-              if: { $gt: ["$totalCourseCount", 0] },
-              then: { $divide: ["$totalDiscountAmount", "$totalCourseCount"] },
-              else: 0,
-            },
+            $round: [
+              {
+                $cond: {
+                  if: { $gt: ["$totalCourseCount", 0] },
+                  then: { $divide: [{ $ifNull: ["$coupon.discountAmount", 0] }, "$totalCourseCount"] },
+                  else: 0,
+                },
+              },
+              2,
+            ],
+          },
+          effectiveCoursePrice: {
+            $round: [
+              {
+                $subtract: [
+                  { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
+                  {
+                    $cond: {
+                      if: { $gt: ["$totalCourseCount", 0] },
+                      then: { $divide: [{ $ifNull: ["$coupon.discountAmount", 0] }, "$totalCourseCount"] },
+                      else: 0,
+                    },
+                  },
+                ],
+              },
+              2,
+            ],
           },
         },
       },
-      { $unwind: "$courses" },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseInfo",
-        },
-      },
-      { $unwind: "$courseInfo" },
-      { $match: { "courseInfo.instructorId": instructorId } },
       {
         $group: {
           _id: null,
           total: {
             $sum: {
-              $multiply: [
-                { $subtract: ["$courseInfo.price", "$perCourseDiscount"] },
-                0.9,
-              ],
+              $round: [{ $multiply: ["$effectiveCoursePrice", 0.9] }, 2],
             },
           },
         },
@@ -249,16 +215,7 @@ export class InstructorAllCourseDashboardRepository
     const result = await this._orderRepo.aggregate<{ totalSales: number }>([
       { $match: { status: "SUCCESS" } },
       { $unwind: "$courses" },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseInfo",
-        },
-      },
-      { $unwind: "$courseInfo" },
-      { $match: { "courseInfo.instructorId": instructorId } },
+      { $match: { "courses.instructorId": instructorId } },
       { $count: "totalSales" },
     ]);
     return result[0]?.totalSales || 0;
@@ -350,200 +307,168 @@ export class InstructorAllCourseDashboardRepository
       createdAt: { $gte: start, $lte: end },
     };
 
-    const dataAggregation = await this._orderRepo.aggregate<IRevenueReportItem>(
-      [
-        { $match: matchStage },
-        {
-          $addFields: {
-            totalCourseCount: { $size: "$courses" },
-          },
+    const dataAggregation = await this._orderRepo.aggregate<IRevenueReportItem>([
+      { $match: matchStage },
+      {
+        $addFields: {
+          totalCourseCount: { $size: "$courses" },
         },
-        // Lookup all courses first to calculate total order price
-        {
-          $lookup: {
-            from: "courses",
-            localField: "courses",
-            foreignField: "_id",
-            as: "allCoursesInfo",
-          },
-        },
-        {
-          $addFields: {
-            totalOrderPrice: {
-              $sum: "$allCoursesInfo.price",
-            },
-          },
-        },
-        {
-          $addFields: {
-            totalDiscountAmount: {
-              $subtract: ["$totalOrderPrice", "$amount"],
-            },
-          },
-        },
-        {
-          $addFields: {
-            perCourseDiscount: {
-              $cond: {
-                if: { $gt: ["$totalCourseCount", 0] },
-                then: { $divide: ["$totalDiscountAmount", "$totalCourseCount"] },
-                else: 0,
+      },
+      { $unwind: "$courses" },
+      { $match: { "courses.instructorId": instructorId } },
+      {
+        $addFields: {
+          perCourseDiscount: {
+            $round: [
+              {
+                $cond: {
+                  if: { $gt: ["$totalCourseCount", 0] },
+                  then: { $divide: [{ $ifNull: ["$coupon.discountAmount", 0] }, "$totalCourseCount"] },
+                  else: 0,
+                },
               },
-            },
+              2,
+            ],
           },
-        },
-        { $unwind: "$courses" },
-        {
-          $lookup: {
-            from: "courses",
-            localField: "courses",
-            foreignField: "_id",
-            as: "courseInfo",
-          },
-        },
-        { $unwind: "$courseInfo" },
-        {
-          $match: {
-            "courseInfo.instructorId": instructorId,
-          },
-        },
-        {
-          $lookup: {
-            from: "payments",
-            localField: "_id",
-            foreignField: "orderId",
-            as: "paymentInfo",
-          },
-        },
-        {
-          $unwind: {
-            path: "$paymentInfo",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "coupons",
-            localField: "couponId",
-            foreignField: "_id",
-            as: "couponInfo",
-          },
-        },
-        {
-          $unwind: {
-            path: "$couponInfo",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        { $sort: { createdAt: -1 } },
-        {
-          $project: {
-            createdAt: {
-              $concat: [
-                {
-                  $dateToString: {
-                    format: "%d-%m-%Y ",
-                    date: "$createdAt",
-                  },
-                },
-                {
-                  $cond: {
-                    if: { $gte: [{ $hour: "$createdAt" }, 12] },
-                    then: {
-                      $concat: [
-                        {
-                          $toString: {
-                            $cond: {
-                              if: { $eq: [{ $hour: "$createdAt" }, 12] },
-                              then: 12,
-                              else: { $mod: [{ $hour: "$createdAt" }, 12] },
-                            },
-                          },
-                        },
-                        ":",
-                        {
-                          $dateToString: {
-                            format: "%M:%S",
-                            date: "$createdAt",
-                          },
-                        },
-                        " PM",
-                      ],
-                    },
-                    else: {
-                      $concat: [
-                        {
-                          $toString: {
-                            $cond: {
-                              if: { $eq: [{ $hour: "$createdAt" }, 0] },
-                              then: 12,
-                              else: { $hour: "$createdAt" },
-                            },
-                          },
-                        },
-                        ":",
-                        {
-                          $dateToString: {
-                            format: "%M:%S",
-                            date: "$createdAt",
-                          },
-                        },
-                        " AM",
-                      ],
+          effectiveCoursePrice: {
+            $round: [
+              {
+                $subtract: [
+                  { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
+                  {
+                    $cond: {
+                      if: { $gt: ["$totalCourseCount", 0] },
+                      then: { $divide: [{ $ifNull: ["$coupon.discountAmount", 0] }, "$totalCourseCount"] },
+                      else: 0,
                     },
                   },
-                },
-              ],
-            },
+                ],
+              },
+              2,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "coupons",
+          localField: "coupon.couponId",
+          foreignField: "_id",
+          as: "couponInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$couponInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: {
             orderId: "$_id",
-            paymentMethod: { $ifNull: ["$paymentInfo.method", "N/A"] },
-            courseName: "$courseInfo.courseName",
-            courseOriginalPrice: "$courseInfo.price",
-            couponCode: { $ifNull: ["$couponInfo.code", "N/A"] },
-            couponDiscount: { $ifNull: ["$couponInfo.discount", 0] },
-            courseDiscountAmount: "$perCourseDiscount",
-            finalCoursePrice: {
-              $subtract: ["$courseInfo.price", "$perCourseDiscount"],
-            },
-            instructorEarning: {
-              $multiply: [
-                { $subtract: ["$courseInfo.price", "$perCourseDiscount"] },
-                0.9,
-              ],
-            },
+            createdAt: "$createdAt",
             totalOrderAmount: "$amount",
           },
+          courses: {
+            $push: {
+              courseName: "$courses.courseName",
+              courseOriginalPrice: "$courses.coursePrice",
+              courseOfferPrice: { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
+              couponCode: { $ifNull: ["$couponInfo.code", "N/A"] },
+              couponDiscountAmount: "$perCourseDiscount",
+              couponDiscount: { $ifNull: ["$coupon.discountPercentage", 0] },
+              finalCoursePrice: "$effectiveCoursePrice",
+            },
+          },
+          instructorEarning: {
+            $sum: {
+              $round: [{ $multiply: ["$effectiveCoursePrice", 0.9] }, 2],
+            },
+          },
         },
-        { $skip: (page - 1) * limit },
-        { $limit: limit },
-      ],
-    );
+      },
+      {
+        $project: {
+          orderId: "$_id.orderId",
+          orderDate: {
+            $concat: [
+              {
+                $dateToString: {
+                  format: "%d-%m-%Y ",
+                  date: "$_id.createdAt",
+                },
+              },
+              {
+                $cond: {
+                  if: { $gte: [{ $hour: "$_id.createdAt" }, 12] },
+                  then: {
+                    $concat: [
+                      {
+                        $toString: {
+                          $cond: {
+                            if: { $eq: [{ $hour: "$_id.createdAt" }, 12] },
+                            then: 12,
+                            else: { $mod: [{ $hour: "$_id.createdAt" }, 12] },
+                          },
+                        },
+                      },
+                      ":",
+                      {
+                        $dateToString: {
+                          format: "%M:%S",
+                          date: "$_id.createdAt",
+                        },
+                      },
+                      " PM",
+                    ],
+                  },
+                  else: {
+                    $concat: [
+                      {
+                        $toString: {
+                          $cond: {
+                            if: { $eq: [{ $hour: "$_id.createdAt" }, 0] },
+                            then: 12,
+                            else: { $hour: "$_id.createdAt" },
+                          },
+                        },
+                      },
+                      ":",
+                      {
+                        $dateToString: {
+                          format: "%M:%S",
+                          date: "$_id.createdAt",
+                        },
+                      },
+                      " AM",
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+          courses: 1,
+          instructorEarning: { $round: ["$instructorEarning", 2] },
+          totalOrderAmount: "$_id.totalOrderAmount",
+          _id: 0,
+        },
+      },
+      { $sort: { orderDate: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ]);
 
-    const countAggregation = await this._orderRepo.aggregate<{ total: number }>(
-      [
-        { $match: matchStage },
-        { $unwind: "$courses" },
-        {
-          $lookup: {
-            from: "courses",
-            localField: "courses",
-            foreignField: "_id",
-            as: "courseInfo",
-          },
-        },
-        { $unwind: "$courseInfo" },
-        {
-          $match: {
-            "courseInfo.instructorId": instructorId,
-          },
-        },
-        { $count: "total" },
-      ],
-    );
+    const countAggregation = await this._orderRepo.aggregate<{ total: number }>([
+      { $match: matchStage },
+      { $unwind: "$courses" },
+      { $match: { "courses.instructorId": instructorId } },
+      { $group: { _id: "$_id" } },
+      { $count: "total" },
+    ]);
 
     const total = countAggregation[0]?.total || 0;
 
     return { data: dataAggregation, total };
   }
-
 }

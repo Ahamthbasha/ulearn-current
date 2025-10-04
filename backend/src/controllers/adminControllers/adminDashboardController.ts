@@ -22,7 +22,6 @@ export class AdminDashboardController implements IAdminDashboardController {
       const data = await this._dashboardService.getDashboardMetrics();
       res.status(StatusCode.OK).json({ success: true, data });
     } catch (error) {
-      console.error("AdminDashboardController Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -84,7 +83,6 @@ export class AdminDashboardController implements IAdminDashboardController {
         currentPage,
       });
     } catch (error) {
-      console.error("CourseSalesReport Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -153,7 +151,6 @@ export class AdminDashboardController implements IAdminDashboardController {
         currentPage,
       });
     } catch (error) {
-      console.error("MembershipSalesReport Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -191,7 +188,7 @@ export class AdminDashboardController implements IAdminDashboardController {
       };
 
       const { items, totalAdminShare } =
-        await this._dashboardService.getCourseSalesReport(filter); // No pagination for exports
+        await this._dashboardService.getCourseSalesReport(filter);
 
       if (format === "excel") {
         await generateCourseSalesExcelReport(items, totalAdminShare, res);
@@ -199,7 +196,6 @@ export class AdminDashboardController implements IAdminDashboardController {
         await generateCourseSalesPdfReport(items, totalAdminShare, res);
       }
     } catch (error) {
-      console.error("ExportCourseSalesReport Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -240,7 +236,7 @@ export class AdminDashboardController implements IAdminDashboardController {
       };
 
       const { items } =
-        await this._dashboardService.getMembershipSalesReport(filter); // No pagination for exports
+        await this._dashboardService.getMembershipSalesReport(filter);
 
       if (format === "excel") {
         await generateMembershipSalesExcelReport(items, res);
@@ -248,7 +244,6 @@ export class AdminDashboardController implements IAdminDashboardController {
         await generateMembershipSalesPdfReport(items, res);
       }
     } catch (error) {
-      console.error("ExportMembershipSalesReport Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,

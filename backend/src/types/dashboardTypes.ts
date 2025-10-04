@@ -22,17 +22,18 @@ export interface IMonthlySales {
 
 export interface IAdminCourseSalesReportItem {
   orderId: string;
-  date: Date;
+  date: string; // Changed to string for day-month-year format
   couponCode?: string;
   courses: {
     courseName: string;
     coursePrice: number;
+    offerPrice?: number; // Added for offerPrice field
     adminShare: number;
     instructorName: string;
-    discountedPrice:number;
+    discountedPrice: number;
   }[];
   totalPrice: number;
-  discountAmount:number;
+  discountAmount: number;
   totalAdminShare: number;
 }
 
@@ -47,7 +48,7 @@ export interface IAdminCourseSalesReportItemFlattened {
 
 export interface IAdminMembershipReportItem {
   orderId: string;
-  date: Date;
+  date: string;
   planName: string;
   instructorName: string;
   price: number;
@@ -80,7 +81,7 @@ export interface IStudentSlotReportItem {
   totalPrice: number;
 }
 
-// types/aggregationTypes.ts
+
 export type AggregationPipelineStage = {
   $match?: { [key: string]: any };
   $unwind?: string | { path: string; preserveNullAndEmptyArrays?: boolean };

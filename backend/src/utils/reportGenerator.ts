@@ -3,17 +3,22 @@ import PDFDocument from "pdfkit";
 import { PassThrough } from "stream";
 import { Response } from "express";
 
-export interface ReportData {
-  createdAt: string;
+export interface CourseData {
   courseName: string;
   courseOriginalPrice: number;
+  courseOfferPrice: number;
   couponCode: string;
+  couponDiscountAmount: number;
   couponDiscount: number;
-  courseDiscountAmount: number;
   finalCoursePrice: number;
-  instructorEarning: number;
+}
+
+export interface ReportData {
   orderId: string;
-  paymentMethod?: string;
+  orderDate: string;
+  instructorEarning: number;
+  totalOrderAmount: number;
+  courses: CourseData[];
 }
 
 export async function generateExcelReport(
@@ -24,37 +29,45 @@ export async function generateExcelReport(
   const sheet = workbook.addWorksheet("Revenue Report");
 
   sheet.columns = [
-    { header: "Order ID", key: "orderId", width: 25 },
-    { header: "Date", key: "createdAt", width: 20 },
+    { header: "orderInfo", key: "orderInfo", width: 40 },
     { header: "Course Name", key: "courseName", width: 30 },
-    { header: "Course Price", key: "courseOriginalPrice", width: 15 },
+    { header: "Original Price", key: "courseOriginalPrice", width: 15 },
+    { header: "Offer Price", key: "courseOfferPrice", width: 15 },
     { header: "Coupon Used", key: "couponCode", width: 15 },
-    { header: "Discount Amount", key: "courseDiscountAmount", width: 15 },
+    { header: "Discount Amount", key: "couponDiscountAmount", width: 15 },
     { header: "Final Price", key: "finalCoursePrice", width: 15 },
     { header: "Instructor Earnings", key: "instructorEarning", width: 20 },
   ];
 
   let totalInstructorEarnings = 0;
+  let totalOrderAmount = 0;
 
-  data.forEach((item) => {
-    sheet.addRow({
-      orderId: item.orderId,
-      createdAt: item.createdAt,
-      courseName: item.courseName,
-      courseOriginalPrice: item.courseOriginalPrice,
-      couponCode: item.couponCode,
-      courseDiscountAmount: item.courseDiscountAmount,
-      finalCoursePrice: item.finalCoursePrice,
-      instructorEarning: item.instructorEarning,
+  data.forEach((order) => {
+    order.courses.forEach((course, courseIndex) => {
+      const courseInstructorEarning = course.finalCoursePrice * 0.9;
+      sheet.addRow({
+        orderInfo: courseIndex === 0 ? `Order ID: ${order.orderId}, Date: ${order.orderDate}, Total: Rs.${order.totalOrderAmount.toFixed(2)}` : "",
+        courseName: course.courseName,
+        courseOriginalPrice: course.courseOriginalPrice,
+        courseOfferPrice: course.courseOfferPrice,
+        couponCode: course.couponCode,
+        couponDiscountAmount: course.couponDiscountAmount,
+        finalCoursePrice: course.finalCoursePrice,
+        instructorEarning: courseInstructorEarning,
+      });
+
+      totalInstructorEarnings += courseInstructorEarning;
+      if (courseIndex === 0) {
+        totalOrderAmount += order.totalOrderAmount;
+      }
     });
-
-    totalInstructorEarnings += item.instructorEarning;
   });
 
   sheet.addRow({}); // Empty row
   sheet.addRow({
     courseName: "Total Instructor Earnings:",
     instructorEarning: totalInstructorEarnings,
+    totalOrderAmount: totalOrderAmount,
   });
 
   res.setHeader(
@@ -73,10 +86,10 @@ export async function generatePdfReport(
   data: ReportData[],
   res: Response,
 ): Promise<void> {
-  const doc = new PDFDocument({ 
+  const doc = new PDFDocument({
     margin: 50,
     size: 'A4',
-    bufferPages: true
+    bufferPages: true,
   });
   const stream = new PassThrough();
 
@@ -89,202 +102,245 @@ export async function generatePdfReport(
   doc.pipe(stream);
 
   // Header Section with Background
-  doc.rect(0, 0, doc.page.width, 120).fill('#4A90E2');
-  
+  doc.rect(0, 0, doc.page.width, 80).fill('#4A90E2');
+
   // Title
   doc.fillColor('white')
-     .fontSize(28)
-     .font('Helvetica-Bold')
-     .text('ULearn', 50, 30, { align: 'left' });
-  
-  doc.fontSize(16)
-     .font('Helvetica')
-     .text('Revenue Report', 50, 65);
-  
+    .fontSize(20)
+    .font('Helvetica-Bold')
+    .text('ULearn', 50, 20, { align: 'left' });
+
+  doc.fontSize(12)
+    .font('Helvetica')
+    .text('Revenue Report', 50, 45);
+
   // Date Range
-  const reportDate = new Date().toLocaleDateString('en-GB');
-  doc.fontSize(10)
-     .text(`Generated on: ${reportDate}`, 50, 90);
+  const reportDate = new Date().toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Kolkata',
+  });
+  doc.fontSize(8)
+    .text(`Generated on: ${reportDate} IST`, 50, 65);
 
   // Move below header
-  doc.fillColor('black').moveDown(3);
+  doc.fillColor('black').moveDown(1);
 
   let totalEarnings = 0;
   let totalDiscount = 0;
   let totalOrders = data.length;
+  let totalOrderAmount = 0;
 
   // Calculate totals
-  data.forEach(item => {
-    totalEarnings += item.instructorEarning;
-    totalDiscount += item.courseDiscountAmount;
+  data.forEach(order => {
+    order.courses.forEach(course => {
+      totalEarnings += course.finalCoursePrice * 0.9;
+      totalDiscount += course.couponDiscountAmount;
+    });
+    totalOrderAmount += order.totalOrderAmount;
   });
 
   // Summary Cards
-  const summaryY = 140;
-  const cardWidth = 150;
-  const cardHeight = 70;
-  const spacing = 20;
+  const summaryY = 100;
+  const cardWidth = 120;
+  const cardHeight = 60;
+  const spacing = 15;
 
   // Card 1 - Total Orders
   doc.roundedRect(50, summaryY, cardWidth, cardHeight, 5)
-     .fillAndStroke('#E8F4F8', '#4A90E2');
+    .fillAndStroke('#E8F4F8', '#4A90E2');
   doc.fillColor('#4A90E2')
-     .fontSize(12)
-     .font('Helvetica-Bold')
-     .text('Total Orders', 60, summaryY + 15);
+    .fontSize(10)
+    .font('Helvetica-Bold')
+    .text('Total Orders', 55, summaryY + 10);
   doc.fillColor('black')
-     .fontSize(20)
-     .text(totalOrders.toString(), 60, summaryY + 35);
+    .fontSize(16)
+    .text(totalOrders.toString(), 55, summaryY + 30);
 
   // Card 2 - Total Discount
   doc.roundedRect(50 + cardWidth + spacing, summaryY, cardWidth, cardHeight, 5)
-     .fillAndStroke('#FFF4E6', '#FF9800');
+    .fillAndStroke('#FFF4E6', '#FF9800');
   doc.fillColor('#FF9800')
-     .fontSize(12)
-     .font('Helvetica-Bold')
-     .text('Total Discount', 60 + cardWidth + spacing, summaryY + 15);
+    .fontSize(10)
+    .font('Helvetica-Bold')
+    .text('Total Discount', 55 + cardWidth + spacing, summaryY + 10);
   doc.fillColor('black')
-     .fontSize(16)
-     .text(`Rs.${totalDiscount.toFixed(2)}`, 60 + cardWidth + spacing, summaryY + 35);
+    .fontSize(14)
+    .text(`Rs.${totalDiscount.toFixed(2)}`, 55 + cardWidth + spacing, summaryY + 30);
 
   // Card 3 - Total Earnings
   doc.roundedRect(50 + (cardWidth + spacing) * 2, summaryY, cardWidth, cardHeight, 5)
-     .fillAndStroke('#E8F5E9', '#4CAF50');
+    .fillAndStroke('#E8F5E9', '#4CAF50');
   doc.fillColor('#4CAF50')
-     .fontSize(12)
-     .font('Helvetica-Bold')
-     .text('Total Earnings', 60 + (cardWidth + spacing) * 2, summaryY + 15);
+    .fontSize(10)
+    .font('Helvetica-Bold')
+    .text('Total Earnings', 55 + (cardWidth + spacing) * 2, summaryY + 10);
   doc.fillColor('black')
-     .fontSize(16)
-     .text(`Rs.${totalEarnings.toFixed(2)}`, 60 + (cardWidth + spacing) * 2, summaryY + 35);
+    .fontSize(14)
+    .text(`Rs.${totalEarnings.toFixed(2)}`, 55 + (cardWidth + spacing) * 2, summaryY + 30);
 
-  doc.moveDown(6);
+  // Card 4 - Total Order Amount
+  doc.roundedRect(50 + (cardWidth + spacing) * 3, summaryY, cardWidth, cardHeight, 5)
+    .fillAndStroke('#F3E5F5', '#9C27B0');
+  doc.fillColor('#9C27B0')
+    .fontSize(10)
+    .font('Helvetica-Bold')
+    .text('Total Order', 55 + (cardWidth + spacing) * 3, summaryY + 10);
+  doc.fillColor('black')
+    .fontSize(14)
+    .text(`Rs.${totalOrderAmount.toFixed(2)}`, 55 + (cardWidth + spacing) * 3, summaryY + 30);
 
   // Table Header
-  const tableTop = summaryY + cardHeight + 40;
+  const tableTop = summaryY + cardHeight + 20;
   let currentY = tableTop;
 
   // Draw table header background
-  doc.rect(50, currentY, doc.page.width - 100, 30)
-     .fill('#F5F5F5');
+  doc.rect(50, currentY, doc.page.width - 100, 25)
+    .fill('#F5F5F5');
 
   const headers = [
-    { text: 'Date & Time', x: 55, width: 85 },
-    { text: 'Course', x: 145, width: 110 },
-    { text: 'Price', x: 260, width: 45 },
-    { text: 'Coupon', x: 310, width: 50 },
-    { text: 'Discount', x: 365, width: 50 },
-    { text: 'Final', x: 420, width: 45 },
-    { text: 'Earnings', x: 470, width: 55 }
+    { text: 'orderInfo', x: 50, width: 100 },
+    { text: 'Course', x: 150, width: 130 },
+    { text: 'Original', x: 280, width: 50 },
+    { text: 'Offer', x: 330, width: 50 },
+    { text: 'Coupon', x: 380, width: 50 },
+    { text: 'Discount', x: 430, width: 50 },
+    { text: 'Final', x: 480, width: 50 },
+    { text: 'Earnings', x: 530, width: 60 },
   ];
 
   doc.fillColor('black')
-     .fontSize(9)
-     .font('Helvetica-Bold');
+    .fontSize(9)
+    .font('Helvetica-Bold');
 
   headers.forEach(header => {
-    doc.text(header.text, header.x, currentY + 10, { 
+    doc.text(header.text, header.x, currentY + 7, {
       width: header.width,
-      align: 'left'
+      align: 'left',
     });
   });
 
-  currentY += 30;
+  currentY += 25;
   doc.font('Helvetica').fontSize(8);
 
   // Draw table rows
-  data.forEach((item, index) => {
-    // Alternate row colors
-    if (index % 2 === 0) {
-      doc.rect(50, currentY, doc.page.width - 100, 35)
-         .fill('#FAFAFA');
-    }
+  data.forEach((order, orderIndex) => {
+    order.courses.forEach((course, courseIndex) => {
+      // Alternate row colors
+      if ((orderIndex + courseIndex) % 2 === 0) {
+        doc.rect(50, currentY, doc.page.width - 100, 25)
+          .fill('#FAFAFA');
+      }
 
-    // Check for page break
-    if (currentY > doc.page.height - 100) {
-      doc.addPage();
-      currentY = 50;
-      
-      // Redraw header on new page
-      doc.rect(50, currentY, doc.page.width - 100, 30)
-         .fill('#F5F5F5');
-      
-      doc.fillColor('black')
-         .fontSize(9)
-         .font('Helvetica-Bold');
-      
-      headers.forEach(header => {
-        doc.text(header.text, header.x, currentY + 10, { 
-          width: header.width,
-          align: 'left'
+      // Check for page break
+      if (currentY > doc.page.height - 100) {
+        doc.addPage();
+        currentY = 50;
+
+        // Redraw header on new page
+        doc.rect(50, currentY, doc.page.width - 100, 25)
+          .fill('#F5F5F5');
+
+        doc.fillColor('black')
+          .fontSize(9)
+          .font('Helvetica-Bold');
+
+        headers.forEach(header => {
+          doc.text(header.text, header.x, currentY + 7, {
+            width: header.width,
+            align: 'left',
+          });
         });
+
+        currentY += 25;
+        doc.font('Helvetica').fontSize(8);
+      }
+
+      doc.fillColor('black');
+
+      // orderInfo (only for first course in order)
+      const orderInfoText = courseIndex === 0 ? `Order ID: ${order.orderId}, Date: ${order.orderDate}, Total: Rs.${order.totalOrderAmount.toFixed(2)}` : '';
+      doc.text(orderInfoText, 50, currentY + 5, { width: 100 });
+
+      // Course Name (wrap text if necessary)
+      doc.text(course.courseName, 150, currentY + 5, {
+        width: 130,
+        height: 25,
+        lineBreak: true,
       });
-      
-      currentY += 30;
-      doc.font('Helvetica').fontSize(8);
-    }
 
-    doc.fillColor('black');
+      // Original Price
+      doc.text(`Rs.${course.courseOriginalPrice.toFixed(0)}`, 280, currentY + 5, { width: 50 });
 
-    // Date (already formatted from DB)
-    doc.text(item.createdAt, 55, currentY + 8, { width: 80 });
+      // Offer Price
+      doc.text(`Rs.${course.courseOfferPrice.toFixed(0)}`, 330, currentY + 5, { width: 50 });
 
-    // Course Name (truncate if too long)
-    const courseName = item.courseName.length > 20 
-      ? item.courseName.substring(0, 20) + '...' 
-      : item.courseName;
-    doc.text(courseName, 145, currentY + 8, { width: 105 });
+      // Coupon
+      const coupon = course.couponCode === 'N/A' ? '-' : course.couponCode;
+      doc.fillColor('#FF9800')
+        .fontSize(7)
+        .text(coupon, 380, currentY + 5, { width: 50 });
 
-    // Price
-    doc.text(`Rs.${item.courseOriginalPrice.toFixed(0)}`, 260, currentY + 8);
-    
-    // Coupon
-    const coupon = item.couponCode === 'N/A' ? '-' : item.couponCode;
-    doc.fillColor('#FF9800')
-       .fontSize(7)
-       .text(coupon, 310, currentY + 8, { width: 45 });
-    
-    // Discount
-    doc.fillColor('black')
-       .fontSize(8)
-       .text(`Rs.${item.courseDiscountAmount.toFixed(2)}`, 365, currentY + 8);
-    
-    // Final Price
-    doc.text(`Rs.${item.finalCoursePrice.toFixed(2)}`, 420, currentY + 8);
-    
-    // Earnings in green
-    doc.fillColor('#4CAF50')
-       .font('Helvetica-Bold')
-       .text(`Rs.${item.instructorEarning.toFixed(2)}`, 470, currentY + 8);
+      // Discount
+      doc.fillColor('black')
+        .fontSize(8)
+        .text(`Rs.${course.couponDiscountAmount.toFixed(2)}`, 430, currentY + 5, { width: 50 });
 
-    currentY += 35;
+      // Final Price
+      doc.text(`Rs.${course.finalCoursePrice.toFixed(2)}`, 480, currentY + 5, { width: 50 });
+
+      // Earnings in green
+      doc.fillColor('#4CAF50')
+        .font('Helvetica-Bold')
+        .text(`Rs.${(course.finalCoursePrice * 0.9).toFixed(2)}`, 530, currentY + 5, { width: 60 });
+
+      currentY += 25;
+    });
   });
 
   // Footer Summary
-  currentY += 20;
-  doc.rect(50, currentY, doc.page.width - 100, 40)
-     .fill('#E8F5E9');
+  currentY += 15;
+  if (currentY + 80 < doc.page.height) {
+    doc.rect(50, currentY, doc.page.width - 100, 30)
+      .fill('#E8F5E9');
 
-  doc.fillColor('#4CAF50')
-     .fontSize(14)
-     .font('Helvetica-Bold')
-     .text('Total Instructor Earnings:', 60, currentY + 12);
+    doc.fillColor('#4CAF50')
+      .fontSize(10)
+      .font('Helvetica-Bold')
+      .text('Total Instructor Earnings:', 60, currentY + 8);
 
-  doc.fontSize(18)
-     .text(`Rs.${totalEarnings.toFixed(2)}`, doc.page.width - 200, currentY + 10);
+    doc.fontSize(12)
+      .text(`Rs.${totalEarnings.toFixed(2)}`, doc.page.width - 120, currentY + 8);
+
+    currentY += 30;
+    doc.rect(50, currentY, doc.page.width - 100, 30)
+      .fill('#F3E5F5');
+
+    doc.fillColor('#9C27B0')
+      .fontSize(10)
+      .font('Helvetica-Bold')
+      .text('Total Order Amount:', 60, currentY + 8);
+
+    doc.fontSize(12)
+      .text(`Rs.${totalOrderAmount.toFixed(2)}`, doc.page.width - 120, currentY + 8);
+  }
 
   // Footer
   const pageCount = doc.bufferedPageRange().count;
   for (let i = 0; i < pageCount; i++) {
     doc.switchToPage(i);
-    doc.fontSize(8)
-       .fillColor('#777777')
-       .text(
-         `Page ${i + 1} of ${pageCount} | ULearn Revenue Report`,
-         50,
-         doc.page.height - 50,
-         { align: 'center' }
-       );
+    doc.fontSize(7)
+      .fillColor('#777777')
+      .text(
+        `Page ${i + 1} of ${pageCount} | ULearn Revenue Report`,
+        50,
+        doc.page.height - 30,
+        { align: 'center' }
+      );
   }
 
   doc.end();

@@ -355,6 +355,7 @@ const SpecificDashboardPage = () => {
                     <th className="p-3">Date</th>
                     <th className="p-3">Course Name</th>
                     <th className="p-3">Original Price</th>
+                    <th className="p-3">Offer Price</th>
                     <th className="p-3">Coupon Used</th>
                     <th className="p-3">Discount Amount</th>
                     <th className="p-3">Final Price</th>
@@ -368,6 +369,7 @@ const SpecificDashboardPage = () => {
                       <td className="p-3">{format(new Date(item.purchaseDate), "dd-MM-yyyy")}</td>
                       <td className="p-3">{item.courseName}</td>
                       <td className="p-3">₹{item.originalCoursePrice.toLocaleString()}</td>
+                      <td className="p-3">₹{item.courseOfferPrice.toLocaleString()}</td>
                       <td className="p-3">
                         {item.couponUsed ? (
                           <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
@@ -387,11 +389,11 @@ const SpecificDashboardPage = () => {
                     </tr>
                   ))}
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={7} className="p-3 text-right">Total Instructor Revenue</td>
+                    <td colSpan={8} className="p-3 text-right">Total Instructor Revenue</td>
                     <td className="p-3 text-green-700 font-bold">₹{totalRevenue.toLocaleString()}</td>
                   </tr>
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={7} className="p-3 text-right">Total Enrollments</td>
+                    <td colSpan={8} className="p-3 text-right">Total Enrollments</td>
                     <td className="p-3 text-green-700 font-bold">{reportData.length}</td>
                   </tr>
                 </tbody>

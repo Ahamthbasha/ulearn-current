@@ -9,6 +9,8 @@ export interface IAdminDashboardService {
     membershipRevenue: number;
     courseSalesGraph: { month: number; year: number; total: number }[];
     membershipSalesGraph: { month: number; year: number; total: number }[];
+    topCourses: { courseName: string; salesCount: number }[];
+    topCategories: { categoryName: string }[];
   }>;
 
   getCourseSalesReport(
@@ -40,7 +42,7 @@ export interface IAdminDashboardService {
       orderId: string;
       planName: string;
       instructorName: string;
-      date: Date;
+      date: string;
       price: number;
     }[];
     totalRevenue: number;

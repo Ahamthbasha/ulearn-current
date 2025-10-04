@@ -30,7 +30,7 @@ export class StudentOrderRepository
           status: 1,
           createdAt: -1,
         },
-        ["courses", "couponId"],
+        [{ path: "userId", select: "username email" }], // Populate with specific fields
       );
       return { orders: data, total };
     }
@@ -52,7 +52,7 @@ export class StudentOrderRepository
         page,
         limit,
         { createdAt: -1 },
-        ["courses", "couponId"],
+        [{ path: "userId", select: "username email" }], // Populate with specific fields
       );
       return { orders: data, total };
     }
@@ -88,28 +88,6 @@ export class StudentOrderRepository
           createdAt: -1,
         },
       },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courses",
-        },
-      },
-      {
-        $lookup: {
-          from: "coupons",
-          localField: "couponId",
-          foreignField: "_id",
-          as: "couponId",
-        },
-      },
-      {
-        $unwind: {
-          path: "$couponId",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
     ];
 
     const countPipeline: PipelineStage[] = [...pipeline, { $count: "total" }];
@@ -117,6 +95,26 @@ export class StudentOrderRepository
       ...pipeline,
       { $skip: (page - 1) * limit },
       { $limit: limit },
+      {
+        $lookup: {
+          from: "users", // Replace with your actual users collection name
+          localField: "userId",
+          foreignField: "_id",
+          as: "userId",
+        },
+      },
+      {
+        $unwind: {
+          path: "$userId",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          "userId.password": 0, // Exclude sensitive fields
+          "userId.__v": 0,
+        },
+      },
     ];
 
     const [countResult, dataResult] = await Promise.all([
@@ -133,13 +131,25 @@ export class StudentOrderRepository
     userId: Types.ObjectId,
     session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
+    const query = this.model.findOne({ _id: orderId, userId });
+    
     if (session) {
-      return await this.model
-        .findOne({ _id: orderId, userId })
-        .populate("courses userId couponId")
+      return await query
+        .populate({
+          path: "userId",
+          select: "username email", // Only select needed fields
+        })
         .session(session)
+        .lean() // Use lean() for better performance if you don't need mongoose documents
         .exec();
     }
-    return await this.findOne({ _id: orderId, userId }, ["courses", "userId", "couponId"]);
+    
+    return await query
+      .populate({
+        path: "userId",
+        select: "username email",
+      })
+      .lean()
+      .exec();
   }
 }

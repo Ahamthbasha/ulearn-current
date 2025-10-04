@@ -80,12 +80,13 @@ export interface ReportFilter {
 
 export interface CourseReportRow {
   orderId: string;
-  date: Date;
-  couponCode:boolean;
+  date: string;
+  couponCode:string|undefined;
   courses: {
     courseName: string;
     instructorName: string;
     coursePrice: number;
+    offerPrice?:number;
     adminShare: number;
     discountedPrice:number;
   }[];
@@ -98,7 +99,7 @@ export interface MembershipReportRow {
   planName: string;
   instructorName: string;
   price: number;
-  date: Date;
+  date: string;
 }
 
 export interface Instructors {

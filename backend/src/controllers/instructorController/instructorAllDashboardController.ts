@@ -134,7 +134,6 @@ export class InstructorAllCourseDashboardController
     }
   }
 
-  
 
    async exportRevenueReport(
   req: AuthenticatedRequest,
@@ -188,24 +187,27 @@ export class InstructorAllCourseDashboardController
       return;
     }
 
-    // Map IRevenueReportItem to ReportData to ensure type compatibility
+    // Map API response to the new ReportData interface
     const reportData: ReportData[] = result.data.map((item: any) => ({
       orderId: item.orderId.toString(),
-      createdAt: item.createdAt,
-      courseName: item.courseName,
-      courseOriginalPrice: item.courseOriginalPrice || 0,
-      couponCode: item.couponCode || "N/A",
-      couponDiscount: item.couponDiscount || 0,
-      courseDiscountAmount: item.courseDiscountAmount || 0,
-      finalCoursePrice: item.finalCoursePrice || item.coursePrice || 0,
+      orderDate: item.orderDate || new Date().toLocaleString(), // Fallback to current date if orderDate is missing
       instructorEarning: item.instructorEarning || 0,
-      paymentMethod: item.paymentMethod || "N/A",
+      totalOrderAmount: item.totalOrderAmount || 0,
+      courses: item.courses.map((course: any) => ({
+        courseName: course.courseName || "Unknown Course",
+        courseOriginalPrice: course.courseOriginalPrice || 0,
+        courseOfferPrice: course.courseOfferPrice || 0,
+        couponCode: course.couponCode || "N/A",
+        couponDiscountAmount: course.couponDiscountAmount || 0,
+        couponDiscount: course.couponDiscount || 0,
+        finalCoursePrice: course.finalCoursePrice || 0,
+      })),
     }));
 
     if (format === "excel") {
-      return generateExcelReport(reportData, res);
+      return await generateExcelReport(reportData, res);
     } else {
-      return generatePdfReport(reportData, res);
+      return await generatePdfReport(reportData, res);
     }
   } catch (error: unknown) {
     console.error("Export Error:", error);

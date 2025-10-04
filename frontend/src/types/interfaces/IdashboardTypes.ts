@@ -1,5 +1,5 @@
 export interface ITopSellingCourse {
-    _id:string,
+  _id: string;
   courseName: string;
   thumbnailUrl: string;
   count: number;
@@ -17,17 +17,33 @@ export interface IMonthlySales {
   totalRevenue: number;
 }
 
-
 export interface IDashboardData {
   topCourses: ITopSellingCourse[];
   categorySales: ICategorySales[];
   monthlySales: IMonthlySales[];
   totalRevenue: number;
   totalCourseSales: number;
-  publishedCourses:number;
-  categoryWiseCount:number
+  publishedCourses: number;
+  categoryWiseCount: number;
 }
 
+export interface IRevenueReportCourse {
+  courseName: string;
+  courseOriginalPrice: number;
+  courseOfferPrice: number;
+  couponCode: string;
+  couponDiscountAmount: number;
+  couponDiscount: number;
+  finalCoursePrice: number;
+}
+
+export interface IRevenueReportItem {
+  orderId: string;
+  orderDate: string;
+  courses: IRevenueReportCourse[];
+  instructorEarning: number;
+  totalOrderAmount: number;
+}
 
 export interface ReportFilter {
   type: "daily" | "weekly" | "monthly" | "custom";

@@ -1,19 +1,14 @@
+import { Types } from "mongoose";
+import { CourseInfoDTO, CouponInfoDTO, UserInfoDTO } from "./courseInfoDTO";
+
 export interface OrderDetailsDTO {
-  customerName: string;
-  customerEmail: string;
-  payment: string;
-  totalAmount: number;
+  orderId: Types.ObjectId;
+  userInfo: UserInfoDTO;
+  coursesInfo: CourseInfoDTO[]; // Includes thumbnailUrl
+  couponInfo?: CouponInfoDTO;
+  sumOfAllCourseOriginalPrice: number;
+  sumOfAllCourseIncludingOfferPrice: number;
+  finalPrice: number;
   status: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
-  orderId: string;
   orderDate: string;
-  courses: {
-    courseName: string;
-    price: number;
-    thumbnailUrl: string;
-  }[];
-  totalAmountWithoutDiscount:number;
-  canRetryPayment: boolean;
-  couponCode?: string;
-  couponDiscountPercentage?: number;
-  couponDiscountAmount?: number;
 }

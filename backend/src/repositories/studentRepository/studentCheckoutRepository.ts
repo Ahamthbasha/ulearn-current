@@ -28,23 +28,9 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   }
 
   async createOrder(
-    userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
-    amount: number,
-    razorpayOrderId: string,
+    orderData: Partial<IOrder>,
     session?: mongoose.ClientSession,
-    couponId?: Types.ObjectId,
   ): Promise<IOrder> {
-    const orderData = {
-      userId,
-      courses: courseIds,
-      amount,
-      status: "PENDING" as const,
-      gateway: "razorpay" as const,
-      gatewayOrderId: razorpayOrderId,
-      couponId,
-    } as Partial<IOrder>;
-
     if (session) {
       return this._orderRepo.createWithSession(orderData, session);
     }
@@ -156,7 +142,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     const filter = {
       userId,
       status: "PENDING",
-      courses: { $in: courseIds },
+      "courses.courseId": { $in: courseIds },
     };
 
     if (session) {
@@ -192,7 +178,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     const filter = {
       userId,
       status: "PENDING",
-      courses: { $in: courseIds },
+      "courses.courseId": { $in: courseIds },
       createdAt: { $lte: staleThreshold },
     };
 

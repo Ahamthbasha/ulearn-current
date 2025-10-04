@@ -1,7 +1,7 @@
 import { IOrder, OrderModel } from "../models/orderModel";
-import { IOrderRepository } from "./interfaces/IOrderRepository";
+import { IOrderRepository } from "./interfaces/IOrderRepository"; 
 import { GenericRepository } from "./genericRepository";
-import { ClientSession } from "mongoose";
+import { ClientSession, PipelineStage } from "mongoose";
 
 export class OrderRepository
   extends GenericRepository<IOrder>
@@ -29,5 +29,17 @@ export class OrderRepository
     session: ClientSession,
   ): Promise<void> {
     await this.model.updateMany(filter, data, { session }).exec();
+  }
+
+  async findSuccessfulOrdersLean(): Promise<IOrder[]> {
+    return this.model.find({ status: "SUCCESS" }).lean().exec();
+  }
+
+  async performAggregation<T = any>(pipeline: PipelineStage[]): Promise<T[]> {
+    return this.model.aggregate<T>(pipeline).exec();
+  }
+  
+  async countDocumentsMatching(query: object): Promise<number> {
+    return this.model.countDocuments(query).exec();
   }
 }
