@@ -50,6 +50,9 @@ export class InstructorCourseRepository
         filter.isPublished = true;
       } else if (status === "unpublished") {
         filter.isPublished = false;
+      } else if (status === "scheduled") {
+        filter.publishDate = { $exists: true, $ne: null };
+        filter.isPublished = false;
       }
     }
 
@@ -81,8 +84,17 @@ export class InstructorCourseRepository
     });
   }
 
-  async publishCourse(courseId: string): Promise<ICourse | null> {
-    return await this.update(courseId, { isPublished: true });
+  async publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null> {
+    const updateData: Partial<ICourse> = publishDate
+      ? { publishDate }
+      : { isPublished: true, publishDate: undefined };
+    return await this.update(courseId, updateData);
   }
-  
+
+  async getScheduledCourses(): Promise<ICourse[]> {
+    return await this.find({
+      publishDate: { $lte: new Date(), $exists: true, $ne: null },
+      isPublished: false,
+    });
+  }
 }

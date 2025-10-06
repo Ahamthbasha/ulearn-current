@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+
 export interface IInstructorCourseController {
   createCourse(req: Request, res: Response, next: NextFunction): Promise<void>;
   updateCourse(req: Request, res: Response, next: NextFunction): Promise<void>;

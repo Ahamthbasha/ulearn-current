@@ -243,6 +243,8 @@ import { InstructorCourseService } from "../services/instructorServices/instruct
 import { IInstructorCourseController } from "../controllers/instructorController/interfaces/IInstructorCourseController";
 import { InstructorCourseController } from "../controllers/instructorController/instructorCourseController";
 
+import { CoursePublishCron } from "../cron/coursePublishCron";
+
 const instructorCourseRepository: IInstructorCourseRepository =
   new InstructorCourseRepository();
 
@@ -255,6 +257,9 @@ const instructorCourseService: IInstructorCourseService =
 
 const instructorCourseController: IInstructorCourseController =
   new InstructorCourseController(instructorCourseService);
+
+const coursePublishCron = new CoursePublishCron(instructorCourseRepository)
+coursePublishCron.start()
 
 ////////////////////////ADMIN COURSE CONTROLLER/////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -820,7 +825,7 @@ import { IAdminDashboardRepository } from "../repositories/adminRepository/inter
 import { AdminDashboardRepository } from "../repositories/adminRepository/adminDashboardRepository";
 
 import { IAdminDashboardService } from "../services/adminServices/interface/IAdminDashboardService";
-import { AdminDashboardService } from "../services/adminServices/adminDashboardService";
+import { AdminDashboardService } from "../services/adminServices/AdminDashboardService"; 
 
 import { IAdminDashboardController } from "../controllers/adminControllers/interface/IAdminDashboardController";
 import { AdminDashboardController } from "../controllers/adminControllers/adminDashboardController";

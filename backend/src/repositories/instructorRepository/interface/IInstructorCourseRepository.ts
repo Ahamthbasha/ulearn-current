@@ -24,5 +24,6 @@ export interface IInstructorCourseRepository {
     instructorId: string,
     excludeId: string,
   ): Promise<ICourse | null>;
-  publishCourse(courseId: string): Promise<ICourse | null>;
+  publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null>;
+  getScheduledCourses(): Promise<ICourse[]>;
 }

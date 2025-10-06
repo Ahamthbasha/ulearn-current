@@ -22,16 +22,17 @@ export interface Course {
 export interface CourseManagement {
   courseId: string;
   courseName: string;
-  description: string;
+  categoryName: string;
+  level: string;
   duration: string;
   price: number;
-  level: string;
-  categoryName: string;
-  thumbnailSignedUrl: string | null;
-  demoVideoUrlSigned: string | null;
+  description: string;
+  thumbnailSignedUrl?: string;
+  demoVideoUrlSigned?: string;
   isPublished: boolean;
   isListed: boolean;
   isVerified: boolean;
+  publishDate?: string; 
 }
 
 export interface MembershipPlan {

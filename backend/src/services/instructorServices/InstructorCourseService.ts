@@ -80,8 +80,6 @@ export class InstructorCourseService implements IInstructorCourseService {
     const demoVideoSignedUrl = courseObj.demoVideo?.url
       ? await getPresignedUrl(courseObj.demoVideo.url)
       : null;
-
-    // Create response data with signed URLs
     const responseData = {
       ...courseObj,
       thumbnailSignedUrl,
@@ -164,9 +162,7 @@ export class InstructorCourseService implements IInstructorCourseService {
     );
   }
 
-  async publishCourse(courseId: string): Promise<ICourse | null> {
-    return await this._courseRepository.updateCourse(courseId, {
-      isPublished: true,
-    });
+  async publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null> {
+    return await this._courseRepository.publishCourse(courseId, publishDate);
   }
 }
