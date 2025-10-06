@@ -11,7 +11,7 @@ const InputField: React.FC<InputFieldProps> = ({
   disabled = false,
   value,
   onChange,
-  useFormik = true, // default to true
+  useFormik = true,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";

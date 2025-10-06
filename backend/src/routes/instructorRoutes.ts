@@ -16,6 +16,7 @@ import {
   instructorSlotController,
   instructorSlotBookingController,
   instructorWithdrawalController,
+  instructorLearningPathController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 
@@ -659,6 +660,55 @@ router.get(
     instructorSlotBookingController,
   ),
 );
+
+//learningPath
+router.get(
+  "/learningPaths",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorLearningPathController.getInstructorLearningPaths.bind(instructorLearningPathController)
+)
+
+router.get(
+  "/learningPath/:learningPathId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorLearningPathController.getLearningPathById.bind(instructorLearningPathController)
+)
+
+router.post(
+  "/createLearningPath",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorLearningPathController.createLearningPath.bind(instructorLearningPathController)
+)
+
+router.post(
+  "/learningPath/:learningPathId/publish",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorLearningPathController.publishLearningPath.bind(instructorLearningPathController)
+)
+
+router.put(
+  "/learningPath/:learningPathId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorLearningPathController.updateLearningPath.bind(instructorLearningPathController)
+)
+
+router.delete(
+  "/learningPath/:learningPathId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorLearningPathController.deleteLearningPath.bind(instructorLearningPathController)
+)
 
 const instructorRoutes = router;
 

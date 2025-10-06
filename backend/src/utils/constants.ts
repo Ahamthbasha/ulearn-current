@@ -768,3 +768,25 @@ export const CATEGORY_OFFER_MESSAGE = {
   CATEGORY_OFFER_EDITED: "Category offer updated successfully",
   CATEGORY_OFFER_DELETED: "Category offer deleted successfully",
 };
+
+
+
+
+
+export const LearningPathErrorMessages = {
+  MISSING_FIELDS: "Missing required fields",
+  ALREADY_CREATED: "Learning path with this title already exists",
+  NOT_FOUND: "Learning path not found",
+  INVALID_COURSES: "Invalid courses provided",
+  PUBLISH_CONDITION: "Learning path must have at least one course to publish",
+  INVALID_PUBLISH_DATE: "Publish date must be in the future",
+};
+
+export const LearningPathSuccessMessages = {
+  CREATED: "Learning path created successfully",
+  UPDATED: "Learning path updated successfully",
+  DELETED: "Learning path deleted successfully",
+  RETRIEVED: "Learning path retrieved successfully",
+  PUBLISHED: "Learning path published successfully",
+  SCHEDULED: "Learning path scheduled for publishing",
+};

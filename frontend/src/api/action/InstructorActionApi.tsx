@@ -8,6 +8,7 @@ import {
 
 import { type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesParam";
 import type { IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
+import type { CreateLearningPathRequest,UpdateLearningPathRequest,LearningPathDTO } from "../../types/interfaces/IInstructorInterface";
 
 //verification api call
 
@@ -15,15 +16,8 @@ export const sendVerification = async (formData: FormData) => {
   try {
     const response = await API.post(
       InstructorRouterEndPoints.instructorSendVerificationRequest,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        withCredentials: true,
-      }
+      formData
     );
-    console.log("sendVerification request", response.data);
     return response.data;
   } catch (error) {
     console.log(error);
@@ -34,12 +28,7 @@ export const getVerificationRequestByemail = async (email: string) => {
   try {
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorGetVerificationStatus}/${email}`,
-      {
-        withCredentials: true,
-      }
     );
-
-    console.log("instructorVerification detail", response.data);
 
     return response.data;
   } catch (error) {
@@ -52,13 +41,8 @@ export const getVerificationRequestByemail = async (email: string) => {
 export const instructorGetProfile = async () => {
   try {
     const response = await API.get(
-      InstructorRouterEndPoints.instructorProfilePage,
-      {
-        withCredentials: true,
-      }
+      InstructorRouterEndPoints.instructorProfilePage
     );
-
-    console.log("instructor profile data response", response.data);
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
@@ -73,12 +57,8 @@ export const instructorUpdateProfile = async (
   try {
     const response = await API.put(
       InstructorRouterEndPoints.instructorUpdateProfile,
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
+      formData
     );
-    console.log("instructor updateprofile response", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -89,7 +69,6 @@ export const instructorUpdatePassword = async (data: any): Promise<any> => {
   try {
     const response = await API.put(
       InstructorRouterEndPoints.instructorUpdatePassword,data);
-    console.log("instructor password updation data", response.data);
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
@@ -111,9 +90,7 @@ export const instructorUpdateBankDetail = async(data:any)=>{
 
 export const getInstructorCategories = async (): Promise<any[]> => {
   try {
-    const response = await API.get("/api/instructor/categories", {
-      withCredentials: true,
-    });
+    const response = await API.get("/api/instructor/categories");
     return response.data.data;
   } catch (error) {
     throw error;
@@ -133,7 +110,6 @@ export const instructorCreateCourse = async (
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        withCredentials: true,
       }
     );
     return response.data;
@@ -155,7 +131,6 @@ export const instructorUpdateCourse = async (
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        withCredentials: true,
       }
     );
     return response.data;
@@ -205,8 +180,7 @@ export const fetchInstructorCourses = async (
     const response = await API.get(
       InstructorRouterEndPoints.instructorGetCreatedCourses,
       {
-        params, // ✅ pass page, limit, search as query params
-        withCredentials: true,
+        params, 
       }
     );
     return response.data;
@@ -228,7 +202,6 @@ export const getChaptersByCourse = async (
       `${InstructorRouterEndPoints.instructorGetChaptersByCourse}/${courseId}`,
       {
         params: { page, limit, search },
-        withCredentials: true,
       }
     );
     return response.data;
@@ -243,7 +216,6 @@ export const getChapterById = async (courseId: string, chapterId: string) => {
       `${InstructorRouterEndPoints.instructorGetSingleChapter}/${courseId}/${chapterId}`
     );
 
-    console.log("get chapter by id", response.data);
     return response.data.data;
   } catch (error) {
     throw error;
@@ -977,3 +949,85 @@ export const slotDetailsInInstructor = async(slotId:string)=>{
     throw error
   }
 }
+
+// Action functions
+export const getInstructorLearningPaths = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+  status: string = ""
+): Promise<{ data: LearningPathDTO[]; total: number }> => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetLearningPaths}?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&status=${status}`
+    );
+    return {
+      data: response.data.data || [],
+      total: response.data.total || 0,
+    };
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch learning paths");
+  }
+};
+
+export const getLearningPathById = async (
+  learningPathId: string
+): Promise<{success:boolean,data:LearningPathDTO}> => {
+  try {
+    const response = await API.get(`${InstructorRouterEndPoints.instructorGetLearningPathById}/${learningPathId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch learning path");
+  }
+};
+
+export const createLearningPath = async (
+  data: CreateLearningPathRequest
+): Promise<LearningPathDTO> => {
+  try {
+    const response= await API.post(
+      InstructorRouterEndPoints.instructorCreateLearningPath,
+      data
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create learning path");
+  }
+};
+
+export const updateLearningPath = async (
+  learningPathId: string,
+  data: UpdateLearningPathRequest
+): Promise<LearningPathDTO> => {
+  try {
+    const response = await API.put(`${InstructorRouterEndPoints.instructorUpdateLearningPath}/${learningPathId}`,data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update learning path");
+  }
+};
+
+export const deleteLearningPath = async (
+  learningPathId: string
+): Promise<null> => {
+  try {
+    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteLearningPath}/${learningPathId}`)
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete learning path");
+  }
+};
+
+export const publishLearningPath = async (
+  learningPathId: string,
+  publishDate?: string
+): Promise<LearningPathDTO> => {
+  try {
+    const response = await API.post(`${InstructorRouterEndPoints.instructorPublishLearningPath}/${learningPathId}/publish`,
+      publishDate ? { publishDate } : {}
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to publish learning path");
+  }
+};
