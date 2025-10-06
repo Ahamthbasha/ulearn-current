@@ -657,6 +657,7 @@ export const INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER = {
 };
 
 export const INSTRUCTOR_ERROR_MESSAGE = {
+  INVALID_PUBLISH_DATE : "Publish date cannot be in the past",
   NOT_FOUND: "not found",
   ONLY_REJECTED: "Only rejected",
   UNAUTHORIZED_ID: "Unauthorized: Instructor ID not found.",
@@ -705,6 +706,7 @@ export const INSTRUCTOR_ERROR_MESSAGE = {
 };
 
 export const INSTRUCTOR_SUCCESS_MESSAGE = {
+  COURSE_SCHEDULED : "Course scheduled for publishing",
   COURSE_PUBLISHED: "Course published successfully",
   REVIFICATION_SUBMITTED: "Reverification submitted successfully.",
   WITHDRAWAL_REQUEST_CREATED: "Withdrawal request created successfully",

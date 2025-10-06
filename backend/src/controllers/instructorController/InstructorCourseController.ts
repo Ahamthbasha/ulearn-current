@@ -77,6 +77,9 @@ export class InstructorCourseController implements IInstructorCourseController {
         type: "video",
         url: demoVideoKey,
       };
+      if (courseData.publishDate) {
+        courseData.publishDate = new Date(courseData.publishDate);
+      }
 
       const createdCourse = await this._courseService.createCourse(courseData);
 
@@ -146,6 +149,10 @@ export class InstructorCourseController implements IInstructorCourseController {
           type: "video",
           url: demoVideoKey,
         };
+      }
+
+      if (courseData.publishDate) {
+        courseData.publishDate = new Date(courseData.publishDate);
       }
 
       courseData.courseName = courseName;
@@ -265,6 +272,7 @@ export class InstructorCourseController implements IInstructorCourseController {
   ): Promise<void> {
     try {
       const { courseId } = req.params;
+      const { publishDate } = req.body;
 
       const canPublish = await this._courseService.canPublishCourse(courseId);
 
@@ -276,7 +284,16 @@ export class InstructorCourseController implements IInstructorCourseController {
         return;
       }
 
-      const updatedCourse = await this._courseService.publishCourse(courseId);
+      const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
+      if (parsedPublishDate && parsedPublishDate < new Date()) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_PUBLISH_DATE,
+        });
+        return;
+      }
+
+      const updatedCourse = await this._courseService.publishCourse(courseId, parsedPublishDate);
 
       if (!updatedCourse) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -288,7 +305,9 @@ export class InstructorCourseController implements IInstructorCourseController {
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: INSTRUCTOR_SUCCESS_MESSAGE.COURSE_PUBLISHED,
+        message: parsedPublishDate
+          ? INSTRUCTOR_SUCCESS_MESSAGE.COURSE_SCHEDULED
+          : INSTRUCTOR_SUCCESS_MESSAGE.COURSE_PUBLISHED,
         data: updatedCourse,
       });
     } catch (error) {

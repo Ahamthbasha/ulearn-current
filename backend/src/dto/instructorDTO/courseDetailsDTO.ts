@@ -11,4 +11,5 @@ export interface CourseResponseDto {
   isPublished: boolean;
   isListed: boolean;
   isVerified: boolean;
+  publishDate?:string;
 }

@@ -1,4 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
+
 interface IDemoVideo {
   type: "video";
   url: string;
@@ -21,9 +22,10 @@ export interface ICourse extends Document {
   isListed: boolean;
   createdAt: Date;
   updatedAt: Date;
-  offer?: Types.ObjectId; 
-  originalPrice?:number;
-  effectivePrice?: number; 
+  offer?: Types.ObjectId;
+  originalPrice?: number;
+  effectivePrice?: number;
+  publishDate?: Date;
 }
 
 const demoVideoSchema = new Schema<IDemoVideo>({
@@ -63,6 +65,7 @@ const CourseSchema = new Schema<ICourse>(
       ref: "CourseOffer",
       required: false,
     },
+    publishDate: { type: Date, required: false },
   },
   {
     timestamps: true,

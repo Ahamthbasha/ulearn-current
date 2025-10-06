@@ -432,10 +432,11 @@ export const deleteQuestionFromQuiz = async (
   }
 };
 
-export const publishCourse = async (courseId: string) => {
+export const publishCourse = async (courseId: string,publishDate?:string) => {
   try {
     const response = await API.patch(
-      `${InstructorRouterEndPoints.instructorPublishCourseById}/${courseId}/publish`
+      `${InstructorRouterEndPoints.instructorPublishCourseById}/${courseId}/publish`,
+      publishDate? {publishDate} : {}
     );
 
     return response.data;

@@ -6,14 +6,18 @@ import {
   publishCourse,
 } from "../../../api/action/InstructorActionApi";
 import Card from "../../../components/common/Card";
-import { type CourseManagement } from "../interface/instructorInterface";
+import Modal from "react-modal";
+import type { CourseManagement } from "../interface/instructorInterface";
 
+Modal.setAppElement("#root");
 const CourseManagementPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
   const [course, setCourse] = useState<CourseManagement | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [publishDate, setPublishDate] = useState<string>("");
 
   const fetchCourseDetails = async () => {
     if (!courseId) {
@@ -40,17 +44,104 @@ const CourseManagementPage = () => {
     fetchCourseDetails();
   }, [courseId]);
 
-  const handlePublish = async () => {
+  const handleOpenPublishModal = () => {
+    setIsModalOpen(true);
+    // Pre-fill publishDate if it exists, converting to datetime-local format
+    if (course?.publishDate) {
+      // Parse DD-MM-YYYY hh:mm AM/PM format
+      const match = course.publishDate.match(/^(\d{2})-(\d{2})-(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/);
+      if (match) {
+        const [, day, month, year, hours, minutes, ampm] = match;
+        let hours24 = parseInt(hours, 10);
+        if (ampm === "PM" && hours24 !== 12) {
+          hours24 += 12;
+        } else if (ampm === "AM" && hours24 === 12) {
+          hours24 = 0;
+        }
+        const date = new Date(+year, +month - 1, +day, hours24, +minutes);
+        if (!isNaN(date.getTime())) {
+          // Format to datetime-local using local time (YYYY-MM-DDThh:mm)
+          const localDateTime = date.toLocaleString("en-US", {
+            timeZone: "Asia/Kolkata", // Match backend IST
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).replace(/,/, '').replace(/(\d+)\/(\d+)\/(\d+)\s(\d+):(\d+)/, "$3-$2-$1T$4:$5");
+          setPublishDate(localDateTime);
+        } else {
+          console.error("Invalid date parsed from:", course.publishDate);
+          setPublishDate(""); // Fallback to empty if invalid
+        }
+      } else {
+        console.error("Date format mismatch:", course.publishDate);
+        setPublishDate(""); // Fallback if format doesn't match
+      }
+    } else {
+      setPublishDate("");
+    }
+  };
+
+  const handleClosePublishModal = () => {
+    setIsModalOpen(false);
+    setPublishDate("");
+  };
+
+  const handleImmediatePublish = async () => {
     if (!courseId) {
       toast.error("Course ID is missing");
       return;
     }
     try {
-      const res = await publishCourse(courseId);
+      const res = await publishCourse(courseId); // No publishDate for immediate
       toast.success(res?.message || "Course published successfully");
-      await fetchCourseDetails(); // Refresh to reflect isPublished flag
+      await fetchCourseDetails(); // Refresh to reflect isPublished
+      handleClosePublishModal();
     } catch (error: any) {
       const errMsg = error?.response?.data?.message || "Publish failed";
+      toast.error(errMsg);
+    }
+  };
+
+  const handleLatePublish = async () => {
+    if (!courseId) {
+      toast.error("Course ID is missing");
+      return;
+    }
+    if (!publishDate) {
+      toast.error("Please select a publish date and time");
+      return;
+    }
+    const selectedDate = new Date(publishDate);
+    if (selectedDate < new Date()) {
+      toast.error("Publish date cannot be in the past");
+      return;
+    }
+    try {
+      const res = await publishCourse(courseId, publishDate);
+      toast.success(res?.message || "Course scheduled for publishing");
+      await fetchCourseDetails(); // Refresh to reflect publishDate
+      handleClosePublishModal();
+    } catch (error: any) {
+      const errMsg = error?.response?.data?.message || "Failed to schedule publish";
+      toast.error(errMsg);
+    }
+  };
+
+  const handleCancelSchedule = async () => {
+    if (!courseId) {
+      toast.error("Course ID is missing");
+      return;
+    }
+    try {
+      const res = await publishCourse(courseId); // Send null to clear publishDate
+      toast.success(res?.message || "Publish schedule canceled");
+      await fetchCourseDetails(); // Refresh to reflect no publishDate
+      handleClosePublishModal();
+    } catch (error: any) {
+      const errMsg = error?.response?.data?.message || "Failed to cancel schedule";
       toast.error(errMsg);
     }
   };
@@ -113,6 +204,12 @@ const CourseManagementPage = () => {
               />
             </div>
           )}
+          {course.publishDate && (
+            <div className="col-span-2">
+              <p className="font-semibold">Scheduled Publish Date:</p>
+              <p>{course.publishDate}</p> {/* Display the formatted publishDate */}
+            </div>
+          )}
         </div>
       </Card>
 
@@ -136,9 +233,16 @@ const CourseManagementPage = () => {
           >
             ✅ Course Published
           </button>
+        ) : course.publishDate ? (
+          <button
+            onClick={handleOpenPublishModal}
+            className="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+          >
+            ✏️ Edit Publish
+          </button>
         ) : (
           <button
-            onClick={handlePublish}
+            onClick={handleOpenPublishModal}
             className="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
           >
             🚀 Publish Course
@@ -151,6 +255,56 @@ const CourseManagementPage = () => {
           📊 View Course Dashboard
         </button>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={handleClosePublishModal}
+        className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto mt-20"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start"
+      >
+        <h2 className="text-xl font-semibold mb-4">
+          {course.publishDate ? "Edit Publish Schedule" : "Publish Course"}
+        </h2>
+        <div className="space-y-4">
+          <button
+            onClick={handleImmediatePublish}
+            className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
+          >
+            Immediate Publish
+          </button>
+          <div className="space-y-2">
+            <label className="block font-medium">Schedule Publish</label>
+            <input
+              type="datetime-local"
+              value={publishDate}
+              onChange={(e) => setPublishDate(e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2"
+              min={new Date().toISOString().slice(0, 16)} // Prevent past dates
+            />
+            <button
+              onClick={handleLatePublish}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+              disabled={!publishDate}
+            >
+              Schedule Publish
+            </button>
+          </div>
+          {course.publishDate && (
+            <button
+              onClick={handleCancelSchedule}
+              className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium"
+            >
+              Cancel Schedule
+            </button>
+          )}
+          <button
+            onClick={handleClosePublishModal}
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-medium"
+          >
+            Close
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

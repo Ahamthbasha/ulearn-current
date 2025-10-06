@@ -26,6 +26,6 @@ export interface IInstructorCourseService {
     instructorId: string,
     courseId: string,
   ): Promise<boolean>;
-  publishCourse(courseId: string): Promise<ICourse | null>;
+  publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null>;
   canPublishCourse(courseId: string): Promise<boolean>;
 }
