@@ -238,10 +238,10 @@ import { IInstructorCourseRepository } from "../repositories/instructorRepositor
 import { InstructorCourseRepository } from "../repositories/instructorRepository/instructorCourseRepository";
 
 import { IInstructorCourseService } from "../services/instructorServices/interface/IInstructorCourseService";
-import { InstructorCourseService } from "../services/instructorServices/instructorCourseService";
+import { InstructorCourseService } from "../services/instructorServices/InstructorCourseService";
 
 import { IInstructorCourseController } from "../controllers/instructorController/interfaces/IInstructorCourseController";
-import { InstructorCourseController } from "../controllers/instructorController/instructorCourseController";
+import { InstructorCourseController } from "../controllers/instructorController/InstructorCourseController"; 
 
 import { CoursePublishCron } from "../cron/coursePublishCron";
 
@@ -974,6 +974,27 @@ const adminCategoryOfferService : IAdminCategoryOfferService = new AdminCategory
 
 const adminCategoryOfferController : IAdminCategoryOfferController = new AdminCategoryOfferController(adminCategoryOfferService)
 
+///////////////////LEARNING PATH/////////////////////////////////////
+
+
+import { IInstructorLearningPathRepository } from "../repositories/instructorRepository/interface/IInstructorLearningPathRepo";
+import { InstructorLearningPathRepository } from "../repositories/instructorRepository/instructorLearningPathRepo";
+
+
+import { IInstructorLearningPathService } from "../services/instructorServices/interface/IInstructorLearningPathService";
+import { InstructorLearningPathService } from "../services/instructorServices/instructorLearningPathService";
+
+import { IInstructorLearningPathController } from "../controllers/instructorController/interfaces/IInstructorLearningPathController";
+import { InstructorLearningPathController } from "../controllers/instructorController/instructorLearningPathController";
+
+
+const instructorLearningPathRepo : IInstructorLearningPathRepository = new InstructorLearningPathRepository()
+
+const instructorLearningPathService : IInstructorLearningPathService= new InstructorLearningPathService(instructorLearningPathRepo)
+
+const instructorLearningPathController : IInstructorLearningPathController = new InstructorLearningPathController(instructorLearningPathService)
+
+
 export {
   studentController,
   instructorController,
@@ -1066,4 +1087,7 @@ export {
   
   //admin categoryOffer controller
   adminCategoryOfferController,
+
+  //instructor learning path controller,
+  instructorLearningPathController,
 };

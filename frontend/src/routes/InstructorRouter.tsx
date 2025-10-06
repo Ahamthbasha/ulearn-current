@@ -40,6 +40,10 @@ import MembershipOrderDetail from '../pages/instructor/purchaseHistory/Membershi
 import NotFound from '../components/common/NotFound'
 import SlotHistoryPage from '../pages/instructor/slot/SlotHistoryPage'
 import SlotDetailPage from '../pages/instructor/slot/SlotDetailPage'
+import LearningPathListPage from '../pages/instructor/learningPath/LearningPathList'
+import LearningPathCreatePage from '../pages/instructor/learningPath/LearningPathCreatepage'
+import LearningPathEditPage from '../pages/instructor/learningPath/LearningPathEditPage'
+import LearningPathViewPage from '../pages/instructor/learningPath/LearningPathViewPage'
 
 
 const InstructorRouter = () => {
@@ -83,6 +87,13 @@ const InstructorRouter = () => {
     <Route path='course/:courseId/quiz' element= {<QuizManagementPage/>}/>
     <Route path='course/:courseId/quiz/add' element={<AddQuizPage/>}/>
     <Route path="course/:courseId/quiz/edit/:quizId" element={<EditQuizPage />} />
+
+    {/* learning Path management */}
+
+    <Route path='learningPath' element={<LearningPathListPage/>}/>
+    <Route path='learningPath/create' element={<LearningPathCreatePage/>}/>
+    <Route path='learningPath/edit/:learningPathId' element={<LearningPathEditPage/>}/>
+    <Route path='learningPath/:learningPathId' element={<LearningPathViewPage/>}/>
 
     <Route path="wallet" element={<InstructorWalletPage/>}/>
     <Route path="membership" element={<Membership/>} />

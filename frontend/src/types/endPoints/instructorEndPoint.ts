@@ -98,8 +98,15 @@ const InstructorRouterEndPoints = {
   instructorSlotHistory: "/api/instructor/slotStats",
 
   //slot details
-
   instructorSlotDetail : "/api/instructor/slotBooking",
+
+  //learning path
+  instructorGetLearningPaths: "/api/instructor/learningPaths",
+  instructorGetLearningPathById: "/api/instructor/learningPath",
+  instructorCreateLearningPath: "/api/instructor/createLearningPath",
+  instructorUpdateLearningPath: "/api/instructor/learningPath",
+  instructorDeleteLearningPath: "/api/instructor/learningPath",
+  instructorPublishLearningPath: "/api/instructor/learningPath",
 }
 
 export default InstructorRouterEndPoints
