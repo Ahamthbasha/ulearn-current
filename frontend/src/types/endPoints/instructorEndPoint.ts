@@ -107,6 +107,16 @@ const InstructorRouterEndPoints = {
   instructorUpdateLearningPath: "/api/instructor/learningPath",
   instructorDeleteLearningPath: "/api/instructor/learningPath",
   instructorPublishLearningPath: "/api/instructor/learningPath",
+  instructorSubmitLearningPath : "/api/instructor/learningPath",
+  instructorReSubmitLearningPath : "/api/instructor/learningPath",
+
+
+  instructorCreateCourseOffer : "/api/instructor/createCourseOffer",
+  instructorEditCourseOffer : "/api/instructor/editCourseOffer",
+  instructorResubmitCourseOffer : "/api/instructor/resubmitOffer",
+  instructorGetCourseOffers : "/api/instructor/myOffers",
+  instructorGetSpecificOfferById:"/api/instructor/courseOffer",
+  instructorDeleteSpecificOffer : "/api/instructor/courseOffer"
 }
 
 export default InstructorRouterEndPoints

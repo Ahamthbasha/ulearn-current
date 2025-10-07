@@ -71,14 +71,10 @@ const AdminRoutersEndPoints = {
   adminModifyStatus : "/api/admin/coupons",
 
   //adminCourseOffer
+  adminGetAllCourseOfferRequest : "/api/admin/courseOffers",
+  adminVerifyCourseOffer : "/api/admin/courseOffers/verify",
+  adminGetCourseOfferDetail : "/api/admin/courseOffer",
 
-  adminGetCoursesForSelection : "/api/admin/courses",
-  adminGetAllCourseOffer : "/api/admin/courseOffers",
-  adminCreateCourseOffer : "/api/admin/createCourseOffer",
-  adminEditCourseOffer : "/api/admin/editCourseOffer",
-  adminToggleCourseOffer : "/api/admin/courseOffer",
-  adminDeleteCourseOffer : "/api/admin/courseOffer",
-  adminGetCourseOfferById : "/api/admin/courseOffer",
 
   //admin Category Offer
 
@@ -89,6 +85,13 @@ const AdminRoutersEndPoints = {
   adminUpdateCategoryOffer: "/api/admin/updateCategoryOffer",
   adminToggleCategoryOffer: "/api/admin/toggleCategoryOffer",
   adminDeleteCategoryOffer: "/api/admin/deleteCategoryOffer",
+
+  //adminLearningPath verification
+
+  adminGetLearningPaths: "/api/admin/learningPaths",
+  adminGetLearningPathById: "/api/admin/learningPaths",
+  adminVerifyLearningPath: "/api/admin/learningPaths",
+
 
 };
 

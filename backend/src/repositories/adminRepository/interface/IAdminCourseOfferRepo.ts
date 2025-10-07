@@ -4,12 +4,9 @@ import { IGenericRepository } from "../../../repositories/genericRepository";
 export interface IAdminCourseOfferRepo extends IGenericRepository<ICourseOffer> {
   findById(offerId: string): Promise<ICourseOffer | null>;
   updateById(offerId: string, data: Partial<ICourseOffer>): Promise<ICourseOffer | null>;
-  toggleActiveById(offerId: string): Promise<ICourseOffer | null>;
-  deleteById(offerId: string): Promise<ICourseOffer | null>;
-  getCourseOffers(
+  getOfferRequests(
     page: number,
     limit: number,
-    search?: string,
+    search?: string
   ): Promise<{ data: ICourseOffer[]; total: number }>;
-  getCourseOfferById(offerId:string):Promise<ICourseOffer | null>
 }

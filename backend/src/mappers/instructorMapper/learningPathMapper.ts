@@ -4,10 +4,10 @@ import { formatDate } from "../../utils/dateFormat";
 
 export function mapLearningPathToDTO(learningPath: ILearningPath): LearningPathDTO {
   const items = learningPath.items.map((item) => {
-    const isPopulated = item.courseId && typeof item.courseId === 'object' && '_id' in item.courseId;
+    const isPopulated = item.courseId && typeof item.courseId === "object" && "_id" in item.courseId;
     return {
-      courseId: isPopulated 
-        ? (item.courseId as any)._id.toString() 
+      courseId: isPopulated
+        ? (item.courseId as any)._id.toString()
         : item.courseId.toString(),
       order: item.order,
       courseName: isPopulated ? (item.courseId as any)?.courseName : undefined,
@@ -28,9 +28,10 @@ export function mapLearningPathToDTO(learningPath: ILearningPath): LearningPathD
     items,
     totalAmount,
     isPublished: learningPath.isPublished,
-    publishDate: learningPath.publishDate,
     createdAt: formatDate(learningPath.createdAt),
     updatedAt: formatDate(learningPath.updatedAt),
+    status: learningPath.status,
+    adminReview: learningPath.adminReview,
   };
 }
 

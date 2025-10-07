@@ -1,5 +1,5 @@
 import { ILearningPath, CreateLearningPathDTO } from "../../../models/learningPathModel";
-import { LearningPathDTO } from "../../../dto/instructorDTO/learningPathDTO"; 
+import { LearningPathDTO } from "../../../dto/instructorDTO/learningPathDTO";
 
 export interface IInstructorLearningPathService {
   createLearningPath(data: CreateLearningPathDTO): Promise<LearningPathDTO>;
@@ -25,6 +25,7 @@ export interface IInstructorLearningPathService {
     instructorId: string,
     learningPathId: string,
   ): Promise<boolean>;
-  publishLearningPath(learningPathId: string, publishDate?: Date): Promise<ILearningPath | null>;
-  canPublishLearningPath(learningPathId: string): Promise<boolean>;
+  publishLearningPath(learningPathId: string): Promise<ILearningPath | null>;
+  submitLearningPathToAdmin(learningPathId: string): Promise<ILearningPath | null>;
+  resubmitLearningPathToAdmin(learningPathId: string): Promise<ILearningPath | null>; // New method
 }

@@ -23,17 +23,26 @@ export interface ICourseOffer {
   courseId: {
     _id: string;
     courseName: string;
+    name?: string;  // In case your backend returns 'name' or 'courseName'
     id?: string;
+  };
+  instructorId: {
+    _id: string;
+    name: string;
+    email?: string;
   };
   discountPercentage: number;
   startDate: string | Date;
   endDate: string | Date;
   isActive: boolean;
+  status: "pending" | "approved" | "rejected";
+  reviews?: string;
   createdAt: string;
   updatedAt: string;
   discountedPrice?: number | null;
   id?: string;
 }
+
 
 export interface ICourseAdmin {
   courseId: string;
@@ -65,4 +74,39 @@ export interface ICategoryOffer {
   courseOffers: ObjectId[]; // Array of ICourseOffer _id values
   createdAt?: string; // ISO date string
   updatedAt?: string; // ISO date string
+}
+
+
+export interface LearningPathItemDTO {
+  courseId: string;
+  order: number;
+  courseName?: string;
+  thumbnailUrl?: string;
+  price?:number;
+  isVerified?:boolean
+}
+
+export interface LearningPathDTO {
+  _id: string;
+  title: string;
+  description: string;
+  instructorId: string;
+  instructorName?:string;
+  items: LearningPathItemDTO[];
+  totalAmount:number;
+  isPublished: boolean;
+  publishDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  status: "draft" | "pending" | "accepted" | "rejected"; 
+  adminReview?: string;
+}
+
+export interface LearningPathSummaryDTO {
+  learningPathId: string;
+  title: string;
+  instructorName?: string;
+  status: "pending" | "accepted" | "rejected" | "draft";
+  LearningPathCourse: number;
+  UnverifiedCourses: number;
 }

@@ -8,7 +8,11 @@ import {
 
 import { type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesParam";
 import type { IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
-import type { CreateLearningPathRequest,UpdateLearningPathRequest,LearningPathDTO } from "../../types/interfaces/IInstructorInterface";
+import type {
+  CreateLearningPathRequest,
+  UpdateLearningPathRequest,
+  LearningPathDTO,
+} from "../../types/interfaces/IInstructorInterface";
 
 //verification api call
 
@@ -27,7 +31,7 @@ export const sendVerification = async (formData: FormData) => {
 export const getVerificationRequestByemail = async (email: string) => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorGetVerificationStatus}/${email}`,
+      `${InstructorRouterEndPoints.instructorGetVerificationStatus}/${email}`
     );
 
     return response.data;
@@ -68,7 +72,9 @@ export const instructorUpdateProfile = async (
 export const instructorUpdatePassword = async (data: any): Promise<any> => {
   try {
     const response = await API.put(
-      InstructorRouterEndPoints.instructorUpdatePassword,data);
+      InstructorRouterEndPoints.instructorUpdatePassword,
+      data
+    );
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
@@ -77,14 +83,17 @@ export const instructorUpdatePassword = async (data: any): Promise<any> => {
   }
 };
 
-export const instructorUpdateBankDetail = async(data:any)=>{
+export const instructorUpdateBankDetail = async (data: any) => {
   try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorUpdateBankDetail}`,data)
-    return response.data
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorUpdateBankDetail}`,
+      data
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 //FETCH CATEGORY
 
@@ -180,7 +189,7 @@ export const fetchInstructorCourses = async (
     const response = await API.get(
       InstructorRouterEndPoints.instructorGetCreatedCourses,
       {
-        params, 
+        params,
       }
     );
     return response.data;
@@ -404,11 +413,11 @@ export const deleteQuestionFromQuiz = async (
   }
 };
 
-export const publishCourse = async (courseId: string,publishDate?:string) => {
+export const publishCourse = async (courseId: string, publishDate?: string) => {
   try {
     const response = await API.patch(
       `${InstructorRouterEndPoints.instructorPublishCourseById}/${courseId}/publish`,
-      publishDate? {publishDate} : {}
+      publishDate ? { publishDate } : {}
     );
 
     return response.data;
@@ -495,7 +504,7 @@ export const specificCourseDashboard = async (courseId: string) => {
       `${InstructorRouterEndPoints.instructorSpecificCourse}/${courseId}`
     );
 
-    console.log('specific course', response.data);
+    console.log("specific course", response.data);
 
     return response.data;
   } catch (error) {
@@ -505,7 +514,7 @@ export const specificCourseDashboard = async (courseId: string) => {
 
 export const specificCourseReport = async (
   courseId: string,
-  range: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
+  range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
   startDate?: string,
   endDate?: string,
   page: number = 1,
@@ -513,19 +522,21 @@ export const specificCourseReport = async (
 ) => {
   try {
     const queryParams = new URLSearchParams();
-    queryParams.append('range', range);
-    queryParams.append('page', page.toString());
-    queryParams.append('limit', limit.toString());
-    if (range === 'custom') {
-      if (startDate) queryParams.append('startDate', startDate);
-      if (endDate) queryParams.append('endDate', endDate);
+    queryParams.append("range", range);
+    queryParams.append("page", page.toString());
+    queryParams.append("limit", limit.toString());
+    if (range === "custom") {
+      if (startDate) queryParams.append("startDate", startDate);
+      if (endDate) queryParams.append("endDate", endDate);
     }
 
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorSpecificCourseReport}/${courseId}/revenueReport?${queryParams.toString()}`
+      `${
+        InstructorRouterEndPoints.instructorSpecificCourseReport
+      }/${courseId}/revenueReport?${queryParams.toString()}`
     );
 
-    console.log('specific course report response:', response); // Add logging
+    console.log("specific course report response:", response); // Add logging
 
     return response; // Return full response instead of response.data
   } catch (error) {
@@ -535,10 +546,10 @@ export const specificCourseReport = async (
 
 export const exportSpecificCourseReport = async (
   courseId: string,
-  filter: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
+  filter: "daily" | "weekly" | "monthly" | "yearly" | "custom",
   startDate?: string,
   endDate?: string,
-  format: 'pdf' | 'excel' = 'pdf'
+  format: "pdf" | "excel" = "pdf"
 ): Promise<void> => {
   try {
     const params: Record<string, string> = {
@@ -546,7 +557,7 @@ export const exportSpecificCourseReport = async (
       format,
     };
 
-    if (filter === 'custom' && startDate && endDate) {
+    if (filter === "custom" && startDate && endDate) {
       params.startDate = startDate;
       params.endDate = endDate;
     }
@@ -555,23 +566,21 @@ export const exportSpecificCourseReport = async (
       `${InstructorRouterEndPoints.instructorExportSpecificCourseReport}/${courseId}/exportRevenueReport`,
       {
         params,
-        responseType: 'blob',
+        responseType: "blob",
       }
     );
 
     const filename =
-      format === 'excel'
-        ? 'Specific_Course_Revenue_Report.xlsx'
-        : 'Specific_Course_Revenue_Report.pdf';
+      format === "excel"
+        ? "Specific_Course_Revenue_Report.xlsx"
+        : "Specific_Course_Revenue_Report.pdf";
 
     fileDownload(response.data, filename);
   } catch (error) {
-    console.error('Failed to export specific course report:', error);
+    console.error("Failed to export specific course report:", error);
     throw error;
   }
 };
-
-
 
 // wallet page
 
@@ -601,7 +610,6 @@ export const instructorCreditWallet = async (data: {
     throw error;
   }
 };
-
 
 export const instructorDebitWallet = async (data: {
   amount: number;
@@ -669,23 +677,34 @@ export const instructorWalletTransactionHistory = async (
 
 // instructor withdrawal request
 
-export const instructorCreateWithdrawal = async(amount:number)=>{
+export const instructorCreateWithdrawal = async (amount: number) => {
   try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorCreateWithdrawalRequest}`,{amount})
-    return response.data
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorCreateWithdrawalRequest}`,
+      { amount }
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const instructorGetWithdrawal = async (
   page: number,
   limit: number
-): Promise<{ transactions: IWithdrawalRequest[], currentPage: number, totalPages: number, total: number }> => {
+): Promise<{
+  transactions: IWithdrawalRequest[];
+  currentPage: number;
+  totalPages: number;
+  total: number;
+}> => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorGetWithdrawalRequest}`, {
-      params: { page, limit },
-    });
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetWithdrawalRequest}`,
+      {
+        params: { page, limit },
+      }
+    );
     return response.data.data;
   } catch (error) {
     throw error;
@@ -738,45 +757,56 @@ export const membershipInitiateCheckout = async (planId: string) => {
   }
 };
 
-export const createRazorpayOrder = async(planId:string)=>{
+export const createRazorpayOrder = async (planId: string) => {
   try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorCreateRazorpay}`,{planId})
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-export const cancelOrder = async(orderId:string)=>{
-  try {
-    console.log('orderId',orderId)
-    const response = await API.post(`${InstructorRouterEndPoints.instructorCancelOrder}`,{orderId})
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-export const retryPayment = async(orderId:string)=>{
-  try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorRetryPayment}/${orderId}`)
-
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
-export const markOrderAsFailed = async (orderId: string) => {
-  try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorMarkAsFailed}`, {
-      orderId
-    });
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorCreateRazorpay}`,
+      { planId }
+    );
     return response.data;
   } catch (error) {
     throw error;
   }
-}
+};
+
+export const cancelOrder = async (orderId: string) => {
+  try {
+    console.log("orderId", orderId);
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorCancelOrder}`,
+      { orderId }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const retryPayment = async (orderId: string) => {
+  try {
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorRetryPayment}/${orderId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const markOrderAsFailed = async (orderId: string) => {
+  try {
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorMarkAsFailed}`,
+      {
+        orderId,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const verifyMembershipPurchase = async (payload: {
   razorpayOrderId: string;
@@ -818,7 +848,11 @@ export const purchaseMembershipWithWallet = async (planId: string) => {
   }
 };
 
-export const membershipPurchaseHistory = async (page = 1, limit = 10, search="") => {
+export const membershipPurchaseHistory = async (
+  page = 1,
+  limit = 10,
+  search = ""
+) => {
   try {
     const response = await API.get(
       InstructorRouterEndPoints.instructorMembershipPurchaseHistory,
@@ -826,7 +860,7 @@ export const membershipPurchaseHistory = async (page = 1, limit = 10, search="")
         params: { page, limit, search },
       }
     );
-    console.log(response.data)
+    console.log(response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -941,16 +975,19 @@ export const slotHistory = async (
   }
 };
 
-export const slotDetailsInInstructor = async(slotId:string)=>{
+export const slotDetailsInInstructor = async (slotId: string) => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorSlotDetail}/${slotId}`)
-    return response.data
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorSlotDetail}/${slotId}`
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
-// Action functions
+// learning path
+
 export const getInstructorLearningPaths = async (
   page: number = 1,
   limit: number = 10,
@@ -959,25 +996,35 @@ export const getInstructorLearningPaths = async (
 ): Promise<{ data: LearningPathDTO[]; total: number }> => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorGetLearningPaths}?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&status=${status}`
+      `${
+        InstructorRouterEndPoints.instructorGetLearningPaths
+      }?page=${page}&limit=${limit}&search=${encodeURIComponent(
+        search
+      )}&status=${status}`
     );
     return {
       data: response.data.data || [],
       total: response.data.total || 0,
     };
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch learning paths");
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch learning paths"
+    );
   }
 };
 
 export const getLearningPathById = async (
   learningPathId: string
-): Promise<{success:boolean,data:LearningPathDTO}> => {
+): Promise<LearningPathDTO> => {
   try {
-    const response = await API.get(`${InstructorRouterEndPoints.instructorGetLearningPathById}/${learningPathId}`);
-    return response.data;
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetLearningPathById}/${learningPathId}`
+    );
+    return response.data.data; // Adjusted to match backend response structure
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch learning path");
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch learning path"
+    );
   }
 };
 
@@ -985,13 +1032,15 @@ export const createLearningPath = async (
   data: CreateLearningPathRequest
 ): Promise<LearningPathDTO> => {
   try {
-    const response= await API.post(
+    const response = await API.post(
       InstructorRouterEndPoints.instructorCreateLearningPath,
       data
     );
-    return response.data;
+    return response.data.data; // Adjusted to match backend response structure
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to create learning path");
+    throw new Error(
+      error.response?.data?.message || "Failed to create learning path"
+    );
   }
 };
 
@@ -1000,34 +1049,169 @@ export const updateLearningPath = async (
   data: UpdateLearningPathRequest
 ): Promise<LearningPathDTO> => {
   try {
-    const response = await API.put(`${InstructorRouterEndPoints.instructorUpdateLearningPath}/${learningPathId}`,data);
-    return response.data;
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorUpdateLearningPath}/${learningPathId}`,
+      data
+    );
+    return response.data.data; // Adjusted to match backend response structure
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to update learning path");
+    throw new Error(
+      error.response?.data?.message || "Failed to update learning path"
+    );
   }
 };
 
 export const deleteLearningPath = async (
   learningPathId: string
-): Promise<null> => {
+): Promise<void> => {
   try {
-    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteLearningPath}/${learningPathId}`)
-    return response.data;
+    await API.delete(
+      `${InstructorRouterEndPoints.instructorDeleteLearningPath}/${learningPathId}`
+    );
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to delete learning path");
+    throw new Error(
+      error.response?.data?.message || "Failed to delete learning path"
+    );
   }
 };
 
 export const publishLearningPath = async (
-  learningPathId: string,
-  publishDate?: string
+  learningPathId: string
 ): Promise<LearningPathDTO> => {
   try {
-    const response = await API.post(`${InstructorRouterEndPoints.instructorPublishLearningPath}/${learningPathId}/publish`,
-      publishDate ? { publishDate } : {}
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorPublishLearningPath}/${learningPathId}/publish`,
+      {}
     );
-    return response.data;
+    return response.data.data; // Adjusted to match backend response structure
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to publish learning path");
+    throw new Error(
+      error.response?.data?.message || "Failed to publish learning path"
+    );
+  }
+};
+
+export const submitLearningPathVerification = async (
+  learningPathId: string
+): Promise<LearningPathDTO> => {
+  try {
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorSubmitLearningPath}/${learningPathId}/submit`
+    );
+    return response.data.data; // Adjusted to match backend response structure
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to submit learning path"
+    );
+  }
+};
+
+export const resubmitLearningPathVerification = async (
+  learningPathId: string
+): Promise<LearningPathDTO> => {
+  try {
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorReSubmitLearningPath}/${learningPathId}/resubmit`
+    );
+    return response.data.data; // Adjusted to match backend response structure
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to resubmit learning path"
+    );
+  }
+};
+
+//course offer management
+export const getPublishedCourses = async () => {
+  try {
+    const response = await API.get(
+    InstructorRouterEndPoints.instructorGetCreatedCourses
+  );
+  return response.data; 
+  } catch (error) {
+    throw error
+  }
+};
+
+export const getInstructorCourseOffers = async (
+  page = 1,
+  limit = 10,
+  search?: string
+) => {
+
+  try {
+    const response = await API.get(InstructorRouterEndPoints.instructorGetCourseOffers , {
+      params: { page, limit, search },
+    });
+    return response.data;
+  } catch (error) {
+    throw error
+  }
+};
+
+export const createInstructorCourseOffer = async (
+  courseId: string,
+  discountPercentage: number,
+  startDate: Date,
+  endDate: Date
+) => {
+  try {
+    const response = await API.post(InstructorRouterEndPoints.instructorCreateCourseOffer, {
+      courseId,
+      discountPercentage,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+    return response.data;
+  } catch (error) {
+    throw error
+  }
+};
+
+export const editInstructorCourseOffer = async (
+  offerId: string,
+  discountPercentage: number,
+  startDate: Date,
+  endDate: Date
+) => {
+  const response = await API.put(InstructorRouterEndPoints.instructorEditCourseOffer, {
+    offerId,
+    discountPercentage,
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  });
+  return response.data;
+};
+
+export const resubmitInstructorCourseOffer = async (
+  offerId: string,
+  discountPercentage: number,
+  startDate: Date,
+  endDate: Date
+) => {
+  const response = await API.post(InstructorRouterEndPoints.instructorResubmitCourseOffer, {
+    offerId,
+    discountPercentage,
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  });
+  return response.data;
+};
+
+export const getInstructorCourseOfferById = async (offerId: string) => {
+  try {
+    const response = await API.get(`${InstructorRouterEndPoints.instructorGetSpecificOfferById}/${offerId}`);
+    return response.data.data;
+  } catch (error) {
+    throw error
+  }
+};
+
+export const deleteInstructorCourseOffer = async (offerId: string) => {
+  try {
+    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteSpecificOffer}/${offerId}`);
+    return response.data
+  } catch (error) {
+    throw error
   }
 };

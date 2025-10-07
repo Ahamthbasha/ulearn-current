@@ -5,7 +5,7 @@ import { type IMembershipPayload } from "../../types/interfaces/IMembershipPaylo
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
 import { type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
-import type { CouponData , ICourseOffer, ICategoryModel,ICategoryOffer} from "../../types/interfaces/IAdminInterface";
+import type { CouponData , ICategoryModel,ICategoryOffer,LearningPathDTO, LearningPathSummaryDTO} from "../../types/interfaces/IAdminInterface";
 
 export const getAllUser = async (
   page = 1,
@@ -711,115 +711,35 @@ export const toggleStatus = async (couponId: string, status: boolean) => {
   }
 };
 
+//course offer action
 
-export const getPublishedCourses = async () => {
+export const getCourseRequestList = async (page = 1, limit = 10, search?: string) => {
   try {
-    const response = await API.get(
-      AdminRoutersEndPoints.adminGetCoursesForSelection
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch published courses");
+   const res = await API.get(AdminRoutersEndPoints.adminGetAllCourseOfferRequest, { params: { page, limit, search } });
+  return res.data; 
+  } catch (error) {
+    throw error
   }
 };
 
-export const getCourseOffers = async (
-  page: number = 1,
-  limit: number = 10,
-  search?: string
-): Promise<{ data: ICourseOffer[]; total: number }> => {
+export const getCourseOfferDetail = async (offerId: string) => {
   try {
-    const response = await API.get(
-      AdminRoutersEndPoints.adminGetAllCourseOffer,
-      {
-        params: {
-          page,
-          limit,
-          search,
-        },
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch course offers");
+    const res = await API.get(`${AdminRoutersEndPoints.adminGetCourseOfferDetail}/${offerId}`);
+  return res.data;
+  } catch (error) {
+    throw error
   }
 };
 
-export const getCourseOfferById = async (offerId: string): Promise<ICourseOffer> => {
+export const verifyCourseOfferRequest = async (payload: { offerId: string; status: "approved" | "rejected"; reviews?: string }) => {
   try {
-    const response = await API.get(
-      `${AdminRoutersEndPoints.adminGetCourseOfferById}/${offerId}`
-    );
-    return response.data.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch course offer");
+    const res = await API.post(AdminRoutersEndPoints.adminVerifyCourseOffer, payload);
+  return res.data;
+  } catch (error) {
+    throw error
   }
 };
 
-export const createCourseOffer = async (
-  courseId: string,
-  discountPercentage: number,
-  startDate: Date,
-  endDate: Date
-): Promise<ICourseOffer> => {
-  try {
-    const response = await API.post(
-      AdminRoutersEndPoints.adminCreateCourseOffer,
-      {
-        courseId,
-        discountPercentage,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to create course offer");
-  }
-};
-
-export const editCourseOffer = async (
-  offerId: string,
-  discountPercentage: number,
-  startDate: Date,
-  endDate: Date
-): Promise<ICourseOffer> => {
-  try {
-    const response = await API.put(
-      AdminRoutersEndPoints.adminEditCourseOffer,
-      {
-        offerId,
-        discountPercentage,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to edit course offer");
-  }
-};
-
-export const toggleCourseOfferActive = async (offerId: string): Promise<ICourseOffer> => {
-  try {
-    const response = await API.patch(
-      `${AdminRoutersEndPoints.adminToggleCourseOffer}/${offerId}`
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to toggle course offer");
-  }
-};
-
-export const deleteCourseOffer = async (offerId: string): Promise<void> => {
-  try {
-    await API.delete(
-      `${AdminRoutersEndPoints.adminDeleteCourseOffer}/${offerId}`
-    );
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to delete course offer");
-  }
-};
 
 //category offer action
 
@@ -916,5 +836,45 @@ export const deleteCategoryOffer = async (categoryOfferId: string): Promise<void
     await API.delete(`${AdminRoutersEndPoints.adminDeleteCategoryOffer}/${categoryOfferId}`);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to delete category offer");
+  }
+};
+
+
+export const getAdminLearningPaths = async (
+  page: number,
+  limit: number,
+  search?: string,
+  status?: string
+): Promise<{ data: LearningPathSummaryDTO[]; total: number; page: number; limit: number }> => {
+  const response = await API.get(`${AdminRoutersEndPoints.adminGetLearningPaths}`, {
+    params: { page, limit, search, status },
+  });
+  return response.data;
+};
+
+export const getAdminLearningPathById = async (
+  learningPathId: string
+): Promise<LearningPathDTO> => {
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminGetLearningPathById}/${learningPathId}`);
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch learning path");
+  }
+};
+
+export const verifyLearningPath = async (
+  learningPathId: string,
+  status: "accepted" | "rejected",
+  adminReview: string
+): Promise<LearningPathDTO> => {
+  try {
+    const response = await API.put(
+      `${AdminRoutersEndPoints.adminVerifyLearningPath}/${learningPathId}/verify`,
+      { status, adminReview }
+    );
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to verify learning path");
   }
 };

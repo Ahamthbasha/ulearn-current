@@ -106,12 +106,44 @@ export class InstructorLearningPathService implements IInstructorLearningPathSer
     return !!existing;
   }
 
-  async canPublishLearningPath(learningPathId: string): Promise<boolean> {
-    const learningPath = await this._learningPathRepository.getLearningPathById(learningPathId);
-    return !!learningPath && learningPath.items.length > 0;
+  async publishLearningPath(learningPathId: string): Promise<ILearningPath | null> {
+    return await this._learningPathRepository.publishLearningPath(learningPathId);
   }
 
-  async publishLearningPath(learningPathId: string, publishDate?: Date): Promise<ILearningPath | null> {
-    return await this._learningPathRepository.publishLearningPath(learningPathId, publishDate);
+  async submitLearningPathToAdmin(learningPathId: string): Promise<ILearningPath | null> {
+    const learningPath = await this._learningPathRepository.getLearningPathById(learningPathId);
+    if (!learningPath) {
+      throw new Error("Learning path not found");
+    }
+    if (learningPath.status === "pending") {
+      throw new Error("Learning path already submitted");
+    }
+    if (learningPath.status === "accepted") {
+      throw new Error("Learning path already accepted");
+    }
+    if (learningPath.items.length === 0) {
+      throw new Error("Cannot submit an empty learning path");
+    }
+    return await this._learningPathRepository.updateLearningPath(learningPathId, {
+      status: "pending",
+      adminReview: undefined, // Clear any existing review on submission
+    });
+  }
+
+  async resubmitLearningPathToAdmin(learningPathId: string): Promise<ILearningPath | null> {
+    const learningPath = await this._learningPathRepository.getLearningPathById(learningPathId);
+    if (!learningPath) {
+      throw new Error("Learning path not found");
+    }
+    if (learningPath.status !== "rejected") {
+      throw new Error("Learning path can only be resubmitted if it was rejected");
+    }
+    if (learningPath.items.length === 0) {
+      throw new Error("Cannot resubmit an empty learning path");
+    }
+    return await this._learningPathRepository.updateLearningPath(learningPathId, {
+      status: "pending",
+      adminReview: undefined, // Clear the review on resubmission
+    });
   }
 }

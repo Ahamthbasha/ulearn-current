@@ -12,7 +12,8 @@ import {
   adminWithdrawalController,
   adminCouponController,
   adminCourseOfferController,
-  adminCategoryOfferController,
+  // adminCategoryOfferController,
+  adminLearningPathController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 
@@ -380,103 +381,98 @@ router.get(
   //admin courseOffer controller
 
   router.get(
-    "/courses",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.getPublishedCourses.bind(adminCourseOfferController)
-  )
-
-  router.get(
     "/courseOffers",
     authenticateToken,
     isAdmin,
-    adminCourseOfferController.getCourseOffers.bind(adminCourseOfferController)
+    adminCourseOfferController.getOfferRequests.bind(adminCourseOfferController)
+  )
+
+  router.post(
+    "/courseOffers/verify",
+    authenticateToken,
+    isAdmin,
+    adminCourseOfferController.verifyCourseOffer.bind(adminCourseOfferController)
   )
 
   router.get(
     "/courseOffer/:offerId",
     authenticateToken,
     isAdmin,
-    adminCourseOfferController.getCourseOfferById.bind(adminCourseOfferController)
-  )
-
-  router.post(
-    "/createCourseOffer",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.createCourseOffer.bind(adminCourseOfferController)
-  )
-
-  router.put(
-    "/editCourseOffer",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.editCourseOffer.bind(adminCourseOfferController)
-  )
-
-  router.patch(
-    "/courseOffer/:offerId",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.toggleCourseOfferActive.bind(adminCourseOfferController)
-  )
-
-  router.delete(
-    "/courseOffer/:offerId",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.deleteCourseOffer.bind(adminCourseOfferController)
+    adminCourseOfferController.getOfferById.bind(adminCourseOfferController)
   )
 
   //admin category Offer controller
 
+  // router.get(
+  //   "/getCategories",
+  //   authenticateToken,
+  //   isAdmin,
+  //   adminCategoryOfferController.getListedCategories.bind(adminCategoryOfferController)
+  // )
+
+  // router.get(
+  //   "/getCategoryOffers",
+  //   authenticateToken,
+  //   isAdmin,
+  //   adminCategoryOfferController.getCategoryOffers.bind(adminCategoryOfferController)
+  // )
+
+  // router.get(
+  //   "/categoryOffers/:categoryOfferId",
+  //   authenticateToken,
+  //   isAdmin,
+  //   adminCategoryOfferController.getCategoryOfferById.bind(adminCategoryOfferController)
+  // )
+
+  // router.post(
+  //   "/createCategoryOffer",
+  //   authenticateToken,
+  //   isAdmin,
+  //   adminCategoryOfferController.createCategoryOffer.bind(adminCategoryOfferController)
+  // )
+
+  // router.put(
+  //   "/updateCategoryOffer",
+  //   authenticateToken,
+  //   isAdmin,
+  //   adminCategoryOfferController.editCategoryOffer.bind(adminCategoryOfferController)
+  // )
+
+  // router.patch(
+  //   "/toggleCategoryOffer/:categoryOfferId",
+  //   authenticateToken,
+  //   isAdmin,
+  //   adminCategoryOfferController.toggleCategoryOfferActive.bind(adminCategoryOfferController)
+  // )
+
+  // router.delete(
+  //   "/deleteCategoryOffer/:categoryOfferId",
+  //   authenticateToken,
+  //   isAdmin,
+  //   adminCategoryOfferController.deleteCategoryOffer.bind(adminCategoryOfferController)
+  // )
+
+  //learnign path verification
+
   router.get(
-    "/getCategories",
+    "/learningPaths",
     authenticateToken,
     isAdmin,
-    adminCategoryOfferController.getListedCategories.bind(adminCategoryOfferController)
+    adminLearningPathController.getSubmittedLearningPaths.bind(adminLearningPathController)
   )
 
   router.get(
-    "/getCategoryOffers",
+    "/learningPaths/:learningPathId",
     authenticateToken,
     isAdmin,
-    adminCategoryOfferController.getCategoryOffers.bind(adminCategoryOfferController)
-  )
-
-  router.get(
-    "/categoryOffers/:categoryOfferId",
-    authenticateToken,
-    isAdmin,
-    adminCategoryOfferController.getCategoryOfferById.bind(adminCategoryOfferController)
-  )
-
-  router.post(
-    "/createCategoryOffer",
-    authenticateToken,
-    isAdmin,
-    adminCategoryOfferController.createCategoryOffer.bind(adminCategoryOfferController)
+    adminLearningPathController.getLearningPathById.bind(adminLearningPathController)
   )
 
   router.put(
-    "/updateCategoryOffer",
+    "/learningPaths/:learningPathId/verify",
     authenticateToken,
     isAdmin,
-    adminCategoryOfferController.editCategoryOffer.bind(adminCategoryOfferController)
-  )
-
-  router.patch(
-    "/toggleCategoryOffer/:categoryOfferId",
-    authenticateToken,
-    isAdmin,
-    adminCategoryOfferController.toggleCategoryOfferActive.bind(adminCategoryOfferController)
-  )
-
-  router.delete(
-    "/deleteCategoryOffer/:categoryOfferId",
-    authenticateToken,
-    isAdmin,
-    adminCategoryOfferController.deleteCategoryOffer.bind(adminCategoryOfferController)
+    adminLearningPathController.verifyLearningPath.bind(adminLearningPathController)
   )
 
 const adminRoutes = router;

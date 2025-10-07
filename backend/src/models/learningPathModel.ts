@@ -7,14 +7,15 @@ export interface ILearningPathItem {
 
 export interface ILearningPath extends Document {
   _id: Types.ObjectId;
-  title: string; 
+  title: string;
   description: string;
   instructorId: Types.ObjectId;
   items: ILearningPathItem[];
   isPublished: boolean;
-  publishDate?: Date;
   createdAt: Date;
   updatedAt: Date;
+  status: "pending" | "accepted" | "rejected" | "draft"; // New status field
+  adminReview?: string; // Single review instead of array
 }
 
 export interface CreateLearningPathDTO {
@@ -22,13 +23,12 @@ export interface CreateLearningPathDTO {
   description: string;
   instructorId: Types.ObjectId;
   items: ILearningPathItem[];
-  publishDate?: Date;
 }
 
 const LearningPathItemSchema = new Schema<ILearningPathItem>({
   courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
   order: { type: Number, required: true, min: 1 },
-},{_id:false});
+}, { _id: false });
 
 const LearningPathSchema = new Schema<ILearningPath>(
   {
@@ -37,7 +37,12 @@ const LearningPathSchema = new Schema<ILearningPath>(
     instructorId: { type: Schema.Types.ObjectId, ref: "Instructor", required: true },
     items: [LearningPathItemSchema],
     isPublished: { type: Boolean, default: false },
-    publishDate: { type: Date, required: false },
+    status: { 
+      type: String, 
+      enum: ["draft", "pending", "accepted", "rejected"], 
+      default: "draft" 
+    }, // New field
+    adminReview: { type: String, required: false }, // Single review field
   },
   { timestamps: true },
 );

@@ -4,8 +4,10 @@ import {
   getInstructorLearningPaths,
   deleteLearningPath,
   publishLearningPath,
+  submitLearningPathVerification,
+  resubmitLearningPathVerification,
 } from "../../../api/action/InstructorActionApi";
-import {type  LearningPathDTO } from "../../../types/interfaces/IInstructorInterface";
+import { type LearningPathDTO } from "../../../types/interfaces/IInstructorInterface";
 import InputField from "../../../components/common/InputField";
 
 const LearningPathListPage: React.FC = () => {
@@ -20,14 +22,10 @@ const LearningPathListPage: React.FC = () => {
 
   const fetchLearningPaths = async () => {
     try {
-      const response: { data: LearningPathDTO[]; total: number } = await getInstructorLearningPaths(
-        page,
-        limit,
-        search,
-        status
-      );
+      const response = await getInstructorLearningPaths(page, limit, search, status);
       setLearningPaths(response.data || []);
       setTotal(response.total || 0);
+      setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to fetch learning paths");
     }
@@ -57,6 +55,39 @@ const LearningPathListPage: React.FC = () => {
     }
   };
 
+  const handleSubmit = async (id: string) => {
+    try {
+      await submitLearningPathVerification(id);
+      fetchLearningPaths();
+    } catch (err: any) {
+      setError(err.message || "Failed to submit learning path");
+    }
+  };
+
+  const handleResubmit = async (id: string) => {
+    try {
+      await resubmitLearningPathVerification(id);
+      fetchLearningPaths();
+    } catch (err: any) {
+      setError(err.message || "Failed to resubmit learning path");
+    }
+  };
+
+  const getStatusDisplay = (path: LearningPathDTO) => {
+    switch (path.status) {
+      case "draft":
+        return <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Draft</span>;
+      case "pending":
+        return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Pending</span>;
+      case "accepted":
+        return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Accepted</span>;
+      case "rejected":
+        return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">Rejected</span>;
+      default:
+        return <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Unknown</span>;
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Learning Paths</h1>
@@ -75,10 +106,13 @@ const LearningPathListPage: React.FC = () => {
           onChange={(e) => setStatus(e.target.value)}
           className="px-3 py-2 rounded-lg border-2 border-transparent text-black text-sm focus:outline-none bg-gray-100"
         >
-          <option value="">All</option>
+          <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="pending">Pending</option>
+          <option value="accepted">Accepted</option>
+          <option value="rejected">Rejected</option>
           <option value="published">Published</option>
           <option value="unpublished">Unpublished</option>
-          <option value="scheduled">Scheduled</option>
         </select>
         <button
           onClick={() => navigate("/instructor/learningPath/create")}
@@ -90,12 +124,15 @@ const LearningPathListPage: React.FC = () => {
       <div className="grid grid-cols-1 gap-4">
         {learningPaths.map((path) => (
           <div key={path._id} className="border p-4 rounded-lg">
-            <h2 className="text-xl font-semibold">{path.title}</h2>
+            <div className="flex items-start justify-between mb-2">
+              <h2 className="text-xl font-semibold">{path.title}</h2>
+              {getStatusDisplay(path)}
+            </div>
             <p className="text-gray-600">{path.description}</p>
-            <p className="text-sm">
-              Status: {path.isPublished ? "Published" : path.publishDate ? "Scheduled" : "Unpublished"}
-            </p>
             <p className="text-sm">Courses: {path.items.length}</p>
+            {path.adminReview && path.status === "rejected" && (
+              <p className="text-sm text-red-600">Admin Review: {path.adminReview}</p>
+            )}
             <div className="mt-2 space-x-2">
               <button
                 onClick={() => navigate(`/instructor/learningPath/${path._id}`)}
@@ -115,7 +152,23 @@ const LearningPathListPage: React.FC = () => {
               >
                 Delete
               </button>
-              {!path.isPublished && !path.publishDate && (
+              {path.status === "draft" && (
+                <button
+                  onClick={() => handleSubmit(path._id)}
+                  className="text-purple-500"
+                >
+                  Submit for Review
+                </button>
+              )}
+              {path.status === "rejected" && (
+                <button
+                  onClick={() => handleResubmit(path._id)}
+                  className="text-purple-500"
+                >
+                  Resubmit
+                </button>
+              )}
+              {path.status === "accepted" && !path.isPublished && (
                 <button
                   onClick={() => handlePublish(path._id)}
                   className="text-green-500"

@@ -7,4 +7,6 @@ export interface IInstructorLearningPathController {
   getLearningPathById(req: Request, res: Response, next: NextFunction): Promise<void>;
   getInstructorLearningPaths(req: Request, res: Response, next: NextFunction): Promise<void>;
   publishLearningPath(req: Request, res: Response, next: NextFunction): Promise<void>;
+  submitLearningPathToAdmin(req: Request, res: Response, next: NextFunction): Promise<void>;
+  resubmitLearningPathToAdmin(req: Request, res: Response, next: NextFunction): Promise<void>; // New method
 }

@@ -1,6 +1,6 @@
 import { LearningPathModel, ILearningPath, CreateLearningPathDTO } from "../../models/learningPathModel";
 import { GenericRepository } from "../genericRepository";
-import { IInstructorLearningPathRepository } from "./interface/IInstructorLearningPathRepo"; 
+import { IInstructorLearningPathRepository } from "./interface/IInstructorLearningPathRepo";
 import { CourseModel } from "../../models/courseModel";
 import mongoose from "mongoose";
 import { Types } from "mongoose";
@@ -55,9 +55,8 @@ export class InstructorLearningPathRepository
         filter.isPublished = true;
       } else if (status === "unpublished") {
         filter.isPublished = false;
-      } else if (status === "scheduled") {
-        filter.publishDate = { $exists: true, $ne: null };
-        filter.isPublished = false;
+      } else if (["pending", "accepted", "rejected", "draft"].includes(status)) {
+        filter.status = status; // Filter by status
       }
     }
 
@@ -66,7 +65,11 @@ export class InstructorLearningPathRepository
       page,
       limit,
       { createdAt: -1 },
-      { path: "items.courseId", select: "courseName thumbnailUrl price offer", populate: { path: "offer", select: "isActive startDate endDate discountPercentage" } },
+      {
+        path: "items.courseId",
+        select: "courseName thumbnailUrl price offer",
+        populate: { path: "offer", select: "isActive startDate endDate discountPercentage" },
+      },
     );
   }
 
@@ -89,18 +92,9 @@ export class InstructorLearningPathRepository
     });
   }
 
-  async publishLearningPath(learningPathId: string, publishDate?: Date): Promise<ILearningPath | null> {
-    const updateData: Partial<ILearningPath> = publishDate
-      ? { publishDate }
-      : { isPublished: true, publishDate: undefined };
+  async publishLearningPath(learningPathId: string): Promise<ILearningPath | null> {
+    const updateData: Partial<ILearningPath> = { isPublished: true };
     return await this.update(learningPathId, updateData);
-  }
-
-  async getScheduledLearningPaths(): Promise<ILearningPath[]> {
-    return await this.find({
-      publishDate: { $lte: new Date(), $exists: true, $ne: null },
-      isPublished: false,
-    });
   }
 
   async validateCoursesForInstructor(courses: Types.ObjectId[], instructorId: string): Promise<boolean> {

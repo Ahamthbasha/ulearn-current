@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Milestone,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { adminLogout } from "../api/auth/AdminAuthentication";
@@ -45,6 +46,7 @@ const AdminLayout = () => {
   { name: "Wallet", icon: <CreditCard />, path: "wallet" },
   { name: "Membership", icon: <Crown />, path: "membership" },
   { name: "Withdrawal", icon: <BadgePercent />, path: "withdrawal" },
+  {name:"LearningPath",icon:<Milestone /> ,path:"learningPaths"}
 ];
 
   const handleLogout = async () => {

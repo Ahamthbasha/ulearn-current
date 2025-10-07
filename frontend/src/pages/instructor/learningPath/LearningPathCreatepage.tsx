@@ -24,7 +24,6 @@ const validationSchema = Yup.object({
       })
     )
     .min(1, "At least one course is required"),
-  publishDate: Yup.string().optional().nullable(),
 });
 
 const LearningPathCreatePage: React.FC = () => {
@@ -35,7 +34,6 @@ const LearningPathCreatePage: React.FC = () => {
     title: "",
     description: "",
     items: [{ courseId: "", order: 1 }],
-    publishDate: "",
   };
 
   const handleSubmit = async (values: CreateLearningPathRequest) => {
@@ -48,7 +46,6 @@ const LearningPathCreatePage: React.FC = () => {
           courseId: item.courseId,
           order: item.order,
         })),
-        publishDate: values.publishDate || undefined,
       };
       await createLearningPath(payload);
       navigate("/instructor/learningPath");
@@ -75,11 +72,6 @@ const LearningPathCreatePage: React.FC = () => {
               placeholder="Enter description"
             />
             <CourseSelector name="items" label="Courses" />
-            <InputField
-              name="publishDate"
-              label="Publish Date (Optional)"
-              type="datetime-local"
-            />
             <div className="flex space-x-4">
               <button
                 type="submit"
@@ -90,7 +82,7 @@ const LearningPathCreatePage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/instructor/learningPaths")}
+                onClick={() => navigate("/instructor/learningPath")}
                 className="bg-gray-200 px-4 py-2 rounded-lg"
               >
                 Cancel
