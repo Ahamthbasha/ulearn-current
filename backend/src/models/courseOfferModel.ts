@@ -13,6 +13,7 @@ export interface ICourseOffer extends Document {
   reviews?: string;
   createdAt: Date;
   updatedAt: Date;
+  discountedPrice?:number;
 }
 
 const CourseOfferSchema = new Schema<ICourseOffer>({
@@ -34,7 +35,7 @@ const CourseOfferSchema = new Schema<ICourseOffer>({
   toObject: { virtuals: true }
 });
 
-// Virtual discounted price if course populated
+
 CourseOfferSchema.virtual("discountedPrice").get(function(this: ICourseOffer) {
   return this.populated("courseId") ?
     (this.courseId as any).price * (1 - this.discountPercentage / 100) : null;

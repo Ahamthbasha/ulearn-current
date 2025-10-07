@@ -74,6 +74,8 @@ const CourseSchema = new Schema<ICourse>(
   }
 );
 
+CourseSchema.index({ courseName: "text" });
+
 // Virtual for chapters
 CourseSchema.virtual("chapters", {
   ref: "Chapter",

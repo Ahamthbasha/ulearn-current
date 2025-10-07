@@ -4,12 +4,13 @@ import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 
 export class InstructorCourseOfferController {
-    private _courseOfferService: IInstructorCourseOfferService
-  constructor(courseOfferservice: IInstructorCourseOfferService) {
-    this._courseOfferService = courseOfferservice
+  private _courseOfferService: IInstructorCourseOfferService;
+
+  constructor(courseOfferService: IInstructorCourseOfferService) {
+    this._courseOfferService = courseOfferService;
   }
 
-  async createCourseOffer(req: AuthenticatedRequest, res: Response):Promise<void> {
+  async createCourseOffer(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id!;
       const { courseId, discountPercentage, startDate, endDate } = req.body;
@@ -20,7 +21,7 @@ export class InstructorCourseOfferController {
     }
   }
 
-  async editCourseOffer(req: AuthenticatedRequest, res: Response):Promise<void> {
+  async editCourseOffer(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id!;
       const { offerId, discountPercentage, startDate, endDate } = req.body;
@@ -31,7 +32,7 @@ export class InstructorCourseOfferController {
     }
   }
 
-  async resubmitOffer(req: AuthenticatedRequest, res: Response):Promise<void> {
+  async resubmitOffer(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id!;
       const { offerId, discountPercentage, startDate, endDate } = req.body;
@@ -42,18 +43,24 @@ export class InstructorCourseOfferController {
     }
   }
 
-  async getOffersByInstructor(req: AuthenticatedRequest, res: Response):Promise<void> {
+  async getOffersByInstructor(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id!;
-      const { page = 1, limit = 10, search } = req.query;
-      const result = await this._courseOfferService.getOffersByInstructor(instructorId, Number(page), Number(limit), search as string | undefined);
+      const { page = 1, limit = 10, search, status } = req.query;
+      const result = await this._courseOfferService.getOffersByInstructor(
+        instructorId,
+        Number(page),
+        Number(limit),
+        search as string | undefined,
+        status as string | undefined
+      );
       res.status(StatusCode.OK).json({ success: true, data: result.data, total: result.total });
     } catch (err) {
       res.status(StatusCode.BAD_REQUEST).json({ success: false, message: (err as Error).message });
     }
   }
 
-  async getOfferById(req: AuthenticatedRequest, res: Response):Promise<void> {
+  async getOfferById(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id!;
       const { offerId } = req.params;
@@ -64,7 +71,7 @@ export class InstructorCourseOfferController {
     }
   }
 
-  async deleteOffer(req: AuthenticatedRequest, res: Response):Promise<void>{
+  async deleteOffer(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id!;
       const { offerId } = req.params;

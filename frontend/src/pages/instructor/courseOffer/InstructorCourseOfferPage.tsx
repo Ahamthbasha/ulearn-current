@@ -5,6 +5,7 @@ import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { getInstructorCourseOffers, deleteInstructorCourseOffer } from "../../../api/action/InstructorActionApi";
 import { toast } from "react-toastify";
 import { Trash2, Edit2, Eye } from "lucide-react";
+import { useDebounce } from "../../../hooks/UseDebounce"; 
 import type { ICourseOffer } from "../interface/instructorInterface";
 
 const InstructorCourseOffersPage: React.FC = () => {
@@ -14,15 +15,24 @@ const InstructorCourseOffersPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 
+  // Debounce the search input with a 500ms delay
+  const debouncedSearch = useDebounce(search, 500);
+
   const fetchOffers = async () => {
     setLoading(true);
     try {
-      const { data, total } = await getInstructorCourseOffers(currentPage, limit, search);
+      const { data, total } = await getInstructorCourseOffers(
+        currentPage,
+        limit,
+        debouncedSearch, // Use debounced search value
+        statusFilter === "all" ? undefined : statusFilter
+      );
       setCourseOffers(data);
       setTotal(total);
     } catch (err: any) {
@@ -35,7 +45,7 @@ const InstructorCourseOffersPage: React.FC = () => {
 
   useEffect(() => {
     fetchOffers();
-  }, [currentPage, limit, search]);
+  }, [currentPage, limit, debouncedSearch, statusFilter]); // Use debouncedSearch instead of search
 
   const handleDeleteClick = (courseOfferId: string) => {
     setSelectedOfferId(courseOfferId);
@@ -101,6 +111,25 @@ const InstructorCourseOffersPage: React.FC = () => {
         <Link to="/instructor/addCourseOffer" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
           Add Offer
         </Link>
+        <div className="flex items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search by course name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="px-3 py-2 border rounded text-sm"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border rounded text-sm"
+          >
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
       </div>
       <InstructorDataTable
         title="My Course Offers"
@@ -111,9 +140,7 @@ const InstructorCourseOffersPage: React.FC = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
-        showSearch={true}
-        searchValue={search}
-        onSearchChange={setSearch}
+        showSearch={false} // Search is now handled inline
         actions={actions}
         emptyStateTitle="No Course Offers"
         emptyStateDescription="You have not created any course offers yet."

@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import DataTable from "../../../components/AdminComponents/DataTable"; 
-import { getCourseRequestList, verifyCourseOfferRequest } from "../../../api/action/AdminActionApi";
+import DataTable from "../../../components/AdminComponents/DataTable";
+import { getCourseRequestList } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
-import { Check, X, Eye } from "lucide-react";
-import type { ICourseOffer } from "../../../types/interfaces/IAdminInterface"; 
+import { Eye } from "lucide-react";
+import { useDebounce } from "../../../hooks/UseDebounce";
+import type { IAdminCourseOffer } from "../../../types/interfaces/IAdminInterface";
 
 const AdminCourseOfferListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [offers, setOffers] = useState<ICourseOffer[]>([]);
+  const [offers, setOffers] = useState<IAdminCourseOffer[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Debounce the search input with a 500ms delay
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchOffers = async () => {
     setLoading(true);
     try {
-      const { data, total } = await getCourseRequestList(page, limit, search);
+      const { data, total } = await getCourseRequestList(page, limit, debouncedSearch, status === "all" ? undefined : status);
       setOffers(data);
       setTotal(total);
     } catch (err: any) {
@@ -32,47 +37,22 @@ const AdminCourseOfferListPage: React.FC = () => {
 
   useEffect(() => {
     fetchOffers();
-  }, [page, search]);
-
-  const handleVerify = async (offer: ICourseOffer, approve: boolean) => {
-    const confirmMsg = approve ? "approve" : "reject";
-    const reason = approve ? "" : prompt("Please provide reason for rejection", offer.reviews || "") || "";
-    if (!approve && !reason) {
-      toast.info("Rejection reason is required");
-      return;
-    }
-    if (!window.confirm(`Are you sure you want to ${confirmMsg} this offer?`)) return;
-
-    try {
-      await verifyCourseOfferRequest({
-        offerId: offer._id,
-        status: approve ? "approved" : "rejected",
-        reviews: reason,
-      });
-      toast.success(`Offer ${approve ? "approved" : "rejected"} successfully`);
-      fetchOffers();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to update verification");
-    }
-  };
+  }, [page, debouncedSearch, status]);
 
   const columns = [
     { key: "serial", title: "S.No", render: (_: any, __: any, i: number) => (page - 1) * limit + i + 1 },
-    { 
-      key: "courseName", 
-      title: "Course", 
-      render: (_: any, r: ICourseOffer) => r.courseId?.courseName || r.courseId?.name || "-" 
+    {
+      key: "courseName",
+      title: "Course",
+      render: (_: any, r: IAdminCourseOffer) => r.courseName || "-",
     },
-    { 
-      key: "instructor", 
-      title: "Instructor", 
-      render: (_: any, r: ICourseOffer) => r.instructorId?.name || r.instructorId?.email || "-" 
+    {
+      key: "instructorName",
+      title: "Instructor",
+      render: (_: any, r: IAdminCourseOffer) => r.instructorName || "-",
     },
     { key: "discount", title: "Discount (%)", render: (v: number) => `${v}%` },
-    { key: "startDate", title: "Start Date", render: (v: string) => new Date(v).toLocaleDateString() },
-    { key: "endDate", title: "End Date", render: (v: string) => new Date(v).toLocaleDateString() },
     { key: "status", title: "Status", render: (v: string) => v.charAt(0).toUpperCase() + v.slice(1) },
-    { key: "reviews", title: "Admin Reviews", render: (v: string) => v || "-" },
   ];
 
   const actions = [
@@ -80,24 +60,8 @@ const AdminCourseOfferListPage: React.FC = () => {
       key: "view",
       label: "View",
       icon: <Eye size={16} />,
-      onClick: (record: ICourseOffer) => navigate(`/admin/courseOffer/${record._id}`),
+      onClick: (record: IAdminCourseOffer) => navigate(`/admin/courseOffer/${record.offerId}`),
       className: "bg-blue-500 hover:bg-blue-600 text-white",
-    },
-    {
-      key: "approve",
-      label: "Approve",
-      icon: <Check size={16} />,
-      onClick: (record: ICourseOffer) => handleVerify(record, true),
-      className: "bg-green-600 hover:bg-green-700 text-white",
-      condition: (record: ICourseOffer) => record.status === "pending",
-    },
-    {
-      key: "reject",
-      label: "Reject",
-      icon: <X size={16} />,
-      onClick: (record: ICourseOffer) => handleVerify(record, false),
-      className: "bg-red-600 hover:bg-red-700 text-white",
-      condition: (record: ICourseOffer) => record.status === "pending",
     },
   ];
 
@@ -106,6 +70,21 @@ const AdminCourseOfferListPage: React.FC = () => {
     totalPages: Math.ceil(total / limit),
     onPageChange: setPage,
   };
+
+  const filters = [
+    {
+      key: "status",
+      label: "Status",
+      options: [
+        { value: "all", label: "All" },
+        { value: "pending", label: "Pending" },
+        { value: "approved", label: "Approved" },
+        { value: "rejected", label: "Rejected" },
+      ],
+      value: status,
+      onChange: setStatus,
+    },
+  ];
 
   return (
     <div className="p-6">
@@ -118,9 +97,10 @@ const AdminCourseOfferListPage: React.FC = () => {
         pagination={pagination}
         loading={loading}
         error={error}
-        searchPlaceholder="Search course or instructor"
+        searchPlaceholder="Search based on course name"
         searchValue={search}
         onSearchChange={setSearch}
+        filters={filters}
       />
     </div>
   );

@@ -1,9 +1,9 @@
 import { Types } from "mongoose";
 import { ICourseOffer } from "../../models/courseOfferModel";
-import { IInstructorCourseOfferRepo } from "../../repositories/instructorRepository/interface/IInstructorCourseofferRepo"; 
+import { IInstructorCourseOfferRepo } from "../../repositories/instructorRepository/interface/IInstructorCourseofferRepo";
 import { IInstructorCourseOfferService } from "./interface/IInstructorCourseOfferService";
 import { ICourseRepository } from "../../repositories/interfaces/ICourseRepository";
-import { CourseOfferListDTO,CourseOfferDetailDTO } from "../../dto/instructorDTO/courseOfferDTO";
+import { CourseOfferListDTO, CourseOfferDetailDTO } from "../../dto/instructorDTO/courseOfferDTO";
 import { CourseOfferMapper } from "../../mappers/instructorMapper/courseOfferMapper";
 
 export class InstructorCourseOfferService implements IInstructorCourseOfferService {
@@ -60,7 +60,6 @@ export class InstructorCourseOfferService implements IInstructorCourseOfferServi
     const existingOffer = await this._courseOfferRepo.findById(offerId);
     if (!existingOffer) throw new Error("Offer not found");
     if (existingOffer.instructorId.toString() !== instructorId) throw new Error("Unauthorized");
-    if (existingOffer.status === "approved") throw new Error("Cannot edit approved offer");
 
     const updatedOffer = await this._courseOfferRepo.updateById(offerId, {
       discountPercentage,
@@ -97,9 +96,10 @@ export class InstructorCourseOfferService implements IInstructorCourseOfferServi
     instructorId: string,
     page: number,
     limit: number,
-    search?: string
+    search?: string,
+    status?: string
   ): Promise<{ data: CourseOfferListDTO[]; total: number }> {
-    const result = await this._courseOfferRepo.getOffersByInstructor(instructorId, page, limit, search);
+    const result = await this._courseOfferRepo.getOffersByInstructor(instructorId, page, limit, search, status);
     return {
       data: CourseOfferMapper.toCourseOfferListDTOs(result.data),
       total: result.total,

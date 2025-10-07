@@ -90,7 +90,9 @@ const EditInstructorCourseOfferPage: React.FC = () => {
       toast.success("Course offer updated successfully");
       navigate("/instructor/courseOffers");
     } catch (err: any) {
-      toast.error(err.message || "Failed to update offer");
+      // Check if the error is an AxiosError with a response and data
+      const errorMessage = err.response?.data?.message || err.message || "Failed to update offer";
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }

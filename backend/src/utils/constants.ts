@@ -760,7 +760,14 @@ export const COUPONMESSAGE = {
 export const COURSE_OFFER_MESSAGE = {
   COURSE_OFFER_CREATED:"Course offer created successfully",
   COURSE_OFFER_EDITED:"Course offer edited successfully",
-   COURSE_OFFER_DELETED:"Course offer deleted successfully"
+  COURSE_OFFER_DELETED:"Course offer deleted successfully",
+  INVALID_INPUT: "Invalid input data", 
+  OFFER_NOT_FOUND: "Offer not found",
+  GENERIC: "An error occurred while processing the request",
+  GET_OFFER_REQUESTS: "Course offer requests retrieved successfully",
+  VERIFY_OFFER: (status: string) => `Offer ${status}`,
+  GET_OFFER_BY_ID: "Course offer retrieved successfully",
+
 }
 
 export const CATEGORY_OFFER_MESSAGE = {
@@ -798,4 +805,22 @@ export const LearningPathSuccessMessages = {
   RESUBMITTED : "Learning path resubmitted for admin review",
   APPROVED : "Learning path approved by admin",
   REJECTED : "Learning path rejected by admin"
+};
+
+
+
+
+export const COURSE_OFFER_SUCCESS_MESSAGE = {
+  COURSE_OFFER_CREATED: "Course offer created successfully",
+  COURSE_OFFER_EDITED: "Course offer edited successfully",
+  COURSE_OFFER_DELETED: "Course offer deleted successfully",
+  GET_OFFER_REQUESTS: "Course offer requests retrieved successfully",
+  VERIFY_OFFER: (status: string) => `Offer ${status}`,
+  GET_OFFER_BY_ID: "Course offer retrieved successfully",
+};
+
+export const COURSE_OFFER_ERROR_MESSAGE = {
+  INVALID_INPUT: "Invalid input data",
+  OFFER_NOT_FOUND: "Offer not found",
+  GENERIC: "An error occurred while processing the request",
 };

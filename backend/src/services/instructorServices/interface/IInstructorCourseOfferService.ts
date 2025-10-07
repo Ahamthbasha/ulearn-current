@@ -30,7 +30,8 @@ export interface IInstructorCourseOfferService {
     instructorId: string,
     page: number,
     limit: number,
-    search?: string
+    search?: string,
+    status?: string
   ): Promise<{ data: CourseOfferListDTO[]; total: number }>;
 
   deleteCourseOffer(instructorId: string, offerId: string): Promise<void>;

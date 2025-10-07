@@ -18,31 +18,30 @@ export interface ICoupon {
   maxDiscount: number;
 }
 
-export interface ICourseOffer {
-  _id: string;
-  courseId: {
-    _id: string;
-    courseName: string;
-    name?: string;  // In case your backend returns 'name' or 'courseName'
-    id?: string;
-  };
-  instructorId: {
-    _id: string;
-    name: string;
-    email?: string;
-  };
-  discountPercentage: number;
-  startDate: string | Date;
-  endDate: string | Date;
-  isActive: boolean;
+export interface IAdminCourseOffer {
+  offerId: string;
+  courseId: string;
+  courseName: string;
+  instructorId: string;
+  instructorName: string;
+  discount: number;
   status: "pending" | "approved" | "rejected";
-  reviews?: string;
-  createdAt: string;
-  updatedAt: string;
-  discountedPrice?: number | null;
-  id?: string;
 }
 
+export interface IAdminCourseOfferDetail{
+  courseOfferId: string;
+  courseId: string;
+  courseName: string;
+  instructorId: string;
+  instructorName: string;
+  discount: number;
+  startDate: string;
+  endDate: string;
+  status: "pending" | "approved" | "rejected";
+  review: string;
+  coursePrice:number;
+  discountedPrice:number;
+}
 
 export interface ICourseAdmin {
   courseId: string;

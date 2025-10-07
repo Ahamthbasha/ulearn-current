@@ -949,30 +949,6 @@ const adminCourseOfferService: IAdminCourseOfferService =
 const adminCourseOfferController: IAdminCourseOfferController =
   new AdminCourseOfferController(adminCourseOfferService);
 
-/////////// admin category offer controller
-
-// import { IAdminCategoryOfferRepo } from "../repositories/adminRepository/interface/IAdminCategoryOfferRepo";
-// import { AdminCategoryOfferRepo } from "../repositories/adminRepository/adminCategoryOfferRepo";
-
-// import { IAdminCategoryOfferService } from "../services/adminServices/interface/IAdminCategoryOfferService";
-// import { AdminCategoryOfferService } from "../services/adminServices/adminCategoryOfferService";
-
-// import { IAdminCategoryOfferController } from "../controllers/adminControllers/interface/IAdminCategoryOfferController";
-// import { AdminCategoryOfferController } from "../controllers/adminControllers/adminCategoryOfferController";
-
-// const adminCategoryOfferRepo: IAdminCategoryOfferRepo =
-//   new AdminCategoryOfferRepo();
-
-// const adminCategoryOfferService: IAdminCategoryOfferService =
-//   new AdminCategoryOfferService(
-//     new CourseRepository(),
-//     adminCategoryOfferRepo,
-//     adminCategoryRepository,
-//     adminCourseOfferRepo
-//   );
-
-// const adminCategoryOfferController: IAdminCategoryOfferController =
-//   new AdminCategoryOfferController(adminCategoryOfferService);
 
 ////////////////////////////instructor course offer //////////////
 import { IInstructorCourseOfferRepo } from "../repositories/instructorRepository/interface/IInstructorCourseofferRepo";
@@ -1122,9 +1098,6 @@ export {
 
   //admin course offer controller
   adminCourseOfferController,
-
-  //admin categoryOffer controller
-  // adminCategoryOfferController,
 
   //instructor learning path controller,
   instructorLearningPathController,
