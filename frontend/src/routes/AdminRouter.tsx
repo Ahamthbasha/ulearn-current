@@ -29,12 +29,13 @@ import WithdrawalDetailsPage from "../pages/admin/withdrawal/WithdrawalDetails";
 import CouponListPage from "../pages/admin/Coupon/CouponManagementPage";
 import AddCouponPage from "../pages/admin/Coupon/AddCoupon";
 import EditCouponPage from "../pages/admin/Coupon/EditCoupon";
-import CourseOffersPage from "../pages/admin/courseOffer/CourseOffersPage";
-import AddCourseOfferPage from "../pages/admin/courseOffer/AddCourseOfferPage";
-import EditCourseOfferPage from "../pages/admin/courseOffer/EditCourseOfferPage";
 import CategoryOfferPage from "../pages/admin/categoryOffer/CategoryOfferPage";
 import AddCategoryOfferPage from "../pages/admin/categoryOffer/AddCategoryOffer";
 import EditCategoryOfferPage from "../pages/admin/categoryOffer/EditCategoryOffer";
+import LearningPathListPage from "../pages/admin/learningPath/LearningPathListPage";
+import LearningPathDetailPage from "../pages/admin/learningPath/LearningPathDetailPage";
+import AdminCourseOfferDetailPage from "../pages/admin/courseOffer/AdminCourseOfferDetailPage";
+import AdminCourseOfferListPage from "../pages/admin/courseOffer/CourseOffersPage";
 
 //wallet
 
@@ -99,15 +100,19 @@ const AdminRouter = () => {
 
           {/* course offer */}
 
-          <Route path="courseOffers" element={<CourseOffersPage/>}/>
-          <Route path="addCourseOffer" element={<AddCourseOfferPage/>}/>
-          <Route path="editCourseOffer/:offerId" element={<EditCourseOfferPage/>}/>
+          <Route path="courseOffers" element={<AdminCourseOfferListPage/>}/>
+          <Route path="courseOffer/:offerId" element={<AdminCourseOfferDetailPage/>}/>
           
           {/* category offer */}
 
           <Route path="categoryOffers" element={<CategoryOfferPage/>}/>
           <Route path="addCategoryOffer" element={<AddCategoryOfferPage/>}/>
           <Route path="editCategoryOffer/:categoryOfferId" element={<EditCategoryOfferPage/>}/>
+
+          {/* learning path */}
+
+          <Route path="learningPaths" element={<LearningPathListPage/>}/>
+          <Route path="learningPaths/:learningPathId" element={<LearningPathDetailPage/>}/>
         </Route>
 
       </Route>

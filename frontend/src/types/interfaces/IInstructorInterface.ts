@@ -1,4 +1,4 @@
-export interface LearningPathItem {
+export interface LearningPathItemDTO {
   courseId: string;
   order: number;
   courseName?: string;
@@ -11,12 +11,14 @@ export interface LearningPathDTO {
   title: string;
   description: string;
   instructorId: string;
-  items: LearningPathItem[];
+  items: LearningPathItemDTO[];
   totalAmount:number;
   isPublished: boolean;
   publishDate?: string;
   createdAt: string;
   updatedAt: string;
+  status: "draft" | "pending" | "accepted" | "rejected"; 
+  adminReview?: string;
 }
 
 export interface CreateLearningPathRequest {
@@ -36,4 +38,22 @@ export interface UpdateLearningPathRequest {
 export interface CourseDTO {
   courseId: string;
   courseName: string;
+}
+
+
+export interface ICourseOffer {
+  _id: string;
+  courseId: {
+    _id: string;
+    courseName: string;
+    id?: string;
+  };
+  discountPercentage: number;
+  startDate: string | Date;
+  endDate: string | Date;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  discountedPrice?: number | null;
+  id?: string;
 }

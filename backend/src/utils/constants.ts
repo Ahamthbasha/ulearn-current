@@ -774,12 +774,17 @@ export const CATEGORY_OFFER_MESSAGE = {
 
 
 export const LearningPathErrorMessages = {
+  UNVERIFIED_COURSES :"Unverified courses",
+  INVALID_STATUS : "Invalid status",
   MISSING_FIELDS: "Missing required fields",
   ALREADY_CREATED: "Learning path with this title already exists",
   NOT_FOUND: "Learning path not found",
   INVALID_COURSES: "Invalid courses provided",
   PUBLISH_CONDITION: "Learning path must have at least one course to publish",
   INVALID_PUBLISH_DATE: "Publish date must be in the future",
+  ALREADY_SUBMITTED:"Learning path already submitted for review",
+  NOT_SUBMITTED:"Learning path not submitted for review",
+  ALREADY_VERIFIED:"Learning path already verified",
 };
 
 export const LearningPathSuccessMessages = {
@@ -789,4 +794,8 @@ export const LearningPathSuccessMessages = {
   RETRIEVED: "Learning path retrieved successfully",
   PUBLISHED: "Learning path published successfully",
   SCHEDULED: "Learning path scheduled for publishing",
+  SUBMITTED : "Learning path submitted for admin review",
+  RESUBMITTED : "Learning path resubmitted for admin review",
+  APPROVED : "Learning path approved by admin",
+  REJECTED : "Learning path rejected by admin"
 };

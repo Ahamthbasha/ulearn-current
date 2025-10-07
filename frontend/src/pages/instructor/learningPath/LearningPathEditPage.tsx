@@ -5,20 +5,25 @@ import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
 import CourseSelector from "../../../components/InstructorComponents/CourseSelector";
 import { getLearningPathById, updateLearningPath } from "../../../api/action/InstructorActionApi";
-import type { UpdateLearningPathRequest, LearningPathDTO } from "../../../types/interfaces/IInstructorInterface";
+import type { UpdateLearningPathRequest } from "../../../types/interfaces/IInstructorInterface";
+
+const isValidObjectId = (id: string): boolean => {
+  return /^[0-9a-fA-F]{24}$/.test(id);
+};
 
 const validationSchema = Yup.object({
-  title: Yup.string().required("Title is required"),
-  description: Yup.string().required("Description is required"),
+  title: Yup.string().required("Title is required").trim(),
+  description: Yup.string().required("Description is required").trim(),
   items: Yup.array()
     .of(
       Yup.object({
-        courseId: Yup.string().required("Course is required"),
+        courseId: Yup.string()
+          .required("Course is required")
+          .test("is-valid-objectid", "Invalid course ID format", (value) => isValidObjectId(value || "")),
         order: Yup.number().min(1, "Order must be at least 1").required("Order is required"),
       })
     )
     .min(1, "At least one course is required"),
-  publishDate: Yup.string().optional().nullable(),
 });
 
 const LearningPathEditPage: React.FC = () => {
@@ -31,18 +36,12 @@ const LearningPathEditPage: React.FC = () => {
     const fetchLearningPath = async () => {
       if (!learningPathId) return;
       try {
-        const response = await getLearningPathById(learningPathId);
-        if (response.success && response.data) {
-          const learningPath: LearningPathDTO = response.data;
-          setInitialValues({
-            title: learningPath.title,
-            description: learningPath.description,
-            items: learningPath.items,
-            publishDate: learningPath.publishDate,
-          });
-        } else {
-          setError("Invalid API response");
-        }
+        const learningPath = await getLearningPathById(learningPathId);
+        setInitialValues({
+          title: learningPath.title,
+          description: learningPath.description,
+          items: learningPath.items,
+        });
       } catch (err: any) {
         setError(err.message || "Failed to load learning path");
       }
@@ -53,7 +52,16 @@ const LearningPathEditPage: React.FC = () => {
   const handleSubmit = async (values: UpdateLearningPathRequest) => {
     if (!learningPathId) return;
     try {
-      await updateLearningPath(learningPathId, values);
+      const payload: UpdateLearningPathRequest = {
+        ...values,
+        title: values.title?.trim(),
+        description: values.description?.trim(),
+        items: values.items?.map((item) => ({
+          courseId: item.courseId,
+          order: item.order,
+        })),
+      };
+      await updateLearningPath(learningPathId, payload);
       navigate("/instructor/learningPath");
     } catch (err: any) {
       setError(err.message || "Failed to update learning path");
@@ -82,11 +90,6 @@ const LearningPathEditPage: React.FC = () => {
               placeholder="Enter description"
             />
             <CourseSelector name="items" label="Courses" />
-            <InputField
-              name="publishDate"
-              label="Publish Date (Optional)"
-              type="datetime-local"
-            />
             <div className="flex space-x-4">
               <button
                 type="submit"

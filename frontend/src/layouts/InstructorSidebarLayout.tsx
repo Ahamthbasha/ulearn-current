@@ -15,6 +15,7 @@ const navItems = [
   { name: "Memberships", path: "/instructor/membership", icon: "🏅" },
   { name: "PurchaseHistory", path: "/instructor/purchaseHistory", icon: "🧾" },
   { name: "LearningPath", path: "/instructor/learningPath", icon: "🗺️" },
+  { name: "courseOffer", path: "/instructor/courseOffers", icon: "🎁" }
 ];
 
 const InstructorSidebarLayout = () => {

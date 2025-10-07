@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getLearningPathById, publishLearningPath } from "../../../api/action/InstructorActionApi";
+import { getLearningPathById, publishLearningPath, submitLearningPathVerification, resubmitLearningPathVerification } from "../../../api/action/InstructorActionApi";
 import type { LearningPathDTO } from "../../../types/interfaces/IInstructorInterface";
 
 const LearningPathViewPage: React.FC = () => {
@@ -10,6 +10,7 @@ const LearningPathViewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [publishing, setPublishing] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchLearningPath = async () => {
@@ -20,12 +21,7 @@ const LearningPathViewPage: React.FC = () => {
       }
       try {
         const response = await getLearningPathById(learningPathId);
-        console.log("Fetched response:", response);
-        if (response.success && response.data) {
-          setLearningPath({ ...response.data, items: response.data.items ?? [] });
-        } else {
-          setError("Invalid API response");
-        }
+        setLearningPath({ ...response, items: response.items ?? [] });
         setError(null);
       } catch (err: any) {
         setError(err.message || "Failed to load learning path");
@@ -45,14 +41,48 @@ const LearningPathViewPage: React.FC = () => {
     try {
       await publishLearningPath(learningPathId);
       const response = await getLearningPathById(learningPathId);
-      if (response?.success && response?.data) {
-        setLearningPath({ ...response.data, items: response.data.items ?? [] });
-      }
+      setLearningPath({ ...response, items: response.items ?? [] });
       setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to publish learning path");
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!learningPathId) {
+      setError("Invalid learning path ID");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitLearningPathVerification(learningPathId);
+      const response = await getLearningPathById(learningPathId);
+      setLearningPath({ ...response, items: response.items ?? [] });
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to submit learning path");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResubmit = async () => {
+    if (!learningPathId) {
+      setError("Invalid learning path ID");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await resubmitLearningPathVerification(learningPathId);
+      const response = await getLearningPathById(learningPathId);
+      setLearningPath({ ...response, items: response.items ?? [] });
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to resubmit learning path");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -91,12 +121,17 @@ const LearningPathViewPage: React.FC = () => {
   }
 
   const getStatusBadge = () => {
-    if (learningPath.isPublished) {
-      return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Published</span>;
-    } else if (learningPath.publishDate) {
-      return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Scheduled</span>;
-    } else {
-      return <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Unpublished</span>;
+    switch (learningPath.status) {
+      case "draft":
+        return <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Draft</span>;
+      case "pending":
+        return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Pending</span>;
+      case "accepted":
+        return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Accepted</span>;
+      case "rejected":
+        return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">Rejected</span>;
+      default:
+        return <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Unknown</span>;
     }
   };
 
@@ -106,25 +141,31 @@ const LearningPathViewPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900">{learningPath.title}</h1>
-          {getStatusBadge()}
+          <div className="flex items-center space-x-2">
+            {getStatusBadge()}
+            {learningPath.isPublished && (
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Published</span>
+            )}
+            {!learningPath.isPublished && (
+              <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Unpublished</span>
+            )}
+          </div>
         </div>
         <p className="text-gray-700 text-lg mb-4">{learningPath.description}</p>
-        
+        {learningPath.adminReview && learningPath.status === "rejected" && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-600 font-medium">Admin Review: {learningPath.adminReview}</p>
+          </div>
+        )}
         {/* Metadata */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
-          {learningPath.publishDate && (
-            <div>
-              <span className="font-medium">Publish Date:</span>{" "}
-              {learningPath.publishDate}
-            </div>
-          )}
           <div>
             <span className="font-medium">Created:</span>{" "}
-            {learningPath.createdAt}
+            {new Date(learningPath.createdAt).toLocaleString()}
           </div>
           <div>
             <span className="font-medium">Last Updated:</span>{" "}
-            {learningPath.updatedAt}
+            {new Date(learningPath.updatedAt).toLocaleString()}
           </div>
         </div>
       </div>
@@ -141,7 +182,6 @@ const LearningPathViewPage: React.FC = () => {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Courses ({learningPath.items?.length ?? 0})
         </h2>
-        
         {learningPath.items?.length > 0 ? (
           <div className="space-y-4">
             {learningPath.items.map((item, index) => (
@@ -161,7 +201,6 @@ const LearningPathViewPage: React.FC = () => {
                     }}
                   />
                 )}
-                
                 {/* Course Info */}
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
@@ -211,7 +250,33 @@ const LearningPathViewPage: React.FC = () => {
         >
           Edit
         </button>
-        {!learningPath.isPublished && !learningPath.publishDate && (
+        {learningPath.status === "draft" && (
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !learningPath.items || learningPath.items.length === 0}
+            className={`px-6 py-2 rounded-lg transition font-medium ${
+              submitting || !learningPath.items || learningPath.items.length === 0
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-purple-500 hover:bg-purple-600 text-white"
+            }`}
+          >
+            {submitting ? "Submitting..." : "Submit for Review"}
+          </button>
+        )}
+        {learningPath.status === "rejected" && (
+          <button
+            onClick={handleResubmit}
+            disabled={submitting || !learningPath.items || learningPath.items.length === 0}
+            className={`px-6 py-2 rounded-lg transition font-medium ${
+              submitting || !learningPath.items || learningPath.items.length === 0
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-purple-500 hover:bg-purple-600 text-white"
+            }`}
+          >
+            {submitting ? "Resubmitting..." : "Resubmit"}
+          </button>
+        )}
+        {learningPath.status === "accepted" && !learningPath.isPublished && (
           <button
             onClick={handlePublish}
             disabled={publishing || !learningPath.items || learningPath.items.length === 0}

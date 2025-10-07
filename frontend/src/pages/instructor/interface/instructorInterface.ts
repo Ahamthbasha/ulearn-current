@@ -194,3 +194,33 @@ export interface InstructorData {
   isBlocked: boolean;
   isVerified: boolean;
 }
+
+
+
+export interface ICourseOffer {
+  courseOfferId: string;
+  courseId: string;
+  courseName: string;
+  discount: number;
+  status: "pending" | "approved" | "rejected";
+  startDate: string;
+  endDate: string; 
+}
+
+export interface ICourseOfferDetails {
+  courseOfferId: string;
+  courseId: string;
+  courseName : string;
+  courseOriginalPrice: number;
+  discount: number;
+  courseDiscountPrice: number;
+  startDate: string; 
+  endDate: string; 
+  status: string;
+  reviews: string;
+}
+
+export interface ICourses {
+  courseId: string;
+  courseName: string;
+}

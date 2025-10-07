@@ -1,190 +1,129 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import DataTable from "../../../components/AdminComponents/DataTable";
-import { type Column, type ActionButton } from "../../../components/AdminComponents/DataTable";
-import { getCourseOffers, toggleCourseOfferActive, deleteCourseOffer } from "../../../api/action/AdminActionApi";
-import type { ICourseOffer } from "../../../types/interfaces/IAdminInterface";
+import DataTable from "../../../components/AdminComponents/DataTable"; 
+import { getCourseRequestList, verifyCourseOfferRequest } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
-import { Edit2, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useDebounce } from "../../../hooks/UseDebounce"; 
-import ConfirmationModal from "../../../components/common/ConfirmationModal"; 
+import { Check, X, Eye } from "lucide-react";
+import type { ICourseOffer } from "../../../types/interfaces/IAdminInterface"; 
 
-const CourseOffersPage: React.FC = () => {
+const AdminCourseOfferListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [courseOffers, setCourseOffers] = useState<ICourseOffer[]>([]);
-  const [total, setTotal] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [limit] = useState<number>(10);
-  const [search, setSearch] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [offers, setOffers] = useState<ICourseOffer[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
-  const [offerToToggle, setOfferToToggle] = useState<ICourseOffer | null>(null); // Track the offer to toggle
-  const [offerToDelete, setOfferToDelete] = useState<ICourseOffer | null>(null); // Track the offer to delete
 
-  // Use debouncing for search input
-  const debouncedSearch = useDebounce(search, 500);
-
-  const fetchCourseOffers = async () => {
+  const fetchOffers = async () => {
     setLoading(true);
     try {
-      const response = await getCourseOffers(currentPage, limit, debouncedSearch);
-      setCourseOffers(response.data);
-      setTotal(response.total || 0);
-    } catch (err) {
-      setError((err as Error).message);
-      toast.error((err as Error).message);
+      const { data, total } = await getCourseRequestList(page, limit, search);
+      setOffers(data);
+      setTotal(total);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch requests");
+      toast.error(err.message || "Failed to fetch requests");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCourseOffers();
-  }, [currentPage, debouncedSearch]);
+    fetchOffers();
+  }, [page, search]);
 
-  const handleToggle = (offer: ICourseOffer) => {
-    setOfferToToggle(offer);
-    setIsModalOpen(true);
-  };
+  const handleVerify = async (offer: ICourseOffer, approve: boolean) => {
+    const confirmMsg = approve ? "approve" : "reject";
+    const reason = approve ? "" : prompt("Please provide reason for rejection", offer.reviews || "") || "";
+    if (!approve && !reason) {
+      toast.info("Rejection reason is required");
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to ${confirmMsg} this offer?`)) return;
 
-  const confirmToggle = async () => {
-    if (offerToToggle) {
-      try {
-        await toggleCourseOfferActive(offerToToggle._id);
-        toast.success("Course offer toggled successfully");
-        fetchCourseOffers();
-      } catch (err) {
-        toast.error((err as Error).message);
-      } finally {
-        setIsModalOpen(false);
-        setOfferToToggle(null);
-      }
+    try {
+      await verifyCourseOfferRequest({
+        offerId: offer._id,
+        status: approve ? "approved" : "rejected",
+        reviews: reason,
+      });
+      toast.success(`Offer ${approve ? "approved" : "rejected"} successfully`);
+      fetchOffers();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update verification");
     }
   };
 
-  const handleDelete = (offer: ICourseOffer) => {
-    setOfferToDelete(offer);
-    setIsModalOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (offerToDelete) {
-      try {
-        await deleteCourseOffer(offerToDelete._id);
-        toast.success("Course offer deleted successfully");
-        fetchCourseOffers();
-      } catch (err) {
-        toast.error((err as Error).message);
-      } finally {
-        setIsModalOpen(false);
-        setOfferToDelete(null);
-      }
-    }
-  };
-
-  const cancelAction = () => {
-    setIsModalOpen(false);
-    setOfferToToggle(null);
-    setOfferToDelete(null);
-  };
-
-  const columns: Column<ICourseOffer>[] = [
-    {
-      key: "serialNo",
-      title: "S.No",
-      render: (_, __, index) => (currentPage - 1) * limit + index + 1, // Calculate serial number
+  const columns = [
+    { key: "serial", title: "S.No", render: (_: any, __: any, i: number) => (page - 1) * limit + i + 1 },
+    { 
+      key: "courseName", 
+      title: "Course", 
+      render: (_: any, r: ICourseOffer) => r.courseId?.courseName || r.courseId?.name || "-" 
     },
-    {
-      key: "courseName",
-      title: "Course",
-      render: (_, record) => record.courseId.courseName,
+    { 
+      key: "instructor", 
+      title: "Instructor", 
+      render: (_: any, r: ICourseOffer) => r.instructorId?.name || r.instructorId?.email || "-" 
     },
-    { key: "discountPercentage", title: "Discount (%)", render: (value) => `${value}%` },
-    { key: "startDate", title: "Start Date", render: (value) => new Date(value).toLocaleDateString() },
-    { key: "endDate", title: "End Date", render: (value) => new Date(value).toLocaleDateString() },
-    {
-      key: "isActive",
-      title: "Status",
-      render: (value) => (value ? "Active" : "Inactive"),
-    },
+    { key: "discount", title: "Discount (%)", render: (v: number) => `${v}%` },
+    { key: "startDate", title: "Start Date", render: (v: string) => new Date(v).toLocaleDateString() },
+    { key: "endDate", title: "End Date", render: (v: string) => new Date(v).toLocaleDateString() },
+    { key: "status", title: "Status", render: (v: string) => v.charAt(0).toUpperCase() + v.slice(1) },
+    { key: "reviews", title: "Admin Reviews", render: (v: string) => v || "-" },
   ];
 
-  const actions: ActionButton<ICourseOffer>[] = [
+  const actions = [
     {
-      key: "edit",
-      label: "Edit",
-      icon: <Edit2 size={16} />,
-      onClick: (record) => navigate(`/admin/editCourseOffer/${record._id}`),
+      key: "view",
+      label: "View",
+      icon: <Eye size={16} />,
+      onClick: (record: ICourseOffer) => navigate(`/admin/courseOffer/${record._id}`),
       className: "bg-blue-500 hover:bg-blue-600 text-white",
     },
     {
-      key: "toggle",
-      label: (record) => (record.isActive ? "Deactivate" : "Activate"),
-      icon: (record) => (record.isActive ? <ToggleLeft size={16} /> : <ToggleRight size={16} />),
-      onClick: handleToggle,
-      className: (record) =>
-        record.isActive ? "bg-yellow-500 hover:bg-yellow-600 text-white" : "bg-green-500 hover:bg-green-600 text-white",
+      key: "approve",
+      label: "Approve",
+      icon: <Check size={16} />,
+      onClick: (record: ICourseOffer) => handleVerify(record, true),
+      className: "bg-green-600 hover:bg-green-700 text-white",
+      condition: (record: ICourseOffer) => record.status === "pending",
     },
     {
-      key: "delete",
-      label: "Delete",
-      icon: <Trash2 size={16} />,
-      onClick: handleDelete,
-      className: "bg-red-500 hover:bg-red-600 text-white",
+      key: "reject",
+      label: "Reject",
+      icon: <X size={16} />,
+      onClick: (record: ICourseOffer) => handleVerify(record, false),
+      className: "bg-red-600 hover:bg-red-700 text-white",
+      condition: (record: ICourseOffer) => record.status === "pending",
     },
   ];
 
-  const totalPages = Math.ceil(total / limit);
+  const pagination = {
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+    onPageChange: setPage,
+  };
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-6">
       <DataTable
-        data={courseOffers}
+        title="Course Offer Requests"
+        description="List of course offers pending for admin verification"
+        data={offers}
         columns={columns}
+        actions={actions}
+        pagination={pagination}
         loading={loading}
         error={error}
-        title="Course Offers"
-        description="Manage course offers with discounts and validity periods"
-        actions={actions}
-        onRetry={fetchCourseOffers}
-        emptyStateTitle="No Course Offers"
-        emptyStateDescription="No course offers have been created yet."
-        pagination={{
-          currentPage,
-          totalPages,
-          onPageChange: (page) => setCurrentPage(page),
-        }}
+        searchPlaceholder="Search course or instructor"
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by course name..."
-        leftSideHeaderContent={
-          <Link
-            to="/admin/addCourseOffer"
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
-          >
-            Add Course Offer
-          </Link>
-        }
-      />
-      <ConfirmationModal
-        isOpen={isModalOpen}
-        message={
-          offerToToggle
-            ? `Are you sure you want to ${offerToToggle.isActive ? "deactivate" : "activate"} this course offer?`
-            : offerToDelete
-            ? "Are you sure you want to delete this course offer? This action cannot be undone."
-            : ""
-        }
-        title={offerToToggle ? "TOGGLE COURSE OFFER" : "DELETE COURSE OFFER"}
-        confirmText={offerToToggle ? (offerToToggle.isActive ? "Deactivate" : "Activate") : "Delete"}
-        cancelText="Cancel"
-        onConfirm={offerToToggle ? confirmToggle : confirmDelete}
-        onCancel={cancelAction}
       />
     </div>
   );
 };
 
-export default CourseOffersPage;
+export default AdminCourseOfferListPage;

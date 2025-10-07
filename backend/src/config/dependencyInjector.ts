@@ -46,20 +46,20 @@ const studentController: IStudentController = new StudentController(
   otpService,
   otpGenerateService,
   jwtService,
-  emailService,
+  emailService
 );
 
 ///////INSTRUCTOR REPOSITORY//////////
 const instructorRepository: IInstructorRepository = new InstructorRepository();
 const instructorService: IInstructorService = new InstructorService(
-  instructorRepository,
+  instructorRepository
 );
 const instructorController: IInstructorController = new InstructorController(
   instructorService,
   otpService,
   otpGenerateService,
   jwtService,
-  emailService,
+  emailService
 );
 
 ///////////////ADMIN REPOSITORY///////////
@@ -77,12 +77,12 @@ const adminInstructorRepository: IAdminInstructorRepository =
 
 const adminRespository: IAdminRepository = new AdminRespository(
   adminUserRepository,
-  adminInstructorRepository,
+  adminInstructorRepository
 );
 const adminService: IAdminService = new AdminService(adminRespository);
 const adminController: IAdminController = new AdminController(
   adminService,
-  jwtService,
+  jwtService
 );
 
 //////////////////////admin verification //////////////////////////////////////////
@@ -130,7 +130,7 @@ import { StudentProfileController } from "../controllers/studentControllers/stud
 const studentProfileRepo: IStudentProfileRepository =
   new studentProfileRepository();
 const studentProfileService: IStudentProfileService = new StudentProfileService(
-  studentProfileRepo,
+  studentProfileRepo
 );
 const studentProfileController: IStudentProfileController =
   new StudentProfileController(studentProfileService);
@@ -165,7 +165,7 @@ import { AdminCategoryContoller } from "../controllers/adminControllers/adminCat
 const adminCategoryRepository: IAdminCategoryRepository =
   new AdminCategoryRepository();
 const adminCategoryServie: IAdminCategoryService = new AdminCategoryService(
-  adminCategoryRepository,
+  adminCategoryRepository
 );
 const adminCategoryController: IAdminCategoryController =
   new AdminCategoryContoller(adminCategoryServie);
@@ -226,7 +226,7 @@ const instructorQuizRepository: IInstructorQuizRepository =
   new InstructorQuizRepository();
 
 const instructorQuizService: IInstructorQuizService = new InstructorQuizService(
-  instructorQuizRepository,
+  instructorQuizRepository
 );
 
 const instructorQuizController: IInstructorQuizController =
@@ -241,7 +241,7 @@ import { IInstructorCourseService } from "../services/instructorServices/interfa
 import { InstructorCourseService } from "../services/instructorServices/InstructorCourseService";
 
 import { IInstructorCourseController } from "../controllers/instructorController/interfaces/IInstructorCourseController";
-import { InstructorCourseController } from "../controllers/instructorController/InstructorCourseController"; 
+import { InstructorCourseController } from "../controllers/instructorController/InstructorCourseController";
 
 import { CoursePublishCron } from "../cron/coursePublishCron";
 
@@ -252,14 +252,14 @@ const instructorCourseService: IInstructorCourseService =
   new InstructorCourseService(
     instructorCourseRepository,
     instructorChapterRepository,
-    instructorQuizRepository,
+    instructorQuizRepository
   );
 
 const instructorCourseController: IInstructorCourseController =
   new InstructorCourseController(instructorCourseService);
 
-const coursePublishCron = new CoursePublishCron(instructorCourseRepository)
-coursePublishCron.start()
+const coursePublishCron = new CoursePublishCron(instructorCourseRepository);
+coursePublishCron.start();
 
 ////////////////////////ADMIN COURSE CONTROLLER/////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -276,15 +276,15 @@ import { QuizDetailRepository } from "../repositories/QuizRepository";
 
 const adminCourseRepository: IAdminCourseRepository = new AdminCourseRepository(
   new ChapterDetailRepository(),
-  new QuizDetailRepository(),
+  new QuizDetailRepository()
 );
 
 const adminCourseService: IAdminCourseService = new AdminCourseService(
-  adminCourseRepository,
+  adminCourseRepository
 );
 
 const adminCourseController: IAdminCourseController = new AdminCourseController(
-  adminCourseService,
+  adminCourseService
 );
 
 ///////////////////////////STUDENT COURSE CONTROLLER//////////////////////////////////////////////////////////////////////////////////////////
@@ -308,7 +308,8 @@ import { IStudentCourseOfferRepository } from "../repositories/studentRepository
 
 import { StudentCourseOfferRepository } from "../repositories/studentRepository/studentCourseOfferRepo";
 
-const studentCourseOfferRepo : IStudentCourseOfferRepository = new StudentCourseOfferRepository()
+const studentCourseOfferRepo: IStudentCourseOfferRepository =
+  new StudentCourseOfferRepository();
 
 const chapterReadOnlyRepository: IChapterReadOnlyRepository =
   new ChapterReadOnlyRepository();
@@ -323,7 +324,7 @@ const studentCourseRepository: IStudentCourseRepository =
   );
 
 const studentCourseService: IStudentCourseService = new StudentCourseService(
-  studentCourseRepository,
+  studentCourseRepository
 );
 
 const studentCourseController: IStudentCourseController =
@@ -353,7 +354,7 @@ import { IStudentCartRepository } from "../repositories/interfaces/IStudentCartR
 import { StudentCartRepository } from "../repositories/studentRepository/studentCartRepository";
 
 import { IStudentCartService } from "../services/studentServices/interface/IStudentCartService";
-import { StudentCartService } from "../services/studentServices/StudentCartService"; 
+import { StudentCartService } from "../services/studentServices/StudentCartService";
 
 import { IStudentCartController } from "../controllers/studentControllers/interfaces/IStudentCartController";
 import { StudentCartController } from "../controllers/studentControllers/studentCartController";
@@ -367,7 +368,7 @@ const studentCartService: IStudentCartService = new StudentCartService(
 );
 
 const studentCartController: IStudentCartController = new StudentCartController(
-  studentCartService,
+  studentCartService
 );
 
 ///////////////////////STUDENT WISHLIST MANAGEMENT//////////////////////////////////////////////////////////////////////////////////////////////
@@ -376,7 +377,7 @@ import { IStudentWishlistRepository } from "../repositories/studentRepository/in
 import { StudentWishlistRepository } from "../repositories/studentRepository/studentWishlistRepository";
 
 import { IStudentWishlistService } from "../services/studentServices/interface/IStudentWishlistService";
-import { StudentWishlistService } from "../services/studentServices/StudentWishlistService"; 
+import { StudentWishlistService } from "../services/studentServices/StudentWishlistService";
 
 import { IStudentWishlistController } from "../controllers/studentControllers/interfaces/IStudentWishlistController";
 import { StudentWishlistController } from "../controllers/studentControllers/studentWishlistController";
@@ -387,7 +388,6 @@ const studentWishlistService: IStudentWishlistService =
   new StudentWishlistService(studentWishlistRepository);
 const studentWishlistController: IStudentWishlistController =
   new StudentWishlistController(studentWishlistService);
-
 
 /// coupon management ///
 
@@ -400,13 +400,14 @@ import { StudentCouponService } from "../services/studentServices/studentCouponS
 import { IStudentCouponController } from "../controllers/studentControllers/interfaces/IStudentCouponController";
 import { StudentCouponController } from "../controllers/studentControllers/studentCouponController";
 
+const studentCouponRepo: IStudentCouponRepo = new StudentCouponRepo();
 
-const studentCouponRepo : IStudentCouponRepo = new StudentCouponRepo()
+const studentCouponService: IStudentCouponService = new StudentCouponService(
+  studentCouponRepo
+);
 
-const studentCouponService : IStudentCouponService = new StudentCouponService(studentCouponRepo)
-
-const studentCouponController : IStudentCouponController = new StudentCouponController(studentCouponService)
-
+const studentCouponController: IStudentCouponController =
+  new StudentCouponController(studentCouponService);
 
 /////////STUDENT CHECKOUT MANAGEMENT///////////////////
 
@@ -433,7 +434,7 @@ const walletRepository: IWalletRepository = new WalletRepository();
 
 const walletService: IWalletService = new WalletService(
   walletRepository,
-  adminRespository,
+  adminRespository
 );
 
 const studentCheckoutRepository: IStudentCheckoutRepository =
@@ -441,7 +442,7 @@ const studentCheckoutRepository: IStudentCheckoutRepository =
     new OrderRepository(),
     new PaymentRepository(),
     new EnrollmentRepository(),
-    new CourseRepository(),
+    new CourseRepository()
   );
 
 const studentCheckoutService: IStudentCheckoutService =
@@ -461,7 +462,7 @@ import { IInstructorAllCourseDashboardRepository } from "../repositories/instruc
 import { InstructorAllCourseDashboardRepository } from "../repositories/instructorRepository/instructorAllCourseDashboardRepository";
 
 import { IInstructorAllCourseDashboardService } from "../services/instructorServices/interface/IInstructorAllDashboardService";
-import { InstructorAllCourseDashboardService } from "../services/instructorServices/InstructorAllDashboardService"; 
+import { InstructorAllCourseDashboardService } from "../services/instructorServices/InstructorAllDashboardService";
 
 import { IInstructorAllDashboardController } from "../controllers/instructorController/interfaces/IInstructorAllDashboardController";
 import { InstructorAllCourseDashboardController } from "../controllers/instructorController/instructorAllDashboardController";
@@ -474,15 +475,15 @@ import { OrderModel, IOrder } from "../models/orderModel";
 import { CourseModel, ICourse } from "../models/courseModel";
 
 const orderRepo: IGenericRepository<IOrder> = new GenericRepository<IOrder>(
-  OrderModel,
+  OrderModel
 );
 
-const courseRepo : IGenericRepository<ICourse> = new GenericRepository<ICourse>(CourseModel)
-
-
+const courseRepo: IGenericRepository<ICourse> = new GenericRepository<ICourse>(
+  CourseModel
+);
 
 const instructorDashboardRepo: IInstructorAllCourseDashboardRepository =
-  new InstructorAllCourseDashboardRepository(orderRepo,courseRepo);
+  new InstructorAllCourseDashboardRepository(orderRepo, courseRepo);
 
 const instructorDashboardService: IInstructorAllCourseDashboardService =
   new InstructorAllCourseDashboardService(instructorDashboardRepo);
@@ -496,7 +497,7 @@ import { IInstructorCourseSpecificDashboardRepository } from "../repositories/in
 import { InstructorSpecificCourseDashboardRepository } from "../repositories/instructorRepository/instructorSpecificCourseDashboardRepository";
 
 import { IInstructorSpecificCourseDashboardService } from "../services/instructorServices/interface/IInstructorSpecificCourseService";
-import { InstructorSpecificCourseDashboardService } from "../services/instructorServices/InstructorSpecificCourseService"; 
+import { InstructorSpecificCourseDashboardService } from "../services/instructorServices/InstructorSpecificCourseService";
 
 import { IInstructorCourseSpecificDashboardController } from "../controllers/instructorController/interfaces/IInstructorSpecificCourseController";
 import { InstructorSpecificCourseDashboardController } from "../controllers/instructorController/instructorSpecificCourseController";
@@ -505,17 +506,17 @@ const specificCourseDahboardRepository: IInstructorCourseSpecificDashboardReposi
   new InstructorSpecificCourseDashboardRepository(
     new EnrollmentRepository(),
     new CourseRepository(),
-    new OrderRepository(),
+    new OrderRepository()
   );
 
 const specificCourseDashboardService: IInstructorSpecificCourseDashboardService =
   new InstructorSpecificCourseDashboardService(
-    specificCourseDahboardRepository,
+    specificCourseDahboardRepository
   );
 
 const specificCourseDashboardController: IInstructorCourseSpecificDashboardController =
   new InstructorSpecificCourseDashboardController(
-    specificCourseDashboardService,
+    specificCourseDashboardService
   );
 
 ///////////////////////////////////////////////////////////
@@ -559,7 +560,7 @@ const walletPaymentRepository: IWalletPaymentRepository =
   new WalletPaymentRepository();
 const walletPaymentService: IWalletPaymentService = new WalletPaymentService(
   walletPaymentRepository,
-  walletService,
+  walletService
 );
 const studentWalletPaymentController: IWalletPaymentController =
   new StudentWalletPaymentController(walletPaymentService);
@@ -586,7 +587,7 @@ import { IAdminWalletController } from "../controllers/adminControllers/interfac
 import { AdminWalletController } from "../controllers/adminControllers/adminWalletController";
 
 const adminWalletController: IAdminWalletController = new AdminWalletController(
-  walletService,
+  walletService
 );
 
 //Admin Wallet Payment//
@@ -603,7 +604,7 @@ import { IStudentOrderRepository } from "../repositories/studentRepository/inter
 import { StudentOrderRepository } from "../repositories/studentRepository/studentOrderRepository";
 
 import { IStudentOrderService } from "../services/studentServices/interface/IStudentOrderService";
-import { StudentOrderService } from "../services/studentServices/StudentOrderService"; 
+import { StudentOrderService } from "../services/studentServices/StudentOrderService";
 
 import { IStudentOrderController } from "../controllers/studentControllers/interfaces/IStudentOrderController";
 import { StudentOrderController } from "../controllers/studentControllers/studentOrderController";
@@ -613,7 +614,7 @@ const studentOrderRepository: IStudentOrderRepository =
 
 const studentOrderService: IStudentOrderService = new StudentOrderService(
   studentOrderRepository,
-  studentCheckoutService,
+  studentCheckoutService
 );
 
 const studentOrderController: IStudentOrderController =
@@ -654,7 +655,7 @@ const instructorMembershipRepository: IInstructorMembershipRepository =
 const instructorMembershipService: IInstructorMembershipService =
   new InstructorMembershipService(
     instructorMembershipRepository,
-    instructorRepository,
+    instructorRepository
   );
 
 const instructorMembershipController: IInstructorMembershipController =
@@ -682,13 +683,13 @@ const instructorMembershipOrderService: IInstructorMembershipOrderService =
     instructorRepository,
     razorpay,
     walletService,
-    emailService,
+    emailService
   );
 
 const instructorMembershipOrderController: IInstructorMembershipOrderController =
   new InstructorMembershipOrderController(
     instructorMembershipOrderService,
-    instructorMembershipService,
+    instructorMembershipService
   );
 
 /////////////////////ADMIN MEMBERSHIP ORDER MANAGEMENT/////////////////////////////////////
@@ -726,7 +727,7 @@ const instructorSlotRepository: IInstructorSlotRepository =
   new InstructorSlotRepository();
 
 const instructorSlotService: IInstructorSlotService = new InstructorSlotService(
-  instructorSlotRepository,
+  instructorSlotRepository
 );
 
 const instructorSlotController: IInstructorSlotController =
@@ -767,11 +768,11 @@ const studentSlotRepository: IStudentSlotRepository =
   new StudentSlotRepository();
 
 const studentSlotService: IStudentSlotService = new StudentSlotService(
-  studentSlotRepository,
+  studentSlotRepository
 );
 
 const studentSlotController: IStudentSlotController = new StudentSlotController(
-  studentSlotService,
+  studentSlotService
 );
 
 ///////////////////student slot booking managment//////////
@@ -793,7 +794,7 @@ const studentSlotBookingService: IStudentSlotBookingService =
     studentSlotBookingRepository,
     studentSlotRepository,
     walletService,
-    emailService,
+    emailService
   );
 
 const studentSlotBookingController: IStudentSlotBookingController =
@@ -825,7 +826,7 @@ import { IAdminDashboardRepository } from "../repositories/adminRepository/inter
 import { AdminDashboardRepository } from "../repositories/adminRepository/adminDashboardRepository";
 
 import { IAdminDashboardService } from "../services/adminServices/interface/IAdminDashboardService";
-import { AdminDashboardService } from "../services/adminServices/AdminDashboardService"; 
+import { AdminDashboardService } from "../services/adminServices/AdminDashboardService";
 
 import { IAdminDashboardController } from "../controllers/adminControllers/interface/IAdminDashboardController";
 import { AdminDashboardController } from "../controllers/adminControllers/adminDashboardController";
@@ -837,11 +838,11 @@ const adminDashboardRepository: IAdminDashboardRepository =
     instructorRepository,
     new CourseRepository(),
     new OrderRepository(),
-    new InstructorMembershipOrder(),
+    new InstructorMembershipOrder()
   );
 
 const adminDashboardService: IAdminDashboardService = new AdminDashboardService(
-  adminDashboardRepository,
+  adminDashboardRepository
 );
 
 const adminDashboardController: IAdminDashboardController =
@@ -863,7 +864,7 @@ const studentDashboardRepository: IStudentDashboardRepository =
   new StudentDashboardRepository(
     new EnrollmentRepository(),
     new BookingRepository(),
-    new OrderRepository(),
+    new OrderRepository()
   );
 
 const studentDashboardService: IStudentDashboardService =
@@ -890,7 +891,7 @@ const withdrawalService: IWithdrawalRequestService =
   new WithdrawalRequestService(
     withdrawalRepo,
     walletService,
-    instructorRepository,
+    instructorRepository
   );
 
 const instructorWithdrawalController: IInstructorWithdrawalController =
@@ -904,10 +905,7 @@ import { AdminWithdrawalController } from "../controllers/adminControllers/admin
 const adminWithdrawalController: IAdminWithdrawalController =
   new AdminWithdrawalController(withdrawalService);
 
-
-
 //////////admin coupon management
-
 
 import { IAdminCouponRepo } from "../repositories/adminRepository/interface/IAdminCouponRepo";
 import { AdminCouponRepo } from "../repositories/adminRepository/adminCouponRepo";
@@ -918,12 +916,15 @@ import { AdminCouponService } from "../services/adminServices/adminCouponService
 import { IAdminCouponController } from "../controllers/adminControllers/interface/IAdminCouponController";
 import { AdminCouponController } from "../controllers/adminControllers/adminCouponController";
 
-const adminCouponRepo : IAdminCouponRepo = new AdminCouponRepo()
+const adminCouponRepo: IAdminCouponRepo = new AdminCouponRepo();
 
-const adminCouponService : IAdminCouponService = new AdminCouponService(adminCouponRepo)
+const adminCouponService: IAdminCouponService = new AdminCouponService(
+  adminCouponRepo
+);
 
-const adminCouponController : IAdminCouponController = new AdminCouponController(adminCouponService)
-
+const adminCouponController: IAdminCouponController = new AdminCouponController(
+  adminCouponService
+);
 
 //course offer management
 
@@ -938,48 +939,64 @@ import { AdminCourseOfferController } from "../controllers/adminControllers/admi
 
 import { ICourseRepository } from "../repositories/interfaces/ICourseRepository";
 
+// const courseRepoForAdmin: ICourseRepository = new CourseRepository();
 
-const courseRepoForAdmin : ICourseRepository = new CourseRepository()
+const adminCourseOfferRepo: IAdminCourseOfferRepo = new AdminCourseOfferRepo();
 
+const adminCourseOfferService: IAdminCourseOfferService =
+  new AdminCourseOfferService(adminCourseOfferRepo);
 
-const adminCourseOfferRepo : IAdminCourseOfferRepo = new AdminCourseOfferRepo()
-
-const adminCourseOfferService:IAdminCourseOfferService = new AdminCourseOfferService(courseRepoForAdmin
-,adminCourseOfferRepo)
-
-
-const adminCourseOfferController:IAdminCourseOfferController = new AdminCourseOfferController(adminCourseOfferService)
+const adminCourseOfferController: IAdminCourseOfferController =
+  new AdminCourseOfferController(adminCourseOfferService);
 
 /////////// admin category offer controller
 
-import { IAdminCategoryOfferRepo } from "../repositories/adminRepository/interface/IAdminCategoryOfferRepo";
-import { AdminCategoryOfferRepo } from "../repositories/adminRepository/adminCategoryOfferRepo";
+// import { IAdminCategoryOfferRepo } from "../repositories/adminRepository/interface/IAdminCategoryOfferRepo";
+// import { AdminCategoryOfferRepo } from "../repositories/adminRepository/adminCategoryOfferRepo";
 
+// import { IAdminCategoryOfferService } from "../services/adminServices/interface/IAdminCategoryOfferService";
+// import { AdminCategoryOfferService } from "../services/adminServices/adminCategoryOfferService";
 
-import { IAdminCategoryOfferService } from "../services/adminServices/interface/IAdminCategoryOfferService";
-import { AdminCategoryOfferService } from "../services/adminServices/adminCategoryOfferService";
+// import { IAdminCategoryOfferController } from "../controllers/adminControllers/interface/IAdminCategoryOfferController";
+// import { AdminCategoryOfferController } from "../controllers/adminControllers/adminCategoryOfferController";
 
-import { IAdminCategoryOfferController } from "../controllers/adminControllers/interface/IAdminCategoryOfferController";
-import { AdminCategoryOfferController } from "../controllers/adminControllers/adminCategoryOfferController";
+// const adminCategoryOfferRepo: IAdminCategoryOfferRepo =
+//   new AdminCategoryOfferRepo();
 
+// const adminCategoryOfferService: IAdminCategoryOfferService =
+//   new AdminCategoryOfferService(
+//     new CourseRepository(),
+//     adminCategoryOfferRepo,
+//     adminCategoryRepository,
+//     adminCourseOfferRepo
+//   );
 
-const adminCategoryOfferRepo : IAdminCategoryOfferRepo = new AdminCategoryOfferRepo()
+// const adminCategoryOfferController: IAdminCategoryOfferController =
+//   new AdminCategoryOfferController(adminCategoryOfferService);
 
-const adminCategoryOfferService : IAdminCategoryOfferService = new AdminCategoryOfferService(
-  new CourseRepository(),
-  adminCategoryOfferRepo,
-  adminCategoryRepository,
-  adminCourseOfferRepo
-)
+////////////////////////////instructor course offer //////////////
+import { IInstructorCourseOfferRepo } from "../repositories/instructorRepository/interface/IInstructorCourseofferRepo";
+import { InstructorCourseOfferRepo } from "../repositories/instructorRepository/instructorCourseOfferRepo";
 
-const adminCategoryOfferController : IAdminCategoryOfferController = new AdminCategoryOfferController(adminCategoryOfferService)
+import { IInstructorCourseOfferService } from "../services/instructorServices/interface/IInstructorCourseOfferService";
+import { InstructorCourseOfferService } from "../services/instructorServices/instructorCourseOfferService";
+
+import { IInstructorCourseOfferController } from "../controllers/instructorController/interfaces/IInstructorCourseOfferController";
+import { InstructorCourseOfferController } from "../controllers/instructorController/instructorCourseOfferController";
+
+const courseRepoForInstructor : ICourseRepository = new CourseRepository()
+
+const instructorCourseOfferRepo : IInstructorCourseOfferRepo = new InstructorCourseOfferRepo()
+
+const instructorCourseOfferService : IInstructorCourseOfferService = new InstructorCourseOfferService(courseRepoForInstructor,instructorCourseOfferRepo)
+
+const instructorCourseOfferController : IInstructorCourseOfferController = new InstructorCourseOfferController(instructorCourseOfferService)
+
 
 ///////////////////LEARNING PATH/////////////////////////////////////
 
-
 import { IInstructorLearningPathRepository } from "../repositories/instructorRepository/interface/IInstructorLearningPathRepo";
 import { InstructorLearningPathRepository } from "../repositories/instructorRepository/instructorLearningPathRepo";
-
 
 import { IInstructorLearningPathService } from "../services/instructorServices/interface/IInstructorLearningPathService";
 import { InstructorLearningPathService } from "../services/instructorServices/instructorLearningPathService";
@@ -987,13 +1004,34 @@ import { InstructorLearningPathService } from "../services/instructorServices/in
 import { IInstructorLearningPathController } from "../controllers/instructorController/interfaces/IInstructorLearningPathController";
 import { InstructorLearningPathController } from "../controllers/instructorController/instructorLearningPathController";
 
+const instructorLearningPathRepo: IInstructorLearningPathRepository =
+  new InstructorLearningPathRepository();
 
-const instructorLearningPathRepo : IInstructorLearningPathRepository = new InstructorLearningPathRepository()
+const instructorLearningPathService: IInstructorLearningPathService =
+  new InstructorLearningPathService(instructorLearningPathRepo);
 
-const instructorLearningPathService : IInstructorLearningPathService= new InstructorLearningPathService(instructorLearningPathRepo)
+const instructorLearningPathController: IInstructorLearningPathController =
+  new InstructorLearningPathController(instructorLearningPathService);
 
-const instructorLearningPathController : IInstructorLearningPathController = new InstructorLearningPathController(instructorLearningPathService)
+/////////////////admin learning path ////////////////
 
+import { IAdminLearningPathRepository } from "../repositories/adminRepository/interface/IAdminLearningPathRepo";
+import { AdminLearningPathRepository } from "../repositories/adminRepository/adminLearningPathRepo";
+
+import { IAdminLearningPathService } from "../services/adminServices/interface/IAdminLearningPathService";
+import { AdminLearningPathService } from "../services/adminServices/adminLearningPathService";
+
+import { IAdminLearningPathController } from "../controllers/adminControllers/interface/IAdminLearningPathController";
+import { AdminLearningPathController } from "../controllers/adminControllers/adminLearningPathController";
+
+const adminLearningPathRepository: IAdminLearningPathRepository =
+  new AdminLearningPathRepository();
+
+const adminLearningPathService: IAdminLearningPathService =
+  new AdminLearningPathService(adminLearningPathRepository);
+
+const adminLearningPathController: IAdminLearningPathController =
+  new AdminLearningPathController(adminLearningPathService);
 
 export {
   studentController,
@@ -1084,10 +1122,16 @@ export {
 
   //admin course offer controller
   adminCourseOfferController,
-  
+
   //admin categoryOffer controller
-  adminCategoryOfferController,
+  // adminCategoryOfferController,
 
   //instructor learning path controller,
   instructorLearningPathController,
+
+  //admin learning path controller
+  adminLearningPathController,
+
+  //instructor course offer controller
+  instructorCourseOfferController,
 };

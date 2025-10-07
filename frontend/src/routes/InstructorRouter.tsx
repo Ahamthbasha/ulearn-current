@@ -44,6 +44,10 @@ import LearningPathListPage from '../pages/instructor/learningPath/LearningPathL
 import LearningPathCreatePage from '../pages/instructor/learningPath/LearningPathCreatepage'
 import LearningPathEditPage from '../pages/instructor/learningPath/LearningPathEditPage'
 import LearningPathViewPage from '../pages/instructor/learningPath/LearningPathViewPage'
+import InstructorCourseOffersPage from '../pages/instructor/courseOffer/InstructorCourseOfferPage'
+import AddCourseOfferPage from '../pages/instructor/courseOffer/AddCourseOfferPage'
+import EditInstructorCourseOfferPage from '../pages/instructor/courseOffer/EditCourseOfferPage'
+import OfferDetailsPage from '../pages/instructor/courseOffer/CourseOfferDetailPage'
 
 
 const InstructorRouter = () => {
@@ -101,7 +105,11 @@ const InstructorRouter = () => {
     <Route path="purchaseHistory" element={<Orders/>}/>
     <Route path="membershipOrders/:orderId" element={<MembershipOrderDetail/>}/>
 
-
+{/* offer management */}
+    <Route path='courseOffers' element={<InstructorCourseOffersPage/>}/>
+    <Route path='addCourseOffer' element={<AddCourseOfferPage/>}/>
+    <Route path='editCourseOffer/:offerId' element={<EditInstructorCourseOfferPage/>}/>
+    <Route path='courseOffer/:offerId' element={<OfferDetailsPage/>}/>
 
 
 {/* slot related */}

@@ -49,6 +49,11 @@ export interface IGenericRepository<T extends Document> {
     sort?: Record<string, SortOrder>,
     populate?: PopulateArg,
   ): Promise<{ data: T[]; total: number }>;
+  paginateWithAggregation(
+    pipeline: PipelineStage[],
+    page: number,
+    limit: number,
+  ): Promise<{ data: T[]; total: number }>;
   findOneAndUpdate(filter: object, update: object, options?: MongooseOptions): Promise<T | null>;
   aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
   find(filter: object, populate?: PopulateArg, sort?: Record<string, SortOrder>): Promise<T[]>;
@@ -168,6 +173,27 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     let query = this.model.find(filter).sort(sort);
     if (populate) query = query.populate(populate);
     const data = await query.skip((page - 1) * limit).limit(limit).exec();
+    return { data, total };
+  }
+
+  async paginateWithAggregation(
+    pipeline: PipelineStage[],
+    page: number,
+    limit: number,
+  ): Promise<{ data: T[]; total: number }> {
+    // Create a pipeline to count total documents
+    const countPipeline = [...pipeline, { $count: "total" }];
+    const countResult = await this.model.aggregate(countPipeline).exec();
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Add pagination stages to the original pipeline
+    const paginatedPipeline = [
+      ...pipeline,
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ];
+
+    const data = await this.model.aggregate<T>(paginatedPipeline).exec();
     return { data, total };
   }
 
