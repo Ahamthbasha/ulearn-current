@@ -1,11 +1,7 @@
-import { ICourseOffer } from "../../../models/courseOfferModel";
+import { ICourseOfferListDTO, ICourseOfferDetailDTO } from "../../../dto/adminDTO/adminCourseOfferDTO";
 
 export interface IAdminCourseOfferService {
-  getOfferRequests(page: number, limit: number, search?: string): Promise<{ data: ICourseOffer[]; total: number }>;
-  verifyCourseOffer(
-    offerId: string,
-    status: "approved" | "rejected",
-    reviews?: string
-  ): Promise<ICourseOffer>;
-  getOfferById(offerId: string): Promise<ICourseOffer | null>;
+  getOfferRequests(page: number, limit: number, search?: string, status?: string): Promise<{ data: ICourseOfferListDTO[]; total: number }>;
+  verifyCourseOffer(offerId: string, status: "approved" | "rejected", reviews?: string): Promise<ICourseOfferDetailDTO>;
+  getOfferById(offerId: string): Promise<ICourseOfferDetailDTO | null>;
 }

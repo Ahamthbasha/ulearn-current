@@ -1136,12 +1136,13 @@ export const getPublishedCourses = async () => {
 export const getInstructorCourseOffers = async (
   page = 1,
   limit = 10,
-  search?: string
+  search?: string,
+  status?:string,
 ) => {
 
   try {
     const response = await API.get(InstructorRouterEndPoints.instructorGetCourseOffers , {
-      params: { page, limit, search },
+      params: { page, limit, search, status },
     });
     return response.data;
   } catch (error) {
