@@ -824,3 +824,8 @@ export const COURSE_OFFER_ERROR_MESSAGE = {
   OFFER_NOT_FOUND: "Offer not found",
   GENERIC: "An error occurred while processing the request",
 };
+
+
+export const LMS_ERROR_MESSAGE = {
+  LEARNING_PATH_NOT_FOUND:"Learning path not found",
+}

@@ -13,6 +13,8 @@ export interface ILearningPath extends Document {
   title: string;
   description: string;
   instructorId: Types.ObjectId;
+  instructorName?: string;
+  instructor?: { username: string };
   items: ILearningPathItem[];
   isPublished: boolean;
   createdAt: Date;
@@ -21,8 +23,9 @@ export interface ILearningPath extends Document {
   adminReview?: string;
   thumbnailUrl?: string;
   totalPrice: number;
-  category: Types.ObjectId;
-  categoryDetails?:ICategoryModel
+  category: Types.ObjectId | ICategoryModel;
+  categoryDetails?: ICategoryModel;
+  courses?: ICourse[];
 }
 
 export interface CreateLearningPathDTO {
@@ -114,6 +117,13 @@ LearningPathSchema.virtual("courses", {
 LearningPathSchema.virtual("categoryDetails", {
   ref: "Category",
   localField: "category",
+  foreignField: "_id",
+  justOne: true,
+});
+
+LearningPathSchema.virtual("instructor", {
+  ref: "Instructor",
+  localField: "instructorId",
   foreignField: "_id",
   justOne: true,
 });

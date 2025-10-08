@@ -570,7 +570,7 @@ router.get(
 )
 
 router.get(
-  "/learningPaths/:id",
+  "/learningPaths/:learingPathId",
   studentLmsController.getLearningPathById.bind(studentLmsController)
 )
 

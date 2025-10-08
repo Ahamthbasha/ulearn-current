@@ -39,7 +39,13 @@ const LearningPathListPage = () => {
   const fetchPaths = async () => {
     try {
       setLoading(true);
-      const response: LearningPathFilterResponse = await GetLMSCourses();
+      const response: LearningPathFilterResponse = await GetLMSCourses({
+        query: debouncedSearch,
+        page: currentPage,
+        limit: pathsPerPage,
+        category: selectedCategory,
+        sort: sortOption,
+      });
 
       if (response.success) {
         setPaths(response.data || []);
@@ -145,7 +151,6 @@ const LearningPathListPage = () => {
             </ul>
           </div>
 
-          {/* Sort Filter */}
           <div>
             <h3 className="text-sm sm:text-base md:text-lg font-semibold border-b pb-1 sm:pb-2 mb-2 sm:mb-3 text-gray-800">
               Sort
@@ -183,7 +188,6 @@ const LearningPathListPage = () => {
           </button>
         </aside>
 
-        {/* Learning Paths Grid */}
         <main className="w-full lg:w-3/4">
           <p className="mb-2 sm:mb-4 text-sm sm:text-base text-gray-600">
             We found <strong>{paths.length}</strong> learning paths for you!
@@ -216,14 +220,15 @@ const LearningPathListPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {paths.map((path) => (
                   <LearningPathCard
-                    key={path._id}
-                    id={path._id}
+                    key={path.learningPathId}
+                    learningPathId={path.learningPathId}
                     title={path.title}
                     description={path.description}
-                    totalPrice={path.totalPrice}
+                    noOfCourses={path.noOfCourses}
+                    hoursOfCourses={path.hoursOfCourses}
                     thumbnailUrl={path.thumbnailUrl}
-                    courses={path.courses}
-                    // categoryName={path.categoryName} // Uncomment if categoryName is added to API response
+                    totalPrice={path.totalPrice}
+                    categoryName={path.categoryName}
                   />
                 ))}
               </div>

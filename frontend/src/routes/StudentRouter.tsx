@@ -34,6 +34,7 @@ import SlotCheckoutPage from '../pages/student/slotCheckout/SlotCheckoutPage'
 import SlotHistoryPage from '../pages/student/slot/SlotHistoryPage'
 import SlotBookingDetailPage from '../pages/student/slot/SlotBookingDetailpage'
 import LearningPathListPage from '../pages/student/learningPath/LearningPathListPage'
+import LearningPathDetailPage from '../pages/student/learningPath/LearningPathDetailPage'
 
 
 const StudentRouter = () => {
@@ -56,6 +57,8 @@ const StudentRouter = () => {
         {/*  */}
 
         <Route path='/user/lms' element={<LearningPathListPage/>}/>
+        <Route path='/user/learningPath/:learningPathId' element={<LearningPathDetailPage/>}
+        />
 
 
         {/* reset password in case of forgot password */}
