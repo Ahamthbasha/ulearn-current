@@ -360,5 +360,42 @@ export interface SlotOrderHistory {
   amount: number;
   gateway: string;
   date: string;
-  status?: string; // Optional since it might not be in response
+  status?: string;
+}
+export interface LearningPathCourse {
+  _id: string;
+  duration: string;
+  thumbnailUrl: string;
+}
+
+export interface LearningPath {
+  _id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  totalPrice: number;
+  courses: LearningPathCourse[];
+}
+
+export interface LearningPathFilterResponse {
+  success: boolean;
+  data: LearningPath[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface LearningPathCardProps {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  totalPrice: number;
+  courses: LearningPathCourse[];
+  categoryName?: string;
+}
+
+export interface Category {
+  _id: string;
+  categoryName: string;
 }

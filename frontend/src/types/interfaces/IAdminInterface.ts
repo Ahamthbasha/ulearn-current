@@ -7,15 +7,14 @@ export interface CouponData {
   maxDiscount: number;
 }
 
-export interface ICoupon {
-  _id: string;
+export interface adminCouponDto {
+  couponId: string;
   code: string;
   discount: number;
-  expiryDate: string;
   status: boolean;
-  usedBy: string[];
   minPurchase: number;
   maxDiscount: number;
+  expiryDate: string;
 }
 
 export interface IAdminCourseOffer {
@@ -91,6 +90,7 @@ export interface LearningPathDTO {
   description: string;
   instructorId: string;
   instructorName?:string;
+  instructorEmail?:string;
   items: LearningPathItemDTO[];
   totalAmount:number;
   isPublished: boolean;
@@ -99,6 +99,9 @@ export interface LearningPathDTO {
   updatedAt: string;
   status: "draft" | "pending" | "accepted" | "rejected"; 
   adminReview?: string;
+  thumbnailUrl?:string;
+  categoryId:string;
+  categoryName:string
 }
 
 export interface LearningPathSummaryDTO {

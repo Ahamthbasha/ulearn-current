@@ -6,6 +6,13 @@ export interface LearningPathItemDTO {
   price?:number;
 }
 
+export interface LearningPathListDTO {
+  learningPathId: string;
+  title: string;
+  thumbnailUrl?: string;
+  status: "pending" | "accepted" | "rejected" | "draft";
+}
+
 export interface LearningPathDTO {
   _id: string;
   title: string;
@@ -13,26 +20,32 @@ export interface LearningPathDTO {
   instructorId: string;
   items: LearningPathItemDTO[];
   totalAmount:number;
+  totalPrice:number;
   isPublished: boolean;
   publishDate?: string;
   createdAt: string;
   updatedAt: string;
   status: "draft" | "pending" | "accepted" | "rejected"; 
   adminReview?: string;
+  thumbnailUrl?:string;
+  category?:string;
+  categoryName:string;
 }
 
 export interface CreateLearningPathRequest {
   title: string;
   description: string;
   items: Array<{ courseId: string; order: number }>;
-  publishDate?: string;
+  category: string;
+  thumbnailUrl?: string;
 }
 
 export interface UpdateLearningPathRequest {
   title?: string;
   description?: string;
   items?: Array<{ courseId: string; order: number }>;
-  publishDate?: string;
+  category:string
+  thumbnailUrl?: string;
 }
 
 export interface CourseDTO {

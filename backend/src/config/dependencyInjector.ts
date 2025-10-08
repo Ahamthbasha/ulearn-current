@@ -949,7 +949,6 @@ const adminCourseOfferService: IAdminCourseOfferService =
 const adminCourseOfferController: IAdminCourseOfferController =
   new AdminCourseOfferController(adminCourseOfferService);
 
-
 ////////////////////////////instructor course offer //////////////
 import { IInstructorCourseOfferRepo } from "../repositories/instructorRepository/interface/IInstructorCourseofferRepo";
 import { InstructorCourseOfferRepo } from "../repositories/instructorRepository/instructorCourseOfferRepo";
@@ -960,14 +959,19 @@ import { InstructorCourseOfferService } from "../services/instructorServices/ins
 import { IInstructorCourseOfferController } from "../controllers/instructorController/interfaces/IInstructorCourseOfferController";
 import { InstructorCourseOfferController } from "../controllers/instructorController/instructorCourseOfferController";
 
-const courseRepoForInstructor : ICourseRepository = new CourseRepository()
+const courseRepoForInstructor: ICourseRepository = new CourseRepository();
 
-const instructorCourseOfferRepo : IInstructorCourseOfferRepo = new InstructorCourseOfferRepo()
+const instructorCourseOfferRepo: IInstructorCourseOfferRepo =
+  new InstructorCourseOfferRepo();
 
-const instructorCourseOfferService : IInstructorCourseOfferService = new InstructorCourseOfferService(courseRepoForInstructor,instructorCourseOfferRepo)
+const instructorCourseOfferService: IInstructorCourseOfferService =
+  new InstructorCourseOfferService(
+    courseRepoForInstructor,
+    instructorCourseOfferRepo
+  );
 
-const instructorCourseOfferController : IInstructorCourseOfferController = new InstructorCourseOfferController(instructorCourseOfferService)
-
+const instructorCourseOfferController: IInstructorCourseOfferController =
+  new InstructorCourseOfferController(instructorCourseOfferService);
 
 ///////////////////LEARNING PATH/////////////////////////////////////
 
@@ -1008,6 +1012,25 @@ const adminLearningPathService: IAdminLearningPathService =
 
 const adminLearningPathController: IAdminLearningPathController =
   new AdminLearningPathController(adminLearningPathService);
+
+/////////////////////// STUDENT SIDE LMS //////////////////
+
+import { IStudentLmsRepo } from "../repositories/studentRepository/interface/IStudentLmsRepo";
+import { StudentLmsRepo } from "../repositories/studentRepository/studentLmsRepo";
+
+import { IStudentLmsService } from "../services/studentServices/interface/IStudentLmsService";
+import { StudentLmsService } from "../services/studentServices/studentLmsService";
+
+import { IStudentLmsController } from "../controllers/studentControllers/interfaces/IStudentLmsController";
+import { StudentLmsController } from "../controllers/studentControllers/studentLmsController";
+
+
+const studentLmsRepo : IStudentLmsRepo = new StudentLmsRepo()
+
+const studentLmsService : IStudentLmsService = new StudentLmsService(studentLmsRepo)
+
+const studentLmsController : IStudentLmsController = new StudentLmsController(studentLmsService)
+
 
 export {
   studentController,
@@ -1107,4 +1130,8 @@ export {
 
   //instructor course offer controller
   instructorCourseOfferController,
+
+  //student lms controller
+
+  studentLmsController,
 };

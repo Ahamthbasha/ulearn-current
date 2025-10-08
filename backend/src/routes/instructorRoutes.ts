@@ -686,6 +686,7 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
+  upload.single("thumbnail"),
   instructorLearningPathController.createLearningPath.bind(
     instructorLearningPathController
   )
@@ -706,6 +707,7 @@ router.put(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
+  upload.single("thumbnail"),
   instructorLearningPathController.updateLearningPath.bind(
     instructorLearningPathController
   )

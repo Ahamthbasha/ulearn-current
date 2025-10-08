@@ -836,3 +836,23 @@ export const exportSlotReport = async (
     throw error;
   }
 };
+
+// lms //
+
+export const GetLMSCourses = async()=>{
+  try {
+    const response = await API.get(UserRouterEndpoints.userGetLMSCourse)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const GetLmsCourseDetail = async(learningPathId:string)=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetLMSCourseDetail}/${learningPathId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}

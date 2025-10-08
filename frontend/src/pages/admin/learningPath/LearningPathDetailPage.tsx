@@ -138,6 +138,21 @@ const LearningPathDetailPage: React.FC = () => {
         }
       >
         <div className="space-y-6">
+          {/* Learning Path Thumbnail */}
+          {learningPath.thumbnailUrl && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Learning Path Thumbnail</h3>
+              <img
+                src={learningPath.thumbnailUrl}
+                alt={learningPath.title}
+                className="w-full max-w-md h-48 object-cover rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.src = "https://via.placeholder.com/400x192?text=No+Image";
+                }}
+              />
+            </div>
+          )}
+
           {/* Description */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
@@ -152,12 +167,14 @@ const LearningPathDetailPage: React.FC = () => {
                 <span className="font-medium">Instructor:</span>{" "}
                 {learningPath.instructorName || learningPath.instructorId || "Unknown"}
               </div>
-              {learningPath.publishDate && (
-                <div>
-                  <span className="font-medium">Publish Date:</span>{" "}
-                  {learningPath.publishDate}
-                </div>
-              )}
+              <div>
+                <span className="font-medium">Instructor Email:</span>{" "}
+                {learningPath.instructorEmail || learningPath.instructorId || "Unknown"}
+              </div>
+              <div>
+                <span className="font-medium">Category Name:</span>{" "}
+                {learningPath.categoryName || learningPath.categoryId || "Unknown"}
+              </div>
               <div>
                 <span className="font-medium">Created:</span>{" "}
                 {learningPath.createdAt}

@@ -132,6 +132,20 @@ export class AdminLearningPathRepository
         },
       },
       {
+        $lookup: {
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$categoryDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 1,
           title: 1,
@@ -148,6 +162,8 @@ export class AdminLearningPathRepository
           updatedAt: 1,
           status: 1,
           adminReview: 1,
+          category: 1,
+          categoryDetails: 1,
         },
       },
     ];
@@ -169,7 +185,11 @@ export class AdminLearningPathRepository
       },
       {
         path: "instructorId",
-        select: "username",
+        select: "username email",
+      },
+      {
+        path: "categoryDetails",
+        select: "categoryName isListed",
       },
     ]);
   }
@@ -193,8 +213,12 @@ export class AdminLearningPathRepository
         throw new Error(LearningPathErrorMessages.UNVERIFIED_COURSES);
       }
     }
-    await this.update(learningPathId, { status, adminReview });
-    
+    await this.update(learningPathId, {
+      status,
+      adminReview,
+      isPublished: status === "accepted" ? true : learningPath.isPublished,
+    });
+
     return await this.findByIdWithPopulate(learningPathId, [
       {
         path: "items.courseId",
@@ -203,7 +227,11 @@ export class AdminLearningPathRepository
       },
       {
         path: "instructorId",
-        select: "username",
+        select: "username email",
+      },
+      {
+        path: "categoryDetails",
+        select: "categoryName isListed",
       },
     ]);
   }

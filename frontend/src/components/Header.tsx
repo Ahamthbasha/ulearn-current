@@ -47,6 +47,9 @@ const Header = () => {
           <button onClick={() => navigate("/user/instructors")} className="hover:text-gray-300">
             Instructors
           </button>
+          <button onClick={() => navigate("/user/lms")} className="hover:text-gray-300">
+            Lms
+          </button>
           <button onClick={() => navigate("/user/aboutUs")} className="hover:text-gray-300">
             About Us
           </button>
@@ -89,7 +92,6 @@ const Header = () => {
                 className="w-8 h-8 rounded-full cursor-pointer"
                 onClick={() => navigate("/user/dashboard")}
               />
-              <span>{user.name}</span>
               <button
                 onClick={handleLogout}
                 className="bg-white text-blue-600 px-4 py-1 rounded hover:bg-gray-100"
@@ -122,6 +124,9 @@ const Header = () => {
           </button>
           <button onClick={() => { setIsOpen(false); navigate("/user/instructors"); }} className="block w-full text-left hover:text-gray-300">
             Instructors
+          </button>
+          <button onClick={() => { setIsOpen(false); navigate("/user/lms"); }} className="block w-full text-left hover:text-gray-300">
+            Lms
           </button>
           <button onClick={() => { setIsOpen(false); navigate("/user/aboutUs"); }} className="block w-full text-left hover:text-gray-300">
             About Us

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DataTable, { type Column, type ActionButton, type PaginationProps } from '../../../components/AdminComponents/DataTable';
-import { type ICoupon } from '../../../types/interfaces/IAdminInterface';
+import { type adminCouponDto } from "../../../types/interfaces/IAdminInterface"
 import { getCoupon, deleteCoupon, toggleStatus } from '../../../api/action/AdminActionApi';
 import { Pencil, Trash2, ToggleLeft, ToggleRight, X } from 'lucide-react';
 import { useDebounce } from '../../../hooks/UseDebounce';
 import ConfirmationModal from '../../../components/common/ConfirmationModal';
 
 const CouponListPage: React.FC = () => {
-  const [coupons, setCoupons] = useState<ICoupon[]>([]);
+  const [coupons, setCoupons] = useState<adminCouponDto[]>([]);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
@@ -16,9 +16,9 @@ const CouponListPage: React.FC = () => {
   const [searchValue, setSearchValue] = useState<string>('');
   const navigate = useNavigate();
   const limit = 5;
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
-  const [couponToToggle, setCouponToToggle] = useState<ICoupon | null>(null); // Track the coupon to toggle
-  const [couponToDelete, setCouponToDelete] = useState<ICoupon | null>(null); // Track the coupon to delete
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [couponToToggle, setCouponToToggle] = useState<adminCouponDto | null>(null);
+  const [couponToDelete, setCouponToDelete] = useState<adminCouponDto | null>(null);
 
   const debouncedSearchValue = useDebounce(searchValue, 500);
 
@@ -32,49 +32,44 @@ const CouponListPage: React.FC = () => {
       setTotalPages(Math.ceil((response.data.total || 0) / limit));
     } catch (err: any) {
       setError(err.message || 'Failed to fetch coupons');
-      setCoupons([]); 
+      setCoupons([]);
     } finally {
       setLoading(false);
     }
   }, [limit]);
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Handle search
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    setCurrentPage(1); // Reset to first page on search
+    setCurrentPage(1);
   };
 
-  // Handle toggle with modal
-  const handleToggleStatus = (coupon: ICoupon) => {
+  const handleToggleStatus = (coupon: adminCouponDto) => {
     setCouponToToggle(coupon);
     setIsModalOpen(true);
   };
 
   const confirmToggleStatus = async () => {
     if (couponToToggle) {
-      // Optimistic update
       const newStatus = !couponToToggle.status;
       setCoupons((prev) =>
         prev.map((c) =>
-          c._id === couponToToggle._id ? { ...c, status: newStatus } : c
+          c.couponId === couponToToggle.couponId ? { ...c, status: newStatus } : c
         )
       );
 
       try {
-        const updatedCoupon = await toggleStatus(couponToToggle._id, newStatus);
+        const updatedCoupon = await toggleStatus(couponToToggle.couponId, newStatus);
         setCoupons((prev) =>
-          prev.map((c) => (c._id === updatedCoupon._id ? updatedCoupon : c))
+          prev.map((c) => (c.couponId === updatedCoupon.couponId ? updatedCoupon : c))
         );
       } catch (err: any) {
-        // Revert optimistic update on error
         setCoupons((prev) =>
           prev.map((c) =>
-            c._id === couponToToggle._id ? { ...c, status: couponToToggle.status } : c
+            c.couponId === couponToToggle.couponId ? { ...c, status: couponToToggle.status } : c
           )
         );
         setError(err.message || 'Failed to toggle coupon status');
@@ -85,8 +80,7 @@ const CouponListPage: React.FC = () => {
     }
   };
 
-  // Handle delete with modal
-  const handleDelete = (coupon: ICoupon) => {
+  const handleDelete = (coupon: adminCouponDto) => {
     setCouponToDelete(coupon);
     setIsModalOpen(true);
   };
@@ -94,8 +88,8 @@ const CouponListPage: React.FC = () => {
   const confirmDelete = async () => {
     if (couponToDelete) {
       try {
-        await deleteCoupon(couponToDelete._id);
-        setCoupons((prev) => prev.filter((c) => c._id !== couponToDelete._id));
+        await deleteCoupon(couponToDelete.couponId);
+        setCoupons((prev) => prev.filter((c) => c.couponId !== couponToDelete.couponId));
         const remainingCoupons = coupons.length - 1;
         if (remainingCoupons === 0 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
@@ -109,24 +103,20 @@ const CouponListPage: React.FC = () => {
     }
   };
 
-  // Handle clear search
   const handleClearSearch = () => {
     setSearchValue('');
     setCurrentPage(1);
   };
 
-  // Retry function for error handling
   const handleRetry = () => {
     fetchCoupons(currentPage, debouncedSearchValue);
   };
 
-  // Effect to fetch data when debounced search value changes or page changes
   useEffect(() => {
     fetchCoupons(currentPage, debouncedSearchValue);
   }, [currentPage, debouncedSearchValue, fetchCoupons]);
 
-  // Define table columns with improved rendering
-  const columns: Column<ICoupon>[] = [
+  const columns: Column<adminCouponDto>[] = [
     {
       key: 'sno',
       title: 'S.No.',
@@ -153,7 +143,7 @@ const CouponListPage: React.FC = () => {
       key: 'minPurchase',
       title: 'Min Purchase',
       render: (value: number) => (
-        <span className="text-gray-700">₹{value?.toLocaleString() || '0'}</span>
+        <span className="text-gray-700">₹{value.toLocaleString()}</span>
       ),
       width: '15%',
     },
@@ -161,7 +151,7 @@ const CouponListPage: React.FC = () => {
       key: 'maxDiscount',
       title: 'Max Discount',
       render: (value: number) => (
-        <span className="text-gray-700">₹{value?.toLocaleString() || '0'}</span>
+        <span className="text-gray-700">₹{value.toLocaleString()}</span>
       ),
       width: '15%',
     },
@@ -169,11 +159,12 @@ const CouponListPage: React.FC = () => {
       key: 'expiryDate',
       title: 'Expiry Date',
       render: (value: string) => {
-        const date = new Date(value);
+        const [day, month, year] = value.split('-');
+        const date = new Date(`${year}-${month}-${day}`);
         const isExpired = date < new Date();
         return (
           <span className={`${isExpired ? 'text-red-500' : 'text-gray-700'}`}>
-            {date.toLocaleDateString()}
+            {value}
             {isExpired && <span className="text-xs block text-red-400">Expired</span>}
           </span>
         );
@@ -184,11 +175,11 @@ const CouponListPage: React.FC = () => {
       key: 'status',
       title: 'Status',
       render: (value: boolean) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
+        >
           {value ? 'Active' : 'Inactive'}
         </span>
       ),
@@ -196,23 +187,22 @@ const CouponListPage: React.FC = () => {
     },
   ];
 
-  // Define action buttons with improved styling
-  const actions: ActionButton<ICoupon>[] = [
+  const actions: ActionButton<adminCouponDto>[] = [
     {
       key: 'edit',
       label: 'Edit',
       icon: <Pencil size={16} />,
-      onClick: (coupon) => navigate(`/admin/coupons/edit/${coupon._id}`),
+      onClick: (coupon) => navigate(`/admin/coupons/edit/${coupon.couponId}`),
       className: 'bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200',
     },
     {
       key: 'toggle',
-      label: (record: ICoupon) => (record.status ? 'Deactivate' : 'Activate'),
-      icon: (record: ICoupon) => (record.status ? <ToggleLeft size={16} /> : <ToggleRight size={16} />),
+      label: (record: adminCouponDto) => (record.status ? 'Deactivate' : 'Activate'),
+      icon: (record: adminCouponDto) => (record.status ? <ToggleLeft size={16} /> : <ToggleRight size={16} />),
       onClick: handleToggleStatus,
-      className: (record: ICoupon) =>
-        record.status 
-          ? 'bg-yellow-500 hover:bg-yellow-600 text-white transition-colors duration-200' 
+      className: (record: adminCouponDto) =>
+        record.status
+          ? 'bg-yellow-500 hover:bg-yellow-600 text-white transition-colors duration-200'
           : 'bg-green-500 hover:bg-green-600 text-white transition-colors duration-200',
     },
     {
@@ -224,14 +214,12 @@ const CouponListPage: React.FC = () => {
     },
   ];
 
-  // Pagination props
   const pagination: PaginationProps = {
     currentPage,
     totalPages,
     onPageChange: handlePageChange,
   };
 
-  // Cancel action for modal
   const cancelAction = () => {
     setIsModalOpen(false);
     setCouponToToggle(null);
@@ -252,9 +240,9 @@ const CouponListPage: React.FC = () => {
         emptyStateIcon={<X size={48} className="text-gray-400" />}
         emptyStateTitle="No Coupons Found"
         emptyStateDescription={
-          searchValue 
+          searchValue
             ? `No coupons found matching "${searchValue}". Try adjusting your search term or create a new coupon.`
-            : "Start by creating your first discount coupon to attract more customers."
+            : 'Start by creating your first discount coupon to attract more customers.'
         }
         pagination={pagination}
         searchValue={searchValue}

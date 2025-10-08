@@ -1,15 +1,18 @@
 import { Types } from "mongoose";
-import { IAdminCouponRepo } from "../../repositories/adminRepository/interface/IAdminCouponRepo"; 
-import { IAdminCouponService } from "./interface/IAdminCouponService"; 
+import { IAdminCouponRepo } from "../../repositories/adminRepository/interface/IAdminCouponRepo";
+import { IAdminCouponService } from "./interface/IAdminCouponService";
 import { ICoupon } from "../../models/couponModel";
+import { adminCouponDto } from "../../dto/adminDTO/adminCouponDTO";
+import { mapToCouponDto,mapToCouponListDto } from "../../mappers/adminMapper/adminCouponMapper";
 
 export class AdminCouponService implements IAdminCouponService {
-    private _couponRepo: IAdminCouponRepo
+  private _couponRepo: IAdminCouponRepo;
+
   constructor(couponRepo: IAdminCouponRepo) {
-    this._couponRepo = couponRepo
+    this._couponRepo = couponRepo;
   }
 
-  async createCoupon(couponData: Partial<ICoupon>): Promise<ICoupon> {
+  async createCoupon(couponData: Partial<ICoupon>): Promise<adminCouponDto> {
     if (!couponData.code || !couponData.discount || !couponData.expiryDate) {
       throw new Error("Missing required coupon fields");
     }
@@ -27,31 +30,38 @@ export class AdminCouponService implements IAdminCouponService {
       throw new Error("Expiry date must be in the future");
     }
 
-    return await this._couponRepo.createCoupon(couponData);
+    const coupon = await this._couponRepo.createCoupon(couponData);
+    return mapToCouponDto(coupon);
   }
 
-  async getAllCoupons(page: number, limit: number,searchCode?:string): Promise<{ coupons: ICoupon[], total: number }> {
+  async getAllCoupons(page: number, limit: number, searchCode?: string): Promise<{ coupons: adminCouponDto[], total: number }> {
     if (page < 1 || limit < 1) {
       throw new Error("Invalid pagination parameters");
     }
-    return await this._couponRepo.getAllCoupons(page, limit,searchCode);
+    const result = await this._couponRepo.getAllCoupons(page, limit, searchCode);
+    return {
+      coupons: mapToCouponListDto(result.coupons),
+      total: result.total,
+    };
   }
 
-  async getCouponById(id: string): Promise<ICoupon | null> {
+  async getCouponById(id: string): Promise<adminCouponDto | null> {
     if (!Types.ObjectId.isValid(id)) {
       throw new Error("Invalid coupon ID");
     }
-    return await this._couponRepo.getCouponById(new Types.ObjectId(id));
+    const coupon = await this._couponRepo.getCouponById(new Types.ObjectId(id));
+    return coupon ? mapToCouponDto(coupon) : null;
   }
 
-  async getCouponByCode(code: string): Promise<ICoupon | null> {
+  async getCouponByCode(code: string): Promise<adminCouponDto | null> {
     if (!code) {
       throw new Error("Coupon code is required");
     }
-    return await this._couponRepo.getCouponByCode(code);
+    const coupon = await this._couponRepo.getCouponByCode(code);
+    return coupon ? mapToCouponDto(coupon) : null;
   }
 
-  async updateCoupon(id: string, couponData: Partial<ICoupon>): Promise<ICoupon | null> {
+  async updateCoupon(id: string, couponData: Partial<ICoupon>): Promise<adminCouponDto | null> {
     if (!Types.ObjectId.isValid(id)) {
       throw new Error("Invalid coupon ID");
     }
@@ -71,7 +81,8 @@ export class AdminCouponService implements IAdminCouponService {
       }
     }
 
-    return await this._couponRepo.updateCoupon(new Types.ObjectId(id), couponData);
+    const coupon = await this._couponRepo.updateCoupon(new Types.ObjectId(id), couponData);
+    return coupon ? mapToCouponDto(coupon) : null;
   }
 
   async deleteCoupon(id: string): Promise<boolean> {
@@ -81,10 +92,11 @@ export class AdminCouponService implements IAdminCouponService {
     return await this._couponRepo.deleteCoupon(new Types.ObjectId(id));
   }
 
-  async toggleCouponStatus(id: string, status: boolean): Promise<ICoupon | null> {
+  async toggleCouponStatus(id: string, status: boolean): Promise<adminCouponDto | null> {
     if (!Types.ObjectId.isValid(id)) {
       throw new Error("Invalid coupon ID");
     }
-    return await this._couponRepo.toggleCouponStatus(new Types.ObjectId(id), status);
+    const coupon = await this._couponRepo.toggleCouponStatus(new Types.ObjectId(id), status);
+    return coupon ? mapToCouponDto(coupon) : null;
   }
 }

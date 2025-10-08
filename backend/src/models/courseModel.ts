@@ -1,6 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
+import { LearningPathModel, ILearningPathItem } from "./learningPathModel";
 
-interface IDemoVideo {
+export interface IDemoVideo {
   type: "video";
   url: string;
 }
@@ -76,7 +77,36 @@ const CourseSchema = new Schema<ICourse>(
 
 CourseSchema.index({ courseName: "text" });
 
-// Virtual for chapters
+CourseSchema.pre("save", async function (next) {
+  if (this.isModified("price") || this.isModified("offer")) {
+    try {
+      const learningPaths = await LearningPathModel.find({
+        "items.courseId": this._id,
+      });
+      for (const path of learningPaths) {
+        const courses = await CourseModel.find({
+          _id: { $in: path.items.map((item: ILearningPathItem) => item.courseId) },
+        })
+          .populate({
+            path: "offer",
+            select: "isActive startDate endDate discountPercentage",
+          })
+          .lean();
+        path.totalPrice = courses.reduce((sum, course) => {
+          const effectivePrice = course.effectivePrice ?? course.price;
+          return sum + effectivePrice;
+        }, 0);
+        await path.save();
+      }
+      next();
+    } catch (error) {
+      next(new Error("Failed to update learning path prices"));
+    }
+  } else {
+    next();
+  }
+});
+
 CourseSchema.virtual("chapters", {
   ref: "Chapter",
   localField: "_id",
@@ -84,7 +114,6 @@ CourseSchema.virtual("chapters", {
   justOne: false,
 });
 
-// Virtual for quizzes
 CourseSchema.virtual("quizzes", {
   ref: "Quiz",
   localField: "_id",
@@ -92,7 +121,6 @@ CourseSchema.virtual("quizzes", {
   justOne: false,
 });
 
-// Virtual for effective price (considering offer)
 CourseSchema.virtual("effectivePrice").get(function (this: ICourse) {
   if (this.offer && this.populated("offer")) {
     const offer = this.offer as any;

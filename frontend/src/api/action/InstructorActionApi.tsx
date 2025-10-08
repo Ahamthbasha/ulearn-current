@@ -12,6 +12,7 @@ import type {
   CreateLearningPathRequest,
   UpdateLearningPathRequest,
   LearningPathDTO,
+  LearningPathListDTO
 } from "../../types/interfaces/IInstructorInterface";
 
 //verification api call
@@ -993,7 +994,7 @@ export const getInstructorLearningPaths = async (
   limit: number = 10,
   search: string = "",
   status: string = ""
-): Promise<{ data: LearningPathDTO[]; total: number }> => {
+): Promise<{ data: LearningPathListDTO[]; total: number }> => {
   try {
     const response = await API.get(
       `${
@@ -1020,7 +1021,7 @@ export const getLearningPathById = async (
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorGetLearningPathById}/${learningPathId}`
     );
-    return response.data.data; // Adjusted to match backend response structure
+    return response.data.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to fetch learning path"
@@ -1029,14 +1030,26 @@ export const getLearningPathById = async (
 };
 
 export const createLearningPath = async (
-  data: CreateLearningPathRequest
+  data: CreateLearningPathRequest,
+  thumbnail?: File
 ): Promise<LearningPathDTO> => {
   try {
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("description", data.description);
+    formData.append("category",data.category)
+    formData.append("items", JSON.stringify(data.items));
+    if (thumbnail) {
+      formData.append("thumbnail", thumbnail);
+    }
     const response = await API.post(
       InstructorRouterEndPoints.instructorCreateLearningPath,
-      data
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
     );
-    return response.data.data; // Adjusted to match backend response structure
+    return response.data.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to create learning path"
@@ -1046,14 +1059,24 @@ export const createLearningPath = async (
 
 export const updateLearningPath = async (
   learningPathId: string,
-  data: UpdateLearningPathRequest
+  data: UpdateLearningPathRequest,
+  thumbnail?: File
 ): Promise<LearningPathDTO> => {
   try {
+    const formData = new FormData();
+    if (data.title) formData.append("title", data.title);
+    if (data.description) formData.append("description", data.description);
+    if (data.items) formData.append("items", JSON.stringify(data.items));
+    if (data.category) formData.append("category",data.category)
+    if (thumbnail) formData.append("thumbnail", thumbnail);
     const response = await API.put(
       `${InstructorRouterEndPoints.instructorUpdateLearningPath}/${learningPathId}`,
-      data
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
     );
-    return response.data.data; // Adjusted to match backend response structure
+    return response.data.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to update learning path"
@@ -1083,7 +1106,7 @@ export const publishLearningPath = async (
       `${InstructorRouterEndPoints.instructorPublishLearningPath}/${learningPathId}/publish`,
       {}
     );
-    return response.data.data; // Adjusted to match backend response structure
+    return response.data.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to publish learning path"
@@ -1098,7 +1121,7 @@ export const submitLearningPathVerification = async (
     const response = await API.put(
       `${InstructorRouterEndPoints.instructorSubmitLearningPath}/${learningPathId}/submit`
     );
-    return response.data.data; // Adjusted to match backend response structure
+    return response.data.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to submit learning path"
@@ -1113,7 +1136,7 @@ export const resubmitLearningPathVerification = async (
     const response = await API.put(
       `${InstructorRouterEndPoints.instructorReSubmitLearningPath}/${learningPathId}/resubmit`
     );
-    return response.data.data; // Adjusted to match backend response structure
+    return response.data.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to resubmit learning path"

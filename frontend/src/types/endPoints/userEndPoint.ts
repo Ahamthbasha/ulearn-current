@@ -91,7 +91,10 @@ const UserRouterEndpoints = {
   userExportCourseReport : "/api/student/dashboard/exportCourseReport",
   userExportSlotReport : "/api/student/dashboard/exportSlotReport",
 
-  
+  // student lms
+
+  userGetLMSCourse : "/api/student/learningPaths",
+  userGetLMSCourseDetail : "/api/student/learningPaths",
 
   
 };

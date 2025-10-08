@@ -2,8 +2,6 @@ import { LearningPathModel, ILearningPath, CreateLearningPathDTO } from "../../m
 import { GenericRepository } from "../genericRepository";
 import { IInstructorLearningPathRepository } from "./interface/IInstructorLearningPathRepo";
 import { CourseModel } from "../../models/courseModel";
-import mongoose from "mongoose";
-import { Types } from "mongoose";
 
 export class InstructorLearningPathRepository
   extends GenericRepository<ILearningPath>
@@ -29,11 +27,17 @@ export class InstructorLearningPathRepository
   }
 
   async getLearningPathById(learningPathId: string): Promise<ILearningPath | null> {
-    const result = await this.findByIdWithPopulate(learningPathId, {
-      path: "items.courseId",
-      select: "courseName thumbnailUrl price offer",
-      populate: { path: "offer", select: "isActive startDate endDate discountPercentage" },
-    });
+    const result = await this.findByIdWithPopulate(learningPathId, [
+      {
+        path: "items.courseId",
+        select: "courseName thumbnailUrl price offer",
+        populate: { path: "offer", select: "isActive startDate endDate discountPercentage" },
+      },
+      {
+        path: "categoryDetails",
+        select: "categoryName",
+      },
+    ]);
     return result;
   }
 
@@ -56,7 +60,7 @@ export class InstructorLearningPathRepository
       } else if (status === "unpublished") {
         filter.isPublished = false;
       } else if (["pending", "accepted", "rejected", "draft"].includes(status)) {
-        filter.status = status; // Filter by status
+        filter.status = status;
       }
     }
 
@@ -65,11 +69,17 @@ export class InstructorLearningPathRepository
       page,
       limit,
       { createdAt: -1 },
-      {
-        path: "items.courseId",
-        select: "courseName thumbnailUrl price offer",
-        populate: { path: "offer", select: "isActive startDate endDate discountPercentage" },
-      },
+      [
+        {
+          path: "items.courseId",
+          select: "courseName thumbnailUrl price offer",
+          populate: { path: "offer", select: "isActive startDate endDate discountPercentage" },
+        },
+        {
+          path: "categoryDetails",
+          select: "categoryName",
+        },
+      ],
     );
   }
 
@@ -97,12 +107,12 @@ export class InstructorLearningPathRepository
     return await this.update(learningPathId, updateData);
   }
 
-  async validateCoursesForInstructor(courses: Types.ObjectId[], instructorId: string): Promise<boolean> {
-    const count = await CourseModel.countDocuments({
-      _id: { $in: courses },
-      instructorId: new mongoose.Types.ObjectId(instructorId),
+  async validateCoursesForInstructor(courseIds: string[], instructorId: string): Promise<boolean> {
+    const courses = await CourseModel.find({
+      _id: { $in: courseIds },
+      instructorId,
       isPublished: true,
     });
-    return count === courses.length;
+    return courses.length === courseIds.length;
   }
 }

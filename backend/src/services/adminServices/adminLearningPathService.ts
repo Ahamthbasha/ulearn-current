@@ -27,6 +27,7 @@ export class AdminLearningPathService implements IAdminLearningPathService {
   async getLearningPathById(learningPathId: string): Promise<LearningPathDTO | null> {
     const learningPath = await this._learningPathRepository.getLearningPathById(learningPathId);
     if (!learningPath) return null;
+    console.log("learningPath",learningPath)
     const dto = mapLearningPathToDTO(learningPath);
     dto.items = await Promise.all(
       dto.items.map(async (item) => ({
@@ -34,6 +35,10 @@ export class AdminLearningPathService implements IAdminLearningPathService {
         thumbnailUrl: item.thumbnailUrl ? await getPresignedUrl(item.thumbnailUrl) : undefined,
       }))
     );
+
+    if(dto.thumbnailUrl){
+      dto.thumbnailUrl = await getPresignedUrl(dto.thumbnailUrl)
+    }
     return dto;
   }
 

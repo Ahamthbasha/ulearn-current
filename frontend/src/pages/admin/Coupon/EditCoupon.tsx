@@ -4,7 +4,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import InputField from '../../../components/common/InputField';
 import { getCouponById, editCoupon } from '../../../api/action/AdminActionApi';
-import { type CouponData } from '../../../types/interfaces/IAdminInterface';
+import {type  adminCouponDto } from '../../../types/interfaces/IAdminInterface';
 
 const validationSchema = Yup.object({
   code: Yup.string()
@@ -14,9 +14,14 @@ const validationSchema = Yup.object({
     .required('Discount is required')
     .min(5, 'Discount must be at least 5')
     .max(100, 'Discount cannot exceed 100'),
-  expiryDate: Yup.date()
+  expiryDate: Yup.string()
     .required('Expiry date is required')
-    .min(new Date(), 'Expiry date must be in the future'),
+    .test('is-future-date', 'Expiry date must be in the future', (value) => {
+      if (!value) return false;
+      const [day, month, year] = value.split('-');
+      const date = new Date(`${year}-${month}-${day}`);
+      return date > new Date();
+    }),
   minPurchase: Yup.number()
     .required('Minimum purchase is required')
     .moreThan(0, 'Minimum purchase must be greater than 0'),
@@ -27,19 +32,32 @@ const validationSchema = Yup.object({
 
 const EditCouponPage: React.FC = () => {
   const { couponId } = useParams<{ couponId: string }>();
-  const [initialValues, setInitialValues] = useState<CouponData>({
+  const [initialValues, setInitialValues] = useState<adminCouponDto>({
+    couponId: '',
     code: '',
     discount: 0,
-    expiryDate: '',
+    status: true,
     minPurchase: 0,
     maxDiscount: 0,
+    expiryDate: '',
   });
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  // Fetch coupon data
+  // Function to convert DD-MM-YYYY to YYYY-MM-DD for input field
+  const convertToInputDateFormat = (date: string): string => {
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Function to convert YYYY-MM-DD to DD-MM-YYYY for submission
+  const convertToApiDateFormat = (date: string): string => {
+    const [year, month, day] = date.split('-');
+    return `${day}-${month}-${year}`;
+  };
+
   useEffect(() => {
     const fetchCoupon = async () => {
       if (!couponId) {
@@ -49,14 +67,15 @@ const EditCouponPage: React.FC = () => {
       }
       try {
         const response = await getCouponById(couponId);
-        // Access the coupon data from response.data
-        const coupon = response.data || response; // Fallback to response if data is missing
+        const coupon: adminCouponDto = response.data;
         setInitialValues({
+          couponId: coupon.couponId,
           code: coupon.code,
           discount: coupon.discount,
-          expiryDate: coupon.expiryDate.split('T')[0],
+          status: coupon.status,
           minPurchase: coupon.minPurchase,
           maxDiscount: coupon.maxDiscount,
+          expiryDate: convertToInputDateFormat(coupon.expiryDate),
         });
         setLoading(false);
       } catch (err: any) {
@@ -67,11 +86,15 @@ const EditCouponPage: React.FC = () => {
     fetchCoupon();
   }, [couponId]);
 
-  const handleSubmit = async (values: CouponData, { setSubmitting }: any) => {
+  const handleSubmit = async (values: adminCouponDto, { setSubmitting }: any) => {
     setServerError(null);
     try {
       if (!couponId) throw new Error('Invalid coupon ID');
-      await editCoupon(couponId, values);
+      const submissionValues = {
+        ...values,
+        expiryDate: convertToApiDateFormat(values.expiryDate),
+      };
+      await editCoupon(couponId, submissionValues);
       navigate('/admin/coupons');
     } catch (err: any) {
       setServerError(err.message || 'Failed to update coupon');

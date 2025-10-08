@@ -1,24 +1,36 @@
+import { ICourse } from "../../models/courseModel";
 import { ILearningPath } from "../../models/learningPathModel";
-import { LearningPathDTO } from "../../dto/instructorDTO/learningPathDTO";
+import { LearningPathListDTO, LearningPathDTO } from "src/dto/instructorDTO/learningPathDTO";
 import { formatDate } from "../../utils/dateFormat";
+import { Types } from "mongoose";
+
+export function mapLearningPathToListDTO(learningPath: ILearningPath): LearningPathListDTO {
+  return {
+    learningPathId: learningPath._id.toString(),
+    title: learningPath.title,
+    thumbnailUrl: learningPath.thumbnailUrl,
+    status: learningPath.status,
+  };
+}
+
+export function mapLearningPathsToListDTO(learningPaths: ILearningPath[]): LearningPathListDTO[] {
+  return learningPaths.map(mapLearningPathToListDTO);
+}
 
 export function mapLearningPathToDTO(learningPath: ILearningPath): LearningPathDTO {
   const items = learningPath.items.map((item) => {
-    const isPopulated = item.courseId && typeof item.courseId === "object" && "_id" in item.courseId;
+    const isPopulated = item.courseId && item.courseId instanceof Object && "_id" in item.courseId;
+
     return {
       courseId: isPopulated
-        ? (item.courseId as any)._id.toString()
-        : item.courseId.toString(),
+        ? (item.courseId as ICourse)._id.toString()
+        : (item.courseId as Types.ObjectId).toString(),
       order: item.order,
-      courseName: isPopulated ? (item.courseId as any)?.courseName : undefined,
-      thumbnailUrl: isPopulated ? (item.courseId as any)?.thumbnailUrl : undefined,
-      price: isPopulated ? (item.courseId as any)?.effectivePrice ?? (item.courseId as any)?.price : undefined,
+      courseName: isPopulated ? (item.courseId as ICourse).courseName : undefined,
+      thumbnailUrl: isPopulated ? (item.courseId as ICourse).thumbnailUrl : undefined,
+      price: isPopulated ? ((item.courseId as ICourse).effectivePrice ?? (item.courseId as ICourse).price) : undefined,
     };
   });
-
-  const totalAmount = items.reduce((sum, item) => {
-    return sum + (item.price !== undefined ? item.price : 0);
-  }, 0);
 
   return {
     _id: learningPath._id.toString(),
@@ -26,12 +38,16 @@ export function mapLearningPathToDTO(learningPath: ILearningPath): LearningPathD
     description: learningPath.description,
     instructorId: learningPath.instructorId.toString(),
     items,
-    totalAmount,
+    totalPrice: learningPath.totalPrice,
     isPublished: learningPath.isPublished,
+    publishDate: learningPath.isPublished ? learningPath.updatedAt : undefined,
     createdAt: formatDate(learningPath.createdAt),
     updatedAt: formatDate(learningPath.updatedAt),
     status: learningPath.status,
     adminReview: learningPath.adminReview,
+    thumbnailUrl: learningPath.thumbnailUrl,
+    category: learningPath.category!.toString(),
+    categoryName: learningPath.categoryDetails?.categoryName ?? ""
   };
 }
 

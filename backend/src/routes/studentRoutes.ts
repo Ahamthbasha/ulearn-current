@@ -15,7 +15,8 @@ import {
   studentSlotController,
   studentSlotBookingController,
   studentDashboardController,
-  studentCouponController
+  studentCouponController,
+  studentLmsController
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 import authenticateToken from "../middlewares/authenticatedRoutes";
@@ -561,7 +562,17 @@ router.get(
   studentCouponController.getAvailableCoupons.bind(studentCouponController)
 )
 
+///////////////////// lms integration //////////////////
 
+router.get(
+  "/learningPaths",
+  studentLmsController.getLearningPaths.bind(studentLmsController)
+)
+
+router.get(
+  "/learningPaths/:id",
+  studentLmsController.getLearningPathById.bind(studentLmsController)
+)
 
 
 

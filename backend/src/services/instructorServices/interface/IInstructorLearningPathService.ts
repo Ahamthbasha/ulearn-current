@@ -1,11 +1,13 @@
 import { ILearningPath, CreateLearningPathDTO } from "../../../models/learningPathModel";
-import { LearningPathDTO } from "../../../dto/instructorDTO/learningPathDTO";
+import { LearningPathDTO,LearningPathListDTO } from "../../../dto/instructorDTO/learningPathDTO";
+import { IMulterFile } from "../../../utils/s3Bucket";
 
 export interface IInstructorLearningPathService {
-  createLearningPath(data: CreateLearningPathDTO): Promise<LearningPathDTO>;
+  createLearningPath(data: CreateLearningPathDTO, thumbnail?: IMulterFile): Promise<LearningPathDTO>;
   updateLearningPath(
     learningPathId: string,
     data: Partial<ILearningPath>,
+    thumbnail?: IMulterFile
   ): Promise<LearningPathDTO | null>;
   deleteLearningPath(learningPathId: string): Promise<ILearningPath | null>;
   getLearningPathById(learningPathId: string): Promise<LearningPathDTO | null>;
@@ -15,7 +17,7 @@ export interface IInstructorLearningPathService {
     limit: number,
     search?: string,
     status?: string,
-  ): Promise<{ data: LearningPathDTO[]; total: number }>;
+  ): Promise<{ data: LearningPathListDTO[]; total: number }>;
   isLearningPathAlreadyCreatedByInstructor(
     title: string,
     instructorId: string,
@@ -27,5 +29,5 @@ export interface IInstructorLearningPathService {
   ): Promise<boolean>;
   publishLearningPath(learningPathId: string): Promise<ILearningPath | null>;
   submitLearningPathToAdmin(learningPathId: string): Promise<ILearningPath | null>;
-  resubmitLearningPathToAdmin(learningPathId: string): Promise<ILearningPath | null>; // New method
+  resubmitLearningPathToAdmin(learningPathId: string): Promise<ILearningPath | null>;
 }

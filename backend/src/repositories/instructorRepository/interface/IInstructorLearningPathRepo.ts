@@ -1,5 +1,4 @@
 import { ILearningPath, CreateLearningPathDTO } from "../../../models/learningPathModel";
-import { Types } from "mongoose";
 
 export interface IInstructorLearningPathRepository {
   createLearningPath(data: CreateLearningPathDTO): Promise<ILearningPath>;
@@ -20,5 +19,5 @@ export interface IInstructorLearningPathRepository {
     excludeId: string,
   ): Promise<ILearningPath | null>;
   publishLearningPath(learningPathId: string): Promise<ILearningPath | null>;
-  validateCoursesForInstructor(courses: Types.ObjectId[], instructorId: string): Promise<boolean>;
+  validateCoursesForInstructor(courseIds: string[], instructorId: string): Promise<boolean>;
 }

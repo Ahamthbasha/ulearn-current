@@ -66,4 +66,21 @@ export interface InstructorDataTableProps<T = any> {
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
+  leftSideHeaderContent?: React.ReactNode;
+}
+
+export interface Column<T> {
+  key: string;
+  title: string;
+  render?: (value: any, record: T, index: number) => React.ReactNode;
+  width?: string;
+}
+
+export interface ActionButton<T> {
+  key: string;
+  label: string | ((record: T) => string);
+  icon: React.ReactNode | ((record: T) => React.ReactNode);
+  onClick: (record: T) => void;
+  className?: string | ((record: T) => string);
+  condition?: (record: T) => boolean;
 }

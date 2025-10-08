@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Formik, Form } from "formik";
+import { Formik, Form, ErrorMessage, Field } from "formik";
 import * as Yup from "yup";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import InputField from "../../../components/common/InputField";
 import CourseSelector from "../../../components/InstructorComponents/CourseSelector";
-import { createLearningPath } from "../../../api/action/InstructorActionApi";
+import { createLearningPath, getInstructorCategories } from "../../../api/action/InstructorActionApi";
 import type { CreateLearningPathRequest } from "../../../types/interfaces/IInstructorInterface";
 
 const isValidObjectId = (id: string): boolean => {
@@ -12,79 +14,267 @@ const isValidObjectId = (id: string): boolean => {
 };
 
 const validationSchema = Yup.object({
-  title: Yup.string().required("Title is required").trim(),
-  description: Yup.string().required("Description is required").trim(),
+  title: Yup.string()
+    .required("Title is required")
+    .trim()
+    .min(5, "Title must be at least 5 characters")
+    .max(100, "Title cannot exceed 100 characters")
+    .matches(/^[a-zA-Z0-9\s,.!?-]+$/, "Title can only contain letters, numbers, spaces, and basic punctuation")
+    .test(
+      "min-letters",
+      "Title must contain at least 10 letters",
+      (value) => {
+        if (!value) return false;
+        const letterCount = (value.match(/[a-zA-Z]/g) || []).length;
+        return letterCount >= 10;
+      }
+    ),
+  description: Yup.string()
+    .required("Description is required")
+    .trim()
+    .min(10, "Description must be at least 10 characters")
+    .max(500, "Description cannot exceed 500 characters")
+    .matches(/^[a-zA-Z0-9\s,.!?-]+$/, "Description can only contain letters, numbers, spaces, and basic punctuation")
+    .test(
+      "min-letters",
+      "Description must contain at least 10 letters",
+      (value) => {
+        if (!value) return false;
+        const letterCount = (value.match(/[a-zA-Z]/g) || []).length;
+        return letterCount >= 10;
+      }
+    ),
+  category: Yup.string()
+    .required("Category is required")
+    .test("is-valid-objectid", "Invalid category ID format", (value) => isValidObjectId(value || "")),
   items: Yup.array()
     .of(
       Yup.object({
         courseId: Yup.string()
           .required("Course is required")
           .test("is-valid-objectid", "Invalid course ID format", (value) => isValidObjectId(value || "")),
-        order: Yup.number().min(1, "Order must be at least 1").required("Order is required"),
+        order: Yup.number()
+          .min(1, "Order must be at least 1")
+          .required("Order is required")
+          .integer("Order must be an integer"),
       })
     )
-    .min(1, "At least one course is required"),
+    .min(1, "At least one course is required")
+    .test(
+      "unique-course-ids",
+      "Duplicate courses are not allowed",
+      (items) => {
+        if (!items) return true;
+        const courseIds = items.map((item: any) => item.courseId);
+        const uniqueCourseIds = new Set(courseIds);
+        return uniqueCourseIds.size === courseIds.length;
+      }
+    )
+    .test(
+      "unique-orders",
+      "Duplicate order numbers are not allowed",
+      (items) => {
+        if (!items) return true;
+        const orders = items.map((item: any) => item.order);
+        const uniqueOrders = new Set(orders);
+        return uniqueOrders.size === orders.length;
+      }
+    ),
+  thumbnail: Yup.mixed()
+    .required("Thumbnail image is required")
+    .test(
+      "file-type",
+      "Thumbnail must be an image (JPEG, PNG, or GIF)",
+      (value: unknown) => {
+        if (!value) return false;
+        if (!(value instanceof File)) return false;
+        return ["image/jpeg", "image/png", "image/gif"].includes(value.type);
+      }
+    )
+    .test(
+      "file-size",
+      "Thumbnail must be less than 5MB",
+      (value: unknown) => {
+        if (!value || !(value instanceof File)) return false;
+        return value.size <= 5 * 1024 * 1024; // 5MB
+      }
+    ),
 });
 
 const LearningPathCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Array<{ _id: string; categoryName: string }>>([]);
 
-  const initialValues: CreateLearningPathRequest = {
+  const initialValues: CreateLearningPathRequest & { thumbnail?: File } = {
     title: "",
     description: "",
+    category: "",
     items: [{ courseId: "", order: 1 }],
+    thumbnail: undefined,
   };
 
-  const handleSubmit = async (values: CreateLearningPathRequest) => {
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getInstructorCategories();
+        console.log("Fetched categories:", data); // Debug categories
+        setCategories(data);
+      } catch (error) {
+        console.error("Failed to load categories", error);
+        toast.error("Failed to load categories", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (thumbnailPreview) {
+        URL.revokeObjectURL(thumbnailPreview);
+      }
+    };
+  }, [thumbnailPreview]);
+
+  const handleSubmit = async (values: CreateLearningPathRequest & { thumbnail?: File }) => {
     try {
+      console.log("Form values:", values); // Debug entire form state
+      if (!values.category || !isValidObjectId(values.category)) {
+        throw new Error("Please select a valid category");
+      }
+
       const payload: CreateLearningPathRequest = {
-        ...values,
         title: values.title.trim(),
         description: values.description.trim(),
+        category: values.category,
         items: values.items.map((item) => ({
           courseId: item.courseId,
           order: item.order,
         })),
       };
-      await createLearningPath(payload);
+
+      console.log("Frontend payload:", payload);
+      console.log("Frontend thumbnail:", values.thumbnail);
+      await createLearningPath(payload, values.thumbnail!);
+      toast.success("Learning path created successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       navigate("/instructor/learningPath");
     } catch (err: any) {
-      setError(err.message || "Failed to create learning path");
+      const errorMessage = err.response?.data?.message || err.message || "Failed to create learning path";
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+      console.error("Create learning path error:", err.response?.data || err);
     }
   };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Create Learning Path</h1>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ isSubmitting }) => (
+      <ToastContainer />
+      <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
+        {({ isSubmitting, setFieldValue, values }) => (
           <Form className="space-y-4">
-            <InputField name="title" label="Title" placeholder="Enter title" />
-            <InputField
-              name="description"
-              label="Description"
-              placeholder="Enter description"
-            />
+            <InputField name="title" label="Title" placeholder="Enter title (5-100 characters, at least 10 letters)" />
+            <InputField name="description" label="Description" placeholder="Enter description (10-500 characters, at least 10 letters)" />
+
+            <div>
+              <label htmlFor="category" className="block font-medium mb-1">
+                Category
+              </label>
+              <Field
+                as="select"
+                name="category"
+                id="category"
+                className="block w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  const selectedCategory = e.target.value;
+                  setFieldValue("category", selectedCategory);
+                  console.log("Category selected:", selectedCategory, "Form state category:", values.category); // Debug
+                }}
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.categoryName}
+                  </option>
+                ))}
+              </Field>
+              <ErrorMessage name="category" component="p" className="text-red-500 text-sm mt-1" />
+            </div>
+
             <CourseSelector name="items" label="Courses" />
+
+            <div>
+              <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">
+                Thumbnail Image (Required, max 5MB)
+              </label>
+              <input
+                id="thumbnail"
+                name="thumbnail"
+                type="file"
+                accept="image/jpeg,image/png,image/gif"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  setFieldValue("thumbnail", file);
+                  if (file) {
+                    const previewUrl = URL.createObjectURL(file);
+                    setThumbnailPreview(previewUrl);
+                  } else {
+                    setThumbnailPreview(null);
+                  }
+                  console.log("Selected thumbnail:", file);
+                }}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              <ErrorMessage name="thumbnail" component="p" className="text-red-500 text-sm mt-1" />
+              {thumbnailPreview && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Thumbnail Preview:</p>
+                  <img src={thumbnailPreview} alt="Thumbnail preview" className="max-w-xs h-auto rounded-lg border border-gray-200" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFieldValue("thumbnail", undefined);
+                      setThumbnailPreview(null);
+                    }}
+                    className="mt-2 text-sm text-red-500 hover:text-red-700"
+                  >
+                    Remove Thumbnail
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="flex space-x-4">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                className="relative bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center justify-center"
               >
-                Create
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Creating...
+                  </>
+                ) : (
+                  "Create"
+                )}
               </button>
-              <button
-                type="button"
-                onClick={() => navigate("/instructor/learningPath")}
-                className="bg-gray-200 px-4 py-2 rounded-lg"
-              >
+              <button type="button" onClick={() => navigate("/instructor/learningPath")} className="bg-gray-200 px-4 py-2 rounded-lg">
                 Cancel
               </button>
             </div>

@@ -137,7 +137,6 @@ const LearningPathViewPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      {/* Header */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900">{learningPath.title}</h1>
@@ -157,27 +156,32 @@ const LearningPathViewPage: React.FC = () => {
             <p className="text-red-600 font-medium">Admin Review: {learningPath.adminReview}</p>
           </div>
         )}
-        {/* Metadata */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
           <div>
+            <span className="font-medium">category:</span>{" "}
+            {learningPath.categoryName}
+          </div>
+          <div>
             <span className="font-medium">Created:</span>{" "}
-            {new Date(learningPath.createdAt).toLocaleString()}
+            {learningPath.createdAt}
           </div>
           <div>
             <span className="font-medium">Last Updated:</span>{" "}
-            {new Date(learningPath.updatedAt).toLocaleString()}
+            {learningPath.updatedAt}
+          </div>
+          <div>
+            <span className="font-medium">Total Price:</span>{" "}
+            ₹{learningPath.totalPrice.toLocaleString()}
           </div>
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <p className="text-red-600">{error}</p>
         </div>
       )}
 
-      {/* Courses Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Courses ({learningPath.items?.length ?? 0})
@@ -189,7 +193,6 @@ const LearningPathViewPage: React.FC = () => {
                 key={item.courseId || `item-${index}`}
                 className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
               >
-                {/* Thumbnail */}
                 {item.thumbnailUrl && (
                   <img
                     src={item.thumbnailUrl}
@@ -201,7 +204,6 @@ const LearningPathViewPage: React.FC = () => {
                     }}
                   />
                 )}
-                {/* Course Info */}
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full">
@@ -225,7 +227,7 @@ const LearningPathViewPage: React.FC = () => {
             ))}
             <div className="mt-6 border-t border-gray-200 pt-4">
               <h2 className="text-lg font-semibold text-gray-900">
-                Total Amount for This Learning Path: ₹{learningPath.totalAmount.toFixed(2)}
+                Total Price for This Learning Path: ₹{learningPath.totalPrice.toFixed(2)}
               </h2>
             </div>
           </div>
@@ -236,7 +238,6 @@ const LearningPathViewPage: React.FC = () => {
         )}
       </div>
 
-      {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 mb-6">
         <button
           onClick={() => navigate("/instructor/learningPath")}

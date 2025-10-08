@@ -33,6 +33,7 @@ import StudentAvailableSlotsPage from '../pages/student/slot/StudentAvailableSlo
 import SlotCheckoutPage from '../pages/student/slotCheckout/SlotCheckoutPage' 
 import SlotHistoryPage from '../pages/student/slot/SlotHistoryPage'
 import SlotBookingDetailPage from '../pages/student/slot/SlotBookingDetailpage'
+import LearningPathListPage from '../pages/student/learningPath/LearningPathListPage'
 
 
 const StudentRouter = () => {
@@ -51,6 +52,11 @@ const StudentRouter = () => {
         <Route path="/user/instructors" element={<InstructorListPage/>}/>
         <Route path="/user/instructor/:instructorId" element={<InstructorDetailPage/>}/>
         <Route path="/user/instructor/:instructorId/slots" element={<StudentAvailableSlotsPage/>}/>
+
+        {/*  */}
+
+        <Route path='/user/lms' element={<LearningPathListPage/>}/>
+
 
         {/* reset password in case of forgot password */}
         <Route path='/user/verifyEmail' element={<ForgotPassword/>} />

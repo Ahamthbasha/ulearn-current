@@ -1,11 +1,12 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { IInstructorLearningPathController } from "./interfaces/IInstructorLearningPathController";
 import { IInstructorLearningPathService } from "../../services/instructorServices/interface/IInstructorLearningPathService";
 import { ILearningPath, CreateLearningPathDTO } from "../../models/learningPathModel";
-import getId from "../../utils/getId";
 import { StatusCode } from "../../utils/enums";
 import { INSTRUCTOR_ERROR_MESSAGE, LearningPathSuccessMessages, LearningPathErrorMessages } from "../../utils/constants";
 import { Types } from "mongoose";
+import { IMulterFile } from "../../utils/s3Bucket";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 
 export class InstructorLearningPathController implements IInstructorLearningPathController {
   private _learningPathService: IInstructorLearningPathService;
@@ -15,13 +16,15 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   }
 
   async createLearningPath(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
     try {
-      const { title, description, items } = req.body;
-      const instructorId = await getId(req);
+      console.log("req body",req.body)
+      const { title, description, items, category } = req.body;
+      const thumbnail = req.file as IMulterFile | undefined;
+      const instructorId = req.user?.id;
 
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
@@ -31,10 +34,29 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         return;
       }
 
-      if (!title || !description || !Array.isArray(items) || items.length === 0) {
+      let parsedItems;
+      try {
+        parsedItems = typeof items === "string" ? JSON.parse(items) : items;
+      } catch (error) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid items format",
+        });
+        return;
+      }
+
+      if (!title || !description || !Array.isArray(parsedItems) || parsedItems.length === 0 || !thumbnail || !category) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: LearningPathErrorMessages.MISSING_FIELDS,
+        });
+        return;
+      }
+
+      if (!["image/jpeg", "image/png", "image/gif"].includes(thumbnail.mimetype)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Thumbnail must be an image (JPEG, PNG, or GIF)",
         });
         return;
       }
@@ -56,13 +78,15 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         title: trimmedTitle,
         description,
         instructorId: new Types.ObjectId(instructorId),
-        items: items.map((item: any) => ({
+        items: parsedItems.map((item: any) => ({
           courseId: new Types.ObjectId(item.courseId),
           order: Number(item.order),
         })),
+        thumbnailUrl: "",
+        category: new Types.ObjectId(category), // Add category
       };
 
-      const created = await this._learningPathService.createLearningPath(learningPathDTO);
+      const created = await this._learningPathService.createLearningPath(learningPathDTO, thumbnail);
 
       res.status(StatusCode.CREATED).json({
         success: true,
@@ -70,22 +94,42 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         data: created,
       });
     } catch (error) {
+      console.error("Error in createLearningPath:", error);
       next(error);
     }
   }
 
   async updateLearningPath(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
     try {
       const { learningPathId } = req.params;
-      const { title, description, items } = req.body;
-      const instructorId = await getId(req);
+
+      const { title, description, items, category } = req.body;
+      const thumbnail = req.file as IMulterFile | undefined;
+      const instructorId = req.user?.id;
 
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
+        });
+        return;
+      }
+
+      const learningPath = await this._learningPathService.getLearningPathById(learningPathId);
+      if (!learningPath) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: LearningPathErrorMessages.NOT_FOUND,
+        });
+        return;
+      }
+
+      if (learningPath.instructorId.toString() !== instructorId) {
+        res.status(StatusCode.FORBIDDEN).json({
           success: false,
           message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
         });
@@ -108,17 +152,37 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         }
       }
 
+      let parsedItems;
+      if (items) {
+        try {
+          parsedItems = typeof items === "string" ? JSON.parse(items) : items;
+        } catch (error) {
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: "Invalid items format",
+          });
+          return;
+        }
+      }
+
       const updateData: Partial<ILearningPath> = {};
-      if (title) updateData.title = trimmedTitle;
+      if (trimmedTitle) updateData.title = trimmedTitle;
       if (description) updateData.description = description;
-      if (Array.isArray(items)) {
-        updateData.items = items.map((item: any) => ({
+      if (Array.isArray(parsedItems)) {
+        updateData.items = parsedItems.map((item: any) => ({
           courseId: new Types.ObjectId(item.courseId),
           order: Number(item.order),
         }));
       }
+      if (category) updateData.category = new Types.ObjectId(category); // Add category
 
-      const updated = await this._learningPathService.updateLearningPath(learningPathId, updateData);
+      if (learningPath.status === "accepted") {
+        updateData.status = "pending";
+        updateData.isPublished = false;
+        updateData.adminReview = undefined;
+      }
+
+      const updated = await this._learningPathService.updateLearningPath(learningPathId, updateData, thumbnail);
 
       if (!updated) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -139,12 +203,39 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   }
 
   async deleteLearningPath(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
     try {
       const { learningPathId } = req.params;
+      const instructorId = req.user?.id;
+
+      if (!instructorId) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
+        });
+        return;
+      }
+
+      const learningPath = await this._learningPathService.getLearningPathById(learningPathId);
+      if (!learningPath) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: LearningPathErrorMessages.NOT_FOUND,
+        });
+        return;
+      }
+
+      if (learningPath.instructorId.toString() !== instructorId) {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
+        });
+        return;
+      }
+
       const deleted = await this._learningPathService.deleteLearningPath(learningPathId);
       if (!deleted) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -163,7 +254,7 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   }
 
   async getLearningPathById(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
@@ -184,12 +275,12 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   }
 
   async getInstructorLearningPaths(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
     try {
-      const instructorId = await getId(req);
+      const instructorId = req.user?.id;
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
@@ -224,12 +315,38 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   }
 
   async publishLearningPath(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
     try {
       const { learningPathId } = req.params;
+      const instructorId = req.user?.id;
+
+      if (!instructorId) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
+        });
+        return;
+      }
+
+      const learningPath = await this._learningPathService.getLearningPathById(learningPathId);
+      if (!learningPath) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: LearningPathErrorMessages.NOT_FOUND,
+        });
+        return;
+      }
+
+      if (learningPath.instructorId.toString() !== instructorId) {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
+        });
+        return;
+      }
 
       const updated = await this._learningPathService.publishLearningPath(learningPathId);
 
@@ -252,13 +369,13 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   }
 
   async submitLearningPathToAdmin(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
     try {
       const { learningPathId } = req.params;
-      const instructorId = await getId(req);
+      const instructorId = req.user?.id;
 
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
@@ -298,13 +415,13 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   }
 
   async resubmitLearningPathToAdmin(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
   ): Promise<void> {
     try {
       const { learningPathId } = req.params;
-      const instructorId = await getId(req);
+      const instructorId = req.user?.id;
 
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
@@ -335,7 +452,7 @@ export class InstructorLearningPathController implements IInstructorLearningPath
 
       res.status(StatusCode.OK).json({
         success: true,
-        message: LearningPathSuccessMessages.RESUBMITTED, // New success message
+        message: LearningPathSuccessMessages.RESUBMITTED,
         data: resubmitted,
       });
     } catch (error) {
