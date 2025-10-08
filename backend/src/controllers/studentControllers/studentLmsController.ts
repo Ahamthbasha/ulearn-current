@@ -1,20 +1,31 @@
 import { Request, Response } from "express";
-import { IStudentLmsService } from "../../services/studentServices/interface/IStudentLmsService"; 
-import { IStudentLmsController } from "./interfaces/IStudentLmsController"; 
+import { IStudentLmsService } from "../../services/studentServices/interface/IStudentLmsService";
+import { IStudentLmsController } from "./interfaces/IStudentLmsController";
+import { StatusCode } from "../../utils/enums";
+import { LMS_ERROR_MESSAGE } from "../../utils/constants";
 
 export class StudentLmsController implements IStudentLmsController {
-  constructor(private lmsService: IStudentLmsService) {}
+  private _lmsService: IStudentLmsService
+  constructor(lmsService: IStudentLmsService) {
+    this._lmsService = lmsService
+  }
 
   async getLearningPaths(req: Request, res: Response): Promise<void> {
     try {
-      const { query, page = "1", limit = "10", category } = req.query;
-      const paths = await this.lmsService.getLearningPaths(
+      const { query, page = "1", limit = "10", category, sort = "name-asc" } = req.query;
+      const validSortOptions = ["name-asc", "name-desc", "price-asc", "price-desc"];
+      const sortOption = validSortOptions.includes(sort as string)
+        ? (sort as "name-asc" | "name-desc" | "price-asc" | "price-desc")
+        : "name-asc";
+
+      const paths = await this._lmsService.getLearningPaths(
         query as string,
         parseInt(page as string),
         parseInt(limit as string),
-        category as string
+        category as string,
+        sortOption
       );
-      res.status(200).json({
+      res.status(StatusCode.OK).json({
         success: true,
         data: paths.paths,
         total: paths.total,
@@ -22,21 +33,21 @@ export class StudentLmsController implements IStudentLmsController {
         limit: parseInt(limit as string),
       });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
     }
   }
 
   async getLearningPathById(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
-      const path = await this.lmsService.getLearningPathById(id);
+      const { learingPathId } = req.params;
+      const path = await this._lmsService.getLearningPathById(learingPathId);
       if (!path) {
-        res.status(404).json({ success: false, message: "Learning path not found" });
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: LMS_ERROR_MESSAGE.LEARNING_PATH_NOT_FOUND });
         return;
       }
-      res.status(200).json({ success: true, data: path });
+      res.status(StatusCode.OK).json({ success: true, data: path });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
     }
   }
 }

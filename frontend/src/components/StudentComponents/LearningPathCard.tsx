@@ -6,19 +6,20 @@ import {
   getCart,
   addToWishlist,
   removeFromWishlist,
-  courseAlreadyExistInWishlist, // Replace with learning path-specific API if needed
-} from "../../api/action/StudentAction";
+  courseAlreadyExistInWishlist
+} from "../../api/action/StudentAction"; // Updated to learning path-specific APIs
 import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../utils/auth";
-import {type LearningPathCardProps } from "../../pages/student/interface/studentInterface";
+import { type LearningPathCardProps } from "../../pages/student/interface/studentInterface";
 
 const LearningPathCard: React.FC<LearningPathCardProps> = ({
-  id,
+  learningPathId,
   title,
   description,
-  totalPrice,
+  noOfCourses,
+  hoursOfCourses,
   thumbnailUrl,
-  courses,
+  totalPrice,
   categoryName,
 }) => {
   const navigate = useNavigate();
@@ -30,13 +31,13 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
 
     const fetchStatuses = async () => {
       try {
-        const cartRes = await getCart(); // Update to check learning paths in cart
+        const cartRes = await getCart();
         const existsInCart = cartRes?.data && Array.isArray(cartRes.data)
-          ? cartRes.data.some((item: any) => item.learningPathId === id) // Adjust for learning path
+          ? cartRes.data.some((item: any) => item.learningPathId === learningPathId)
           : false;
         setIsInCart(existsInCart);
 
-        const wishRes = await courseAlreadyExistInWishlist(id); // Replace with learning path-specific API
+        const wishRes = await courseAlreadyExistInWishlist(learningPathId);
         setIsInWishlist(wishRes?.exists || false);
       } catch (err) {
         console.error("Failed to fetch cart/wishlist status:", err);
@@ -44,7 +45,7 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
     };
 
     fetchStatuses();
-  }, [id]);
+  }, [learningPathId]);
 
   const handleAddToCart = async () => {
     if (!isStudentLoggedIn()) {
@@ -53,7 +54,7 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
     }
 
     try {
-      const res = await addToCart(id); // Update to add learning path to cart
+      const res = await addToCart(learningPathId);
       toast.success(res.message || "Learning path added to cart");
       setIsInCart(true);
     } catch (error: any) {
@@ -68,7 +69,7 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
     }
 
     try {
-      const res = await addToWishlist(id); // Update to add learning path to wishlist
+      const res = await addToWishlist(learningPathId);
       toast.success(res.message || "Added to wishlist");
       setIsInWishlist(true);
     } catch (error: any) {
@@ -78,16 +79,13 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
 
   const handleRemoveFromWishlist = async () => {
     try {
-      const res = await removeFromWishlist(id); // Update to remove learning path from wishlist
+      const res = await removeFromWishlist(learningPathId);
       toast.success(res.message || "Removed from wishlist");
       setIsInWishlist(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to remove from wishlist");
     }
   };
-
-  // Calculate total duration from courses
-  const totalDuration = courses.reduce((sum, course) => sum + parseFloat(course.duration || "0"), 0);
 
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border flex flex-col max-w-sm mx-auto sm:max-w-md lg:max-w-lg overflow-hidden">
@@ -108,10 +106,10 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-gray-700">
           <span className="flex items-center gap-1">
-            <span className="text-gray-500">📚</span> {courses.length} {courses.length === 1 ? "Course" : "Courses"}
+            <span className="text-gray-500">📚</span> {noOfCourses} {noOfCourses === 1 ? "Course" : "Courses"}
           </span>
           <span className="flex items-center gap-1">
-            <span className="text-gray-500">🕒</span> {totalDuration.toFixed(1)} hrs
+            <span className="text-gray-500">🕒</span> {hoursOfCourses.toFixed(1)} hrs
           </span>
           <div className="flex items-center gap-2">
             <span className="text-gray-800 font-bold text-lg">₹{totalPrice.toLocaleString()}</span>
@@ -148,7 +146,7 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
           </button>
 
           <button
-            onClick={() => navigate(`/user/learning-path/${id}`)}
+            onClick={() => navigate(`/user/learningPath/${learningPathId}`)}
             className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             View Details

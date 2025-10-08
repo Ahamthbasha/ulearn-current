@@ -1,6 +1,8 @@
+import type { LearningPathFilterResponse } from "../../pages/student/interface/studentInterface";
 import { API } from "../../service/axios";
 import UserRouterEndpoints from "../../types/endPoints/userEndPoint";
 import type QuizPayload from "../../types/interfaces/IQuizPayload";
+import type { GetLMSCoursesParams } from "../../types/interfaces/IStudentInterface";
 import type { ListInstructorParams, RetryPaymentResponse } from "../../types/interfaces/ListInstructorParams";
 import fileDownload from "js-file-download";
 
@@ -839,14 +841,24 @@ export const exportSlotReport = async (
 
 // lms //
 
-export const GetLMSCourses = async()=>{
+export const GetLMSCourses = async (params: GetLMSCoursesParams = {}): Promise<LearningPathFilterResponse> => {
   try {
-    const response = await API.get(UserRouterEndpoints.userGetLMSCourse)
-    return response.data
-  } catch (error) {
-    throw error
+    const { query = "", page = 1, limit = 10, category = "", sort = "name-asc" } = params;
+    
+    const queryParams = new URLSearchParams({
+      query,
+      page: page.toString(),
+      limit: limit.toString(),
+      category,
+      sort,
+    }).toString();
+
+    const response = await API.get(`${UserRouterEndpoints.userGetLMSCourse}?${queryParams}`);
+    return response.data as LearningPathFilterResponse;
+  } catch (error: any) {
+    throw error;
   }
-}
+};
 
 export const GetLmsCourseDetail = async(learningPathId:string)=>{
   try {

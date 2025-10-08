@@ -369,12 +369,15 @@ export interface LearningPathCourse {
 }
 
 export interface LearningPath {
-  _id: string;
+  learningPathId: string;
   title: string;
   description: string;
+  noOfCourses: number;
+  hoursOfCourses: number;
   thumbnailUrl: string;
   totalPrice: number;
-  courses: LearningPathCourse[];
+  categoryId: string;
+  categoryName: string;
 }
 
 export interface LearningPathFilterResponse {
@@ -385,17 +388,36 @@ export interface LearningPathFilterResponse {
   limit: number;
 }
 
-export interface LearningPathCardProps {
-  id: string;
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  totalPrice: number;
-  courses: LearningPathCourse[];
-  categoryName?: string;
-}
-
 export interface Category {
   _id: string;
   categoryName: string;
+}
+
+export interface LearningPathCardProps {
+  learningPathId: string;
+  title: string;
+  description: string;
+  noOfCourses: number;
+  hoursOfCourses: number;
+  thumbnailUrl: string;
+  totalPrice: number;
+  categoryName: string;
+}
+
+
+
+
+export interface LearningPathDetail {
+  learningPathId: string;
+  title: string;
+  description: string;
+  instructorId: string;
+  instructorName: string;
+  noOfCourses: number;
+  hoursOfCourses: number;
+  courses: { courseId: string; courseName: string }[];
+  learningPathThumbnailUrl: string;
+  categoryId: string;
+  categoryName: string;
+  totalPrice: number;
 }
