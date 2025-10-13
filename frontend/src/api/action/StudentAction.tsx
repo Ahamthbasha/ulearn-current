@@ -2,7 +2,7 @@ import type { LearningPathFilterResponse } from "../../pages/student/interface/s
 import { API } from "../../service/axios";
 import UserRouterEndpoints from "../../types/endPoints/userEndPoint";
 import type QuizPayload from "../../types/interfaces/IQuizPayload";
-import type { GetLMSCoursesParams } from "../../types/interfaces/IStudentInterface";
+import type { GetLMSCoursesParams, CartItemDTO, WishlistItem } from "../../types/interfaces/IStudentInterface";
 import type { ListInstructorParams, RetryPaymentResponse } from "../../types/interfaces/ListInstructorParams";
 import fileDownload from "js-file-download";
 
@@ -112,19 +112,23 @@ export const getAllCategories = async () => {
 
 //cart actions
 
-export const getCart = async () => {
+export const getCart = async () : Promise<CartItemDTO[]>=> {
   try {
-    const response = await API.get(UserRouterEndpoints.userGetCart);
-    return response.data;
+    const response = await API.get<{ success: boolean; message: string; data: CartItemDTO[] }>(UserRouterEndpoints.userGetCart);
+    return response.data.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const addToCart = async (courseId: string) => {
+export const addToCart = async (itemId: string,type:"course" | "learningPath"):Promise<CartItemDTO> => {
   try {
+    if (!["course", "learningPath"].includes(type)) {
+      throw new Error("Invalid item type");
+    }
     const response = await API.post(UserRouterEndpoints.userAddToCart, {
-      courseId,
+      itemId,
+      type
     });
     return response.data;
   } catch (error) {
@@ -132,12 +136,15 @@ export const addToCart = async (courseId: string) => {
   }
 };
 
-export const removeFromCart = async (courseId: string) => {
+export const removeFromCart = async (itemId: string,type:"course"|"learningPath") : Promise<CartItemDTO[]> => {
   try {
-    const response = await API.delete(
-      `${UserRouterEndpoints.userRemoveCourseFromCart}/${courseId}`
+    if (!["course", "learningPath"].includes(type)) {
+      throw new Error("Invalid item type");
+    }
+    const response = await API.delete<{success: boolean; message: string; data: CartItemDTO[]}>(
+      `${UserRouterEndpoints.userRemoveCourseFromCart}/${itemId}?type=${type}`
     );
-    return response.data;
+    return response.data.data
   } catch (error) {
     throw error;
   }
@@ -154,34 +161,48 @@ export const clearCart = async () => {
 
 //wishlist actions
 
-export const getWishlist = async () => {
+export const getWishlist = async (): Promise<{
+  success: boolean;
+  message: string;
+  data: WishlistItem[];
+}> => {
   try {
-    const response = await API.get(UserRouterEndpoints.userGetWishlist);
+    const response = await API.get(UserRouterEndpoints.userGetWishlistItems);
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const addToWishlist = async (courseId: string) => {
+export const addToWishlist = async (
+  itemId: string,
+  type: "course" | "learningPath"
+): Promise<{
+  success: boolean;
+  message: string;
+  data: any; // Adjust type based on backend response (e.g., IWishlist)
+}> => {
   try {
-    const response = await API.post(
-      UserRouterEndpoints.userAddTowishlist,
-      {
-        courseId,
-      },
-      { withCredentials: true }
-    );
+    const response = await API.post(UserRouterEndpoints.userAddToWishlist, {
+      itemId,
+      type,
+    });
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const removeFromWishlist = async (courseId: string) => {
+export const removeFromWishlist = async (
+  itemId: string,
+  type: "course" | "learningPath"
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
   try {
     const response = await API.delete(
-      `${UserRouterEndpoints.userRemoveWishlist}/${courseId}`
+      `${UserRouterEndpoints.userRemoveFromWishlist}/${itemId}?type=${type}`
     );
     return response.data;
   } catch (error) {
@@ -189,10 +210,16 @@ export const removeFromWishlist = async (courseId: string) => {
   }
 };
 
-export const courseAlreadyExistInWishlist = async (courseId: string) => {
+export const isItemInWishlist = async (
+  itemId: string,
+  type: "course" | "learningPath"
+): Promise<{
+  success: boolean;
+  exists: boolean;
+}> => {
   try {
     const response = await API.get(
-      `${UserRouterEndpoints.userCheckCourseExistInWishlist}/${courseId}`
+      `${UserRouterEndpoints.userIsItemInWishlist}/${itemId}?type=${type}`
     );
     return response.data;
   } catch (error) {
@@ -216,6 +243,7 @@ export const getAllCoupons = async()=>{
 
 export const initiateCheckout = async (
   courseIds: string[],
+  learningPathIds:string[],
   totalAmount: number,
   paymentMethod: "razorpay" | "wallet",
   couponId?:string
@@ -223,6 +251,7 @@ export const initiateCheckout = async (
   try {
     const response = await API.post(UserRouterEndpoints.userInitiateCheckout, {
       courseIds,
+      learningPathIds,
       totalAmount,
       paymentMethod,
       couponId
@@ -864,6 +893,49 @@ export const GetLmsCourseDetail = async(learningPathId:string)=>{
   try {
     const response = await API.get(`${UserRouterEndpoints.userGetLMSCourseDetail}/${learningPathId}`)
     return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// enrolled lms
+
+export const getEnrolledLearningPaths = async()=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetAllEnrollments}`)
+    return response.data.data
+  } catch (error) {
+    throw error
+  }
+}
+
+
+export const getLearningPathDetails = async(learningPathId:string)=>{
+  try {
+   const response = await API.get(`${UserRouterEndpoints.userGetSpecificLmsEnrollments}/${learningPathId}`)
+   return response.data.data 
+  } catch (error) {
+    throw error
+  }
+}
+
+export const completeCourseAndUnlockNext = async(courseId:string,learningPathId:string)=>{
+  try {
+    const response = await API.post(`${UserRouterEndpoints.userCompleteCourseAndUnlockNext}`,{
+      learningPathId,
+      courseId
+    })
+    return response.data.data
+  } catch (error) {
+    throw error
+  }
+}
+
+
+export const getLearningPathCertificate = async(learningPathId:string)=>{
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetSpecificLmsEnrollments}/${learningPathId}/certificate`)
+    return response.data.data
   } catch (error) {
     throw error
   }

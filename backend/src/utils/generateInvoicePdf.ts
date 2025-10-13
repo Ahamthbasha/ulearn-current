@@ -33,7 +33,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
 
     // Helper function to format currency
     const formatCurrency = (amount: number) => {
-      return `Rs. ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+      return `${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
     };
 
     // Helper function to get status color
@@ -135,7 +135,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
 
     doc.y = Math.max(clientSectionY + 100, detailY + 20);
 
-    // ========== COURSES TABLE SECTION ==========
+    // ========== COURSES AND LEARNING PATHS TABLE SECTION ==========
     const tableStartY = doc.y + 20;
 
     // Table header
@@ -150,7 +150,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
     };
 
     doc.fontSize(12).font("Helvetica-Bold").fillColor(colors.dark);
-    doc.text("COURSE DETAILS", colPositions.course, tableStartY + 12);
+    doc.text("COURSE / LEARNING PATH DETAILS", colPositions.course, tableStartY + 12);
     doc.text("ORIGINAL PRICE", colPositions.originalPrice, tableStartY + 12, { width: 70, align: "center" });
     doc.text("OFFER (%)", colPositions.offer, tableStartY + 12, { width: 70, align: "center" });
     doc.text("OFFER PRICE", colPositions.offerPrice, tableStartY + 12, { width: 75, align: "center" });
@@ -158,54 +158,153 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
     // Table rows
     let currentRowY = tableStartY + 35;
     const rowHeight = 40;
+    let rowIndex = 0;
 
-    order.coursesInfo.forEach((course, index) => {
-      // Alternating row colors
-      if (index % 2 === 0) {
-        addColoredRect(50, currentRowY, 495, rowHeight, "#fafafa");
-      }
-
-      // Row border
-      doc.rect(50, currentRowY, 495, rowHeight).stroke("#e5e7eb");
-
-      // Course name (with text wrapping)
+    // Standalone courses
+    if (order.coursesInfo.length > 0) {
       doc
-        .fontSize(11)
+        .fontSize(12)
         .font("Helvetica-Bold")
-        .fillColor(colors.dark)
-        .text(course.courseName, colPositions.course, currentRowY + 8, {
-          width: 220,
-          height: rowHeight - 16,
-          ellipsis: true,
-        });
-
-      // Original price, offer percentage, and offer price
-      doc.fontSize(11).font("Helvetica").fillColor(colors.secondary);
-      doc.text(
-        formatCurrency(course.courseOriginalPrice),
-        colPositions.originalPrice,
-        currentRowY + 15,
-        {
-          width: 70,
-          align: "center",
-        }
-      );
-      doc.text(
-        course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%",
-        colPositions.offer,
-        currentRowY + 15,
-        {
-          width: 70,
-          align: "center",
-        }
-      );
-      doc.text(formatCurrency(course.courseOfferPrice), colPositions.offerPrice, currentRowY + 15, {
-        width: 75,
-        align: "center",
-      });
-
+        .fillColor(colors.primary)
+        .text("Standalone Courses", colPositions.course, currentRowY + 8);
       currentRowY += rowHeight;
-    });
+      rowIndex++;
+
+      order.coursesInfo.forEach((course) => {
+        // Alternating row colors
+        if (rowIndex % 2 === 0) {
+          addColoredRect(50, currentRowY, 495, rowHeight, "#fafafa");
+        }
+
+        // Row border
+        doc.rect(50, currentRowY, 495, rowHeight).stroke("#e5e7eb");
+
+        // Course name (with text wrapping)
+        doc
+          .fontSize(11)
+          .font("Helvetica-Bold")
+          .fillColor(colors.dark)
+          .text(course.courseName, colPositions.course, currentRowY + 8, {
+            width: 220,
+            height: rowHeight - 16,
+            ellipsis: true,
+          });
+
+        // Original price, offer percentage, and offer price
+        const originalPrice = course.isAlreadyEnrolled ? 0 : course.courseOriginalPrice;
+        const offerPrice = course.isAlreadyEnrolled ? 0 : course.courseOfferPrice;
+        doc.fontSize(11).font("Helvetica").fillColor(colors.secondary);
+        doc.text(
+          formatCurrency(originalPrice),
+          colPositions.originalPrice,
+          currentRowY + 15,
+          {
+            width: 70,
+            align: "center",
+          }
+        );
+        doc.text(
+          course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%",
+          colPositions.offer,
+          currentRowY + 15,
+          {
+            width: 70,
+            align: "center",
+          }
+        );
+        doc.text(
+          formatCurrency(offerPrice),
+          colPositions.offerPrice,
+          currentRowY + 15,
+          {
+            width: 75,
+            align: "center",
+          }
+        );
+
+        currentRowY += rowHeight;
+        rowIndex++;
+      });
+    }
+
+    // Learning paths
+    if (order.learningPathsInfo.length > 0) {
+      order.learningPathsInfo.forEach((learningPath) => {
+        // Learning path header
+        if (rowIndex % 2 === 0) {
+          addColoredRect(50, currentRowY, 495, rowHeight, "#fafafa");
+        }
+        doc.rect(50, currentRowY, 495, rowHeight).stroke("#e5e7eb");
+        doc
+          .fontSize(12)
+          .font("Helvetica-Bold")
+          .fillColor(colors.primary)
+          .text(`Learning Path: ${learningPath.learningPathName}`, colPositions.course, currentRowY + 8, {
+            width: 220,
+            height: rowHeight - 16,
+            ellipsis: true,
+          });
+        currentRowY += rowHeight;
+        rowIndex++;
+
+        // Courses in learning path
+        learningPath.courses.forEach((course) => {
+          // Alternating row colors
+          if (rowIndex % 2 === 0) {
+            addColoredRect(50, currentRowY, 495, rowHeight, "#fafafa");
+          }
+
+          // Row border
+          doc.rect(50, currentRowY, 495, rowHeight).stroke("#e5e7eb");
+
+          // Course name (indented, with text wrapping)
+          doc
+            .fontSize(11)
+            .font("Helvetica")
+            .fillColor(colors.dark)
+            .text(`  ${course.courseName}`, colPositions.course, currentRowY + 8, {
+              width: 220,
+              height: rowHeight - 16,
+              ellipsis: true,
+            });
+
+          // Original price, offer percentage, and offer price
+          const originalPrice = course.isAlreadyEnrolled ? 0 : course.courseOriginalPrice;
+          const offerPrice = course.isAlreadyEnrolled ? 0 : course.courseOfferPrice;
+          doc.fontSize(11).font("Helvetica").fillColor(colors.secondary);
+          doc.text(
+            formatCurrency(originalPrice),
+            colPositions.originalPrice,
+            currentRowY + 15,
+            {
+              width: 70,
+              align: "center",
+            }
+          );
+          doc.text(
+            course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%",
+            colPositions.offer,
+            currentRowY + 15,
+            {
+              width: 70,
+              align: "center",
+            }
+          );
+          doc.text(
+            formatCurrency(offerPrice),
+            colPositions.offerPrice,
+            currentRowY + 15,
+            {
+              width: 75,
+              align: "center",
+            }
+          );
+
+          currentRowY += rowHeight;
+          rowIndex++;
+        });
+      });
+    }
 
     // Total section
     doc

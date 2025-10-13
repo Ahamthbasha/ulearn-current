@@ -16,7 +16,8 @@ import {
   studentSlotBookingController,
   studentDashboardController,
   studentCouponController,
-  studentLmsController
+  studentLmsController,
+  studentLmsEnrollmentController
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 import authenticateToken from "../middlewares/authenticatedRoutes";
@@ -132,7 +133,7 @@ router.post(
 );
 
 router.delete(
-  "/remove/:courseId",
+  "/remove/:itemId",
   authenticateToken,
   restrictBlockedUser,
   isStudent,
@@ -158,7 +159,7 @@ router.post(
 );
 
 router.delete(
-  "/removeWishlistCourse/:courseId",
+  "/removeWishlistCourse/:itemId",
   authenticateToken,
   restrictBlockedUser,
   isStudent,
@@ -170,15 +171,15 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isStudent,
-  studentWishlistController.getWishlistCourses.bind(studentWishlistController),
+  studentWishlistController.getWishlistItems.bind(studentWishlistController),
 );
 
 router.get(
-  "/check/:courseId",
+  "/check/:itemId",
   authenticateToken,
   restrictBlockedUser,
   isStudent,
-  studentWishlistController.isCourseInWishlist.bind(studentWishlistController),
+  studentWishlistController.isItemInWishlist.bind(studentWishlistController),
 );
 
 ///////////////////CHECKOUT MANAGEMENT////////////////////////////////////////
@@ -574,6 +575,40 @@ router.get(
   studentLmsController.getLearningPathById.bind(studentLmsController)
 )
 
+
+// lms enrollment //
+
+router.get(
+  "/lms/enrollments",
+  authenticateToken,
+  isStudent,
+  restrictBlockedUser,
+  studentLmsEnrollmentController.getEnrolledLearningPaths.bind(studentLmsEnrollmentController)
+)
+
+router.get(
+  "/lms/enrollments/:learningPathId",
+  authenticateToken,
+  isStudent,
+  restrictBlockedUser,
+  studentLmsEnrollmentController.getLearningPathDetails.bind(studentLmsEnrollmentController)
+)
+
+router.post(
+  "/lms/completeCourse",
+  authenticateToken,
+  isStudent,
+  restrictBlockedUser,
+  studentLmsEnrollmentController.completeCourseAndUnlockNext.bind(studentLmsEnrollmentController)
+)
+
+router.get(
+  "/lms/enrollments/:learningPathId/certificate",
+  authenticateToken,
+  isStudent,
+  restrictBlockedUser,
+  studentLmsEnrollmentController.getLearningPathCertificate.bind(studentLmsEnrollmentController)
+)
 
 
 

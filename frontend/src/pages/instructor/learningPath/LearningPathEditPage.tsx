@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Formik, Form, ErrorMessage, Field } from "formik";
+import { Formik, Form, ErrorMessage, Field, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -110,11 +110,12 @@ const LearningPathEditPage: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!learningPathId) {
+      if (!learningPathId || !isValidObjectId(learningPathId)) {
         toast.error("Invalid learning path ID", {
           position: "top-right",
           autoClose: 5000,
         });
+        navigate("/instructor/learningPath");
         return;
       }
       try {
@@ -126,10 +127,10 @@ const LearningPathEditPage: React.FC = () => {
         // Fetch learning path
         const learningPath = await getLearningPathById(learningPathId);
         setInitialValues({
-          title: learningPath.title,
-          description: learningPath.description,
+          title: learningPath.title || "",
+          description: learningPath.description || "",
           category: learningPath.category || "",
-          items: learningPath.items,
+          items: learningPath.items || [{ courseId: "", order: 1 }],
           thumbnail: undefined,
         });
         setExistingThumbnail(learningPath.thumbnailUrl || null);
@@ -139,10 +140,11 @@ const LearningPathEditPage: React.FC = () => {
           position: "top-right",
           autoClose: 5000,
         });
+        navigate("/instructor/learningPath");
       }
     };
     fetchData();
-  }, [learningPathId]);
+  }, [learningPathId, navigate]);
 
   useEffect(() => {
     return () => {
@@ -152,29 +154,54 @@ const LearningPathEditPage: React.FC = () => {
     };
   }, [thumbnailPreview]);
 
-  const handleSubmit = async (values: UpdateLearningPathRequest & { thumbnail?: File }) => {
-    if (!learningPathId) {
+  const handleSubmit = async (
+    values: UpdateLearningPathRequest & { thumbnail?: File },
+    { setSubmitting, setFieldError }: FormikHelpers<UpdateLearningPathRequest & { thumbnail?: File }>
+  ) => {
+    if (!learningPathId || !isValidObjectId(learningPathId)) {
       toast.error("Invalid learning path ID", {
         position: "top-right",
         autoClose: 5000,
       });
+      setSubmitting(false);
       return;
     }
     try {
-      console.log("Form values:", values); // Debug form state
+      // Validate items
+      if (!values.items || values.items.length === 0 || values.items.some(item => !item.courseId || !isValidObjectId(item.courseId))) {
+        setFieldError("items", "At least one valid course is required");
+        toast.error("Please select at least one valid course", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+        setSubmitting(false);
+        return;
+      }
+
       if (!values.category || !isValidObjectId(values.category)) {
-        throw new Error("Please select a valid category");
+        setFieldError("category", "Please select a valid category");
+        toast.error("Please select a valid category", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      if (!values.title || !values.description) {
+        throw new Error("Title and description are required");
       }
 
       const payload: UpdateLearningPathRequest = {
-        title: values.title?.trim(),
-        description: values.description?.trim(),
+        title: values.title.trim(),
+        description: values.description.trim(),
         category: values.category,
-        items: values.items?.map((item) => ({
+        items: values.items.map((item) => ({
           courseId: item.courseId,
           order: item.order,
         })),
       };
+
       console.log("Frontend payload:", payload);
       console.log("Frontend thumbnail:", values.thumbnail);
       await updateLearningPath(learningPathId, payload, values.thumbnail);
@@ -190,6 +217,8 @@ const LearningPathEditPage: React.FC = () => {
         autoClose: 5000,
       });
       console.error("Update learning path error:", err.response?.data || err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -211,9 +240,13 @@ const LearningPathEditPage: React.FC = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ isSubmitting, setFieldValue, values }) => (
+        {({ isSubmitting, setFieldValue, values, errors, touched }) => (
           <Form className="space-y-4">
-            <InputField name="title" label="Title" placeholder="Enter title (5-100 characters, at least 10 letters)" />
+            <InputField
+              name="title"
+              label="Title"
+              placeholder="Enter title (5-100 characters, at least 10 letters)"
+            />
             <InputField
               name="description"
               label="Description"
@@ -244,6 +277,20 @@ const LearningPathEditPage: React.FC = () => {
               <ErrorMessage name="category" component="p" className="text-red-500 text-sm mt-1" />
             </div>
             <CourseSelector name="items" label="Courses" />
+            {errors.items && touched.items && (
+              <div className="text-red-500 text-sm mt-1">
+                {typeof errors.items === "string" ? (
+                  <p>{errors.items}</p>
+                ) : (
+                  (errors.items as Array<{ courseId?: string; order?: string }>).map((itemError, index: number) => (
+                    <p key={index}>
+                      Course {index + 1}:{" "}
+                      {itemError.courseId || itemError.order || "Invalid course or order"}
+                    </p>
+                  ))
+                )}
+              </div>
+            )}
             <div>
               <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">
                 Thumbnail Image (Optional, max 5MB)
@@ -266,11 +313,7 @@ const LearningPathEditPage: React.FC = () => {
                 }}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
-              <ErrorMessage
-                name="thumbnail"
-                component="p"
-                className="text-red-500 text-sm mt-1"
-              />
+              <ErrorMessage name="thumbnail" component="p" className="text-red-500 text-sm mt-1" />
               {(thumbnailPreview || existingThumbnail) && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-700 mb-2">Thumbnail Preview:</p>

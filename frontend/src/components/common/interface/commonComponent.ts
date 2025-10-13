@@ -60,6 +60,8 @@ export interface InputFieldProps {
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   useFormik?: boolean; // default true
+  min?:string | number;
+  max?:string | number;
 }
 
 export interface PasswordFieldProps {

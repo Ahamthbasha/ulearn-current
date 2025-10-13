@@ -1,8 +1,9 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthenticatedRequest } from "../../../middlewares/authenticatedRoutes";
 
 export interface IStudentWishlistController {
-  addToWishlist(req: Request, res: Response): Promise<void>;
-  removeFromWishlist(req: Request, res: Response): Promise<void>;
-  getWishlistCourses(req: Request, res: Response): Promise<void>;
-  isCourseInWishlist(req: Request, res: Response): Promise<void>;
+  addToWishlist(req: AuthenticatedRequest, res: Response): Promise<void>;
+  removeFromWishlist(req: AuthenticatedRequest, res: Response): Promise<void>;
+  getWishlistItems(req: AuthenticatedRequest, res: Response): Promise<void>;
+  isItemInWishlist(req: AuthenticatedRequest, res: Response): Promise<void>;
 }

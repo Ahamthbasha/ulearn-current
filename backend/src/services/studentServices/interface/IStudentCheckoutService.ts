@@ -1,13 +1,15 @@
 import { Types } from "mongoose";
-import { IOrder } from "../../../models/orderModel";
-import { IPayment } from "../../../models/paymentModel";
-import { IEnrollment } from "../../../models/enrollmentModel";
 import mongoose from "mongoose";
+import { IOrder } from "../../../models/orderModel";
+import { IEnrollment } from "../../../models/enrollmentModel";
+import { ICourseRepository } from "../../../repositories/interfaces/ICourseRepository";
+import { ILearningPathRepository } from "../../../repositories/interfaces/ILearningPathRepository";
 
 export interface IStudentCheckoutService {
   initiateCheckout(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
+    learningPathIds: Types.ObjectId[],
     totalAmount: number,
     paymentMethod: "wallet" | "razorpay",
     couponId?: Types.ObjectId,
@@ -21,7 +23,6 @@ export interface IStudentCheckoutService {
     session?: mongoose.ClientSession,
   ): Promise<{
     order: IOrder;
-    payment: IPayment;
     enrollments: IEnrollment[];
   }>;
 
@@ -48,4 +49,18 @@ export interface IStudentCheckoutService {
     userId?: Types.ObjectId,
     session?: mongoose.ClientSession,
   ): Promise<IOrder | null>;
+
+  getEnrolledCourseIds(
+    userId: Types.ObjectId,
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]>;
+
+  getEnrolledLearningPathIds(
+    userId: Types.ObjectId,
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]>;
+
+  getCourseRepo(): ICourseRepository;
+
+  getLearningPathRepo(): ILearningPathRepository;
 }

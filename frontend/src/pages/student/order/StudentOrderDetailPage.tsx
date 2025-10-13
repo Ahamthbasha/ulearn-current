@@ -7,7 +7,7 @@ import {
   MarkCourseOrderAsFailed as markOrderAsFailed,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
-import type { Order } from "../interface/studentInterface";
+import type { Order,CourseOrder,LearningPathInfo } from "../interface/studentInterface";
 
 export default function StudentOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -197,12 +197,18 @@ export default function StudentOrderDetailPage() {
     }
   };
 
+  const formatPrice = (price: number, isAlreadyEnrolled: boolean) => {
+    const formattedPrice = Math.abs(price).toLocaleString();
+    return isAlreadyEnrolled ? `-₹${formattedPrice}` : `₹${formattedPrice}`;
+  };
+
   if (loading) return <div className="text-center py-20">Loading...</div>;
   if (!order) return <div className="text-center py-20 text-red-500">Order not found.</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
+        {/* Order Header */}
         <div className="bg-white rounded-xl shadow-lg mb-6 p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -302,86 +308,212 @@ export default function StudentOrderDetailPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-800">Purchased Courses</h3>
-          </div>
-          <div className="hidden md:block">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-700">Course</th>
-                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Original Price</th>
-                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer (%)</th>
-                  <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer Price</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {order.coursesInfo.map((course, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition">
-                    <td className="py-4 px-6 flex items-center gap-4">
-                      <img
-                        src={course.thumbnailUrl}
-                        alt={course.courseName}
-                        className="w-16 h-16 rounded-lg object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder.png"; // Fallback image
-                        }}
-                      />
-                      <div>
-                        <h4 className="font-medium text-gray-800">{course.courseName}</h4>
-                        <p className="text-sm text-gray-600">Digital Course</p>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-right font-semibold text-gray-800">
-                      ₹{course.courseOriginalPrice.toLocaleString()}
-                    </td>
-                    <td className="py-4 px-6 text-right font-semibold text-gray-800">
-                      {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}
-                    </td>
-                    <td className="py-4 px-6 text-right font-semibold text-gray-800">
-                      ₹{course.courseOfferPrice.toLocaleString()}
-                    </td>
+        {/* Standalone Courses Section */}
+        {order.coursesInfo.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800">Standalone Courses</h3>
+            </div>
+            <div className="hidden md:block">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-700">Course</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-700">Original Price</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer (%)</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer Price</th>
+                    <th className="text-right py-4 px-6 font-semibold text-gray-700">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="md:hidden divide-y divide-gray-200">
-            {order.coursesInfo.map((course, idx) => (
-              <div key={idx} className="p-4 flex gap-4 items-center">
-                <img
-                  src={course.thumbnailUrl}
-                  alt={course.courseName}
-                  className="w-16 h-16 rounded-lg object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "/placeholder.png"; // Fallback image
-                  }}
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-800">{course.courseName}</h4>
-                  <p className="text-sm text-gray-600">Digital Course</p>
-                  <p className="text-sm text-gray-600">Original Price: ₹{course.courseOriginalPrice.toLocaleString()}</p>
-                  <p className="text-sm text-gray-600">Offer: {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}</p>
-                  <p className="text-lg font-semibold text-gray-800">₹{course.courseOfferPrice.toLocaleString()}</p>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {order.coursesInfo.map((course: CourseOrder, idx: number) => (
+                    <tr key={idx} className={`hover:bg-gray-50 transition ${course.isAlreadyEnrolled ? 'bg-red-50' : ''}`}>
+                      <td className="py-4 px-6 flex items-center gap-4">
+                        <img
+                          src={course.thumbnailUrl}
+                          alt={course.courseName}
+                          className="w-16 h-16 rounded-lg object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.png";
+                          }}
+                        />
+                        <div>
+                          <h4 className={`font-medium ${course.isAlreadyEnrolled ? 'text-red-600' : 'text-gray-800'}`}>
+                            {course.courseName}
+                          </h4>
+                          <p className="text-sm text-gray-600">Digital Course</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                        {formatPrice(course.courseOriginalPrice, course.isAlreadyEnrolled)}
+                      </td>
+                      <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                        {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}
+                      </td>
+                      <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                        {formatPrice(course.courseOfferPrice, course.isAlreadyEnrolled)}
+                      </td>
+                      <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                        {course.isAlreadyEnrolled ? 'Previously Purchased' : 'Newly Purchased'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="md:hidden divide-y divide-gray-200">
+              {order.coursesInfo.map((course: CourseOrder, idx: number) => (
+                <div key={idx} className={`p-4 flex gap-4 items-center ${course.isAlreadyEnrolled ? 'bg-red-50' : ''}`}>
+                  <img
+                    src={course.thumbnailUrl}
+                    alt={course.courseName}
+                    className="w-16 h-16 rounded-lg object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.png";
+                    }}
+                  />
+                  <div className="flex-1">
+                    <h4 className={`font-medium ${course.isAlreadyEnrolled ? 'text-red-600' : 'text-gray-800'}`}>
+                      {course.courseName}
+                    </h4>
+                    <p className="text-sm text-gray-600">Digital Course</p>
+                    <p className="text-sm text-gray-600">Original Price: {formatPrice(course.courseOriginalPrice, course.isAlreadyEnrolled)}</p>
+                    <p className="text-sm text-gray-600">Offer: {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}</p>
+                    <p className="text-lg font-semibold text-gray-800">{formatPrice(course.courseOfferPrice, course.isAlreadyEnrolled)}</p>
+                    <p className="text-sm font-semibold text-gray-600">
+                      Status: {course.isAlreadyEnrolled ? 'Previously Purchased' : 'Newly Purchased'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <div className="bg-gray-50 p-6 border-t border-gray-200">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700">Total Course Price:</span>
-                <span className="text-lg font-semibold text-gray-800">₹{order.sumOfAllCourseOriginalPrice.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700">Final Price (Including Offers):</span>
-                <span className="text-lg font-semibold text-gray-800">₹{order.sumOfAllCourseIncludingOfferPrice.toLocaleString()}</span>
+              ))}
+            </div>
+            <div className="bg-gray-50 p-6 border-t border-gray-200">
+              <div className="space-y-2">
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-700">Standalone Course Final Price:</span>
+                  <span className="text-lg font-semibold text-gray-800">
+                    ₹{order.coursesInfo.reduce((sum: number, course: CourseOrder) => sum + (course.isAlreadyEnrolled ? 0 : course.courseOfferPrice), 0).toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
+        {/* Learning Paths Section */}
+        {order.learningPathsInfo.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800">Learning Paths</h3>
+            </div>
+            {order.learningPathsInfo.map((learningPath: LearningPathInfo, lpIdx: number) => (
+              <div key={lpIdx} className="border-b border-gray-200 last:border-b-0">
+                <div className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <img
+                      src={learningPath.thumbnailUrl}
+                      alt={learningPath.learningPathName}
+                      className="w-16 h-16 rounded-lg object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.png";
+                      }}
+                    />
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-800">{learningPath.learningPathName}</h4>
+                      <p className="text-sm text-gray-600">Learning Path</p>
+                    </div>
+                  </div>
+                  <div className="hidden md:block">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="text-left py-4 px-6 font-semibold text-gray-700">Course</th>
+                          <th className="text-right py-4 px-6 font-semibold text-gray-700">Original Price</th>
+                          <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer (%)</th>
+                          <th className="text-right py-4 px-6 font-semibold text-gray-700">Offer Price</th>
+                          <th className="text-right py-4 px-6 font-semibold text-gray-700">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {learningPath.courses.map((course: CourseOrder, idx: number) => (
+                          <tr key={idx} className={`hover:bg-gray-50 transition ${course.isAlreadyEnrolled ? 'bg-red-50' : ''}`}>
+                            <td className="py-4 px-6 flex items-center gap-4">
+                              <img
+                                src={course.thumbnailUrl}
+                                alt={course.courseName}
+                                className="w-16 h-16 rounded-lg object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/placeholder.png";
+                                }}
+                              />
+                              <div>
+                                <h4 className={`font-medium ${course.isAlreadyEnrolled ? 'text-red-600' : 'text-gray-800'}`}>
+                                  {course.courseName}
+                                </h4>
+                                <p className="text-sm text-gray-600">Digital Course</p>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                              {formatPrice(course.courseOriginalPrice, course.isAlreadyEnrolled)}
+                            </td>
+                            <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                              {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}
+                            </td>
+                            <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                              {formatPrice(course.courseOfferPrice, course.isAlreadyEnrolled)}
+                            </td>
+                            <td className="py-4 px-6 text-right font-semibold text-gray-800">
+                              {course.isAlreadyEnrolled ? 'Previously Purchased' : 'Newly Purchased'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="md:hidden divide-y divide-gray-200">
+                    {learningPath.courses.map((course: CourseOrder, idx: number) => (
+                      <div key={idx} className={`p-4 flex gap-4 items-center ${course.isAlreadyEnrolled ? 'bg-red-50' : ''}`}>
+                        <img
+                          src={course.thumbnailUrl}
+                          alt={course.courseName}
+                          className="w-16 h-16 rounded-lg object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.png";
+                          }}
+                        />
+                        <div className="flex-1">
+                          <h4 className={`font-medium ${course.isAlreadyEnrolled ? 'text-red-600' : 'text-gray-800'}`}>
+                            {course.courseName}
+                          </h4>
+                          <p className="text-sm text-gray-600">Digital Course</p>
+                          <p className="text-sm text-gray-600">Original Price: {formatPrice(course.courseOriginalPrice, course.isAlreadyEnrolled)}</p>
+                          <p className="text-sm text-gray-600">Offer: {course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%"}</p>
+                          <p className="text-lg font-semibold text-gray-800">{formatPrice(course.courseOfferPrice, course.isAlreadyEnrolled)}</p>
+                          <p className="text-sm font-semibold text-gray-600">
+                            Status: {course.isAlreadyEnrolled ? 'Previously Purchased' : 'Newly Purchased'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="bg-gray-50 p-6 border-t border-gray-200">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-700">Learning Paths Final Price:</span>
+                  <span className="text-lg font-semibold text-gray-800">
+                    ₹{order.learningPathsInfo.reduce((sum: number, lp: LearningPathInfo) => sum + lp.totalOfferPrice, 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Coupon Details */}
         {order.couponInfo && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Coupon Details</h3>
@@ -402,13 +534,25 @@ export default function StudentOrderDetailPage() {
           </div>
         )}
 
+        {/* Order Totals */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-gray-700">Final Price:</span>
-            <span className="text-2xl font-bold text-gray-800">₹{order.finalPrice.toLocaleString()}</span>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-gray-700">Total Original Price:</span>
+              <span className="text-lg font-semibold text-gray-800">₹{order.sumOfAllCourseOriginalPrice.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-gray-700">Total Offer Price:</span>
+              <span className="text-lg font-semibold text-gray-800">₹{order.sumOfAllCourseIncludingOfferPrice.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-gray-700">Final Price:</span>
+              <span className="text-2xl font-bold text-gray-800">₹{order.finalPrice.toLocaleString()}</span>
+            </div>
           </div>
         </div>
 
+        {/* Status Alerts */}
         {order.status === "FAILED" && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
             <div className="flex items-center gap-2">
@@ -426,7 +570,6 @@ export default function StudentOrderDetailPage() {
             </p>
           </div>
         )}
-
         {order.status === "PENDING" && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
             <div className="flex items-center gap-2">

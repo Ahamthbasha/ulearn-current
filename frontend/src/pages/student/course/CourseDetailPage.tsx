@@ -7,11 +7,20 @@ import {
   addToCart,
   addToWishlist,
   removeFromWishlist,
-  courseAlreadyExistInWishlist,
+  isItemInWishlist,
 } from "../../../api/action/StudentAction";
 import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../../utils/auth";
-import { type CourseDetail, type CartItem } from "../interface/studentInterface";
+import { type CourseDetail } from "../interface/studentInterface";
+
+// Define CartItemDTO to match backend and API return type
+interface CartItemDTO {
+  itemId: string;
+  type: "course" | "learningPath";
+  title: string;
+  price: number;
+  thumbnailUrl: string;
+}
 
 const CourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -26,23 +35,20 @@ const CourseDetailPage = () => {
     const fetchData = async () => {
       try {
         const res = await courseDetail(courseId!);
-        const courseData = res.data;
-
+        const courseData = res.data && 'data' in res ? res.data : res;
         setCourse(courseData);
 
         if (isStudentLoggedIn()) {
-          const cartRes = await getCart();
-          const inCart = cartRes?.data && Array.isArray(cartRes.data)
-            ? cartRes.data.some((course: CartItem) => course.courseId === courseId)
-            : false;
-          setIsInCart(inCart);
-
-          const wishRes = await courseAlreadyExistInWishlist(courseId!);
+          const [cartRes, wishRes] = await Promise.all([
+            getCart(),
+            isItemInWishlist(courseId!, "course")
+          ]);
+          setIsInCart(cartRes.some((item: CartItemDTO) => item.itemId === courseId && item.type === "course"));
           setIsInWishlist(wishRes.exists);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        toast.error("Failed to fetch course details");
+        toast.error(error.message || "Failed to fetch course details");
       } finally {
         setLoading(false);
       }
@@ -58,7 +64,7 @@ const CourseDetailPage = () => {
     }
 
     try {
-      await addToCart(courseId!);
+      await addToCart(courseId!, "course");
       toast.success("Course added to cart");
       setIsInCart(true);
     } catch (error: any) {
@@ -66,7 +72,7 @@ const CourseDetailPage = () => {
         toast.info("Course is already in cart");
         setIsInCart(true);
       } else {
-        toast.error("Failed to add to cart");
+        toast.error(error.message || "Failed to add to cart");
       }
     }
   };
@@ -81,16 +87,16 @@ const CourseDetailPage = () => {
       if (!courseId) return;
 
       if (isInWishlist) {
-        await removeFromWishlist(courseId);
-        toast.success("Removed from wishlist");
+        const response = await removeFromWishlist(courseId, "course");
+        toast.success(response.message || "Removed from wishlist");
         setIsInWishlist(false);
       } else {
-        await addToWishlist(courseId);
-        toast.success("Added to wishlist");
+        const response = await addToWishlist(courseId, "course");
+        toast.success(response.message || "Added to wishlist");
         setIsInWishlist(true);
       }
     } catch (error: any) {
-      toast.error("Wishlist operation failed");
+      toast.error(error.message || "Wishlist operation failed");
       console.error(error);
     }
   };
@@ -102,7 +108,8 @@ const CourseDetailPage = () => {
       <div className="text-center py-6 sm:py-8 md:py-10 text-red-500 text-lg sm:text-xl">Course not found</div>
     );
 
-  const hasOffer = course.originalPrice !== course.price && course.originalPrice > course.price;
+  // Check if discountedPrice is defined and different from originalPrice
+  const hasOffer = course.discountedPrice !== undefined && course.originalPrice > course.discountedPrice;
 
   return (
     <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 font-sans">
@@ -114,6 +121,7 @@ const CourseDetailPage = () => {
             src={course.thumbnailUrl}
             alt={course.courseName}
             className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-lg shadow-md"
+            onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
           />
         </div>
 
@@ -141,10 +149,22 @@ const CourseDetailPage = () => {
               <p><strong>Duration:</strong> {course.duration} hrs</p>
               <p><strong>Level:</strong> {course.level}</p>
               <div className="flex items-center gap-2">
+                {/* Show original price with strikethrough if there's an offer */}
                 {hasOffer && (
-                  <p><strong>Price:</strong> <span className="text-gray-500 line-through">₹{course.originalPrice.toLocaleString()}</span></p>
+                  <p>
+                    <strong>Original Price:</strong>{" "}
+                    <span className="text-gray-500 line-through">
+                      ₹{course.originalPrice.toLocaleString()}
+                    </span>
+                  </p>
                 )}
-                <p><strong>Price:</strong> <span className={hasOffer ? "text-green-600 font-bold text-lg" : "text-gray-800 font-bold text-lg"}>₹{course.price.toLocaleString()}</span></p>
+                {/* Show discounted price if available, otherwise show original price */}
+                <p>
+                  <strong>Price:</strong>{" "}
+                  <span className={hasOffer ? "text-green-600 font-bold text-lg" : "text-gray-800 font-bold text-lg"}>
+                    ₹{(course.discountedPrice ?? course.originalPrice).toLocaleString()}
+                  </span>
+                </p>
                 {hasOffer && (
                   <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full ml-2">
                     Offer Available

@@ -1,26 +1,34 @@
 import { ILearningPath } from "../../models/learningPathModel";
 import { LearningPathDTO, PopulatedCourse } from "../../dto/adminDTO/learningPathDTO";
+import { ICourseOffer } from "../../models/courseOfferModel";
 import { formatDate } from "../../utils/dateFormat";
-import {Types} from "mongoose"
+import { Types } from "mongoose";
 
-export function mapLearningPathToDTO(learningPath: ILearningPath): LearningPathDTO {
+interface ItemWithOffer {
+  item: { courseId: any; order: number };
+  offer: ICourseOffer | null;
+}
+
+export function mapLearningPathToDTO(learningPath: ILearningPath, itemsWithOffers?: ItemWithOffer[]): LearningPathDTO {
   const items = learningPath.items
-    .filter(item => item.courseId != null)
-    .map((item) => {
+    .filter((item) => item.courseId != null)
+    .map((item, index) => {
       const course = item.courseId as PopulatedCourse;
+      const offer = itemsWithOffers ? itemsWithOffers[index]?.offer : null;
+
+      const effectivePrice = calculateEffectivePrice(course.price || 0, offer);
+
       return {
         courseId: course._id.toString(),
         order: item.order,
         courseName: course.courseName || undefined,
         thumbnailUrl: course.thumbnailUrl || undefined,
-        price: course.effectivePrice ?? course.price ?? 0,
+        price: effectivePrice,
         isVerified: course.isVerified ?? false,
       };
     });
 
-  const totalAmount = items.reduce((sum, item) => {
-    return sum + (item.price !== undefined ? item.price : 0);
-  }, 0);
+  const totalPrice = items.reduce((sum, item) => sum + (item.price || 0), 0);
 
   const instructorId = learningPath.instructorId;
   let instructorName: string | undefined;
@@ -40,7 +48,7 @@ export function mapLearningPathToDTO(learningPath: ILearningPath): LearningPathD
     instructorName,
     instructorEmail,
     items,
-    totalAmount,
+    totalPrice,
     isPublished: learningPath.isPublished,
     createdAt: formatDate(learningPath.createdAt),
     updatedAt: formatDate(learningPath.updatedAt),
@@ -53,5 +61,18 @@ export function mapLearningPathToDTO(learningPath: ILearningPath): LearningPathD
 }
 
 export function mapLearningPathsToDTO(learningPaths: ILearningPath[]): LearningPathDTO[] {
-  return learningPaths.map(mapLearningPathToDTO);
+  return learningPaths.map((lp) => mapLearningPathToDTO(lp));
+}
+
+function calculateEffectivePrice(originalPrice: number, offer: ICourseOffer | null): number {
+  if (!offer || !offer.isActive || offer.status !== "approved") return originalPrice;
+
+  const now = new Date();
+  const startDate = new Date(offer.startDate);
+  const endDate = new Date(offer.endDate);
+
+  if (now >= startDate && now <= endDate) {
+    return originalPrice * (1 - offer.discountPercentage / 100);
+  }
+  return originalPrice;
 }

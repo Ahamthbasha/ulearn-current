@@ -6,18 +6,18 @@ import {
   getCart,
   addToWishlist,
   removeFromWishlist,
-  courseAlreadyExistInWishlist,
+  isItemInWishlist,
 } from "../../api/action/StudentAction";
 import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../utils/auth";
-import { type CourseCardProps, type CartItem } from "./interface/studentComponentInterface";
+import { type CourseCardProps, type CartItemDTO } from "./interface/studentComponentInterface";
 
 const CourseCard: React.FC<CourseCardProps> = ({
   id,
   title,
   description,
-  price,
   originalPrice,
+  discountedPrice,
   duration,
   level,
   thumbnailUrl,
@@ -26,22 +26,23 @@ const CourseCard: React.FC<CourseCardProps> = ({
   const navigate = useNavigate();
   const [isInCart, setIsInCart] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Track API call states
 
   useEffect(() => {
     if (!isStudentLoggedIn()) return;
 
     const fetchStatuses = async () => {
       try {
-        const cartRes = await getCart();
-        const existsInCart = cartRes?.data && Array.isArray(cartRes.data)
-          ? cartRes.data.some((course: CartItem) => course.courseId === id)
+        const cartResponse = await getCart();
+        const existsInCart = Array.isArray(cartResponse)
+          ? cartResponse.some((item: CartItemDTO) => item.itemId === id && item.type === "course")
           : false;
         setIsInCart(existsInCart);
 
-        const wishRes = await courseAlreadyExistInWishlist(id);
-        setIsInWishlist(wishRes?.exists || false);
-      } catch (err) {
-        console.error("Failed to fetch cart/wishlist status:", err);
+        const wishResponse = await isItemInWishlist(id, "course");
+        setIsInWishlist(wishResponse.exists || false);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to fetch cart/wishlist status");
       }
     };
 
@@ -54,12 +55,15 @@ const CourseCard: React.FC<CourseCardProps> = ({
       return;
     }
 
+    setIsLoading(true);
     try {
-      const res = await addToCart(id);
-      toast.success(res.message || "Course added to cart");
+      await addToCart(id, "course");
       setIsInCart(true);
+      toast.success("Course added to cart");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to add to cart");
+      toast.error(error.message || "Failed to add course to cart");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -69,26 +73,38 @@ const CourseCard: React.FC<CourseCardProps> = ({
       return;
     }
 
+    setIsLoading(true);
     try {
-      const res = await addToWishlist(id);
-      toast.success(res.message || "Added to wishlist");
+      const response = await addToWishlist(id, "course");
+      toast.success(response.message || "Added to wishlist");
       setIsInWishlist(true);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to add to wishlist");
+      toast.error(error.message || "Failed to add to wishlist");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRemoveFromWishlist = async () => {
+    if (!isStudentLoggedIn()) {
+      toast.info("Please log in to use the wishlist");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const res = await removeFromWishlist(id);
-      toast.success(res.message || "Removed from wishlist");
+      const response = await removeFromWishlist(id, "course");
+      toast.success(response.message || "Removed from wishlist");
       setIsInWishlist(false);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to remove from wishlist");
+      toast.error(error.message || "Failed to remove from wishlist");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const hasOffer = originalPrice !== price && originalPrice > price;
+  // Check if there is a valid offer
+  const hasOffer = discountedPrice !== undefined && discountedPrice < originalPrice;
 
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border flex flex-col max-w-sm mx-auto sm:max-w-md lg:max-w-lg overflow-hidden">
@@ -119,7 +135,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
               <span className="text-gray-500 line-through">₹{originalPrice.toLocaleString()}</span>
             )}
             <span className={hasOffer ? "text-green-600 font-bold text-lg" : "text-gray-800 font-bold text-lg"}>
-              ₹{price.toLocaleString()}
+              ₹{(hasOffer ? discountedPrice : originalPrice).toLocaleString()}
             </span>
             {hasOffer && (
               <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full">
@@ -133,7 +149,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
           {isInCart ? (
             <button
               onClick={() => navigate("/user/cart")}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50"
+              disabled={isLoading}
             >
               <ShoppingCart size={16} />
               Go to Cart
@@ -141,7 +158,8 @@ const CourseCard: React.FC<CourseCardProps> = ({
           ) : (
             <button
               onClick={handleAddToCart}
-              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+              disabled={isLoading}
             >
               <ShoppingCart size={16} />
               Add to Cart
@@ -149,18 +167,20 @@ const CourseCard: React.FC<CourseCardProps> = ({
           )}
 
           <button
-            className={`transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+            className={`transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 ${
               isInWishlist ? "text-red-500 hover:text-red-600" : "text-gray-400 hover:text-red-500"
             }`}
             title={isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
             onClick={isInWishlist ? handleRemoveFromWishlist : handleAddToWishlist}
+            disabled={isLoading}
           >
             <Heart size={20} fill={isInWishlist ? "currentColor" : "none"} />
           </button>
 
           <button
             onClick={() => navigate(`/user/course/${id}`)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            disabled={isLoading}
           >
             View Details
           </button>

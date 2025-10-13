@@ -31,7 +31,7 @@ import {
   Legend,
 } from "recharts";
 import { Component } from "react";
-import { toast } from "react-toastify"; // Import toast for user feedback (ensure react-toastify is installed)
+import { toast } from "react-toastify";
 import {
   type DashboardData,
   type MonthlyPerformanceItem,
@@ -123,7 +123,7 @@ const StudentDashboard = () => {
           const courseData = courseRes.data || [];
           console.log("Course report data:", courseData);
           setCourseReportData(courseData);
-          const courseTotalCost = courseData.reduce((sum: number, item: IStudentCourseReportItem) => sum + item.totalCost, 0);
+          const courseTotalCost = courseData.reduce((sum: number, item: IStudentCourseReportItem) => sum + item.finalTotalPrice, 0);
           setCourseReportTotals({
             totalCost: courseTotalCost,
             totalOrders: courseData.length,
@@ -209,7 +209,7 @@ const StudentDashboard = () => {
           ? `${item.month.toString().padStart(2, "0")}/${item.year}`
           : "Unknown",
       count: item.count,
-      amount: item.totalAmount, // Renamed totalAmount to amount for clarity
+      amount: item.totalAmount,
     }));
   };
 
@@ -231,17 +231,6 @@ const StudentDashboard = () => {
       default:
         return "";
     }
-  };
-
-  const formatTime = (timeString: string) => {
-    const date = new Date(timeString);
-    return date
-      .toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-      .toUpperCase();
   };
 
   if (loading) {
@@ -311,12 +300,38 @@ const StudentDashboard = () => {
             icon="⏳"
           />
           <Card
+            title="Learning Paths Purchased"
+            value={data.totalLearningPathsPurchased}
+            icon="🗺️"
+          />
+          <Card
+            title="Learning Paths Completed"
+            value={data.totalLearningPathsCompleted}
+            icon="✅"
+            green
+          />
+          <Card
+            title="Learning Paths Pending"
+            value={data.totalLearningPathsNotCompleted}
+            icon="⏳"
+          />
+          <Card
             title="Course Investment"
             value={`₹${data.totalCoursePurchaseCost.toLocaleString()}`}
             icon="💰"
             green
           />
-          <Card title="Slots Booked" value={data.totalSlotBookings} icon="🎯" />
+          <Card
+            title="Learning Path Investment"
+            value={`₹${data.totalLearningPathPurchaseCost.toLocaleString()}`}
+            icon="💰"
+            green
+          />
+          <Card
+            title="Slots Booked"
+            value={data.totalSlotBookings}
+            icon="🎯"
+          />
           <Card
             title="Slot Investment"
             value={`₹${data.totalSlotBookingCost.toLocaleString()}`}
@@ -573,7 +588,7 @@ const StudentDashboard = () => {
               <div>
                 <h3 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600 flex items-center">
                   <BookOpen className="h-5 w-5 mr-2" />
-                  Course Purchase Report
+                  Course and Learning Path Purchase Report
                 </h3>
                 {courseReportData.length > 0 ? (
                   <div>
@@ -588,19 +603,28 @@ const StudentDashboard = () => {
                               Date
                             </th>
                             <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
-                              Course Name with Price
+                              Item Type
                             </th>
                             <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
-                              Coupon Used
+                              Item Name
                             </th>
                             <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
-                              Coupon Discount
+                              Original Price
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Final Price
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Coupon Code
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Coupon Discount (%)
+                            </th>
+                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
+                              Coupon Discount Amount
                             </th>
                             <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
                               Original Total Price
-                            </th>
-                            <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
-                              Coupon Discount
                             </th>
                             <th className="px-2 sm:px-4 py-2 border border-gray-200 text-left font-semibold text-gray-700 text-sm sm:text-base">
                               Final Total Price
@@ -608,54 +632,48 @@ const StudentDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {courseReportData.map((item) => {
-                            const courses = Array.isArray(item.courseName)
-                              ? item.courseName
-                              : [item.courseName || ""];
-                            const prices = Array.isArray(item.price)
-                              ? item.price
-                              : [item.price || 0];
-                            const coursePricePairs = courses.map((course, index) => ({
-                              course,
-                              price: prices[index] || 0,
-                            }));
-
-                            return (
+                          {courseReportData.map((item) =>
+                            item.items.map((subItem, index) => (
                               <tr
-                                key={item.orderId}
+                                key={`${item.orderId}-${index}`}
                                 className="hover:bg-gray-50 transition-colors"
                               >
                                 <td className="px-2 sm:px-4 py-2 border border-gray-200 font-mono text-sm">
-                                  {item.orderId}
+                                  {index === 0 ? item.orderId : ""}
                                 </td>
                                 <td className="px-2 sm:px-4 py-2 border border-gray-200 font-mono text-sm">
-                                  {item.date}
+                                  {index === 0 ? item.date : ""}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm capitalize">
+                                  {subItem.type}
                                 </td>
                                 <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
-                                  {coursePricePairs.map((pair, index) => (
-                                    <div key={index}>
-                                      {pair.course}: ₹{pair.price.toLocaleString()}
-                                    </div>
-                                  ))}
-                                </td>
-                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
-                                  {item.couponCode || "False"}
-                                </td>
-                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
-                                  {item.couponDiscountPercent || "False"}
+                                  {subItem.name}
                                 </td>
                                 <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-green-600">
-                                  ₹{item.originalTotalPrice.toLocaleString()}
-                                </td>
-                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-red-600">
-                                  ₹{item.couponDiscountAmount.toLocaleString()}
+                                  ₹{subItem.originalPrice.toLocaleString()}
                                 </td>
                                 <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-blue-600">
-                                  ₹{item.finalTotalPrice.toLocaleString()}
+                                  ₹{subItem.finalPrice.toLocaleString()}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
+                                  {index === 0 ? (item.couponCode || "-") : ""}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm">
+                                  {index === 0 ? (item.couponDiscountPercent ? `${item.couponDiscountPercent}%` : "-") : ""}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-red-600">
+                                  {index === 0 ? (item.couponDiscountAmount ? `₹${item.couponDiscountAmount.toLocaleString()}` : "-") : ""}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-green-600">
+                                  {index === 0 ? `₹${item.originalTotalPrice.toLocaleString()}` : ""}
+                                </td>
+                                <td className="px-2 sm:px-4 py-2 border border-gray-200 text-sm font-semibold text-blue-600">
+                                  {index === 0 ? `₹${item.finalTotalPrice.toLocaleString()}` : ""}
                                 </td>
                               </tr>
-                            );
-                          })}
+                            ))
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -714,7 +732,7 @@ const StudentDashboard = () => {
                 ) : (
                   <div className="text-center py-6 sm:py-8 text-gray-500">
                     <BookOpen className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-                    <p className="text-sm sm:text-base">No course purchase data found for the selected period</p>
+                    <p className="text-sm sm:text-base">No purchase data found for the selected period</p>
                   </div>
                 )}
               </div>
@@ -760,13 +778,13 @@ const StudentDashboard = () => {
                                 {item.bookingId}
                               </td>
                               <td className="px-2 sm:px-4 py-2 border border-gray-200 text-gray-600 text-sm">
-                                {new Date(item.date).toLocaleDateString("en-GB")}
+                                {item.date}
                               </td>
                               <td className="px-2 sm:px-4 py-2 border border-gray-200 font-medium text-sm">
                                 {item.instructorName}
                               </td>
                               <td className="px-2 sm:px-4 py-2 border border-gray-200 text-gray-600 text-sm">
-                                {`${formatTime(item.slotTime.startTime)} to ${formatTime(item.slotTime.endTime)}`}
+                                {`${item.slotTime.startTime} to ${item.slotTime.endTime}`}
                               </td>
                               <td className="px-2 sm:px-4 py-2 border border-gray-200 font-semibold text-green-600 text-sm">
                                 ₹{item.price.toLocaleString()}

@@ -1,8 +1,9 @@
 import { Types } from "mongoose";
 import { IEnrollment } from "../../../models/enrollmentModel";
+import { EnrolledCourseDTO } from "../../../dto/userDTO/enrollmentCourseDTO";
 
 export interface IStudentEnrollmentService {
-  getAllEnrolledCourses(userId: Types.ObjectId): Promise<IEnrollment[]>;
+  getAllEnrolledCourses(userId: Types.ObjectId): Promise<EnrolledCourseDTO[]>
   getEnrollmentCourseWithDetails(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,

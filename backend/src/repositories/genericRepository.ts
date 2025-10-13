@@ -12,7 +12,7 @@ export interface MongooseOptions {
   session?: ClientSession;
   new?: boolean;
   upsert?: boolean;
-  ordered?: boolean; // Added to support ordered bulk operations
+  ordered?: boolean;
   [key: string]: any;
 }
 
@@ -34,8 +34,8 @@ export interface IGenericRepository<T extends Document> {
   update(id: string, data: Partial<T>, options?: MongooseOptions): Promise<T | null>;
   updateWithSession(id: string, data: Partial<T>, session: ClientSession): Promise<T | null>;
 
-  updateOne(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<T | null>;
-  updateMany(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<void>;
+  updateOne(filter: object, data: Partial<T> | Record<string, any> , options?: MongooseOptions): Promise<T | null>;
+  updateMany(filter: object, data: Partial<T>| Record<string, any>, options?: MongooseOptions): Promise<void>;
 
   delete(id: string): Promise<T | null>;
   deleteWithSession(id: string, session: ClientSession): Promise<T | null>;
@@ -140,15 +140,19 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
   }
 
-  async updateOne(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<T | null> {
-    const updatedDoc = await this.model
-      .findOneAndUpdate(filter, data, { new: true, upsert: false, ...options })
-      .exec();
-    if (!updatedDoc) {
-      console.warn("No document found to update with filter:", filter);
-    }
-    return updatedDoc;
+  async updateOne(
+  filter: object,
+  data: Partial<T> | Record<string, any>,
+  options?: MongooseOptions
+): Promise<T | null> {
+  const updatedDoc = await this.model
+    .findOneAndUpdate(filter, data, { new: true, upsert: false, ...options })
+    .exec();
+  if (!updatedDoc) {
+    console.warn("No document found to update with filter:", filter);
   }
+  return updatedDoc;
+}
 
   async updateMany(filter: object, data: Partial<T>, options?: MongooseOptions): Promise<void> {
     await this.model.updateMany(filter, data, options).exec();
@@ -264,3 +268,384 @@ export class GenericRepository<T extends Document> implements IGenericRepository
     return await this.model.findOneAndDelete(filter, options).exec();
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import {
+//   Model,
+//   Document,
+//   SortOrder,
+//   PopulateOptions,
+//   PipelineStage,
+//   ClientSession,
+//   HydratedDocument,
+//   UpdateQuery,
+// } from "mongoose";
+
+// export interface MongooseOptions {
+//   session?: ClientSession;
+//   new?: boolean;
+//   upsert?: boolean;
+//   ordered?: boolean;
+//   arrayFilters?: { [key: string]: any }[]; // Added to support arrayFilters for subdocument updates
+//   [key: string]: any;
+// }
+
+// type PopulateArg = PopulateOptions | PopulateOptions[] | string[];
+
+// export interface IGenericRepository<T extends Document> {
+//   create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
+//   create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
+//   createWithSession(data: Partial<T>, session: ClientSession): Promise<T>;
+//   createManyWithSession(data: Partial<T>[], session: ClientSession): Promise<T[]>;
+
+//   findOne(filter: object, populate?: PopulateArg, session?: ClientSession): Promise<T | null>;
+//   findById(id: string, session?: ClientSession): Promise<T | null>;
+//   findByIdWithLock(id: string, session: ClientSession): Promise<T | null>;
+
+//   findAll(filter?: object, populate?: PopulateArg, sort?: Record<string, SortOrder>): Promise<T[]>;
+//   findAllWithSession(filter: any, session: ClientSession): Promise<T[]>;
+
+//   update(id: string, data: Partial<T>, options?: MongooseOptions): Promise<T | null>;
+//   updateWithSession(id: string, data: Partial<T>, session: ClientSession): Promise<T | null>;
+
+//   updateOne(filter: object, data: UpdateQuery<T>, options?: MongooseOptions): Promise<T | null>;
+//   updateMany(filter: object, data: UpdateQuery<T>, options?: MongooseOptions): Promise<void>;
+
+//   delete(id: string): Promise<T | null>;
+//   deleteWithSession(id: string, session: ClientSession): Promise<T | null>;
+
+//   findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null>;
+//   updateOneWithPopulate(filter: object, data: UpdateQuery<T>, populate?: PopulateArg): Promise<T | null>;
+//   paginate(
+//     filter: object,
+//     page: number,
+//     limit: number,
+//     sort?: Record<string, SortOrder>,
+//     populate?: PopulateArg,
+//   ): Promise<{ data: T[]; total: number }>;
+//   paginateWithAggregation(
+//     pipeline: PipelineStage[],
+//     page: number,
+//     limit: number,
+//   ): Promise<{ data: T[]; total: number }>;
+//   findOneAndUpdate(filter: object, update: UpdateQuery<T>, options?: MongooseOptions): Promise<T | null>;
+//   aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
+//   find(filter: object, populate?: PopulateArg, sort?: Record<string, SortOrder>): Promise<T[]>;
+//   countDocuments(filter: object): Promise<number>;
+
+//   findWithProjection(
+//     filter: object,
+//     projection: object,
+//     populate?: PopulateArg,
+//     sort?: Record<string, SortOrder>,
+//   ): Promise<T[]>;
+
+//   findOneWithProjection(
+//     filter: object,
+//     projection: object,
+//     populate?: PopulateArg,
+//     session?: ClientSession,
+//   ): Promise<T | null>;
+
+//   findOneAndDelete(filter: object, options?: MongooseOptions): Promise<T | null>;
+// }
+
+// export class GenericRepository<T extends Document> implements IGenericRepository<T> {
+//   protected model: Model<T>;
+
+//   constructor(model: Model<T>) {
+//     this.model = model;
+//   }
+
+//   async create(payload: Partial<T>, options?: MongooseOptions): Promise<T>;
+//   async create(payload: Partial<T>[], options?: MongooseOptions): Promise<T[]>;
+//   async create(payload: Partial<T> | Partial<T>[], options?: MongooseOptions): Promise<T | T[]> {
+//     if (!Array.isArray(payload)) {
+//       const result = await this.model.create([payload], options);
+//       return result[0] as HydratedDocument<T>;
+//     }
+//     return (await this.model.create(payload, options)) as HydratedDocument<T>[];
+//   }
+
+//   async createWithSession(data: Partial<T>, session: ClientSession): Promise<T> {
+//     const result = await this.model.create([data], { session });
+//     return result[0] as HydratedDocument<T>;
+//   }
+
+//   async createManyWithSession(data: Partial<T>[], session: ClientSession): Promise<T[]> {
+//     return (await this.model.create(data, { session, ordered: true })) as HydratedDocument<T>[];
+//   }
+
+//   async findOne(filter: object, populate?: PopulateArg, session?: ClientSession): Promise<T | null> {
+//     let query = this.model.findOne(filter);
+//     if (populate) query = query.populate(populate);
+//     if (session) query = query.session(session);
+//     const result = await query.exec();
+//     if (!result) {
+//       console.warn("No document found with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async findAll(filter: object = {}, populate?: PopulateArg, sort: Record<string, SortOrder> = {}): Promise<T[]> {
+//     let query = this.model.find(filter);
+//     if (populate) query = query.populate(populate);
+//     if (Object.keys(sort).length > 0) query = query.sort(sort);
+//     const result = await query.exec();
+//     if (result.length === 0) {
+//       console.warn("No documents found with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async findAllWithSession(filter: any, session: ClientSession): Promise<T[]> {
+//     const result = await this.model.find(filter).session(session).exec();
+//     if (result.length === 0) {
+//       console.warn("No documents found with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async findById(id: string, session?: ClientSession): Promise<T | null> {
+//     let query = this.model.findById(id);
+//     if (session) query = query.session(session);
+//     const result = await query.exec();
+//     if (!result) {
+//       console.warn("No document found with id:", id);
+//     }
+//     return result;
+//   }
+
+//   async findByIdWithLock(id: string, session: ClientSession): Promise<T | null> {
+//     const result = await this.model
+//       .findOneAndUpdate({ _id: id }, {}, { session, new: true, runValidators: false })
+//       .exec();
+//     if (!result) {
+//       console.warn("No document found with id:", id);
+//     }
+//     return result;
+//   }
+
+//   async update(id: string, data: Partial<T>, options: MongooseOptions = { new: true }): Promise<T | null> {
+//     const result = await this.model.findByIdAndUpdate(id, data, options).exec();
+//     if (!result) {
+//       console.warn("No document found to update with id:", id);
+//     }
+//     return result;
+//   }
+
+//   async updateWithSession(id: string, data: Partial<T>, session: ClientSession): Promise<T | null> {
+//     const result = await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
+//     if (!result) {
+//       console.warn("No document found to update with id:", id);
+//     }
+//     return result;
+//   }
+
+//   async updateOne(
+//     filter: object,
+//     data: UpdateQuery<T>,
+//     options?: MongooseOptions
+//   ): Promise<T | null> {
+//     const updatedDoc = await this.model
+//       .findOneAndUpdate(filter, data, { new: true, upsert: false, ...options })
+//       .exec();
+//     if (!updatedDoc) {
+//       console.warn("No document found to update with filter:", filter);
+//     }
+//     return updatedDoc;
+//   }
+
+//   async updateMany(filter: object, data: UpdateQuery<T>, options?: MongooseOptions): Promise<void> {
+//     const result = await this.model.updateMany(filter, data, options).exec();
+//     if (result.matchedCount === 0) {
+//       console.warn("No documents found to update with filter:", filter);
+//     }
+//   }
+
+//   async delete(id: string): Promise<T | null> {
+//     const result = await this.model.findByIdAndDelete(id).exec();
+//     if (!result) {
+//       console.warn("No document found to delete with id:", id);
+//     }
+//     return result;
+//   }
+
+//   async deleteWithSession(id: string, session: ClientSession): Promise<T | null> {
+//     const result = await this.model.findByIdAndDelete(id, { session }).exec();
+//     if (!result) {
+//       console.warn("No document found to delete with id:", id);
+//     }
+//     return result;
+//   }
+
+//   async paginate(
+//     filter: object,
+//     page: number,
+//     limit: number,
+//     sort: Record<string, SortOrder> = { createdAt: -1 },
+//     populate?: PopulateArg,
+//   ): Promise<{ data: T[]; total: number }> {
+//     const total = await this.model.countDocuments(filter).exec();
+//     let query = this.model.find(filter).sort(sort);
+//     if (populate) query = query.populate(populate);
+//     const data = await query.skip((page - 1) * limit).limit(limit).exec();
+//     if (data.length === 0) {
+//       console.warn("No documents found for pagination with filter:", filter);
+//     }
+//     return { data, total };
+//   }
+
+//   async paginateWithAggregation(
+//     pipeline: PipelineStage[],
+//     page: number,
+//     limit: number,
+//   ): Promise<{ data: T[]; total: number }> {
+//     const countPipeline = [...pipeline, { $count: "total" }];
+//     const countResult = await this.model.aggregate(countPipeline).exec();
+//     const total = countResult.length > 0 ? countResult[0].total : 0;
+
+//     const paginatedPipeline = [
+//       ...pipeline,
+//       { $skip: (page - 1) * limit },
+//       { $limit: limit },
+//     ];
+
+//     const data = await this.model.aggregate<T>(paginatedPipeline).exec();
+//     if (data.length === 0) {
+//       console.warn("No documents found for aggregation with pipeline:", pipeline);
+//     }
+//     return { data, total };
+//   }
+
+//   async findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null> {
+//     let query = this.model.findById(id);
+//     if (populate) query = query.populate(populate);
+//     const result = await query.exec();
+//     if (!result) {
+//       console.warn("No document found with id:", id);
+//     }
+//     return result;
+//   }
+
+//   async updateOneWithPopulate(
+//     filter: object,
+//     data: UpdateQuery<T>,
+//     populate?: PopulateArg,
+//   ): Promise<T | null> {
+//     let query = this.model.findOneAndUpdate(filter, data, { new: true, upsert: false });
+//     if (populate) query = query.populate(populate);
+//     const result = await query.exec();
+//     if (!result) {
+//       console.warn("No document found to update with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async findOneAndUpdate(
+//     filter: object,
+//     update: UpdateQuery<T>,
+//     options: MongooseOptions = { new: true },
+//   ): Promise<T | null> {
+//     const result = await this.model.findOneAndUpdate(filter, update, options).exec();
+//     if (!result) {
+//       console.warn("No document found to update with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]> {
+//     const result = await this.model.aggregate<R>(pipeline).exec();
+//     if (result.length === 0) {
+//       console.warn("No documents found for aggregation with pipeline:", pipeline);
+//     }
+//     return result;
+//   }
+
+//   async find(filter: object = {}, populate?: PopulateArg, sort: Record<string, SortOrder> = {}): Promise<T[]> {
+//     let query = this.model.find(filter);
+//     if (populate) query = query.populate(populate);
+//     if (Object.keys(sort).length > 0) query = query.sort(sort);
+//     const result = await query.exec();
+//     if (result.length === 0) {
+//       console.warn("No documents found with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async countDocuments(filter: object): Promise<number> {
+//     const count = await this.model.countDocuments(filter).exec();
+//     if (count === 0) {
+//       console.warn("No documents found with filter:", filter);
+//     }
+//     return count;
+//   }
+
+//   async findWithProjection(
+//     filter: object = {},
+//     projection: object = {},
+//     populate?: PopulateArg,
+//     sort: Record<string, SortOrder> = {},
+//   ): Promise<T[]> {
+//     let query = this.model.find(filter, projection);
+//     if (populate) query = query.populate(populate);
+//     if (Object.keys(sort).length > 0) query = query.sort(sort);
+//     const result = await query.exec();
+//     if (result.length === 0) {
+//       console.warn("No documents found with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async findOneWithProjection(
+//     filter: object,
+//     projection: object,
+//     populate?: PopulateArg,
+//     session?: ClientSession,
+//   ): Promise<T | null> {
+//     let query = this.model.findOne(filter, projection);
+//     if (populate) query = query.populate(populate);
+//     if (session) query = query.session(session);
+//     const result = await query.exec();
+//     if (!result) {
+//       console.warn("No document found with filter:", filter);
+//     }
+//     return result;
+//   }
+
+//   async findOneAndDelete(filter: object, options?: MongooseOptions): Promise<T | null> {
+//     const result = await this.model.findOneAndDelete(filter, options).exec();
+//     if (!result) {
+//       console.warn("No document found to delete with filter:", filter);
+//     }
+//     return result;
+//   }
+// }

@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   getWishlist,
   removeFromWishlist,
   addToCart,
   getCart,
 } from "../../../api/action/StudentAction";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
-
-import { type WishlistItem, type CartItem } from "../interface/studentInterface";
+import type { WishlistItem,CartItemDTO } from "../interface/studentInterface";
 
 const WishlistPage = () => {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-  const [cartCourseIds, setCartCourseIds] = useState<string[]>([]);
+  const [cartItemIds, setCartItemIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,44 +23,47 @@ const WishlistPage = () => {
   const fetchWishlist = async () => {
     try {
       const response = await getWishlist();
-      if (response?.data) {
+      if (response.success && response.data) {
         setWishlist(response.data);
+      } else {
+        toast.error(response.message || "Failed to fetch wishlist");
       }
-    } catch (error) {
-      toast.error("Failed to fetch wishlist");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch wishlist");
     }
   };
 
   const fetchCartItems = async () => {
     try {
-      const cart = await getCart();
-      if (cart?.data && Array.isArray(cart.data)) {
-        // Extract courseIds from the cart data array
-        const ids = cart.data.map((course: CartItem) => course.courseId);
-        setCartCourseIds(ids);
+      const response = await getCart();
+      if (Array.isArray(response)) {
+        const ids = response.map((item: CartItemDTO) => item.itemId);
+        setCartItemIds(ids);
+      } else {
+        toast.error("Failed to fetch cart");
       }
-    } catch (error) {
-      toast.error("Failed to fetch cart");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch cart");
     }
   };
 
-  const handleAddToCart = async (courseId: string) => {
+  const handleAddToCart = async (itemId: string, type: "course" | "learningPath") => {
     try {
-      await addToCart(courseId);
-      toast.success("Added to cart");
-      fetchCartItems(); // Refresh cart items to update the UI
-    } catch (error) {
-      toast.error("Failed to add to cart");
+      await addToCart(itemId, type);
+      toast.success(`${type === "course" ? "Course" : "Learning Path"} added to cart`);
+      await fetchCartItems(); 
+    } catch (error: any) {
+      toast.error(error.message || `Failed to add ${type === "course" ? "course" : "learning path"} to cart`);
     }
   };
 
-  const handleRemoveFromWishlist = async (courseId: string) => {
+  const handleRemoveFromWishlist = async (itemId: string, type: "course" | "learningPath") => {
     try {
-      await removeFromWishlist(courseId);
-      toast.success("Removed from wishlist");
-      fetchWishlist(); // Refresh wishlist to update the UI
-    } catch (error) {
-      toast.error("Failed to remove from wishlist");
+      const response = await removeFromWishlist(itemId, type);
+      toast.success(response.message || `Removed from wishlist`);
+      await fetchWishlist(); // Refresh wishlist to update the UI
+    } catch (error: any) {
+      toast.error(error.message || `Failed to remove ${type === "course" ? "course" : "learning path"} from wishlist`);
     }
   };
 
@@ -75,7 +77,7 @@ const WishlistPage = () => {
         {wishlist.length === 0 ? (
           <div className="text-center p-6 sm:p-8 bg-white rounded-lg shadow-md mt-10">
             <Heart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="mb-4 text-gray-600 text-lg">No courses in wishlist.</p>
+            <p className="mb-4 text-gray-600 text-lg">No items in wishlist.</p>
             <button
               onClick={() => navigate("/user/courses")}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg shadow-md text-sm sm:text-base w-full sm:w-auto"
@@ -89,32 +91,37 @@ const WishlistPage = () => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-2 sm:p-3 md:p-4 border-b text-left">Thumbnail</th>
-                  <th className="p-2 sm:p-3 md:p-4 border-b text-left">Course Name</th>
+                  <th className="p-2 sm:p-3 md:p-4 border-b text-left">Name</th>
+                  <th className="p-2 sm:p-3 md:p-4 border-b text-left">Type</th>
                   <th className="p-2 sm:p-3 md:p-4 border-b text-left">Price</th>
                   <th className="p-2 sm:p-3 md:p-4 border-b text-left">Cart Action</th>
                   <th className="p-2 sm:p-3 md:p-4 border-b text-left">Wishlist Action</th>
                 </tr>
               </thead>
               <tbody>
-                {wishlist.map((course) => {
-                  const isInCart = cartCourseIds.includes(course.courseId);
+                {wishlist.map((item) => {
+                  const isInCart = cartItemIds.includes(item.itemId);
 
                   return (
                     <tr
-                      key={course.courseId}
+                      key={`${item.itemId}-${item.type}`}
                       className="hover:bg-gray-50 transition duration-300"
                     >
                       <td className="p-2 sm:p-3 md:p-4 border-b">
                         <img
-                          src={course.thumbnailUrl}
-                          alt={course.courseName}
+                          src={item.thumbnailUrl}
+                          alt={item.name}
                           className="w-20 h-12 sm:w-24 sm:h-16 object-cover rounded-lg"
+                          onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
                         />
                       </td>
                       <td className="p-2 sm:p-3 md:p-4 border-b font-medium text-gray-800">
-                        {course.courseName}
+                        {item.name}
                       </td>
-                      <td className="p-2 sm:p-3 md:p-4 border-b text-gray-700">₹{course.price}</td>
+                      <td className="p-2 sm:p-3 md:p-4 border-b text-gray-700">
+                        {item.type === "course" ? "Course" : "Learning Path"}
+                      </td>
+                      <td className="p-2 sm:p-3 md:p-4 border-b text-gray-700">₹{item.price.toLocaleString()}</td>
                       <td className="p-2 sm:p-3 md:p-4 border-b">
                         {isInCart ? (
                           <button
@@ -125,7 +132,7 @@ const WishlistPage = () => {
                           </button>
                         ) : (
                           <button
-                            onClick={() => handleAddToCart(course.courseId)}
+                            onClick={() => handleAddToCart(item.itemId, item.type)}
                             className="flex items-center justify-center w-full sm:w-auto px-2 py-1 sm:px-3 sm:py-2 rounded bg-green-600 hover:bg-green-700 text-white text-sm shadow-md transition duration-300"
                           >
                             <ShoppingCart className="mr-1 h-4 w-4" /> Add to Cart
@@ -134,7 +141,7 @@ const WishlistPage = () => {
                       </td>
                       <td className="p-2 sm:p-3 md:p-4 border-b">
                         <button
-                          onClick={() => handleRemoveFromWishlist(course.courseId)}
+                          onClick={() => handleRemoveFromWishlist(item.itemId, item.type)}
                           className="flex items-center justify-center w-full sm:w-auto px-2 py-1 sm:px-3 sm:py-2 rounded bg-red-500 hover:bg-red-600 text-white text-sm shadow-md transition duration-300"
                         >
                           <Trash2 className="mr-1 h-4 w-4" /> Remove

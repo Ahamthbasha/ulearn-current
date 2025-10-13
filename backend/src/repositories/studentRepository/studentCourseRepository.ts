@@ -5,7 +5,7 @@ import { IChapterReadOnlyRepository } from "../interfaces/IChapterReadOnlyReposi
 import { IQuizReadOnlyRepository } from "../interfaces/IQuizReadOnlyRepository";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { ICourseOffer } from "../../models/courseOfferModel";
-import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo"; 
+import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo";
 
 export class StudentCourseRepository
   extends GenericRepository<ICourse>
@@ -34,6 +34,12 @@ export class StudentCourseRepository
       ["category", "instructorId"],
     )) as ICourse[];
 
+    const courseIds = listedCourses.map(course => course._id.toString());
+    const offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIds);
+    const offerMap = new Map<string, ICourseOffer>(
+      offers.map(offer => [offer.courseId.toString(), offer])
+    );
+
     const result = await Promise.all(
       listedCourses.map(async (course) => {
         const courseId = course._id.toString();
@@ -41,16 +47,19 @@ export class StudentCourseRepository
         const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
-        // Fetch and apply offer if valid
-        const offer = await this._courseOfferRepo.findValidOfferByCourseId(courseId);
-        const effectivePrice = this.calculateEffectivePrice(course.price, offer);
+        const offer = offerMap.get(courseId);
+        const discountedPrice = offer && offer.isActive && offer.status === "approved"
+          ? course.price * (1 - offer.discountPercentage / 100)
+          : undefined;
+
+        console.log(`getAllListedCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`);
 
         return {
           course: {
             ...course.toObject(),
             thumbnailUrl: signedThumbnailUrl,
-            price: effectivePrice,
-            originalPrice: course.price, // Add original price for frontend display
+            originalPrice: course.price,
+            discountedPrice, // Add discountedPrice
           },
           chapterCount,
           quizQuestionCount,
@@ -111,26 +120,32 @@ export class StudentCourseRepository
       ["category", "instructorId"],
     );
 
+    const courseIds = courses.map(course => course._id.toString());
+    const offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIds);
+    const offerMap = new Map<string, ICourseOffer>(
+      offers.map(offer => [offer.courseId.toString(), offer])
+    );
+
     const result = await Promise.all(
       courses.map(async (course) => {
-        const chapterCount = await this._chapterRepo.countChaptersByCourse(
-          course._id.toString(),
-        );
-        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(
-          course._id.toString(),
-        );
+        const courseId = course._id.toString();
+        const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
+        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
-        // Fetch and apply offer if valid
-        const offer = await this._courseOfferRepo.findValidOfferByCourseId(course._id.toString());
-        const effectivePrice = this.calculateEffectivePrice(course.price, offer);
+        const offer = offerMap.get(courseId);
+        const discountedPrice = offer && offer.isActive && offer.status === "approved"
+          ? course.price * (1 - offer.discountPercentage / 100)
+          : undefined;
+
+        console.log(`getFilteredCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`);
 
         return {
           course: {
             ...course.toObject(),
             thumbnailUrl: signedThumbnailUrl,
-            price: effectivePrice,
-            originalPrice: course.price, // Add original price for frontend display
+            originalPrice: course.price,
+            discountedPrice, // Add discountedPrice
           },
           chapterCount,
           quizQuestionCount,
@@ -142,45 +157,32 @@ export class StudentCourseRepository
   }
 
   async getCourseDetails(courseId: string): Promise<{
-  course: ICourse | null;
-  chapterCount: number;
-  quizQuestionCount: number;
-}> {
-  const course = await this.findByIdWithPopulate(courseId, [
-    "category",
-    "instructorId",
-  ]);
-  if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
+    course: ICourse | null;
+    chapterCount: number;
+    quizQuestionCount: number;
+  }> {
+    const course = await this.findByIdWithPopulate(courseId, [
+      "category",
+      "instructorId",
+    ]);
+    if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
 
-  const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
-  const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
+    const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
+    const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
 
-  const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
-  const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);
+    const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+    const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);
 
-  // Fetch and apply offer if valid
-  const offer = await this._courseOfferRepo.findValidOfferByCourseId(courseId);
-  const effectivePrice = this.calculateEffectivePrice(course.price, offer);
+    const offer = await this._courseOfferRepo.findValidOfferByCourseId(courseId);
+    const discountedPrice = offer && offer.isActive && offer.status === "approved"
+      ? course.price * (1 - offer.discountPercentage / 100)
+      : undefined;
 
-  // Set originalPrice to the course's original price and price to the effective price
-  course.thumbnailUrl = signedThumbnailUrl;
-  course.demoVideo.url = signedDemoVideoUrl;
-  course.originalPrice = course.price; // Set originalPrice to the original price
-  course.price = effectivePrice; // Update price to the effective (discounted) price
+    course.thumbnailUrl = signedThumbnailUrl;
+    course.demoVideo.url = signedDemoVideoUrl;
+    course.originalPrice = course.price;
+    course.discountedPrice = discountedPrice; 
 
-  return { course, chapterCount, quizQuestionCount };
-}
-
-  private calculateEffectivePrice(originalPrice: number, offer: ICourseOffer | null): number {
-    if (!offer || !offer.isActive) return originalPrice;
-
-    const now = new Date(); // Use current system time dynamically
-    const startDate = new Date(offer.startDate);
-    const endDate = new Date(offer.endDate);
-
-    if (now >= startDate && now <= endDate) {
-      return originalPrice - (originalPrice * offer.discountPercentage / 100);
-    }
-    return originalPrice;
+    return { course, chapterCount, quizQuestionCount };
   }
 }

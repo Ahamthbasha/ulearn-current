@@ -3,6 +3,7 @@ import { IAdminLearningPathController } from "./interface/IAdminLearningPathCont
 import { IAdminLearningPathService } from "../../services/adminServices/interface/IAdminLearningPathService";
 import { StatusCode } from "../../utils/enums";
 import { LearningPathSuccessMessages, LearningPathErrorMessages } from "../../utils/constants";
+import { Types } from "mongoose";
 
 export class AdminLearningPathController implements IAdminLearningPathController {
   private _learningPathService: IAdminLearningPathService;
@@ -43,6 +44,16 @@ export class AdminLearningPathController implements IAdminLearningPathController
   ): Promise<void> {
     try {
       const { learningPathId } = req.params;
+
+      // Validate learningPathId
+      if (!learningPathId || learningPathId === "undefined" || !Types.ObjectId.isValid(learningPathId)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: LearningPathErrorMessages.INVALID_ID,
+        });
+        return;
+      }
+
       const dto = await this._learningPathService.getLearningPathById(learningPathId);
       if (!dto) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -65,6 +76,15 @@ export class AdminLearningPathController implements IAdminLearningPathController
     try {
       const { learningPathId } = req.params;
       const { status, adminReview } = req.body;
+
+      // Validate learningPathId
+      if (!learningPathId || learningPathId === "undefined" || !Types.ObjectId.isValid(learningPathId)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: LearningPathErrorMessages.INVALID_ID,
+        });
+        return;
+      }
 
       if (!status || !["accepted", "rejected"].includes(status)) {
         res.status(StatusCode.BAD_REQUEST).json({

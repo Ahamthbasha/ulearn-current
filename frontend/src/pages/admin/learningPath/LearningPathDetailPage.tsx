@@ -248,7 +248,7 @@ const LearningPathDetailPage: React.FC = () => {
                 ))}
                 <div className="mt-6 border-t border-gray-200 pt-4">
                   <h4 className="text-lg font-semibold text-gray-900">
-                    Total Amount: ₹{learningPath.totalAmount.toFixed(2)}
+                    Total Amount: ₹{learningPath.totalPrice.toFixed(2)}
                   </h4>
                 </div>
               </div>

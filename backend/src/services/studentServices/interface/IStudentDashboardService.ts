@@ -6,9 +6,13 @@ import {
 export interface IStudentDashboardService {
   getStudentDashboardData(userId: string): Promise<{
     totalCoursesPurchased: number;
+    totalLearningPathsPurchased: number;
     totalCoursesCompleted: number;
     totalCoursesNotCompleted: number;
+    totalLearningPathsCompleted: number;
+    totalLearningPathsNotCompleted: number;
     totalCoursePurchaseCost: number;
+    totalLearningPathPurchaseCost: number;
     totalSlotBookings: number;
     totalSlotBookingCost: number;
   }>;

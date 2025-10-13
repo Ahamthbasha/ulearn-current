@@ -13,29 +13,36 @@ export class StudentWishlistRepository
 
   async addToWishlist(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath"
   ): Promise<IWishlist> {
-    return await this.create({ userId, courseId });
+    const query = type === "course" ? { courseId: itemId } : { learningPathId: itemId };
+    return await this.create({ userId, ...query });
   }
 
   async removeFromWishlist(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath"
   ): Promise<void> {
-    await this.findOneAndDelete({ userId, courseId });
+    const query = type === "course" ? { userId, courseId: itemId } : { userId, learningPathId: itemId };
+    await this.findOneAndDelete(query);
   }
 
-  async getWishlistCourses(userId: Types.ObjectId): Promise<IWishlist[]> {
+  async getWishlistItems(userId: Types.ObjectId): Promise<IWishlist[]> {
     return (await this.findAll({ userId }, [
       { path: "courseId" },
+      { path: "learningPathId" },
     ])) as IWishlist[];
   }
 
-  async isCourseInWishlist(
+  async isItemInWishlist(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath"
   ): Promise<boolean> {
-    const result = await this.findOne({ userId, courseId });
+    const query = type === "course" ? { userId, courseId: itemId } : { userId, learningPathId: itemId };
+    const result = await this.findOne(query);
     return !!result;
   }
 }

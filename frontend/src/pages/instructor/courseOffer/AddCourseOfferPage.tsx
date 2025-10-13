@@ -7,17 +7,34 @@ import { getPublishedCourses, createInstructorCourseOffer } from "../../../api/a
 import { toast } from "react-toastify";
 import type { ICourses } from "../interface/instructorInterface";
 
+// Helper function to get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+};
+
+// Validation schema with enhanced rules
 const validationSchema = Yup.object({
-  courseId: Yup.string().required("Course is required"),
+  courseId: Yup.string().required("Please select a course"),
   discountPercentage: Yup.number()
-    .min(0, "Discount must be at least 0")
-    .max(100, "Discount cannot exceed 100")
-    .required("Discount percentage required"),
-  startDate: Yup.string().required("Start date required"),
-  endDate: Yup.string()
-    .required("End date required")
+    .min(0, "Discount must be at least 0%")
+    .max(100, "Discount cannot exceed 100%")
+    .required("Discount percentage is required"),
+  startDate: Yup.date()
+    .min(getTodayDate(), "Start date cannot be in the past")
+    .required("Start date is required"),
+  endDate: Yup.date()
+    .required("End date is required")
     .test("is-after-start", "End date must be after start date", function (value) {
-      return new Date(value) > new Date(this.parent.startDate);
+      const { startDate } = this.parent;
+      if (!startDate || !value) return false;
+      return new Date(value) > new Date(startDate);
+    })
+    .test("is-future", "End date must be in the future", function (value) {
+      if (!value) return false;
+      const today = new Date(getTodayDate());
+      today.setHours(0, 0, 0, 0); // Normalize to start of day
+      return new Date(value) > today;
     }),
 });
 
@@ -82,7 +99,7 @@ const AddInstructorCourseOfferPage: React.FC = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ isSubmitting }) => (
+        {({ isSubmitting, values, setFieldValue }) => (
           <Form className="space-y-4">
             <div>
               <label htmlFor="courseId" className="block mb-1 font-semibold text-gray-800">
@@ -91,12 +108,12 @@ const AddInstructorCourseOfferPage: React.FC = () => {
               <Field
                 as="select"
                 name="courseId"
-                className="w-full px-3 py-2 rounded border bg-gray-100 text-black"
+                className="w-full px-3 py-2 rounded border bg-gray-100 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select a course</option>
                 {courses.map((c) => (
                   <option key={c.courseId} value={c.courseId}>
-                    {c.courseName} 
+                    {c.courseName}
                   </option>
                 ))}
               </Field>
@@ -106,27 +123,61 @@ const AddInstructorCourseOfferPage: React.FC = () => {
               name="discountPercentage"
               type="number"
               label="Discount Percentage"
-              placeholder="Enter discount percentage"
+              placeholder="Enter discount percentage (0-100)"
+              min={0}
+              max={100}
             />
             <InputField
               name="startDate"
               type="date"
               label="Start Date"
+              min={getTodayDate()}
               placeholder="Select start date"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const newStartDate = e.target.value;
+                if (newStartDate) {
+                  const selectedDate = new Date(newStartDate);
+                  const today = new Date(getTodayDate());
+                  today.setHours(0, 0, 0, 0);
+                  if (selectedDate < today) {
+                    toast.error("Start date cannot be in the past. Please select today or a future date.");
+                    setFieldValue("startDate", "");
+                    setFieldValue("endDate", "");
+                    return;
+                  }
+                }
+                setFieldValue("startDate", newStartDate);
+                if (newStartDate && values.endDate && new Date(values.endDate) <= new Date(newStartDate)) {
+                  setFieldValue("endDate", "");
+                  toast.info("End date has been reset as it was on or before the new start date.");
+                }
+              }}
             />
-            <InputField name="endDate" type="date" label="End Date" placeholder="Select end date" />
+            <InputField
+              name="endDate"
+              type="date"
+              label="End Date"
+              min={
+                values.startDate
+                  ? new Date(new Date(values.startDate).getTime() + 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0]
+                  : getTodayDate()
+              }
+              placeholder="Select end date"
+            />
             <div className="flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => navigate("/instructor/courseOffers")}
-                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
+                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:bg-blue-300"
               >
                 {isSubmitting ? "Creating..." : "Create Offer"}
               </button>

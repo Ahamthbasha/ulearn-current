@@ -8,7 +8,7 @@ import {
   IStudentSlotReportItem,
 } from "../../types/dashboardTypes";
 import { getDateRange, ReportFilter } from "../../utils/reportFilterUtils";
-
+import { formatTo12Hour } from "../../utils/studentReportGenerator";
 export class StudentDashboardRepository implements IStudentDashboardRepository {
   private _enrollmentRepo: EnrollmentRepository;
   private _bookingRepo: BookingRepository;
@@ -24,10 +24,34 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     this._orderRepo = orderRepo;
   }
 
+  
   async getTotalCoursesPurchased(userId: string): Promise<number> {
     return this._enrollmentRepo.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
+      learningPathId: { $exists: false },
     });
+  }
+
+  // Get total learning paths purchased
+  async getTotalLearningPathsPurchased(userId: string): Promise<number> {
+    const enrollments = await this._enrollmentRepo.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          learningPathId: { $exists: true, $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: "$learningPathId",
+        },
+      },
+      {
+        $count: "total",
+      },
+    ]);
+
+    return enrollments.length > 0 ? enrollments[0].total : 0;
   }
 
   async getTotalCoursesCompleted(userId: string): Promise<number> {
@@ -41,9 +65,68 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     return this._enrollmentRepo.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
       completionStatus: { $in: ["NOT_STARTED", "IN_PROGRESS"] },
+      learningPathId:{$exists:false}
     });
   }
 
+  async getTotalLearningPathsCompleted(userId: string): Promise<number> {
+    const learningPaths = await this._enrollmentRepo.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          learningPathId: { $exists: true, $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: "$learningPathId",
+          allCompleted: {
+            $min: {
+              $cond: [
+                { $eq: ["$completionStatus", "COMPLETED"] },
+                true,
+                false,
+              ],
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          allCompleted: true,
+        },
+      },
+      {
+        $count: "total",
+      },
+    ]);
+
+    return learningPaths.length > 0 ? learningPaths[0].total : 0;
+  }
+
+  async getTotalLearningPathsNotCompleted(userId: string): Promise<number> {
+  const enrollments = await this._enrollmentRepo.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        learningPathId: { $exists: true, $ne: null },
+        completionStatus: { $in: ["NOT_STARTED", "IN_PROGRESS"] },
+      },
+    },
+    {
+      $group: {
+        _id: "$learningPathId",
+      },
+    },
+    {
+      $count: "total",
+    },
+  ]);
+
+  return enrollments.length > 0 ? enrollments[0].total : 0;
+}
+
+  // Get total cost of courses purchased (excluding learning path courses)
   async getTotalCoursePurchaseCost(userId: string): Promise<number> {
     const orders = await this._orderRepo.aggregate([
       {
@@ -53,42 +136,54 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
         },
       },
       {
-        $lookup: {
-          from: "coupons",
-          localField: "couponId",
-          foreignField: "_id",
-          as: "coupon",
+        $unwind: {
+          path: "$courses",
+          preserveNullAndEmptyArrays: true,
         },
-      },
-      {
-        $unwind: { path: "$coupon", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $unwind: "$courses",
-      },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseDetails",
-        },
-      },
-      {
-        $unwind: "$courseDetails",
       },
       {
         $group: {
           _id: "$_id",
-          originalPrice: { $sum: "$courseDetails.price" },
-          finalAmount: { $first: "$amount" },
+          coursesTotal: {
+            $sum: {
+              $cond: [
+                { $ifNull: ["$courses", false] },
+                {
+                  $cond: [
+                    { $ifNull: ["$courses.offerPrice", false] },
+                    "$courses.offerPrice",
+                    "$courses.coursePrice",
+                  ],
+                },
+                0,
+              ],
+            },
+          },
           coupon: { $first: "$coupon" },
         },
       },
       {
         $project: {
-          _id: 0,
-          finalAmount: "$finalAmount",
+          coursesTotal: 1,
+          discountAmount: {
+            $cond: [
+              { $ifNull: ["$coupon", false] },
+              {
+                $multiply: [
+                  "$coursesTotal",
+                  { $divide: ["$coupon.discountPercentage", 100] },
+                ],
+              },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          finalAmount: {
+            $subtract: ["$coursesTotal", "$discountAmount"],
+          },
         },
       },
     ]);
@@ -96,6 +191,70 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     return orders.reduce((total, order) => total + order.finalAmount, 0);
   }
 
+  // Get total cost of learning paths purchased
+  async getTotalLearningPathPurchaseCost(userId: string): Promise<number> {
+    const orders = await this._orderRepo.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          status: "SUCCESS",
+        },
+      },
+      {
+        $unwind: {
+          path: "$learningPaths",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          learningPathsTotal: {
+            $sum: {
+              $cond: [
+                { $ifNull: ["$learningPaths", false] },
+                {
+                  $cond: [
+                    { $ifNull: ["$learningPaths.offerPrice", false] },
+                    "$learningPaths.offerPrice",
+                    "$learningPaths.totalPrice",
+                  ],
+                },
+                0,
+              ],
+            },
+          },
+          coupon: { $first: "$coupon" },
+        },
+      },
+      {
+        $project: {
+          learningPathsTotal: 1,
+          discountAmount: {
+            $cond: [
+              { $ifNull: ["$coupon", false] },
+              {
+                $multiply: [
+                  "$learningPathsTotal",
+                  { $divide: ["$coupon.discountPercentage", 100] },
+                ],
+              },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          finalAmount: {
+            $subtract: ["$learningPathsTotal", "$discountAmount"],
+          },
+        },
+      },
+    ]);
+
+    return orders.reduce((total, order) => total + order.finalAmount, 0);
+  }
 
   async getMonthlyCoursePerformance(userId: string) {
     return this._orderRepo.aggregate([
@@ -106,50 +265,13 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
         },
       },
       {
-        $lookup: {
-          from: "coupons",
-          localField: "couponId",
-          foreignField: "_id",
-          as: "coupon",
-        },
-      },
-      {
-        $unwind: { path: "$coupon", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $unwind: "$courses",
-      },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "course",
-        },
-      },
-      {
-        $unwind: "$course",
-      },
-      {
         $group: {
           _id: {
             month: { $month: "$createdAt" },
             year: { $year: "$createdAt" },
-            orderId: "$_id",
           },
-          originalPrice: { $sum: "$course.price" },
-          finalAmount: { $first: "$amount" },
-          courseCount: { $sum: 1 },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            month: "$_id.month",
-            year: "$_id.year",
-          },
-          count: { $sum: "$courseCount" },
-          totalAmount: { $sum: "$finalAmount" },
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 },
         },
       },
       {
@@ -165,7 +287,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     ]);
   }
 
- async getCourseReport(
+  async getCourseReport(
     userId: string,
     filter: {
       type: ReportFilter;
@@ -193,40 +315,53 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
         },
       },
       {
-        $lookup: {
-          from: "coupons",
-          localField: "couponId",
-          foreignField: "_id",
-          as: "coupon",
+        $project: {
+          orderId: "$_id",
+          date: "$createdAt",
+          amount: "$amount",
+          coupon: "$coupon",
+          items: {
+            $concatArrays: [
+              {
+                $map: {
+                  input: { $ifNull: ["$courses", []] },
+                  as: "course",
+                  in: {
+                    type: "course",
+                    name: "$$course.courseName",
+                    originalPrice: "$$course.coursePrice",
+                    offerPrice: "$$course.offerPrice",
+                    offerPercentage: "$$course.courseOfferPercentage",
+                  },
+                },
+              },
+              {
+                $map: {
+                  input: { $ifNull: ["$learningPaths", []] },
+                  as: "lp",
+                  in: {
+                    type: "learningPath",
+                    name: "$$lp.learningPathName",
+                    originalPrice: "$$lp.totalPrice",
+                    offerPrice: "$$lp.offerPrice",
+                    offerPercentage: "$$lp.offerPercentage",
+                  },
+                },
+              },
+            ],
+          },
         },
       },
       {
-        $unwind: { path: "$coupon", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $unwind: "$courses",
-      },
-      {
-        $lookup: {
-          from: "courses",
-          localField: "courses",
-          foreignField: "_id",
-          as: "courseDetails",
-        },
-      },
-      {
-        $unwind: "$courseDetails",
+        $unwind: "$items",
       },
       {
         $group: {
-          _id: "$_id",
-          date: { $first: "$createdAt" },
-          courseName: { $push: "$courseDetails.courseName" },
-          originalPrice: { $push: "$courseDetails.price" },
-          finalAmount: { $first: "$amount" },
-          courseCount: { $sum: 1 },
-          couponCode: { $first: "$coupon.code" },
-          couponDiscountPercent: { $first: "$coupon.discount" },
+          _id: "$orderId",
+          date: { $first: "$date" },
+          items: { $push: "$items" },
+          amount: { $first: "$amount" },
+          coupon: { $first: "$coupon" },
         },
       },
       {
@@ -237,60 +372,55 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
             $dateToString: {
               format: "%Y-%m-%dT%H:%M:%S",
               date: "$date",
-              timezone: "Asia/Kolkata"
-            }
+              timezone: "Asia/Kolkata",
+            },
           },
-          courseName: 1,
-          price: {
-            $map: {
-              input: "$originalPrice",
-              as: "price",
-              in: {
-                $cond: {
-                  if: { $gt: ["$courseCount", 0] },
-                  then: {
-                    $divide: ["$finalAmount", "$courseCount"],
-                  },
-                  else: "$$price",
-                },
+          items: 1,
+          originalTotalPrice: {
+            $sum: {
+              $map: {
+                input: "$items",
+                as: "item",
+                in: "$$item.originalPrice",
               },
             },
           },
-          originalTotalPrice: { $sum: "$originalPrice" },
-          finalTotalPrice: "$finalAmount",
-          couponCode: 1,
-          couponDiscountPercent: 1,
-          couponDiscountAmount: {
-            $subtract: [{ $sum: "$originalPrice" }, "$finalAmount"],
-          },
+          finalTotalPrice: "$amount",
+          couponCode: "$coupon.couponName",
+          couponDiscountPercent: "$coupon.discountPercentage",
+          couponDiscountAmount: "$coupon.discountAmount",
         },
       },
+      { $sort: { date: -1 } },
       { $skip: skip },
       { $limit: limit },
     ]);
 
     return orders.map((item) => {
-      // Parse the ISO-like date string and format to day-month-year 12hrs AM/PM
       const dateObj = new Date(item.date);
-      const day = dateObj.getDate().toString().padStart(2, '0');
-      const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+      const day = dateObj.getDate().toString().padStart(2, "0");
+      const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
       const year = dateObj.getFullYear();
       let hours = dateObj.getHours();
-      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12; // Convert 0 to 12 for midnight
+      const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
       const formattedDate = `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
 
       return {
         orderId: item.orderId.toString(),
         date: formattedDate,
-        courseName: item.courseName,
-        price: item.price,
-        totalCost: item.finalTotalPrice,
-        couponCode: item.couponCode,
-        couponDiscountPercent: item.couponDiscountPercent,
+        items: item.items.map((i: any) => ({
+          type: i.type,
+          name: i.name,
+          originalPrice: i.originalPrice,
+          finalPrice: i.offerPrice || i.originalPrice,
+          offerPercentage: i.offerPercentage,
+        })),
         originalTotalPrice: item.originalTotalPrice,
         finalTotalPrice: item.finalTotalPrice,
+        couponCode: item.couponCode,
+        couponDiscountPercent: item.couponDiscountPercent,
         couponDiscountAmount: item.couponDiscountAmount,
       };
     });
@@ -351,29 +481,61 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
           bookingId: "$_id",
           date: "$createdAt",
           slotTime: {
-            startTime: "$slotDetails.startTime",
-            endTime: "$slotDetails.endTime",
+            startTime: {
+              $dateToString: {
+                format: "%H:%M",
+                date: "$slotDetails.startTime",
+                timezone: "Asia/Kolkata",
+              },
+            },
+            endTime: {
+              $dateToString: {
+                format: "%H:%M",
+                date: "$slotDetails.endTime",
+                timezone: "Asia/Kolkata",
+              },
+            },
           },
           instructorName: "$instructorDetails.username",
           price: "$slotDetails.price",
           totalPrice: "$slotDetails.price",
         },
       },
+      { $sort: { date: -1 } },
       { $skip: skip },
       { $limit: limit },
     ]);
 
-    return bookings.map((item) => ({
-      bookingId: item.bookingId.toString(),
-      date: item.date,
-      slotTime: item.slotTime,
-      instructorName: item.instructorName,
-      price: item.price,
-      totalPrice: item.totalPrice,
-    }));
+    return bookings.map((item) => {
+      const dateObj = new Date(item.date);
+      const day = dateObj.getDate().toString().padStart(2, "0");
+      const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
+      const year = dateObj.getFullYear();
+      let hours = dateObj.getHours();
+      const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      const formattedDate = `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
+
+      return {
+        bookingId: item.bookingId.toString(),
+        date: formattedDate,
+        slotTime: {
+          startTime: item.slotTime.startTime
+            ? formatTo12Hour(item.slotTime.startTime)
+            : "N/A",
+          endTime: item.slotTime.endTime
+            ? formatTo12Hour(item.slotTime.endTime)
+            : "N/A",
+        },
+        instructorName: item.instructorName,
+        price: item.price,
+        totalPrice: item.totalPrice,
+      };
+    });
   }
 
-    async getMonthlySlotBookingPerformance(userId: string) {
+  async getMonthlySlotBookingPerformance(userId: string) {
     return this._bookingRepo.aggregate([
       {
         $match: {
@@ -414,7 +576,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     ]);
   }
 
-    async getTotalSlotBookingCost(userId: string): Promise<number> {
+  async getTotalSlotBookingCost(userId: string): Promise<number> {
     const bookings = await this._bookingRepo.find(
       {
         studentId: new mongoose.Types.ObjectId(userId),
@@ -428,7 +590,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
       0,
     );
   }
-  
+
   async getTotalSlotBookings(userId: string): Promise<number> {
     return this._bookingRepo.countDocuments({
       studentId: new mongoose.Types.ObjectId(userId),
@@ -436,5 +598,4 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
       paymentStatus: "paid",
     });
   }
-
 }

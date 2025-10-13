@@ -12,4 +12,5 @@ export interface CourseDetailDTO {
   level: string;
   price: number;
   originalPrice:number;
+  discountedPrice?:number;
 }

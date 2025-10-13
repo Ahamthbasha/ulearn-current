@@ -22,7 +22,7 @@ export class StudentCourseService implements IStudentCourseService {
         courseData.chapterCount,
         courseData.quizQuestionCount,
       );
-
+      console.log(`getAllCoursesWithDetails ${dto.courseId}: price=${dto.price}, originalPrice=${dto.originalPrice}, discountedPrice=${dto.discountedPrice}`);
       courseDTOs.push(dto);
     }
 
@@ -55,7 +55,7 @@ export class StudentCourseService implements IStudentCourseService {
         courseData.chapterCount,
         courseData.quizQuestionCount,
       );
-
+      console.log(`getFilteredCoursesWithDetails ${dto.courseId}: price=${dto.price}, originalPrice=${dto.originalPrice}, discountedPrice=${dto.discountedPrice}`);
       courseDTOs.push(dto);
     }
 
@@ -79,11 +79,11 @@ export class StudentCourseService implements IStudentCourseService {
       courseData.chapterCount,
       courseData.quizQuestionCount,
     );
+    console.log(`getCourseDetailsById ${dto.courseId}: price=${dto.price}, originalPrice=${dto.originalPrice}, discountedPrice=${dto.discountedPrice}`);
 
     return dto;
   }
 
-  // For internal use when raw course data is needed
   async getCourseRaw(courseId: string): Promise<{
     course: ICourse | null;
     chapterCount: number;

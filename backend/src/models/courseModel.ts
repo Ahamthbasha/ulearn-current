@@ -1,9 +1,15 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { LearningPathModel, ILearningPathItem } from "./learningPathModel";
+import { IChapter } from "./chapterModel";
+import { IQuiz } from "./quizModel";
 
 export interface IDemoVideo {
   type: "video";
   url: string;
+}
+
+export interface IPopulatedCourse extends ICourse {
+  chapters: IChapter[];
+  quizzes: IQuiz[];
 }
 
 export interface ICourse extends Document {
@@ -23,10 +29,12 @@ export interface ICourse extends Document {
   isListed: boolean;
   createdAt: Date;
   updatedAt: Date;
-  offer?: Types.ObjectId;
   originalPrice?: number;
   effectivePrice?: number;
+  discountedPrice?:number;
   publishDate?: Date;
+  Chapters?:IChapter[];
+  quizzes?:IQuiz[];
 }
 
 const demoVideoSchema = new Schema<IDemoVideo>({
@@ -61,11 +69,6 @@ const CourseSchema = new Schema<ICourse>(
     isPublished: { type: Boolean, default: false },
     isListed: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
-    offer: {
-      type: Schema.Types.ObjectId,
-      ref: "CourseOffer",
-      required: false,
-    },
     publishDate: { type: Date, required: false },
   },
   {
@@ -76,36 +79,6 @@ const CourseSchema = new Schema<ICourse>(
 );
 
 CourseSchema.index({ courseName: "text" });
-
-CourseSchema.pre("save", async function (next) {
-  if (this.isModified("price") || this.isModified("offer")) {
-    try {
-      const learningPaths = await LearningPathModel.find({
-        "items.courseId": this._id,
-      });
-      for (const path of learningPaths) {
-        const courses = await CourseModel.find({
-          _id: { $in: path.items.map((item: ILearningPathItem) => item.courseId) },
-        })
-          .populate({
-            path: "offer",
-            select: "isActive startDate endDate discountPercentage",
-          })
-          .lean();
-        path.totalPrice = courses.reduce((sum, course) => {
-          const effectivePrice = course.effectivePrice ?? course.price;
-          return sum + effectivePrice;
-        }, 0);
-        await path.save();
-      }
-      next();
-    } catch (error) {
-      next(new Error("Failed to update learning path prices"));
-    }
-  } else {
-    next();
-  }
-});
 
 CourseSchema.virtual("chapters", {
   ref: "Chapter",
@@ -121,14 +94,5 @@ CourseSchema.virtual("quizzes", {
   justOne: false,
 });
 
-CourseSchema.virtual("effectivePrice").get(function (this: ICourse) {
-  if (this.offer && this.populated("offer")) {
-    const offer = this.offer as any;
-    if (offer.isActive && new Date() >= offer.startDate && new Date() <= offer.endDate) {
-      return this.price * (1 - offer.discountPercentage / 100);
-    }
-  }
-  return this.price;
-});
 
 export const CourseModel = model<ICourse>("Course", CourseSchema);

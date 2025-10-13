@@ -19,6 +19,6 @@ export interface LearningPathDTO {
   status: "pending" | "accepted" | "rejected" | "draft";
   adminReview?: string;
   thumbnailUrl?: string;
-  category:string;
-  categoryName:string
+  category: string;
+  categoryName: string;
 }

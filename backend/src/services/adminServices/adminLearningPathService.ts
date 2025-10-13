@@ -1,16 +1,22 @@
 import { IAdminLearningPathService } from "./interface/IAdminLearningPathService";
 import { IAdminLearningPathRepository } from "../../repositories/adminRepository/interface/IAdminLearningPathRepo";
+import { IAdminCourseOfferRepo } from "../../repositories/adminRepository/interface/IAdminCourseOfferRepo";
 import { LearningPathDTO } from "../../dto/adminDTO/learningPathDTO";
 import { LearningPathSummaryDTO } from "../../dto/adminDTO/learningPathSummaryDTO";
 import { mapLearningPathToDTO } from "../../mappers/adminMapper/adminLearningPathMapper";
-import { mapLearningPathsToSummaryDTO } from "../../mappers/adminMapper/mapLearningPathSummary"; 
+import { mapLearningPathsToSummaryDTO } from "../../mappers/adminMapper/mapLearningPathSummary";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
 export class AdminLearningPathService implements IAdminLearningPathService {
   private _learningPathRepository: IAdminLearningPathRepository;
+  private _courseOfferRepository: IAdminCourseOfferRepo;
 
-  constructor(learningPathRepository: IAdminLearningPathRepository) {
+  constructor(
+    learningPathRepository: IAdminLearningPathRepository,
+    courseOfferRepository: IAdminCourseOfferRepo
+  ) {
     this._learningPathRepository = learningPathRepository;
+    this._courseOfferRepository = courseOfferRepository;
   }
 
   async getSubmittedLearningPaths(
@@ -27,17 +33,25 @@ export class AdminLearningPathService implements IAdminLearningPathService {
   async getLearningPathById(learningPathId: string): Promise<LearningPathDTO | null> {
     const learningPath = await this._learningPathRepository.getLearningPathById(learningPathId);
     if (!learningPath) return null;
-    console.log("learningPath",learningPath)
-    const dto = mapLearningPathToDTO(learningPath);
+
+    // Fetch offers for each course
+    const itemsWithOffers = await Promise.all(
+      learningPath.items.map(async (item) => {
+        const course = item.courseId as any;
+        const offer = await this._courseOfferRepository.findValidOfferByCourseId(course._id.toString());
+        return { item, offer };
+      })
+    );
+
+    const dto = mapLearningPathToDTO(learningPath, itemsWithOffers);
     dto.items = await Promise.all(
       dto.items.map(async (item) => ({
         ...item,
         thumbnailUrl: item.thumbnailUrl ? await getPresignedUrl(item.thumbnailUrl) : undefined,
       }))
     );
-
-    if(dto.thumbnailUrl){
-      dto.thumbnailUrl = await getPresignedUrl(dto.thumbnailUrl)
+    if (dto.thumbnailUrl) {
+      dto.thumbnailUrl = await getPresignedUrl(dto.thumbnailUrl);
     }
     return dto;
   }
@@ -45,13 +59,26 @@ export class AdminLearningPathService implements IAdminLearningPathService {
   async verifyLearningPath(learningPathId: string, status: "accepted" | "rejected", adminReview: string): Promise<LearningPathDTO | null> {
     const updated = await this._learningPathRepository.verifyLearningPath(learningPathId, status, adminReview);
     if (!updated) return null;
-    const dto = mapLearningPathToDTO(updated);
+
+    // Fetch offers for each course
+    const itemsWithOffers = await Promise.all(
+      updated.items.map(async (item) => {
+        const course = item.courseId as any;
+        const offer = await this._courseOfferRepository.findValidOfferByCourseId(course._id.toString());
+        return { item, offer };
+      })
+    );
+
+    const dto = mapLearningPathToDTO(updated, itemsWithOffers);
     dto.items = await Promise.all(
       dto.items.map(async (item) => ({
         ...item,
         thumbnailUrl: item.thumbnailUrl ? await getPresignedUrl(item.thumbnailUrl) : undefined,
       }))
     );
+    if (dto.thumbnailUrl) {
+      dto.thumbnailUrl = await getPresignedUrl(dto.thumbnailUrl);
+    }
     return dto;
-  }  
+  }
 }

@@ -6,11 +6,12 @@ import {
   getCart,
   addToWishlist,
   removeFromWishlist,
-  courseAlreadyExistInWishlist
-} from "../../api/action/StudentAction"; // Updated to learning path-specific APIs
-import { Heart, ShoppingCart } from "lucide-react";
+  isItemInWishlist,
+} from "../../api/action/StudentAction"; 
+import { Heart, ShoppingCart} from "lucide-react";
 import { isStudentLoggedIn } from "../../utils/auth";
 import { type LearningPathCardProps } from "../../pages/student/interface/studentInterface";
+import { type CartItemDTO } from "../../types/interfaces/IStudentInterface";
 
 const LearningPathCard: React.FC<LearningPathCardProps> = ({
   learningPathId,
@@ -25,22 +26,23 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
   const navigate = useNavigate();
   const [isInCart, setIsInCart] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Track API call states
 
   useEffect(() => {
     if (!isStudentLoggedIn()) return;
 
     const fetchStatuses = async () => {
       try {
-        const cartRes = await getCart();
-        const existsInCart = cartRes?.data && Array.isArray(cartRes.data)
-          ? cartRes.data.some((item: any) => item.learningPathId === learningPathId)
+        const cart = await getCart();
+        const existsInCart = Array.isArray(cart)
+          ? cart.some((item: CartItemDTO) => item.itemId === learningPathId && item.type === "learningPath")
           : false;
         setIsInCart(existsInCart);
 
-        const wishRes = await courseAlreadyExistInWishlist(learningPathId);
+        const wishRes = await isItemInWishlist(learningPathId,"learningPath");
         setIsInWishlist(wishRes?.exists || false);
-      } catch (err) {
-        console.error("Failed to fetch cart/wishlist status:", err);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to fetch cart/wishlist status");
       }
     };
 
@@ -53,12 +55,15 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
       return;
     }
 
+    setIsLoading(true);
     try {
-      const res = await addToCart(learningPathId);
-      toast.success(res.message || "Learning path added to cart");
+      await addToCart(learningPathId, "learningPath");
       setIsInCart(true);
+      toast.success("Learning path added to cart" );
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to add to cart");
+      toast.error(error.message || "Failed to add learning path to cart");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -68,22 +73,28 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
       return;
     }
 
+    setIsLoading(true);
     try {
-      const res = await addToWishlist(learningPathId);
+      const res = await addToWishlist(learningPathId,"learningPath");
       toast.success(res.message || "Added to wishlist");
       setIsInWishlist(true);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to add to wishlist");
+      toast.error(error.message || "Failed to add to wishlist");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRemoveFromWishlist = async () => {
+    setIsLoading(true);
     try {
-      const res = await removeFromWishlist(learningPathId);
+      const res = await removeFromWishlist(learningPathId,"learningPath");
       toast.success(res.message || "Removed from wishlist");
       setIsInWishlist(false);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to remove from wishlist");
+      toast.error(error.message || "Failed to remove from wishlist");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -118,17 +129,21 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
 
         <div className="flex items-center justify-between gap-2 sm:gap-3 mt-auto">
           {isInCart ? (
-            <button
-              onClick={() => navigate("/user/cart")}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-            >
-              <ShoppingCart size={16} />
-              Go to Cart
-            </button>
+            <>
+              <button
+                onClick={() => navigate("/user/cart")}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50"
+                disabled={isLoading}
+              >
+                <ShoppingCart size={16} />
+                Go to Cart
+              </button>
+            </>
           ) : (
             <button
               onClick={handleAddToCart}
-              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+              disabled={isLoading}
             >
               <ShoppingCart size={16} />
               Add to Cart
@@ -136,18 +151,20 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
           )}
 
           <button
-            className={`transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+            className={`transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 ${
               isInWishlist ? "text-red-500 hover:text-red-600" : "text-gray-400 hover:text-red-500"
             }`}
             title={isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
             onClick={isInWishlist ? handleRemoveFromWishlist : handleAddToWishlist}
+            disabled={isLoading}
           >
             <Heart size={20} fill={isInWishlist ? "currentColor" : "none"} />
           </button>
 
           <button
             onClick={() => navigate(`/user/learningPath/${learningPathId}`)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium py-2 px-3 sm:px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            disabled={isLoading}
           >
             View Details
           </button>

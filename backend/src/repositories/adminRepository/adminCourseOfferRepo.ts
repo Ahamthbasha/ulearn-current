@@ -3,6 +3,7 @@ import { PopulatedCourseOffer } from "../../dto/adminDTO/adminCourseOfferDTO";
 import { GenericRepository } from "../genericRepository";
 import { IAdminCourseOfferRepo } from "./interface/IAdminCourseOfferRepo";
 import { PipelineStage } from "mongoose";
+import {Types} from "mongoose"
 
 export class AdminCourseOfferRepo extends GenericRepository<ICourseOffer> implements IAdminCourseOfferRepo {
   constructor() {
@@ -105,5 +106,18 @@ export class AdminCourseOfferRepo extends GenericRepository<ICourseOffer> implem
 
     const data = await this.model.aggregate<PopulatedCourseOffer>(pipeline).exec();
     return { data, total };
+  }
+
+  async findValidOfferByCourseId(courseId: string): Promise<ICourseOffer | null> {
+    const now = new Date();
+    const offer = await this.findOne({
+      courseId: new Types.ObjectId(courseId),
+      isActive: true,
+      status: "approved",
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    });
+
+    return offer;
   }
 }

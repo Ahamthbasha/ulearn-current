@@ -6,7 +6,8 @@ export interface CourseInfoDTO {
   courseOriginalPrice: number;
   courseOfferDiscount?: number;
   courseOfferPrice: number;
-  thumbnailUrl?: string; // Optional, used only when includeThumbnail is true
+  thumbnailUrl?: string; 
+  isAlreadyEnrolled:boolean;
 }
 
 export interface CouponInfoDTO {

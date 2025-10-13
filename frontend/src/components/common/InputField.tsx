@@ -12,6 +12,8 @@ const InputField: React.FC<InputFieldProps> = ({
   value,
   onChange,
   useFormik = true,
+  min,
+  max,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
@@ -28,16 +30,22 @@ const InputField: React.FC<InputFieldProps> = ({
       <div className="relative flex flex-col">
         {useFormik ? (
           <Field
-            className={`w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg ${type === "number" ? "no-arrows" : ""} font-medium border-2 border-transparent text-black text-xs sm:text-sm focus:outline-none focus:border-2 focus:outline bg-gray-100`}
+            className={`w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg ${
+              type === "number" ? "no-arrows" : ""
+            } font-medium border-2 border-transparent text-black text-xs sm:text-sm focus:outline-none focus:border-2 focus:outline bg-gray-100`}
             type={isPassword ? (showPassword ? "text" : "password") : type}
             placeholder={placeholder}
             id={name}
             name={name}
             disabled={disabled}
+            min={min}
+            max={max}
           />
         ) : (
           <input
-            className={`w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg ${type === "number" ? "no-arrows" : ""} font-medium border-2 border-transparent text-black text-xs sm:text-sm focus:outline-none focus:border-2 focus:outline bg-gray-100`}
+            className={`w-full px-3 sm:px-5 py-2 sm:py-3 rounded-lg ${
+              type === "number" ? "no-arrows" : ""
+            } font-medium border-2 border-transparent text-black text-xs sm:text-sm focus:outline-none focus:border-2 focus:outline bg-gray-100`}
             type={type}
             placeholder={placeholder}
             id={name}
@@ -45,6 +53,8 @@ const InputField: React.FC<InputFieldProps> = ({
             value={value}
             onChange={onChange}
             disabled={disabled}
+            min={min}
+            max={max}
           />
         )}
 

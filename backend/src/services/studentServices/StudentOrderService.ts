@@ -6,7 +6,7 @@ import { IStudentCheckoutService } from "../studentServices/interface/IStudentCh
 import { IOrder } from "../../models/orderModel";
 import { OrderHistoryDTO } from "../../dto/userDTO/orderHistoryDTO";
 import { OrderDetailsDTO } from "../../dto/userDTO/orderDetailsDTO";
-import { mapCourses, mapCoupon, mapUserInfo } from "../../mappers/userMapper/orderMapper";
+import { mapCourses, mapCoupon, mapUserInfo, mapLearningPaths } from "../../mappers/userMapper/orderMapper";
 import { razorpay } from "../../utils/razorpay";
 import { StudentErrorMessages } from "../../utils/constants";
 import { formatDate } from "../../utils/dateFormat";
@@ -53,15 +53,56 @@ export class StudentOrderService implements IStudentOrderService {
     const order = await this._orderRepo.getOrderById(orderId, userId);
     if (!order) return null;
 
+    // Map standalone courses
     const coursesInfo = await mapCourses(order.courses, true);
-    const sumOfAllCourseOriginalPrice = coursesInfo.reduce((sum, course) => sum + course.courseOriginalPrice, 0);
-    const sumOfAllCourseIncludingOfferPrice = coursesInfo.reduce((sum, course) => sum + course.courseOfferPrice, 0);
+
+    // Map learning paths and their courses
+    const learningPathsInfo = await mapLearningPaths(order.learningPaths, true);
+
+    // Calculate totals for standalone courses, excluding already enrolled courses
+    const sumOfStandaloneCourseOriginalPrice = coursesInfo.reduce(
+      (sum, course) => sum + (course.isAlreadyEnrolled ? 0 : course.courseOriginalPrice),
+      0,
+    );
+    const sumOfStandaloneCourseOfferPrice = coursesInfo.reduce(
+      (sum, course) => sum + (course.isAlreadyEnrolled ? 0 : course.courseOfferPrice),
+      0,
+    );
+
+    // Calculate totals for learning paths, summing prices of non-enrolled courses
+    const sumOfLearningPathOriginalPrice = learningPathsInfo.reduce(
+      (sum, learningPath) => {
+        const learningPathOriginalPrice = learningPath.courses.reduce(
+          (courseSum, course) => courseSum + (course.isAlreadyEnrolled ? 0 : course.courseOriginalPrice),
+          0,
+        );
+        return sum + learningPathOriginalPrice;
+      },
+      0,
+    );
+    const sumOfLearningPathOfferPrice = learningPathsInfo.reduce(
+      (sum, learningPath) => {
+        const learningPathOfferPrice = learningPath.courses.reduce(
+          (courseSum, course) => courseSum + (course.isAlreadyEnrolled ? 0 : course.courseOfferPrice),
+          0,
+        );
+        return sum + learningPathOfferPrice;
+      },
+      0,
+    );
+
+    const sumOfAllCourseOriginalPrice =
+      sumOfStandaloneCourseOriginalPrice + sumOfLearningPathOriginalPrice;
+    const sumOfAllCourseIncludingOfferPrice =
+      sumOfStandaloneCourseOfferPrice + sumOfLearningPathOfferPrice;
+
     const couponInfo = order.coupon ? mapCoupon(order.coupon) : undefined;
 
     return {
       orderId: order._id,
       userInfo: mapUserInfo(order.userId),
       coursesInfo,
+      learningPathsInfo,
       couponInfo,
       sumOfAllCourseOriginalPrice,
       sumOfAllCourseIncludingOfferPrice,
@@ -110,6 +151,49 @@ export class StudentOrderService implements IStudentOrderService {
         );
         if (!order) {
           throw new Error(StudentErrorMessages.ORDER_NOT_FOUND);
+        }
+
+        // Check for enrolled courses
+        const enrolledCourseIds = await this._checkoutService.getEnrolledCourseIds(
+          userId,
+          localSession,
+        );
+        const courseRepo = this._checkoutService.getCourseRepo();
+        const enrolledCourses = order.courses.filter((course) =>
+          enrolledCourseIds.some((eid) => eid.equals(course.courseId)),
+        );
+        const enrolledCourseNames = await Promise.all(
+          enrolledCourses.map(async (course) => {
+            const courseDetails = await courseRepo.findById(course.courseId.toString());
+            return courseDetails ? courseDetails.courseName : course.courseId.toString();
+          })
+        );
+
+        // Check for enrolled learning paths
+        const enrolledLearningPathIds = await this._checkoutService.getEnrolledLearningPathIds(
+          userId,
+          localSession,
+        );
+        const learningPathRepo = this._checkoutService.getLearningPathRepo();
+        const enrolledLearningPaths = order.learningPaths.filter((lp) =>
+          enrolledLearningPathIds.some((eid) => eid.equals(lp.learningPathId)),
+        );
+        const enrolledLearningPathNames = await Promise.all(
+          enrolledLearningPaths.map(async (lp) => {
+            const pathDetails = await learningPathRepo.findById(lp.learningPathId.toString());
+            return pathDetails ? pathDetails.title : lp.learningPathId.toString();
+          })
+        );
+
+        // If any courses or learning paths are enrolled, block the retry
+        if (enrolledCourses.length > 0 || enrolledLearningPaths.length > 0) {
+          const enrolledItems = [
+            ...enrolledCourseNames.map(name => `Course: ${name}`),
+            ...enrolledLearningPathNames.map(name => `Learning Path: ${name}`),
+          ];
+          throw new Error(
+            `Cannot retry payment. Already enrolled in: ${enrolledItems.join(", ")}. Please remove these items and create a new order.`
+          );
         }
 
         if (
@@ -247,4 +331,3 @@ export class StudentOrderService implements IStudentOrderService {
     }
   }
 }
-

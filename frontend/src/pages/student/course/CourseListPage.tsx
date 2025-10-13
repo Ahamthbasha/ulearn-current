@@ -225,8 +225,9 @@ const CourseListPage = () => {
                     id={course.courseId}
                     title={course.courseName}
                     description={course.description}
-                    price={course.price}
+
                     originalPrice={course.originalPrice} // Added originalPrice
+                    discountedPrice={course.discountedPrice}
                     duration={course.duration}
                     level={course.level}
                     thumbnailUrl={course.thumbnailUrl}

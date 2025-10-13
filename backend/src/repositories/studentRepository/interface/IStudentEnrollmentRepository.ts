@@ -1,8 +1,9 @@
 import { Types } from "mongoose";
 import { IEnrollment } from "../../../models/enrollmentModel";
+import { IOrder } from "../../../models/orderModel";
 
 export interface IStudentEnrollmentRepository {
-  getAllEnrolledCourses(userId: Types.ObjectId): Promise<IEnrollment[]>;
+  getAllEnrolledCourses(userId: Types.ObjectId): Promise<{ enrollment: IEnrollment; order?: IOrder }[]>
   getEnrollmentByCourseDetails(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
@@ -12,7 +13,6 @@ export interface IStudentEnrollmentRepository {
     courseId: Types.ObjectId,
     chapterId: Types.ObjectId,
   ): Promise<IEnrollment | null>;
-
   submitQuizResult(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
@@ -23,9 +23,21 @@ export interface IStudentEnrollmentRepository {
       scorePercentage: number;
     },
   ): Promise<IEnrollment | null>;
-
   areAllChaptersCompleted(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
   ): Promise<boolean>;
+  findByUserAndCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<IEnrollment | null>;
+  findByUserAndCourseWithPopulate(
+    userId: string,
+    courseId: string,
+    populateOptions: any[],
+  ): Promise<IEnrollment | null>;
+  findOne(
+    query: any,
+    populateOptions?: any[]
+  ): Promise<IEnrollment | null>;
 }

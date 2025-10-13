@@ -22,12 +22,12 @@ export interface IMonthlySales {
 
 export interface IAdminCourseSalesReportItem {
   orderId: string;
-  date: string; // Changed to string for day-month-year format
+  date: string;
   couponCode?: string;
   courses: {
     courseName: string;
     coursePrice: number;
-    offerPrice?: number; // Added for offerPrice field
+    offerPrice?: number;
     adminShare: number;
     instructorName: string;
     discountedPrice: number;
@@ -56,22 +56,27 @@ export interface IAdminMembershipReportItem {
 }
 
 export type FilterType = "daily" | "weekly" | "monthly" | "custom";
+
 export interface IStudentCourseReportItem {
   orderId: string;
   date: string;
-  courseName: string[];
-  price: number[];
-  totalCost: number;
-   couponCode?: string;
-  couponDiscountPercent?: number;
+  items: Array<{
+    type: "course" | "learningPath";
+    name: string;
+    originalPrice: number;
+    finalPrice: number;
+    offerPercentage?: number;
+  }>;
   originalTotalPrice: number;
   finalTotalPrice: number;
-  couponDiscountAmount: number;
+  couponCode?: string;
+  couponDiscountPercent?: number;
+  couponDiscountAmount?: number;
 }
 
 export interface IStudentSlotReportItem {
   bookingId: string;
-  date: Date;
+  date: string;
   slotTime: {
     startTime: string;
     endTime: string;
@@ -80,7 +85,6 @@ export interface IStudentSlotReportItem {
   price: number;
   totalPrice: number;
 }
-
 
 export type AggregationPipelineStage = {
   $match?: { [key: string]: any };

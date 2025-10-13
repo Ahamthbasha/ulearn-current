@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -5,11 +6,12 @@ import {
   getCertificate,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
-import { type EnrollmentWithDetail } from "../interface/studentInterface";
 import { Loader2, BookOpen, CheckCircle, Clock, Download } from "lucide-react";
+import {type EnrolledCourse } from "../interface/studentInterface";
+
 
 const EnrolledCoursesPage = () => {
-  const [enrollments, setEnrollments] = useState<EnrollmentWithDetail[]>([]);
+  const [enrollments, setEnrollments] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -17,8 +19,13 @@ const EnrolledCoursesPage = () => {
     const fetchEnrolled = async () => {
       try {
         const response = await getEnrolledCourses();
-        setEnrollments(response.courses);
+        if (response.success) {
+          setEnrollments(response.courses);
+        } else {
+          toast.error(response.message || "Failed to load enrolled courses");
+        }
       } catch (error) {
+        console.error("Error fetching enrolled courses:", error);
         toast.error("Failed to load enrolled courses");
       } finally {
         setLoading(false);
@@ -38,16 +45,17 @@ const EnrolledCoursesPage = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        toast.success("Certificate downloaded successfully");
       } else {
         toast.error(response.message || "Certificate not available yet");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error downloading certificate:", error);
       toast.error("Failed to download certificate");
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
@@ -56,8 +64,9 @@ const EnrolledCoursesPage = () => {
         </div>
       </div>
     );
+  }
 
-  if (enrollments.length === 0)
+  if (enrollments.length === 0) {
     return (
       <div className="p-6 sm:p-8 max-w-7xl mx-auto text-center bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
         <div>
@@ -76,6 +85,7 @@ const EnrolledCoursesPage = () => {
         </div>
       </div>
     );
+  }
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -85,29 +95,34 @@ const EnrolledCoursesPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {enrollments.map((enroll) => {
-          const course = enroll.courseId;
           const isCompleted = enroll.completionStatus === "COMPLETED";
 
           return (
             <div
-              key={enroll._id}
+              key={enroll.courseId}
               className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col overflow-hidden"
             >
               <img
-                src={course.thumbnailUrl}
-                alt={course.courseName}
+                src={enroll.thumbnailUrl}
+                alt={enroll.courseName}
                 className="h-44 sm:h-48 md:h-56 w-full object-cover rounded-t-xl"
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder-image.jpg"; // Fallback image
+                }}
               />
 
               <div className="p-4 sm:p-6 flex-grow flex flex-col justify-between">
                 <div
                   className="cursor-pointer"
-                  onClick={() => navigate(`/user/enrolled/${course._id}`)}
+                  onClick={() => navigate(`/user/enrolled/${enroll.courseId}`)}
                 >
                   <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {course.courseName}
+                    {enroll.courseName}
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-3 flex items-center">
+                  <p className="text-sm sm:text-base text-gray-600 mb-2 line-clamp-3">
+                    {enroll.description}
+                  </p>
+                  <p className="text-sm sm:text-base text-gray-600 mb-2 flex items-center">
                     Status:{" "}
                     <span
                       className={`font-medium ml-1 ${
@@ -126,14 +141,25 @@ const EnrolledCoursesPage = () => {
                       <Clock className="ml-2 h-4 w-4 text-yellow-600" />
                     ) : null}
                   </p>
+                  <div className="mb-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full"
+                        style={{ width: `${enroll.completionPercentage}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {enroll.completionPercentage}% Complete
+                    </p>
+                  </div>
                   <p className="text-right font-bold text-blue-600 text-lg sm:text-xl mb-4">
-                    ₹{course.price}
+                    ₹{enroll.price}
                   </p>
                 </div>
 
                 {enroll.certificateGenerated ? (
                   <button
-                    onClick={() => handleDownloadCertificate(course._id)}
+                    onClick={() => handleDownloadCertificate(enroll.courseId)}
                     className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white text-sm sm:text-base px-4 py-2 rounded-lg shadow-md transition duration-300 flex items-center justify-center w-full"
                   >
                     <Download className="mr-2 h-4 w-4" /> 🎓 Download Certificate

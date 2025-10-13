@@ -76,13 +76,13 @@ const LearningPathListPage: React.FC = () => {
       width: "15%",
     },
     {
-      key: "LearningPathCourse",
+      key: "TotalCourseInLearningPath",
       title: "Total Courses",
       render: (value: number) => <span>{value}</span>,
       width: "15%",
     },
     {
-      key: "UnverifiedCourses",
+      key: "unverifiedCourseInLearningPath",
       title: "Unverified Courses",
       render: (value: number) => <span>{value}</span>,
       width: "20%",

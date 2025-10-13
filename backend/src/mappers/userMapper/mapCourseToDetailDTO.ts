@@ -1,4 +1,3 @@
-// src/mappers/courseDetailMapper.ts
 import { ICourse } from "../../models/courseModel";
 import { CourseDetailDTO } from "../../dto/userDTO/courseDetailDTO";
 
@@ -26,6 +25,7 @@ export const mapCourseToDetailDTO = (
     description: course.description,
     level: course.level,
     price: course.price,
-    originalPrice:course.originalPrice || course.price
+    originalPrice: course.originalPrice || course.price,
+    discountedPrice: course.discountedPrice, // Map discountedPrice if available
   };
 };

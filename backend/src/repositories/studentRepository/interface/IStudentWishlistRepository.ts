@@ -4,15 +4,18 @@ import { IWishlist } from "../../../models/wishlistModel";
 export interface IStudentWishlistRepository {
   addToWishlist(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath"
   ): Promise<IWishlist>;
   removeFromWishlist(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath"
   ): Promise<void>;
-  getWishlistCourses(userId: Types.ObjectId): Promise<IWishlist[]>;
-  isCourseInWishlist(
+  getWishlistItems(userId: Types.ObjectId): Promise<IWishlist[]>;
+  isItemInWishlist(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath"
   ): Promise<boolean>;
 }

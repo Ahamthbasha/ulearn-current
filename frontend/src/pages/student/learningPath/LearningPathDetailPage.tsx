@@ -6,8 +6,10 @@ import {
   addToCart,
   addToWishlist,
   removeFromWishlist,
+  getCart,
+  getWishlist,
 } from "../../../api/action/StudentAction";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart, IndianRupee } from "lucide-react";
 import { isStudentLoggedIn } from "../../../utils/auth";
 import {type LearningPathDetail } from "../interface/studentInterface";
 
@@ -23,13 +25,21 @@ const LearningPathDetailPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        // Fetch learning path details
         const res = await GetLmsCourseDetail(learningPathId!);
-        const learningPathData = res.data;
-
+        const learningPathData = res.data && 'data' in res ? res.data : res;
         setLearningPath(learningPathData);
-      } catch (error) {
+
+        // Check initial cart and wishlist status
+        if (isStudentLoggedIn()) {
+          const [cart, wishlist] = await Promise.all([getCart(), getWishlist()]);
+          setIsInCart(cart.some(item => item.itemId === learningPathId && item.type === "learningPath"));
+          setIsInWishlist(wishlist.data.some(item => item.itemId === learningPathId && item.type === "learningPath"));
+        }
+      } catch (error: any) {
         console.error(error);
-        toast.error("Failed to fetch learning path details");
+        toast.error(error.message || "Failed to fetch learning path details");
       } finally {
         setLoading(false);
       }
@@ -45,7 +55,7 @@ const LearningPathDetailPage = () => {
     }
 
     try {
-      await addToCart(learningPathId!);
+      await addToCart(learningPathId!,"learningPath");
       toast.success("Learning path added to cart");
       setIsInCart(true);
     } catch (error: any) {
@@ -53,7 +63,7 @@ const LearningPathDetailPage = () => {
         toast.info("Learning path is already in cart");
         setIsInCart(true);
       } else {
-        toast.error("Failed to add to cart");
+        toast.error(error.message || "Failed to add to cart");
       }
     }
   };
@@ -68,17 +78,16 @@ const LearningPathDetailPage = () => {
       if (!learningPathId) return;
 
       if (isInWishlist) {
-        await removeFromWishlist(learningPathId);
+        await removeFromWishlist(learningPathId,"learningPath");
         toast.success("Removed from wishlist");
         setIsInWishlist(false);
       } else {
-        await addToWishlist(learningPathId);
+        await addToWishlist(learningPathId,"learningPath");
         toast.success("Added to wishlist");
         setIsInWishlist(true);
       }
     } catch (error: any) {
-      toast.error("Wishlist operation failed");
-      console.error(error);
+      toast.error(error.message || "Wishlist operation failed");
     }
   };
 
@@ -101,6 +110,7 @@ const LearningPathDetailPage = () => {
             src={learningPath.learningPathThumbnailUrl}
             alt={learningPath.title}
             className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-lg shadow-md"
+            onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
           />
         </div>
 
@@ -126,7 +136,7 @@ const LearningPathDetailPage = () => {
               <p><strong>Category:</strong> {learningPath.categoryName}</p>
               <p><strong>Number of Courses:</strong> {learningPath.noOfCourses}</p>
               <p><strong>Total Duration:</strong> {learningPath.hoursOfCourses} hrs</p>
-              <p><strong>Total Price:</strong> ${learningPath.totalPrice}</p>
+              <p><strong>Total Price:</strong> <IndianRupee className="inline h-4 w-4 mr-1" /> {learningPath.totalPrice.toLocaleString()}</p>
             </div>
           </div>
 

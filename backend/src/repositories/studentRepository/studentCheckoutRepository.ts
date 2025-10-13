@@ -1,30 +1,39 @@
 import { Types } from "mongoose";
 import mongoose from "mongoose";
 import { IOrder } from "../../models/orderModel";
-import { IPayment } from "../../models/paymentModel";
 import { IEnrollment } from "../../models/enrollmentModel";
+import { ILearningPathEnrollment } from "../../models/learningPathEnrollmentModel";
 import { IStudentCheckoutRepository } from "./interface/IStudentCheckoutRepository";
 import { IOrderRepository } from "../interfaces/IOrderRepository";
-import { IPaymentRepository } from "../interfaces/IPaymentRepository";
 import { IEnrollmentRepository } from "../interfaces/IEnrollmentRepository";
+import { ILearningPathEnrollmentRepo } from "../interfaces/ILearningPathEnrollmentRepo";
 import { ICourseRepository } from "../interfaces/ICourseRepository";
+import { ILearningPathRepository } from "../interfaces/ILearningPathRepository";
+import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo";
+import { ICourseOffer } from "../../models/courseOfferModel";
 
 export class StudentCheckoutRepository implements IStudentCheckoutRepository {
   private _orderRepo: IOrderRepository;
-  private _paymentRepo: IPaymentRepository;
   private _enrollmentRepo: IEnrollmentRepository;
+  private _learningPathEnrollmentRepo: ILearningPathEnrollmentRepo;
   private _courseRepo: ICourseRepository;
+  private _learningPathRepo: ILearningPathRepository;
+  private _courseOfferRepo: IStudentCourseOfferRepository;
 
   constructor(
     orderRepo: IOrderRepository,
-    paymentRepo: IPaymentRepository,
     enrollmentRepo: IEnrollmentRepository,
+    learningPathEnrollmentRepo: ILearningPathEnrollmentRepo,
     courseRepo: ICourseRepository,
+    learningPathRepo: ILearningPathRepository,
+    courseOfferRepo: IStudentCourseOfferRepository,
   ) {
-    this._courseRepo = courseRepo;
     this._orderRepo = orderRepo;
-    this._paymentRepo = paymentRepo;
     this._enrollmentRepo = enrollmentRepo;
+    this._learningPathEnrollmentRepo = learningPathEnrollmentRepo;
+    this._courseRepo = courseRepo;
+    this._learningPathRepo = learningPathRepo;
+    this._courseOfferRepo = courseOfferRepo;
   }
 
   async createOrder(
@@ -67,36 +76,30 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     return this._orderRepo.update(orderId.toString(), updates);
   }
 
-  async savePayment(
-    data: Partial<IPayment>,
-    session?: mongoose.ClientSession,
-  ): Promise<IPayment> {
-    if (session) {
-      return this._paymentRepo.createWithSession(data, session);
-    }
-    return this._paymentRepo.create(data);
-  }
-
   async createEnrollments(
-    userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
+    enrollments: Partial<IEnrollment>[],
     session?: mongoose.ClientSession,
   ): Promise<IEnrollment[]> {
-    const enrollments = courseIds.map((courseId) => ({
-      userId,
-      courseId,
-      completionStatus: "NOT_STARTED",
-      certificateGenerated: false,
-      enrolledAt: new Date(),
-    }));
-
     if (session) {
       return this._enrollmentRepo.createManyWithSession(
-        enrollments as Partial<IEnrollment>[],
+        enrollments,
         session,
       );
     }
-    return this._enrollmentRepo.create(enrollments as Partial<IEnrollment>[]);
+    return this._enrollmentRepo.createMany(enrollments);
+  }
+
+  async createLearningPathEnrollments(
+    enrollments: Partial<ILearningPathEnrollment>[],
+    session?: mongoose.ClientSession,
+  ): Promise<ILearningPathEnrollment[]> {
+    if (session) {
+      return this._learningPathEnrollmentRepo.createManyWithSession(
+        enrollments,
+        session,
+      );
+    }
+    return this._learningPathEnrollmentRepo.createMany(enrollments);
   }
 
   async getCourseNamesByIds(
@@ -113,6 +116,66 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     }
 
     return (courses || []).map((c) => c.courseName);
+  }
+
+  async getLearningPathNamesByIds(
+    learningPathIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<{ name: string; totalPrice: number }[]> {
+    const filter = { _id: { $in: learningPathIds } };
+    let paths;
+
+    if (session) {
+      paths = await this._learningPathRepo.findAllWithSession(filter, session, [
+        {
+          path: "courses",
+          select: "price effectivePrice",
+          match: { isPublished: true },
+        },
+      ]);
+    } else {
+      paths = await this._learningPathRepo.findAll(filter, [
+        {
+          path: "courses",
+          select: "price effectivePrice",
+          match: { isPublished: true },
+        },
+      ]);
+    }
+
+    if (!paths) {
+      return [];
+    }
+
+    const courseIds = paths
+      .flatMap((path) => path.courses?.map((course) => course._id) || [])
+      .filter((id): id is Types.ObjectId => id instanceof Types.ObjectId);
+
+    const offerMap = await this.getValidCourseOffers(courseIds, session);
+
+    const result = await Promise.all(
+      paths.map(async (path) => {
+        let totalPrice = 0;
+
+        if (path.courses && Array.isArray(path.courses)) {
+          for (const course of path.courses) {
+            const courseId = course._id.toString();
+            const offer = offerMap.get(courseId);
+            const price = offer
+              ? Math.floor(course.price * (100 - offer.discountPercentage) / 100 * 100) / 100
+              : course.effectivePrice ?? course.price;
+            totalPrice += price;
+          }
+        }
+
+        return {
+          name: path.title,
+          totalPrice: Math.floor(totalPrice * 100) / 100,
+        };
+      })
+    );
+
+    return result;
   }
 
   async getEnrolledCourseIds(
@@ -134,15 +197,59 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     return (enrollments || []).map((e) => e.courseId);
   }
 
-  async findPendingOrderForCourses(
+  async getEnrolledLearningPathIds(
     userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]> {
+    const filter = { userId };
+    let enrollments;
+
+    if (session) {
+      enrollments = await this._learningPathEnrollmentRepo.findAllWithSession(
+        filter,
+        session,
+      );
+    } else {
+      enrollments = await this._learningPathEnrollmentRepo.findAll(filter);
+    }
+
+    return (enrollments || []).map((e) => e.learningPathId);
+  }
+
+  async getAllCourseIdsFromLearningPaths(
+    learningPathIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]> {
+    const filter = { _id: { $in: learningPathIds } };
+    let paths;
+
+    if (session) {
+      paths = await this._learningPathRepo.findAllWithSession(filter, session);
+    } else {
+      paths = await this._learningPathRepo.findAll(filter);
+    }
+
+    return (paths || []).flatMap((p) =>
+      p.items.map((item) =>
+        item.courseId instanceof Types.ObjectId
+          ? item.courseId
+          : item.courseId._id
+      )
+    );
+  }
+
+  async findPendingOrderWithOverlappingCourses(
+    userId: Types.ObjectId,
+    purchasedCourseIds: Types.ObjectId[],
     session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
     const filter = {
       userId,
       status: "PENDING",
-      "courses.courseId": { $in: courseIds },
+      $or: [
+        { "courses.courseId": { $in: purchasedCourseIds } },
+        { "learningPaths.courses.courseId": { $in: purchasedCourseIds } },
+      ],
     };
 
     if (session) {
@@ -165,21 +272,28 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     return this._courseRepo;
   }
 
+  getLearningPathRepo(): ILearningPathRepository {
+    return this._learningPathRepo;
+  }
+
   async getOrderById(orderId: Types.ObjectId): Promise<IOrder | null> {
     return this._orderRepo.findById(orderId.toString());
   }
 
   async markStalePendingOrdersAsFailed(
     userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
+    purchasedCourseIds: Types.ObjectId[],
     session?: mongoose.ClientSession,
   ): Promise<void> {
     const staleThreshold = new Date(Date.now() - 15 * 60 * 1000);
     const filter = {
       userId,
       status: "PENDING",
-      "courses.courseId": { $in: courseIds },
       createdAt: { $lte: staleThreshold },
+      $or: [
+        { "courses.courseId": { $in: purchasedCourseIds } },
+        { "learningPaths.courses.courseId": { $in: purchasedCourseIds } },
+      ],
     };
 
     if (session) {
@@ -191,5 +305,23 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     } else {
       await this._orderRepo.updateMany(filter, { status: "FAILED" });
     }
+  }
+
+  async getValidCourseOffers(
+    courseIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<Map<string, ICourseOffer>> {
+    const courseIdStrings = courseIds.map(id => id.toString());
+    let offers: ICourseOffer[] = [];
+
+    if (session) {
+      offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIdStrings);
+    } else {
+      offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIdStrings);
+    }
+
+    return new Map<string, ICourseOffer>(
+      offers.map((offer: ICourseOffer) => [offer.courseId.toString(), offer])
+    );
   }
 }

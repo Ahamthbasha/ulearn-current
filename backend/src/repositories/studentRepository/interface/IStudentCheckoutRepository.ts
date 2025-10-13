@@ -1,9 +1,11 @@
 import { Types } from "mongoose";
 import mongoose from "mongoose";
 import { IOrder } from "../../../models/orderModel";
-import { IPayment } from "../../../models/paymentModel";
 import { IEnrollment } from "../../../models/enrollmentModel";
+import { ILearningPathEnrollment } from "../../../models/learningPathEnrollmentModel";
 import { ICourseRepository } from "../../../repositories/interfaces/ICourseRepository";
+import { ILearningPathRepository } from "../../../repositories/interfaces/ILearningPathRepository";
+import { ICourseOffer } from "../../../models/courseOfferModel";
 
 export interface IStudentCheckoutRepository {
   createOrder(
@@ -23,30 +25,44 @@ export interface IStudentCheckoutRepository {
     session?: mongoose.ClientSession,
   ): Promise<IOrder | null>;
 
-  savePayment(
-    data: Partial<IPayment>,
-    session?: mongoose.ClientSession,
-  ): Promise<IPayment>;
-
   createEnrollments(
-    userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
+    enrollments: Partial<IEnrollment>[],
     session?: mongoose.ClientSession,
   ): Promise<IEnrollment[]>;
+
+  createLearningPathEnrollments(
+    enrollments: Partial<ILearningPathEnrollment>[],
+    session?: mongoose.ClientSession,
+  ): Promise<ILearningPathEnrollment[]>;
 
   getCourseNamesByIds(
     courseIds: Types.ObjectId[],
     session?: mongoose.ClientSession,
   ): Promise<string[]>;
 
+  getLearningPathNamesByIds(
+    learningPathIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<{ name: string; totalPrice: number }[]>;
+
   getEnrolledCourseIds(
     userId: Types.ObjectId,
     session?: mongoose.ClientSession,
   ): Promise<Types.ObjectId[]>;
 
-  findPendingOrderForCourses(
+  getEnrolledLearningPathIds(
     userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]>;
+
+  getAllCourseIdsFromLearningPaths(
+    learningPathIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]>;
+
+  findPendingOrderWithOverlappingCourses(
+    userId: Types.ObjectId,
+    purchasedCourseIds: Types.ObjectId[],
     session?: mongoose.ClientSession,
   ): Promise<IOrder | null>;
 
@@ -57,11 +73,18 @@ export interface IStudentCheckoutRepository {
 
   getCourseRepo(): ICourseRepository;
 
+  getLearningPathRepo(): ILearningPathRepository;
+
   getOrderById(orderId: Types.ObjectId): Promise<IOrder | null>;
 
   markStalePendingOrdersAsFailed(
     userId: Types.ObjectId,
-    courseIds: Types.ObjectId[],
+    purchasedCourseIds: Types.ObjectId[],
     session?: mongoose.ClientSession,
   ): Promise<void>;
+
+  getValidCourseOffers(
+    courseIds: Types.ObjectId[],
+    session?: mongoose.ClientSession,
+  ): Promise<Map<string, ICourseOffer>>;
 }

@@ -19,10 +19,10 @@ const UserRouterEndpoints = {
   userClearCart: "/api/student/clearCart",
 
   //userWishlist
-  userGetWishlist: "/api/student/wishlist",
-  userAddTowishlist: "/api/student/addToWishlist",
-  userRemoveWishlist: "/api/student/removeWishlistCourse",
-  userCheckCourseExistInWishlist: "/api/student/check",
+  userGetWishlistItems: "/api/student/wishlist",
+  userAddToWishlist: "/api/student/addToWishlist",
+  userRemoveFromWishlist: "/api/student/removeWishlistCourse",
+  userIsItemInWishlist: "/api/student/check",
 
   //coupon
 
@@ -96,6 +96,11 @@ const UserRouterEndpoints = {
   userGetLMSCourse : "/api/student/learningPaths",
   userGetLMSCourseDetail : "/api/student/learningPaths",
 
+  //student lms enrollment
+
+  userGetAllEnrollments : "/api/student/lms/enrollments",
+  userGetSpecificLmsEnrollments : "/api/student/lms/enrollments",
+  userCompleteCourseAndUnlockNext : "/api/student/lms/completeCourse" 
   
 };
 

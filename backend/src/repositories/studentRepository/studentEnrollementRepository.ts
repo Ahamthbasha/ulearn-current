@@ -5,6 +5,8 @@ import { EnrollmentModel, IEnrollment } from "../../models/enrollmentModel";
 import { generateCertificate } from "../../utils/certificateGenerator";
 import { IStudentRepository } from "./interface/IStudentRepository";
 import IInstructorRepository from "../instructorRepository/interface/IInstructorRepository";
+import { IOrderRepository } from "../interfaces/IOrderRepository";
+import { IOrder } from "../../models/orderModel";
 
 export class StudentEnrollmentRepository
   extends GenericRepository<IEnrollment>
@@ -12,18 +14,51 @@ export class StudentEnrollmentRepository
 {
   private _studentRepository: IStudentRepository;
   private _instructorRepository: IInstructorRepository;
+  private _orderRepository: IOrderRepository;
+
   constructor(
     studentRepository: IStudentRepository,
     instructorRepository: IInstructorRepository,
+    orderRepository: IOrderRepository,
   ) {
     super(EnrollmentModel);
     this._studentRepository = studentRepository;
     this._instructorRepository = instructorRepository;
+    this._orderRepository = orderRepository;
   }
 
-  async getAllEnrolledCourses(userId: Types.ObjectId): Promise<IEnrollment[]> {
-    const result = await this.findAll({ userId }, ["courseId"]);
-    return result || [];
+  async getAllEnrolledCourses(userId: Types.ObjectId): Promise<{ enrollment: IEnrollment; order?: IOrder }[]> {
+    const enrollments = await this.findAll(
+      { userId, learningPathId: { $exists: false } },
+      []
+    );
+
+    if (!enrollments || enrollments.length === 0) {
+      return [];
+    }
+
+    // Fetch successful orders for the user
+    const orders = await this._orderRepository.findByUser(userId);
+
+    // Create a map of courseId to order for efficient lookup
+    const orderMap = new Map<string, IOrder>();
+    orders.forEach(order => {
+      order.courses.forEach(course => {
+        orderMap.set(course.courseId.toString(), order);
+      });
+    });
+
+    // Match enrollments with orders
+    const result = enrollments.map(enrollment => {
+      const courseId = enrollment.courseId.toString();
+      const matchingOrder = orderMap.get(courseId);
+      return {
+        enrollment,
+        order: matchingOrder,
+      };
+    });
+
+    return result;
   }
 
   async getEnrollmentByCourseDetails(
@@ -38,19 +73,59 @@ export class StudentEnrollmentRepository
     ]);
   }
 
-  async markChapterCompleted(
-    userId: Types.ObjectId,
-    courseId: Types.ObjectId,
-    chapterId: Types.ObjectId,
-  ): Promise<IEnrollment | null> {
-    return this.findOneAndUpdate(
+async markChapterCompleted(
+  userId: Types.ObjectId,
+  courseId: Types.ObjectId,
+  chapterId: Types.ObjectId,
+): Promise<IEnrollment | null> {
+  try {
+    // Fetch the enrollment with course chapters populated to get total chapters
+    const enrollment = await this.findOne(
+      { userId, courseId },
+      [
+        {
+          path: "courseId",
+          populate: { path: "chapters" },
+        },
+      ]
+    );
+
+    if (!enrollment || !enrollment.courseId) {
+      console.log("Enrollment or course not found for userId:", userId, "courseId:", courseId);
+      return null;
+    }
+
+    // Check if the chapter is already completed to avoid redundant updates
+    const isChapterCompleted = enrollment.completedChapters.some(
+      (ch) => ch.chapterId.equals(chapterId) && ch.isCompleted
+    );
+
+    if (isChapterCompleted) {
+      console.log("Chapter already marked as completed:", chapterId);
+      return enrollment;
+    }
+
+    // Get total chapters and completed chapters
+    const course: any = enrollment.courseId;
+    const totalChapters = Array.isArray(course.chapters) ? course.chapters.length : 0;
+    const completedChaptersCount = enrollment.completedChapters.filter(
+      (ch) => ch.isCompleted
+    ).length + 1; // Add 1 for the new chapter being marked
+
+    // Calculate completion percentage
+    const completionPercentage = totalChapters > 0
+      ? Math.round((completedChaptersCount / totalChapters) * 100)
+      : 0;
+
+    // Use an atomic update to either add a new chapter or update the existing one
+    const updatedEnrollment = await this.updateOne(
       {
         userId,
         courseId,
-        "completedChapters.chapterId": { $ne: chapterId },
+        "completedChapters.chapterId": { $ne: chapterId }, // Only update if chapterId is not in completedChapters
       },
       {
-        $push: {
+        $addToSet: {
           completedChapters: {
             chapterId,
             isCompleted: true,
@@ -58,12 +133,60 @@ export class StudentEnrollmentRepository
           },
         },
         $set: {
-          completionStatus: "IN_PROGRESS",
+          completionPercentage,
         },
-      },
-      { new: true },
+      }
     );
+
+    if (!updatedEnrollment) {
+      // If no update occurred, it might mean the chapterId already exists
+      // Check if the chapter is already completed in the database
+      const existingEnrollment = await this.findOne(
+        {
+          userId,
+          courseId,
+          "completedChapters.chapterId": chapterId,
+          "completedChapters.isCompleted": true,
+        },
+        [
+          {
+            path: "courseId",
+            populate: [{ path: "chapters" }, { path: "quizzes" }],
+          },
+        ]
+      );
+
+      if (existingEnrollment) {
+        console.log("Chapter already marked as completed in database:", chapterId);
+        return existingEnrollment;
+      }
+
+      console.log("Updated enrollment not found for userId:", userId, "courseId:", courseId);
+      return null;
+    }
+
+    // Fetch the updated enrollment to return
+    const finalEnrollment = await this.findOne(
+      { userId, courseId },
+      [
+        {
+          path: "courseId",
+          populate: [{ path: "chapters" }, { path: "quizzes" }],
+        },
+      ]
+    );
+
+    if (!finalEnrollment) {
+      console.log("Final enrollment not found for userId:", userId, "courseId:", courseId);
+      return null;
+    }
+
+    return finalEnrollment;
+  } catch (error) {
+    console.error("Error marking chapter completed:", error);
+    throw error;
   }
+}
 
   async submitQuizResult(
     userId: Types.ObjectId,
@@ -123,7 +246,9 @@ export class StudentEnrollmentRepository
     const totalChapters = Array.isArray(course.chapters)
       ? course.chapters.length
       : 0;
-    const completedChaptersCount = fullEnrollment.completedChapters.length;
+    const completedChaptersCount = fullEnrollment.completedChapters.filter(
+      (ch) => ch.isCompleted,
+    ).length;
 
     const allChaptersCompleted =
       totalChapters > 0 && completedChaptersCount === totalChapters;
@@ -181,20 +306,37 @@ export class StudentEnrollmentRepository
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
   ): Promise<boolean> {
-    const enrollment = await EnrollmentModel.findOne({
-      userId,
-      courseId,
-    }).populate({
-      path: "courseId",
-      populate: { path: "chapters" },
-    });
+    const enrollment = await this.findOne(
+      { userId, courseId },
+      {
+        path: "courseId",
+        populate: { path: "chapters" },
+      }
+    );
 
     if (!enrollment || !enrollment.courseId) return false;
 
     const course: any = enrollment.courseId;
     const totalChapters = course.chapters?.length || 0;
-    const completedCount = enrollment.completedChapters.length;
+    const completedCount = enrollment.completedChapters.filter(
+      (ch) => ch.isCompleted,
+    ).length;
 
     return totalChapters > 0 && completedCount === totalChapters;
+  }
+
+  async findByUserAndCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<IEnrollment | null> {
+    return this.findOne({ userId, courseId });
+  }
+
+  async findByUserAndCourseWithPopulate(
+    userId: string,
+    courseId: string,
+    populateOptions: any[],
+  ): Promise<IEnrollment | null> {
+    return this.findOne({ userId, courseId }, populateOptions);
   }
 }

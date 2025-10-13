@@ -1,14 +1,15 @@
 import { LearningPathModel, ILearningPath, CreateLearningPathDTO } from "../../models/learningPathModel";
 import { GenericRepository } from "../genericRepository";
 import { IInstructorLearningPathRepository } from "./interface/IInstructorLearningPathRepo";
-import { CourseModel } from "../../models/courseModel";
-
+import { IInstructorCourseRepository } from "./interface/IInstructorCourseRepository";
 export class InstructorLearningPathRepository
   extends GenericRepository<ILearningPath>
   implements IInstructorLearningPathRepository
 {
-  constructor() {
+  private _courseRepository : IInstructorCourseRepository
+  constructor(courseRepository:IInstructorCourseRepository) {
     super(LearningPathModel);
+    this._courseRepository = courseRepository
   }
 
   async createLearningPath(data: CreateLearningPathDTO): Promise<ILearningPath> {
@@ -30,8 +31,7 @@ export class InstructorLearningPathRepository
     const result = await this.findByIdWithPopulate(learningPathId, [
       {
         path: "items.courseId",
-        select: "courseName thumbnailUrl price offer",
-        populate: { path: "offer", select: "isActive startDate endDate discountPercentage" },
+        select: "courseName thumbnailUrl price effectivePrice",
       },
       {
         path: "categoryDetails",
@@ -64,7 +64,7 @@ export class InstructorLearningPathRepository
       }
     }
 
-    return await this.paginate(
+    const result = await this.paginate(
       filter,
       page,
       limit,
@@ -72,8 +72,7 @@ export class InstructorLearningPathRepository
       [
         {
           path: "items.courseId",
-          select: "courseName thumbnailUrl price offer",
-          populate: { path: "offer", select: "isActive startDate endDate discountPercentage" },
+          select: "courseName thumbnailUrl price effectivePrice",
         },
         {
           path: "categoryDetails",
@@ -81,6 +80,8 @@ export class InstructorLearningPathRepository
         },
       ],
     );
+
+    return result;
   }
 
   async findLearningPathByTitleForInstructor(
@@ -108,11 +109,6 @@ export class InstructorLearningPathRepository
   }
 
   async validateCoursesForInstructor(courseIds: string[], instructorId: string): Promise<boolean> {
-    const courses = await CourseModel.find({
-      _id: { $in: courseIds },
-      instructorId,
-      isPublished: true,
-    });
-    return courses.length === courseIds.length;
+    return await this._courseRepository.validateCoursesForInstructor(courseIds, instructorId);
   }
 }

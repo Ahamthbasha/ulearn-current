@@ -5,9 +5,13 @@ import {
 
 export interface IStudentDashboardRepository {
   getTotalCoursesPurchased(userId: string): Promise<number>;
+  getTotalLearningPathsPurchased(userId: string): Promise<number>;
   getTotalCoursesCompleted(userId: string): Promise<number>;
   getTotalCoursesNotCompleted(userId: string): Promise<number>;
+  getTotalLearningPathsCompleted(userId: string): Promise<number>;
+  getTotalLearningPathsNotCompleted(userId: string): Promise<number>;
   getTotalCoursePurchaseCost(userId: string): Promise<number>;
+  getTotalLearningPathPurchaseCost(userId: string): Promise<number>;
   getTotalSlotBookings(userId: string): Promise<number>;
   getTotalSlotBookingCost(userId: string): Promise<number>;
 

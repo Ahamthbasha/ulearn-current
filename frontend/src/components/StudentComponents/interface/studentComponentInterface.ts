@@ -2,8 +2,8 @@ export interface CourseCardProps {
   id: string;
   title: string;
   description: string;
-  price: number;
   originalPrice:number;
+  discountedPrice?:number;
   duration: string;
   level: string;
   thumbnailUrl: string;
@@ -11,8 +11,17 @@ export interface CourseCardProps {
 }
 
 export interface CartItem {
-  courseId: string;
-  courseName: string;
+  itemId: string;
+  type:"course" | "learningPath";
+  title: string;
   thumbnailUrl: string;
   price: number;
+}
+
+export interface CartItemDTO {
+  itemId: string;
+  type: "course" | "learningPath";
+  title: string;
+  price: number;
+  thumbnailUrl: string;
 }

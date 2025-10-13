@@ -16,15 +16,12 @@ export class StudentCheckoutController implements IStudentCheckoutController {
     this._checkoutService = checkoutService;
   }
 
-  async initiateCheckout(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async initiateCheckout(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { courseIds, totalAmount, paymentMethod, couponId } = req.body;
-      const userId = new Types.ObjectId(req.user?.id);
+      const { courseIds = [], learningPathIds = [], totalAmount, paymentMethod, couponId } = req.body;
+      const userId = req.user?.id ? new Types.ObjectId(req.user.id) : null;
 
-      if (!userId || !paymentMethod) {
+      if (!userId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
           message: CheckoutErrorMessages.USER_NOT_AUTHENTICATED,
@@ -32,10 +29,10 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         return;
       }
 
-      if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
+      if (courseIds.length === 0 && learningPathIds.length === 0) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "At least one course ID is required",
+          message: "At least one course or learning path ID is required",
         });
         return;
       }
@@ -67,6 +64,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       const order = await this._checkoutService.initiateCheckout(
         userId,
         courseIds.map((id: string) => new Types.ObjectId(id)),
+        learningPathIds.map((id: string) => new Types.ObjectId(id)),
         totalAmount,
         paymentMethod,
         couponId ? new Types.ObjectId(couponId) : undefined,
@@ -79,10 +77,11 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       });
     } catch (error: any) {
       console.error("Initiate checkout error:", error);
-      const errorMsg = error.message || CheckoutErrorMessages.CHECKOUT_FAILED;
 
+      const errorMsg = error.message || CheckoutErrorMessages.CHECKOUT_FAILED;
       if (
         errorMsg.includes("already enrolled") ||
+        errorMsg.includes("they are included in the learning path(s)") ||
         errorMsg.includes("Insufficient wallet balance") ||
         errorMsg.includes("Invalid coupon") ||
         errorMsg.includes("Coupon is expired or inactive") ||
@@ -107,7 +106,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
 
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: CheckoutErrorMessages.CHECKOUT_FAILED,
+        message: errorMsg,
       });
     }
   }

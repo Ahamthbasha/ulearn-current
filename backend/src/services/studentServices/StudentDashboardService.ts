@@ -15,25 +15,37 @@ export class StudentDashboardService implements IStudentDashboardService {
   async getStudentDashboardData(userId: string) {
     const [
       totalCoursesPurchased,
+      totalLearningPathsPurchased,
       totalCoursesCompleted,
       totalCoursesNotCompleted,
+      totalLearningPathsCompleted,
+      totalLearningPathsNotCompleted,
       totalCoursePurchaseCost,
+      totalLearningPathPurchaseCost,
       totalSlotBookings,
       totalSlotBookingCost,
     ] = await Promise.all([
       this._dashboardRepo.getTotalCoursesPurchased(userId),
+      this._dashboardRepo.getTotalLearningPathsPurchased(userId),
       this._dashboardRepo.getTotalCoursesCompleted(userId),
       this._dashboardRepo.getTotalCoursesNotCompleted(userId),
+      this._dashboardRepo.getTotalLearningPathsCompleted(userId),
+      this._dashboardRepo.getTotalLearningPathsNotCompleted(userId),
       this._dashboardRepo.getTotalCoursePurchaseCost(userId),
+      this._dashboardRepo.getTotalLearningPathPurchaseCost(userId),
       this._dashboardRepo.getTotalSlotBookings(userId),
       this._dashboardRepo.getTotalSlotBookingCost(userId),
     ]);
 
     return {
       totalCoursesPurchased,
+      totalLearningPathsPurchased,
       totalCoursesCompleted,
       totalCoursesNotCompleted,
+      totalLearningPathsCompleted,
+      totalLearningPathsNotCompleted,
       totalCoursePurchaseCost,
+      totalLearningPathPurchaseCost,
       totalSlotBookings,
       totalSlotBookingCost,
     };

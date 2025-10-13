@@ -21,7 +21,6 @@ import WishlistPage from '../pages/student/wishlist/WishlistPage'
 import CheckoutPage from '../pages/student/checkout/CheckoutPage'
 import EnrolledCoursesPage from '../pages/student/enrollCourses/EnrolledCoursesPage'
 import EnrolledCourseDetailPage from '../pages/student/enrollCourses/EnrolledCourseDetailPage.'
-import QuizAttemptPage from '../pages/student/enrollCourses/QuizAttempPage'
 import WalletPage from '../pages/student/wallet/WalletPage'
 import StudentOrderHistoryPage from '../pages/student/order/StudentOrderHistoryPage'
 import StudentOrderDetailPage from '../pages/student/order/StudentOrderDetailPage'
@@ -35,6 +34,8 @@ import SlotHistoryPage from '../pages/student/slot/SlotHistoryPage'
 import SlotBookingDetailPage from '../pages/student/slot/SlotBookingDetailpage'
 import LearningPathListPage from '../pages/student/learningPath/LearningPathListPage'
 import LearningPathDetailPage from '../pages/student/learningPath/LearningPathDetailPage'
+import EnrolledLmsPage from '../pages/student/enrolledLms/EnrolledLmsPage'
+import LmsCourseListPage from '../pages/student/enrolledLms/LmsCourseListPage'
 
 
 const StudentRouter = () => {
@@ -80,6 +81,9 @@ const StudentRouter = () => {
             <Route path='wishlist' element={<WishlistPage/>}/>
             <Route path='checkout' element={<CheckoutPage/>}/>
             <Route path='enrolled' element={<EnrolledCoursesPage/>}/>
+
+            <Route path='enrolledLms' element={<EnrolledLmsPage/>}/>
+            <Route path='enrolledLms/:learningPathId' element={<LmsCourseListPage/>}/>
             <Route path='wallet' element={<WalletPage/>}/>
             <Route path='order' element={<StudentOrderHistoryPage/>}/>
             <Route path='order/:orderId' element={<StudentOrderDetailPage/>}/>
@@ -94,7 +98,6 @@ const StudentRouter = () => {
           
           {/* Enrolled course detail - outside sidebar layout for better UX */}
           <Route path='/user/enrolled/:courseId' element={<EnrolledCourseDetailPage/>}/>
-          <Route path='/quiz/:courseId/:quizId' element={<QuizAttemptPage />}/>
         </Route>
 
         <Route path="*" element={<NotFound/>}/>

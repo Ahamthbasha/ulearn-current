@@ -26,4 +26,6 @@ export interface IInstructorCourseRepository {
   ): Promise<ICourse | null>;
   publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null>;
   getScheduledCourses(): Promise<ICourse[]>;
+
+  validateCoursesForInstructor(courseIds: string[], instructorId: string): Promise<boolean>
 }

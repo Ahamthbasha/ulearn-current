@@ -4,11 +4,9 @@ import { LearningPathDTO, LearningPathListDTO } from "../../dto/instructorDTO/le
 import { IInstructorLearningPathRepository } from "../../repositories/instructorRepository/interface/IInstructorLearningPathRepo";
 import { IInstructorLearningPathService } from "./interface/IInstructorLearningPathService";
 import { ICourse } from "../../models/courseModel";
-import { uploadToS3Bucket } from "../../utils/s3Bucket";
+import { uploadToS3Bucket, IMulterFile } from "../../utils/s3Bucket";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
-import { IMulterFile } from "../../utils/s3Bucket";
 import { mapLearningPathToDTO, mapLearningPathsToListDTO } from "../../mappers/instructorMapper/learningPathMapper";
-import { CategoryModel } from "../../models/categoryModel";
 
 export class InstructorLearningPathService implements IInstructorLearningPathService {
   private _learningPathRepository: IInstructorLearningPathRepository;
@@ -19,38 +17,24 @@ export class InstructorLearningPathService implements IInstructorLearningPathSer
 
   async createLearningPath(data: CreateLearningPathDTO, thumbnail?: IMulterFile): Promise<LearningPathDTO> {
     try {
-      const courseIds = data.items.map((item) =>
-        item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()
-      );
-      const uniqueCourseIds = new Set(courseIds);
-      if (uniqueCourseIds.size !== courseIds.length) {
-        throw new Error("Duplicate courses are not allowed in a learning path");
-      }
-
-      const orders = data.items.map((item) => item.order);
-      const uniqueOrders = new Set(orders);
-      if (uniqueOrders.size !== orders.length) {
-        throw new Error("Duplicate order numbers are not allowed in a learning path");
-      }
-
-      // Validate category exists
-      const categoryExists = await CategoryModel.findById(data.category).lean();
-      if (!categoryExists) {
-        throw new Error("Invalid category ID");
-      }
-
       if (thumbnail) {
         const thumbnailKey = await uploadToS3Bucket(thumbnail, `learning-paths/${data.instructorId}`);
         data.thumbnailUrl = thumbnailKey;
       }
 
-      const valid = await this._learningPathRepository.validateCoursesForInstructor(courseIds, data.instructorId.toString());
+      const valid = await this._learningPathRepository.validateCoursesForInstructor(
+        data.items.map((item) =>
+          item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()
+        ),
+        data.instructorId.toString()
+      );
       if (!valid) {
         throw new Error("Invalid courses: Must be published and owned by instructor");
       }
 
       const learningPath = await this._learningPathRepository.createLearningPath(data);
-      return mapLearningPathToDTO(learningPath);
+      await learningPath.totalPrice; // Ensure totalPrice is computed
+      return await mapLearningPathToDTO(learningPath);
     } catch (error: any) {
       console.error("Error in createLearningPath:", error.message, error.stack);
       throw new Error(`Failed to create learning path: ${error.message}`);
@@ -63,40 +47,35 @@ export class InstructorLearningPathService implements IInstructorLearningPathSer
     thumbnail?: IMulterFile
   ): Promise<LearningPathDTO | null> {
     try {
-      if (data.items) {
-        const courseIds = data.items.map((item) =>
-          item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()
-        );
-        const uniqueCourseIds = new Set(courseIds);
-        if (uniqueCourseIds.size !== courseIds.length) {
-          throw new Error("Duplicate courses are not allowed in a learning path");
-        }
-
-        const orders = data.items.map((item) => item.order);
-        const uniqueOrders = new Set(orders);
-        if (uniqueOrders.size !== orders.length) {
-          throw new Error("Duplicate order numbers are not allowed in a learning path");
-        }
-      }
-
-      if (data.category) {
-        const categoryExists = await CategoryModel.findById(data.category).lean();
-        if (!categoryExists) {
-          throw new Error("Invalid category ID");
-        }
+      const existingLearningPath = await this._learningPathRepository.getLearningPathById(learningPathId);
+      if (!existingLearningPath) {
+        throw new Error("Learning path not found");
       }
 
       if (thumbnail) {
-        const instructorId = data.instructorId?.toString() || (await this._learningPathRepository.getLearningPathById(learningPathId))?.instructorId.toString();
+        const instructorId = data.instructorId?.toString() || existingLearningPath.instructorId.toString();
         const thumbnailKey = await uploadToS3Bucket(thumbnail, `learning-paths/${instructorId}`);
         data.thumbnailUrl = thumbnailKey;
+      }
+
+      if (data.items) {
+        const valid = await this._learningPathRepository.validateCoursesForInstructor(
+          data.items.map((item) =>
+            item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()
+          ),
+          data.instructorId?.toString() || existingLearningPath.instructorId.toString()
+        );
+        if (!valid) {
+          throw new Error("Invalid courses: Must be published and owned by instructor");
+        }
       }
 
       const updated = await this._learningPathRepository.updateLearningPath(learningPathId, data);
       if (!updated) {
         return null;
       }
-      return mapLearningPathToDTO(updated);
+      await updated.totalPrice; // Ensure totalPrice is computed
+      return await mapLearningPathToDTO(updated);
     } catch (error: any) {
       console.error("Error in updateLearningPath:", error.message, error.stack);
       throw new Error(`Failed to update learning path: ${error.message}`);
@@ -110,9 +89,11 @@ export class InstructorLearningPathService implements IInstructorLearningPathSer
   async getLearningPathById(learningPathId: string): Promise<LearningPathDTO | null> {
     const learningPath = await this._learningPathRepository.getLearningPathById(learningPathId);
     if (!learningPath) return null;
-    const dto = mapLearningPathToDTO(learningPath);
+
+    await learningPath.totalPrice; // Ensure totalPrice is computed
+    const dto = await mapLearningPathToDTO(learningPath); // Await the async mapping
     dto.items = await Promise.all(
-      dto.items.map(async (item) => ({
+      dto.items.map(async (item: { courseId: string; order: number; courseName?: string; thumbnailUrl?: string; price?: number }) => ({
         ...item,
         thumbnailUrl: item.thumbnailUrl ? await getPresignedUrl(item.thumbnailUrl) : undefined,
       }))
@@ -187,6 +168,17 @@ export class InstructorLearningPathService implements IInstructorLearningPathSer
     if (learningPath.items.length === 0) {
       throw new Error("Cannot submit an empty learning path");
     }
+
+    const valid = await this._learningPathRepository.validateCoursesForInstructor(
+      learningPath.items.map((item) =>
+        item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()
+      ),
+      learningPath.instructorId.toString()
+    );
+    if (!valid) {
+      throw new Error("All courses must be published and owned by the instructor");
+    }
+
     return await this._learningPathRepository.updateLearningPath(learningPathId, {
       status: "pending",
       adminReview: undefined,
@@ -204,6 +196,17 @@ export class InstructorLearningPathService implements IInstructorLearningPathSer
     if (learningPath.items.length === 0) {
       throw new Error("Cannot resubmit an empty learning path");
     }
+
+    const valid = await this._learningPathRepository.validateCoursesForInstructor(
+      learningPath.items.map((item) =>
+        item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()
+      ),
+      learningPath.instructorId.toString()
+    );
+    if (!valid) {
+      throw new Error("All courses must be published and owned by the instructor");
+    }
+
     return await this._learningPathRepository.updateLearningPath(learningPathId, {
       status: "pending",
       adminReview: undefined,

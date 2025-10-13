@@ -101,4 +101,15 @@ export class InstructorCourseOfferRepo extends GenericRepository<ICourseOffer> i
     const data = await this.model.aggregate<ICourseOffer>(pipeline).exec();
     return { data, total };
   }
+
+  async getActiveOfferByCourseId(courseId: string): Promise<ICourseOffer | null> {
+    return await this.findOne({
+      courseId: new Types.ObjectId(courseId),
+      isActive: true,
+      isVerified: true,
+      status: "approved",
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
+    });
+  }
 }

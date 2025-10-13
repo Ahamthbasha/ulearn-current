@@ -7,12 +7,11 @@ import {
 } from "../types/dashboardTypes";
 import { PassThrough } from "stream";
 
-// ✅ Time formatting utility
 export function formatTo12Hour(time: string | Date): string {
   const strTime =
     typeof time === "string"
       ? time
-      : new Date(time).toISOString().substring(11, 16); // 'HH:MM'
+      : new Date(time).toISOString().substring(11, 16); 
 
   const [hours, minutes] = strTime.split(":");
   let hourNum = parseInt(hours, 10);
@@ -22,7 +21,7 @@ export function formatTo12Hour(time: string | Date): string {
   return `${hourNum}:${minutes} ${ampm}`;
 }
 
-// ✅ Excel - Course Report
+// Excel - Course Report
 export const generateStudentCourseReportExcel = async (
   report: IStudentCourseReportItem[],
   res: Response,
@@ -33,7 +32,7 @@ export const generateStudentCourseReportExcel = async (
   worksheet.columns = [
     { header: "Order ID", key: "orderId", width: 30 },
     { header: "Date", key: "date", width: 20 },
-    { header: "Courses & Prices", key: "coursesWithPrices", width: 40 },
+    { header: "Courses & Learning Paths", key: "itemsWithPrices", width: 40 },
     { header: "Coupon Code", key: "couponCode", width: 15 },
     { header: "Coupon Discount %", key: "couponDiscount", width: 18 },
     { header: "Original Price", key: "originalPrice", width: 15 },
@@ -42,33 +41,43 @@ export const generateStudentCourseReportExcel = async (
   ];
 
   report.forEach((item) => {
-    const courseNames = Array.isArray(item.courseName) ? item.courseName : [item.courseName];
-    const prices = Array.isArray(item.price) ? item.price : [item.price];
-    
-    const coursesWithPrices = courseNames.map((name, idx) => 
-      `${name} (Rs. ${prices[idx]})`
+    const itemsWithPrices = item.items.map(
+      (i) =>
+        `${i.type === "course" ? "Course" : "Learning Path"}: ${i.name} (Rs. ${(
+          i.finalPrice || i.originalPrice
+        ).toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })})` +
+        (i.offerPercentage
+          ? ` [${i.offerPercentage}% off]`
+          : ""),
     ).join(", ");
 
     worksheet.addRow({
       orderId: item.orderId,
       date: item.date,
-      coursesWithPrices: coursesWithPrices,
+      itemsWithPrices,
       couponCode: item.couponCode || "Not used",
-      couponDiscount: item.couponDiscountPercent ? `${item.couponDiscountPercent}%` : "0 %",
+      couponDiscount: item.couponDiscountPercent
+        ? `${item.couponDiscountPercent}%`
+        : "0 %",
       originalPrice: item.originalTotalPrice || 0,
       discountAmount: item.couponDiscountAmount || 0,
-      finalPrice: item.finalTotalPrice || item.totalCost || 0,
+      finalPrice: item.finalTotalPrice || 0,
     });
   });
 
   worksheet.addRow([]);
   worksheet.addRow(["", "", "", "", "", "Total Orders:", report.length, ""]);
   
-  const totalRevenue = report.reduce((sum, item) => 
-    sum + (item.finalTotalPrice || item.totalCost || 0), 0
+  const totalRevenue = report.reduce(
+    (sum, item) => sum + (item.finalTotalPrice || 0),
+    0,
   );
-  const totalDiscount = report.reduce((sum, item) => 
-    sum + (item.couponDiscountAmount || 0), 0
+  const totalDiscount = report.reduce(
+    (sum, item) => sum + (item.couponDiscountAmount || 0),
+    0,
   );
   
   worksheet.addRow(["", "", "", "", "", "Total Discount:", totalDiscount, ""]);
@@ -87,7 +96,7 @@ export const generateStudentCourseReportExcel = async (
   res.end();
 };
 
-// ✅ Excel - Slot Report
+// Excel - Slot Report
 export const generateStudentSlotReportExcel = async (
   report: IStudentSlotReportItem[],
   res: Response,
@@ -106,12 +115,13 @@ export const generateStudentSlotReportExcel = async (
   report.forEach((item) => {
     const slotTime =
       item.slotTime?.startTime && item.slotTime?.endTime
-        ? `${formatTo12Hour(item.slotTime.startTime)} - ${formatTo12Hour(item.slotTime.endTime)}`
+        ? `${item.slotTime.startTime} - ${
+            item.slotTime.endTime}`
         : "N/A";
 
     worksheet.addRow({
       bookingId: item.bookingId,
-      date: new Date(item.date).toLocaleDateString(),
+      date: item.date,
       slotTime,
       instructorName: item.instructorName,
       price: Number(item.price),
@@ -138,7 +148,7 @@ export const generateStudentSlotReportExcel = async (
   res.end();
 };
 
-// ✅ PDF - Course Report
+// PDF - Course Report
 export async function generateStudentCourseReportPdf(
   data: IStudentCourseReportItem[],
   res: Response,
@@ -157,23 +167,40 @@ export async function generateStudentCourseReportPdf(
   doc.pipe(stream);
 
   // Header Section with gradient-like effect
-  doc.fillColor("#1e3a8a").fontSize(22).font("Helvetica-Bold")
-    .text("Student Course Purchase Report", { align: "center" });
-  doc.fillColor("#64748b").fontSize(10).font("Helvetica")
-    .text(`Generated on ${new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}`, { align: "center" });
+  doc
+    .fillColor("#1e3a8a")
+    .fontSize(22)
+    .font("Helvetica-Bold")
+    .text("Student Course & Learning Path Report", { align: "center" });
+  doc
+    .fillColor("#64748b")
+    .fontSize(10)
+    .font("Helvetica")
+    .text(
+      `Generated on ${new Date().toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })}`,
+      { align: "center" },
+    );
   doc.moveDown(0.5);
 
   // Decorative line
   const pageWidth = doc.page.width - 80;
-  doc.strokeColor("#3b82f6").lineWidth(2)
-    .moveTo(40, doc.y).lineTo(40 + pageWidth, doc.y).stroke();
+  doc
+    .strokeColor("#3b82f6")
+    .lineWidth(2)
+    .moveTo(40, doc.y)
+    .lineTo(40 + pageWidth, doc.y)
+    .stroke();
 
   doc.moveDown(1);
 
   const headers = [
     "Order ID",
     "Date",
-    "Courses & Prices",
+    "Courses & Learning Paths",
     "Coupon",
     "Discount",
     "Original",
@@ -186,7 +213,7 @@ export async function generateStudentCourseReportPdf(
   const colWidths = [
     totalWidth * 0.12, // Order ID
     totalWidth * 0.10, // Date
-    totalWidth * 0.28, // Courses
+    totalWidth * 0.28, // Courses & Learning Paths
     totalWidth * 0.10, // Coupon
     totalWidth * 0.08, // Discount %
     totalWidth * 0.11, // Original
@@ -199,31 +226,43 @@ export async function generateStudentCourseReportPdf(
 
   const drawRow = (
     row: string[],
-    coursesArray: string[],
+    itemsArray: string[],
     yOffset: number,
     options: { isHeader?: boolean; isTotal?: boolean; isSummary?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false, isSummary = false } = options;
 
-    // Calculate dynamic row height based on courses
-    const baseHeight = isHeader ? 30 : (isSummary ? 25 : 18);
-    const coursesCount = coursesArray.length || 1;
+    // Calculate dynamic row height based on items
+    const baseHeight = isHeader ? 30 : isSummary ? 25 : 18;
+    const itemsCount = itemsArray.length || 1;
     const rowHeight = isHeader || isTotal || isSummary
       ? baseHeight
-      : Math.max(baseHeight, coursesCount * 12 + 12);
+      : Math.max(baseHeight, itemsCount * 12 + 12);
 
     // Draw background for header
     if (isHeader) {
-      doc.fillColor("#3b82f6").rect(startX, yOffset, totalWidth, rowHeight).fill();
+      doc
+        .fillColor("#3b82f6")
+        .rect(startX, yOffset, totalWidth, rowHeight)
+        .fill();
     } else if (isTotal) {
-      doc.fillColor("#e0f2fe").rect(startX, yOffset, totalWidth, rowHeight).fill(); // Light blue for totals
+      doc
+        .fillColor("#e0f2fe")
+        .rect(startX, yOffset, totalWidth, rowHeight)
+        .fill(); // Light blue for totals
     } else if (isSummary) {
-      doc.fillColor("#f1f5f9").rect(startX, yOffset, totalWidth, rowHeight).fill(); // Light gray for summary
+      doc
+        .fillColor("#f1f5f9")
+        .rect(startX, yOffset, totalWidth, rowHeight)
+        .fill(); // Light gray for summary
     } else {
       // Alternating row colors
       const rowIndex = Math.floor((yOffset - 100) / 20);
       if (rowIndex % 2 === 0) {
-        doc.fillColor("#f8fafc").rect(startX, yOffset, totalWidth, rowHeight).fill();
+        doc
+          .fillColor("#f8fafc")
+          .rect(startX, yOffset, totalWidth, rowHeight)
+          .fill();
       }
     }
 
@@ -240,21 +279,21 @@ export async function generateStudentCourseReportPdf(
 
     let x = startX;
     row.forEach((text, i) => {
-      const align = i >= 5 ? "right" : (i >= 3 ? "center" : "left");
+      const align = i >= 5 ? "right" : i >= 3 ? "center" : "left";
       const padding = 4;
 
       if (!isHeader && !isTotal && !isSummary && i === 2) {
-        // Handle multi-line courses vertically
-        coursesArray.forEach((course, courseIdx) => {
-          doc.text(course, x + padding, yOffset + padding + (courseIdx * 12), {
-            width: colWidths[i] - (padding * 2),
+        // Handle multi-line items vertically
+        itemsArray.forEach((item, itemIdx) => {
+          doc.text(item, x + padding, yOffset + padding + itemIdx * 12, {
+            width: colWidths[i] - padding * 2,
             align: "left",
             lineBreak: false,
           });
         });
       } else {
         doc.text(text, x + padding, yOffset + padding + (rowHeight - 16) / 2, {
-          width: colWidths[i] - (padding * 2),
+          width: colWidths[i] - padding * 2,
           align: align,
           lineBreak: false,
         });
@@ -281,36 +320,52 @@ export async function generateStudentCourseReportPdf(
   let totalOriginal = 0;
 
   for (const item of data) {
-    const courseNames = Array.isArray(item.courseName) ? item.courseName : [item.courseName];
-    const prices = Array.isArray(item.price) ? item.price : [item.price];
-
-    // Create array of courses with prices (each on separate line)
-    const coursesArray = courseNames.map((name, idx) =>
-      `${name} (Rs. ${prices[idx].toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
+    // Create array of items with prices (each on separate line)
+    const itemsArray = item.items.map(
+      (i) =>
+        `${i.type === "course" ? "Course" : "Learning Path"}: ${i.name} (Rs. ${(
+          i.finalPrice || i.originalPrice
+        ).toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })})` +
+        (i.offerPercentage
+          ? ` [${i.offerPercentage}% off]`
+          : ""),
     );
 
-    const finalPrice = item.finalTotalPrice || item.totalCost || 0;
+    const finalPrice = item.finalTotalPrice || 0;
     const discountAmount = item.couponDiscountAmount || 0;
     const originalPrice = item.originalTotalPrice || 0;
 
     // Truncate order ID for display
-    const shortOrderId = item.orderId.length > 16
-      ? item.orderId.substring(0, 13) + "..."
-      : item.orderId;
+    const shortOrderId =
+      item.orderId.length > 16
+        ? item.orderId.substring(0, 13) + "..."
+        : item.orderId;
 
     const row = [
       shortOrderId,
       item.date.includes(" ") ? item.date.split(" ")[0] : item.date,
-      "", // Courses handled separately
+      "", // Items handled separately
       item.couponCode || "-",
       item.couponDiscountPercent ? `${item.couponDiscountPercent}%` : "-",
-      `Rs. ${originalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      `Rs. ${discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      `Rs. ${finalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `Rs. ${originalPrice.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      `Rs. ${discountAmount.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      `Rs. ${finalPrice.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
     ];
 
     // Calculate required height for this row
-    const requiredHeight = Math.max(30, coursesArray.length * 12 + 12);
+    const requiredHeight = Math.max(30, itemsArray.length * 12 + 12);
 
     // Check if new page is needed
     if (y + requiredHeight + 50 > doc.page.height - 80) {
@@ -320,7 +375,7 @@ export async function generateStudentCourseReportPdf(
       y += newHeaderHeight;
     }
 
-    const rowHeight = drawRow(row, coursesArray, y, {});
+    const rowHeight = drawRow(row, itemsArray, y, {});
     y += rowHeight;
 
     totalRevenue += finalPrice;
@@ -332,15 +387,22 @@ export async function generateStudentCourseReportPdf(
   y += 10;
 
   // Add a separator line
-  doc.strokeColor("#3b82f6").lineWidth(1.5)
-    .moveTo(startX, y).lineTo(startX + totalWidth, y).stroke();
+  doc
+    .strokeColor("#3b82f6")
+    .lineWidth(1.5)
+    .moveTo(startX, y)
+    .lineTo(startX + totalWidth, y)
+    .stroke();
   y += 15;
 
   // Summary background
   doc.fillColor("#f1f5f9").rect(startX, y, totalWidth, 85).fill();
 
   // Summary title
-  doc.fontSize(12).font("Helvetica-Bold").fillColor("#1e293b")
+  doc
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .fillColor("#1e293b")
     .text("Summary", startX + 10, y + 10);
   y += 30;
 
@@ -348,29 +410,62 @@ export async function generateStudentCourseReportPdf(
   const summaryStartX = startX + totalWidth - 300;
   const summaryData = [
     { label: "Total Orders:", value: `${data.length}`, color: "#3b82f6" },
-    { label: "Total Original Amount:", value: `Rs. ${totalOriginal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: "#64748b" },
-    { label: "Total Discount:", value: `Rs. ${totalDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: "#16a34a" },
-    { label: "Total Revenue:", value: `Rs. ${totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: "#dc2626" },
+    {
+      label: "Total Original Amount:",
+      value: `Rs. ${totalOriginal.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      color: "#64748b",
+    },
+    {
+      label: "Total Discount:",
+      value: `Rs. ${totalDiscount.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      color: "#16a34a",
+    },
+    {
+      label: "Total Revenue:",
+      value: `Rs. ${totalRevenue.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      color: "#dc2626",
+    },
   ];
 
   summaryData.forEach((item, index) => {
-    const rowY = y + (index * 18);
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("#475569")
+    const rowY = y + index * 18;
+    doc
+      .fontSize(9)
+      .font("Helvetica-Bold")
+      .fillColor("#475569")
       .text(item.label, summaryStartX, rowY, { width: 150, align: "left" });
-    doc.fontSize(10).font("Helvetica-Bold").fillColor(item.color)
-      .text(item.value, summaryStartX + 160, rowY, { width: 140, align: "right" });
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .fillColor(item.color)
+      .text(item.value, summaryStartX + 160, rowY, {
+        width: 140,
+        align: "right",
+      });
   });
 
   // Footer
   const pageCount = doc.bufferedPageRange().count;
   for (let i = 0; i < pageCount; i++) {
     doc.switchToPage(i);
-    doc.fontSize(8).fillColor("#94a3b8").font("Helvetica")
+    doc
+      .fontSize(8)
+      .fillColor("#94a3b8")
+      .font("Helvetica")
       .text(
         `Page ${i + 1} of ${pageCount}`,
         40,
         doc.page.height - 30,
-        { align: "center", width: pageWidth }
+        { align: "center", width: pageWidth },
       );
   }
 
@@ -378,7 +473,7 @@ export async function generateStudentCourseReportPdf(
   stream.pipe(res);
 }
 
-// ✅ PDF - Slot Report
+// PDF - Slot Report
 export const generateStudentSlotReportPdf = (
   data: IStudentSlotReportItem[],
   res: Response,
@@ -410,7 +505,9 @@ export const generateStudentSlotReportPdf = (
     options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
-    doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");
+    doc
+      .fontSize(isHeader ? 10 : 9)
+      .fillColor(isTotal ? "green" : "black");
 
     let x = startX;
     row.forEach((text, i) => {
@@ -437,15 +534,18 @@ export const generateStudentSlotReportPdf = (
     const price = Number(item.price);
     const slotTime =
       item.slotTime?.startTime && item.slotTime?.endTime
-        ? `${formatTo12Hour(item.slotTime.startTime)} - ${formatTo12Hour(item.slotTime.endTime)}`
+        ? `${item.slotTime.startTime} - ${item.slotTime.endTime}`
         : "N/A";
 
     const row = [
       item.bookingId,
-      new Date(item.date).toLocaleDateString(),
+      item.date,
       slotTime,
       item.instructorName,
-      `Rs. ${price.toFixed(2)}`, // Changed to "Rs. [price]"
+      `Rs. ${price.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
     ];
 
     const rowHeight = lineHeight + 8;
@@ -466,7 +566,16 @@ export const generateStudentSlotReportPdf = (
   drawRow(totalRow1, y, 30, { isTotal: true });
   y += 30;
 
-  const totalRow2 = ["", "", "", "Total Revenue:", `Rs. ${total.toFixed(2)}`]; // Changed to "Rs. [total]"
+  const totalRow2 = [
+    "",
+    "",
+    "",
+    "Total Expenses:",
+    `Rs. ${total.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`,
+  ];
   drawRow(totalRow2, y, 30, { isTotal: true });
 
   doc.end();

@@ -348,9 +348,40 @@ const categoryReadOnlyService: ICategoryReadOnlyService =
 const categoryReadOnlyController: ICategoryReadOnlyController =
   new CategoryReadOnlyController(categoryReadOnlyService);
 
+/////////////////////// STUDENT SIDE LMS //////////////////
+
+import { IStudentLmsRepo } from "../repositories/studentRepository/interface/IStudentLmsRepo";
+import { StudentLmsRepo } from "../repositories/studentRepository/studentLmsRepo";
+
+import { IStudentLmsService } from "../services/studentServices/interface/IStudentLmsService";
+import { StudentLmsService } from "../services/studentServices/studentLmsService";
+
+import { IStudentLmsController } from "../controllers/studentControllers/interfaces/IStudentLmsController";
+import { StudentLmsController } from "../controllers/studentControllers/studentLmsController";
+
+// import { ILearningPath, LearningPathModel } from "../models/learningPathModel";
+
+import { IEnrollmentRepository } from "../repositories/interfaces/IEnrollmentRepository";
+import { EnrollmentRepository } from "../repositories/EnrollmentRepository";
+
+const enrollmentRepo : IEnrollmentRepository = new EnrollmentRepository()
+
+
+
+import { ILearningPathEnrollmentRepo } from "../repositories/interfaces/ILearningPathEnrollmentRepo";
+import { LearningPathEnrollmentRepo } from "../repositories/learningPathEnrollmentRepo";
+
+const learningPathEnrollmentRepo : ILearningPathEnrollmentRepo = new LearningPathEnrollmentRepo()
+
+const studentLmsRepo : IStudentLmsRepo = new StudentLmsRepo(studentCourseOfferRepo)
+
+const studentLmsService : IStudentLmsService = new StudentLmsService(studentLmsRepo)
+
+const studentLmsController : IStudentLmsController = new StudentLmsController(studentLmsService)
+
 ////////////////////////////CART MANAGEMENT////////////////
 
-import { IStudentCartRepository } from "../repositories/interfaces/IStudentCartRepository";
+import { IStudentCartRepository } from "../repositories/studentRepository/interface/IStudentCartRepository";
 import { StudentCartRepository } from "../repositories/studentRepository/studentCartRepository";
 
 import { IStudentCartService } from "../services/studentServices/interface/IStudentCartService";
@@ -364,12 +395,17 @@ const studentCartRepository: IStudentCartRepository =
 
 const studentCartService: IStudentCartService = new StudentCartService(
   studentCartRepository,
-  studentCourseRepository
+  studentCourseRepository,
+  studentLmsRepo,
+  studentCourseOfferRepo,
+  enrollmentRepo
 );
 
 const studentCartController: IStudentCartController = new StudentCartController(
   studentCartService
 );
+
+
 
 ///////////////////////STUDENT WISHLIST MANAGEMENT//////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -385,7 +421,7 @@ import { StudentWishlistController } from "../controllers/studentControllers/stu
 const studentWishlistRepository: IStudentWishlistRepository =
   new StudentWishlistRepository();
 const studentWishlistService: IStudentWishlistService =
-  new StudentWishlistService(studentWishlistRepository);
+  new StudentWishlistService(studentWishlistRepository,studentCourseRepository,studentLmsRepo,studentCourseOfferRepo);
 const studentWishlistController: IStudentWishlistController =
   new StudentWishlistController(studentWishlistService);
 
@@ -409,6 +445,14 @@ const studentCouponService: IStudentCouponService = new StudentCouponService(
 const studentCouponController: IStudentCouponController =
   new StudentCouponController(studentCouponService);
 
+  ////////////////////////
+
+import { ILearningPathRepository } from "../repositories/interfaces/ILearningPathRepository";
+import { LearningPathRepo } from "../repositories/learningPathRepo";
+
+const learningPathRepo : ILearningPathRepository = new LearningPathRepo()
+
+
 /////////STUDENT CHECKOUT MANAGEMENT///////////////////
 
 import { IStudentCheckoutRepository } from "../repositories/studentRepository/interface/IStudentCheckoutRepository";
@@ -420,8 +464,6 @@ import { StudentCheckoutService } from "../services/studentServices/StudentCheck
 import { IStudentCheckoutController } from "../controllers/studentControllers/interfaces/IStudentCheckoutController";
 import { StudentCheckoutController } from "../controllers/studentControllers/studentCheckoutController";
 import { OrderRepository } from "../repositories/OrderRepository";
-import { PaymentRepository } from "../repositories/PaymentRepository";
-import { EnrollmentRepository } from "../repositories/EnrollmentRepository";
 import { CourseRepository } from "../repositories/CourseRepository";
 
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
@@ -440,9 +482,11 @@ const walletService: IWalletService = new WalletService(
 const studentCheckoutRepository: IStudentCheckoutRepository =
   new StudentCheckoutRepository(
     new OrderRepository(),
-    new PaymentRepository(),
     new EnrollmentRepository(),
-    new CourseRepository()
+    learningPathEnrollmentRepo,
+    new CourseRepository(),
+    learningPathRepo,
+    studentCourseOfferRepo
   );
 
 const studentCheckoutService: IStudentCheckoutService =
@@ -450,7 +494,8 @@ const studentCheckoutService: IStudentCheckoutService =
     studentCheckoutRepository,
     studentCartRepository,
     walletService,
-    studentCouponRepo
+    studentCouponRepo,
+    enrollmentRepo
   );
 
 const studentCheckoutController: IStudentCheckoutController =
@@ -467,20 +512,12 @@ import { InstructorAllCourseDashboardService } from "../services/instructorServi
 import { IInstructorAllDashboardController } from "../controllers/instructorController/interfaces/IInstructorAllDashboardController";
 import { InstructorAllCourseDashboardController } from "../controllers/instructorController/instructorAllDashboardController";
 
-import {
-  GenericRepository,
-  IGenericRepository,
-} from "../repositories/genericRepository";
-import { OrderModel, IOrder } from "../models/orderModel";
-import { CourseModel, ICourse } from "../models/courseModel";
 
-const orderRepo: IGenericRepository<IOrder> = new GenericRepository<IOrder>(
-  OrderModel
-);
+import { IOrderRepository } from "../repositories/interfaces/IOrderRepository";
 
-const courseRepo: IGenericRepository<ICourse> = new GenericRepository<ICourse>(
-  CourseModel
-);
+const orderRepo : IOrderRepository = new OrderRepository()
+
+const courseRepo: ICourseRepository = new CourseRepository()
 
 const instructorDashboardRepo: IInstructorAllCourseDashboardRepository =
   new InstructorAllCourseDashboardRepository(orderRepo, courseRepo);
@@ -531,13 +568,30 @@ import { IStudentEnrollmentController } from "../controllers/studentControllers/
 import { StudentEnrollmentController } from "../controllers/studentControllers/studentEnrollmentController";
 
 const studentEnrollmentRepository: IStudentEnrollmentRepository =
-  new StudentEnrollmentRepository(studentRepository, instructorRepository);
+  new StudentEnrollmentRepository(studentRepository, instructorRepository,orderRepo);
 
 const studentEnrollmentService: IStudentEnrollmentService =
-  new StudentEnrollmentService(studentEnrollmentRepository);
+  new StudentEnrollmentService(studentEnrollmentRepository,courseRepo);
 
 const studentEnrollmentController: IStudentEnrollmentController =
   new StudentEnrollmentController(studentEnrollmentService);
+
+/////////IStudent LMS Enrollment Repo///////////
+
+import { IStudentLmsEnrollmentRepo } from "../repositories/studentRepository/interface/IStudentLmsEnrollmentRepo";
+import { StudentLmsEnrollmentRepo } from "../repositories/studentRepository/studentLmsEnrollmentRepo";
+
+import { IStudentLmsEnrollmentService } from "../services/studentServices/interface/IStudentLmsEnrollmentService";
+import { StudentLmsEnrollmentService } from "../services/studentServices/studentLmsEnrollmentService";
+
+import { IStudentLmsEnrollmentController } from "../controllers/studentControllers/interfaces/IStudentLmsEnrollmentController";
+import { StudentLmsEnrollmentController } from "../controllers/studentControllers/studentLmsEnrollmentController";
+
+const studentLmsEnrollmentRepo : IStudentLmsEnrollmentRepo = new StudentLmsEnrollmentRepo(learningPathRepo,learningPathEnrollmentRepo,studentRepository,instructorRepository,studentEnrollmentRepository,orderRepo)
+
+const studentLmsEnrollmentService : IStudentLmsEnrollmentService = new StudentLmsEnrollmentService(studentLmsEnrollmentRepo,studentEnrollmentRepository,orderRepo)
+
+const studentLmsEnrollmentController : IStudentLmsEnrollmentController = new StudentLmsEnrollmentController(studentLmsEnrollmentService)
 
 ////////////////wallet repository////////////////////
 
@@ -831,7 +885,7 @@ import { AdminDashboardService } from "../services/adminServices/AdminDashboardS
 import { IAdminDashboardController } from "../controllers/adminControllers/interface/IAdminDashboardController";
 import { AdminDashboardController } from "../controllers/adminControllers/adminDashboardController";
 
-import { InstructorMembershipOrder } from "../../src/repositories/InstructorMemberShirpOrderRepository";
+import { InstructorMembershipOrder } from "../repositories/InstructorMemberShirpOrderRepository";
 
 const adminDashboardRepository: IAdminDashboardRepository =
   new AdminDashboardRepository(
@@ -985,7 +1039,7 @@ import { IInstructorLearningPathController } from "../controllers/instructorCont
 import { InstructorLearningPathController } from "../controllers/instructorController/instructorLearningPathController";
 
 const instructorLearningPathRepo: IInstructorLearningPathRepository =
-  new InstructorLearningPathRepository();
+  new InstructorLearningPathRepository(instructorCourseRepository);
 
 const instructorLearningPathService: IInstructorLearningPathService =
   new InstructorLearningPathService(instructorLearningPathRepo);
@@ -1008,28 +1062,11 @@ const adminLearningPathRepository: IAdminLearningPathRepository =
   new AdminLearningPathRepository();
 
 const adminLearningPathService: IAdminLearningPathService =
-  new AdminLearningPathService(adminLearningPathRepository);
+  new AdminLearningPathService(adminLearningPathRepository,adminCourseOfferRepo);
 
 const adminLearningPathController: IAdminLearningPathController =
   new AdminLearningPathController(adminLearningPathService);
 
-/////////////////////// STUDENT SIDE LMS //////////////////
-
-import { IStudentLmsRepo } from "../repositories/studentRepository/interface/IStudentLmsRepo";
-import { StudentLmsRepo } from "../repositories/studentRepository/studentLmsRepo";
-
-import { IStudentLmsService } from "../services/studentServices/interface/IStudentLmsService";
-import { StudentLmsService } from "../services/studentServices/studentLmsService";
-
-import { IStudentLmsController } from "../controllers/studentControllers/interfaces/IStudentLmsController";
-import { StudentLmsController } from "../controllers/studentControllers/studentLmsController";
-
-
-const studentLmsRepo : IStudentLmsRepo = new StudentLmsRepo()
-
-const studentLmsService : IStudentLmsService = new StudentLmsService(studentLmsRepo)
-
-const studentLmsController : IStudentLmsController = new StudentLmsController(studentLmsService)
 
 
 export {
@@ -1056,7 +1093,7 @@ export {
   studentCourseController,
   //studentCategory controller
   categoryReadOnlyController,
-  //student cart controller
+  // student cart controller
   studentCartController,
   //student wishlist controller
   studentWishlistController,
@@ -1134,4 +1171,8 @@ export {
   //student lms controller
 
   studentLmsController,
+
+  //student lms enrollment controller
+
+  studentLmsEnrollmentController,
 };

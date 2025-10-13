@@ -1,28 +1,26 @@
 import { ILearningPath } from "../../models/learningPathModel";
 import { LearningPathSummaryDTO } from "../../dto/adminDTO/learningPathSummaryDTO";
 
+interface AggregatedLearningPath extends ILearningPath {
+  TotalCourseInLearningPath?: number;
+  unverifiedCourseInLearningPath?: number;
+}
+
 export function mapLearningPathToSummaryDTO(learningPath: ILearningPath): LearningPathSummaryDTO {
-  const items = learningPath.items.filter(item => item.courseId != null);
-  const totalCourses = items.length;
-  const unverifiedCourses = items.filter(item => {
-    const course = item.courseId as any;
-    return course && typeof course === "object" && !course.isVerified;
-  }).length;
-
-  const instructorId = learningPath.instructorId;
+  const aggregatedPath = learningPath as AggregatedLearningPath;
+  const instructorId = aggregatedPath.instructorId;
   let instructorName: string | undefined;
-
   if (instructorId && typeof instructorId === "object" && "username" in instructorId) {
     instructorName = (instructorId as any).username;
   }
 
   return {
-    learningPathId: learningPath._id.toString(),
-    title: learningPath.title,
+    learningPathId: aggregatedPath._id.toString(),
+    title: aggregatedPath.title,
     instructorName,
-    status: learningPath.status,
-    LearningPathCourse: totalCourses,
-    UnverifiedCourses: unverifiedCourses,
+    status: aggregatedPath.status,
+    TotalCourseInLearningPath: aggregatedPath.TotalCourseInLearningPath || aggregatedPath.items.length,
+    unverifiedCourseInLearningPath: aggregatedPath.unverifiedCourseInLearningPath || aggregatedPath.items.filter((item: any) => !(item.courseId as any)?.isVerified).length,
   };
 }
 

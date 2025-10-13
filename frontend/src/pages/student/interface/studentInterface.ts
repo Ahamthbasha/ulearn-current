@@ -31,8 +31,8 @@ export interface CourseList {
   duration: string;
   description: string;
   level: string;
-  price: number;
-  originalPrice : number;
+  originalPrice: number;
+  discountedPrice:number;
 }
 
 export interface Category {
@@ -64,8 +64,8 @@ export interface CourseDetail {
   duration: string;
   description: string;
   level: string;
-  price: number;
   originalPrice : number;
+  discountedPrice?:number;
 }
 
 export interface CartItem {
@@ -88,6 +88,10 @@ export interface DashboardData {
   totalCoursesCompleted: number;
   totalCoursesNotCompleted: number;
   totalCoursePurchaseCost: number;
+  totalLearningPathsPurchased:number;
+  totalLearningPathsCompleted:number;
+  totalLearningPathsNotCompleted:number;
+  totalLearningPathPurchaseCost:number;
   totalSlotBookings: number;
   totalSlotBookingCost: number;
   coursePerformance: MonthlyPerformanceItem[];
@@ -97,14 +101,17 @@ export interface DashboardData {
 export interface IStudentCourseReportItem {
   orderId: string;
   date: string;
-  courseName: string[] | string;
-  price: number[] | number;
-  totalCost: number;
-  couponCode:string | boolean;
-  couponDiscountPercent:number;
-  originalTotalPrice:number;
-  couponDiscountAmount:number;
-  finalTotalPrice:number;
+  items: Array<{
+    type: "course" | "learningPath";
+    name: string;
+    originalPrice: number;
+    finalPrice: number;
+  }>;
+  originalTotalPrice: number;
+  finalTotalPrice: number;
+  couponCode?: string;
+  couponDiscountPercent?: number;
+  couponDiscountAmount?: number;
 }
 
 export interface IStudentSlotReportItem {
@@ -167,6 +174,7 @@ export interface Enrollment {
   _id: string;
   courseId: EnrollCourse;
   completedChapters: { chapterId: string }[];
+  completionPercentage:number;
 }
 
 
@@ -175,8 +183,19 @@ export interface EnrollmentWithDetail {
   courseId: Course;
   completionStatus: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
   certificateGenerated: boolean;
+  completionPercentage:number
 }
 
+export interface EnrolledCourse {
+  courseId: string;
+  thumbnailUrl: string;
+  courseName: string;
+  description: string;
+  completionStatus: string;
+  certificateGenerated: boolean;
+  completionPercentage: number;
+  price: number;
+}
 
 export interface QuizQuestion {
   questionText: string;
@@ -212,7 +231,6 @@ export interface InstructorDetail {
   expertise?: string[];
 }
 
-
 export interface CourseOrder {
   courseId: string;
   courseName: string;
@@ -220,8 +238,17 @@ export interface CourseOrder {
   courseOriginalPrice: number;
   courseOfferDiscount?: number;
   courseOfferPrice: number;
+  isAlreadyEnrolled:boolean;
 }
 
+export interface LearningPathInfo {
+  learningPathId: string;
+  learningPathName: string;
+  totalOriginalPrice: number;
+  totalOfferPrice: number;
+  courses: CourseOrder[];
+  thumbnailUrl: string;
+}
 export interface CouponInfo {
   couponId: string;
   couponCode: string;
@@ -239,6 +266,7 @@ export interface Order {
   orderDate: string;
   userInfo: UserInfo;
   coursesInfo: CourseOrder[];
+  learningPathsInfo: LearningPathInfo[];
   couponInfo?: CouponInfo;
   sumOfAllCourseOriginalPrice: number;
   sumOfAllCourseIncludingOfferPrice: number;
@@ -298,14 +326,6 @@ export interface Transaction {
   description: string;
   txnId: string;
   date: string;
-}
-
-
-export interface WishlistItem {
-  courseId: string;
-  courseName: string;
-  thumbnailUrl: string;
-  price: number;
 }
 
 export interface LandingPageCourse {
@@ -420,4 +440,109 @@ export interface LearningPathDetail {
   categoryId: string;
   categoryName: string;
   totalPrice: number;
+}
+
+
+export interface WishlistItem {
+  itemId: string;
+  name: string;
+  price: number;
+  thumbnailUrl: string;
+  type: "course" | "learningPath";
+}
+
+export interface CartItemDTO {
+  itemId: string;
+  type: "course" | "learningPath";
+  title: string;
+  price: number;
+  thumbnailUrl: string;
+}
+
+
+export interface EnrolledLearningPath {
+  id: string;
+  title: string;
+  totalPrice: number;
+  description: string;
+  noOfCourses: number;
+  noOfHours: number;
+  presignedThumbnailUrl: string;
+  learningPathCompleted: boolean;
+  totalCompletionPercentageOfLearningPath: number;
+}
+
+
+
+
+
+export interface EnrolledLearningPath {
+  id: string;
+  title: string;
+  totalPrice: number;
+  description: string;
+  noOfCourses: number;
+  noOfHours: number;
+  presignedThumbnailUrl: string;
+  learningPathCompleted: boolean;
+}
+
+export interface Course {
+  courseId: string;
+  order: number;
+  courseName: string;
+  description: string;
+  price: number;
+  effectivePrice:number;
+  thumbnailUrl: string;
+  isCompleted: boolean;
+  certificateUrl?: string;
+  completionPercentage: number; // Added to include completion percentage
+}
+
+export interface ILearningPathCompletedCourse {
+  courseId: string;
+  isCompleted: boolean;
+  completedAt?: Date;
+}
+
+export interface ILearningPathEnrollment {
+  userId: string;
+  learningPathId: string;
+  enrolledAt: Date;
+  completionStatus: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  certificateGenerated: boolean;
+  certificateUrl?: string;
+  unlockedOrder: number;
+  completedCourses: ILearningPathCompletedCourse[];
+}
+
+export interface LearningPathDetails {
+  learningPathId: string;
+  totalPrice: number;
+  courses: Course[];
+  unlockedCourses: string[];
+  enrollment: ILearningPathEnrollment;
+}
+
+export interface checkoutCartItem {
+  _id: string;
+  type: "course" | "learningPath";
+  title: string;
+  price: number;
+  thumbnailUrl: string;
+  isAlreadyEnrolled?: boolean; // Added for courses
+  enrolledCourses?: string[]; // Added for learning paths
+}
+
+
+export interface ICoupon {
+  _id: string;
+  code: string;
+  discount: number;
+  expiryDate: string;
+  status: boolean;
+  usedBy: string[];
+  minPurchase: number;
+  maxDiscount: number;
 }

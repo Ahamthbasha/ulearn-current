@@ -26,16 +26,7 @@ export class StudentEnrollmentController
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
-      const courses =
-        await this._enrollmentService.getAllEnrolledCourses(userId);
-
-      // Presign thumbnail URLs
-      for (const enroll of courses) {
-        const course: any = enroll.courseId;
-        if (course?.thumbnailUrl) {
-          course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
-        }
-      }
+      const courses = await this._enrollmentService.getAllEnrolledCourses(userId);
 
       res.status(StatusCode.OK).json({ success: true, courses });
     } catch (error) {
@@ -71,17 +62,17 @@ export class StudentEnrollmentController
 
       const course: any = enrollment.courseId;
 
-      // ✅ Presign course thumbnail
+      // Presign course thumbnail
       if (course.thumbnailUrl) {
         course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
       }
 
-      // ✅ Presign demo video
+      // Presign demo video
       if (course.demoVideo?.url) {
         course.demoVideo.url = await getPresignedUrl(course.demoVideo.url);
       }
 
-      // ✅ Presign chapter videos
+      // Presign chapter videos
       if (course.chapters?.length > 0) {
         for (const chapter of course.chapters) {
           if (chapter.videoUrl) {
@@ -90,7 +81,13 @@ export class StudentEnrollmentController
         }
       }
 
-      res.status(StatusCode.OK).json({ success: true, enrollment });
+      res.status(StatusCode.OK).json({ 
+        success: true, 
+        enrollment: {
+          ...enrollment.toObject(),
+          completionPercentage: enrollment.completionPercentage
+        }
+      });
     } catch (error) {
       console.error(error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({

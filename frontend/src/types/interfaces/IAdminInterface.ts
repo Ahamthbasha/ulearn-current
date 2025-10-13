@@ -92,7 +92,7 @@ export interface LearningPathDTO {
   instructorName?:string;
   instructorEmail?:string;
   items: LearningPathItemDTO[];
-  totalAmount:number;
+  totalPrice:number;
   isPublished: boolean;
   publishDate?: string;
   createdAt: string;
@@ -109,6 +109,6 @@ export interface LearningPathSummaryDTO {
   title: string;
   instructorName?: string;
   status: "pending" | "accepted" | "rejected" | "draft";
-  LearningPathCourse: number;
-  UnverifiedCourses: number;
+  TotalCourseInLearningPath: number;
+  unverifiedCourseInLearningPath: number;
 }

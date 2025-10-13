@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Formik, Form, ErrorMessage, Field } from "formik";
+import { Formik, Form, ErrorMessage, Field, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -139,11 +139,30 @@ const LearningPathCreatePage: React.FC = () => {
     };
   }, [thumbnailPreview]);
 
-  const handleSubmit = async (values: CreateLearningPathRequest & { thumbnail?: File }) => {
+  const handleSubmit = async (
+    values: CreateLearningPathRequest & { thumbnail?: File },
+    { setSubmitting, setFieldError }: FormikHelpers<CreateLearningPathRequest & { thumbnail?: File }>
+  ) => {
     try {
-      console.log("Form values:", values); // Debug entire form state
+      // Validate items manually to trigger toast for course selection
+      if (!values.items || values.items.length === 0 || values.items.some(item => !item.courseId || !isValidObjectId(item.courseId))) {
+        setFieldError("items", "At least one valid course is required");
+        toast.error("Please select at least one valid course", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+        setSubmitting(false);
+        return;
+      }
+
       if (!values.category || !isValidObjectId(values.category)) {
-        throw new Error("Please select a valid category");
+        setFieldError("category", "Please select a valid category");
+        toast.error("Please select a valid category", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+        setSubmitting(false);
+        return;
       }
 
       const payload: CreateLearningPathRequest = {
@@ -158,7 +177,7 @@ const LearningPathCreatePage: React.FC = () => {
 
       console.log("Frontend payload:", payload);
       console.log("Frontend thumbnail:", values.thumbnail);
-      await createLearningPath(payload, values.thumbnail!);
+      await createLearningPath(payload, values.thumbnail);
       toast.success("Learning path created successfully!", {
         position: "top-right",
         autoClose: 3000,
@@ -171,6 +190,8 @@ const LearningPathCreatePage: React.FC = () => {
         autoClose: 5000,
       });
       console.error("Create learning path error:", err.response?.data || err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -179,10 +200,18 @@ const LearningPathCreatePage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">Create Learning Path</h1>
       <ToastContainer />
       <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
-        {({ isSubmitting, setFieldValue, values }) => (
+        {({ isSubmitting, setFieldValue, values, errors, touched }) => (
           <Form className="space-y-4">
-            <InputField name="title" label="Title" placeholder="Enter title (5-100 characters, at least 10 letters)" />
-            <InputField name="description" label="Description" placeholder="Enter description (10-500 characters, at least 10 letters)" />
+            <InputField
+              name="title"
+              label="Title"
+              placeholder="Enter title (5-100 characters, at least 10 letters)"
+            />
+            <InputField
+              name="description"
+              label="Description"
+              placeholder="Enter description (10-500 characters, at least 10 letters)"
+            />
 
             <div>
               <label htmlFor="category" className="block font-medium mb-1">
@@ -210,6 +239,22 @@ const LearningPathCreatePage: React.FC = () => {
             </div>
 
             <CourseSelector name="items" label="Courses" />
+            {errors.items && touched.items && (
+              <div className="text-red-500 text-sm mt-1">
+                {typeof errors.items === "string" ? (
+                  <p>{errors.items}</p>
+                ) : (
+                  errors.items.map((itemError, index) => (
+                    <p key={index}>
+                      Course {index + 1}:{" "}
+                      {(itemError as { courseId?: string; order?: string }).courseId ||
+                        (itemError as { courseId?: string; order?: string }).order ||
+                        "Invalid course or order"}
+                    </p>
+                  ))
+                )}
+              </div>
+            )}
 
             <div>
               <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">
@@ -237,7 +282,11 @@ const LearningPathCreatePage: React.FC = () => {
               {thumbnailPreview && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-700 mb-2">Thumbnail Preview:</p>
-                  <img src={thumbnailPreview} alt="Thumbnail preview" className="max-w-xs h-auto rounded-lg border border-gray-200" />
+                  <img
+                    src={thumbnailPreview}
+                    alt="Thumbnail preview"
+                    className="max-w-xs h-auto rounded-lg border border-gray-200"
+                  />
                   <button
                     type="button"
                     onClick={() => {
@@ -260,7 +309,12 @@ const LearningPathCreatePage: React.FC = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path
                         className="opacity-75"
@@ -274,7 +328,11 @@ const LearningPathCreatePage: React.FC = () => {
                   "Create"
                 )}
               </button>
-              <button type="button" onClick={() => navigate("/instructor/learningPath")} className="bg-gray-200 px-4 py-2 rounded-lg">
+              <button
+                type="button"
+                onClick={() => navigate("/instructor/learningPath")}
+                className="bg-gray-200 px-4 py-2 rounded-lg"
+              >
                 Cancel
               </button>
             </div>

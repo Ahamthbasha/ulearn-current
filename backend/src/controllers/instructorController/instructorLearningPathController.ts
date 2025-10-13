@@ -1,4 +1,4 @@
-import { Response, NextFunction } from "express";
+import {  Response, NextFunction } from "express";
 import { IInstructorLearningPathController } from "./interfaces/IInstructorLearningPathController";
 import { IInstructorLearningPathService } from "../../services/instructorServices/interface/IInstructorLearningPathService";
 import { ILearningPath, CreateLearningPathDTO } from "../../models/learningPathModel";
@@ -21,7 +21,6 @@ export class InstructorLearningPathController implements IInstructorLearningPath
     next: NextFunction,
   ): Promise<void> {
     try {
-      console.log("req body",req.body)
       const { title, description, items, category } = req.body;
       const thumbnail = req.file as IMulterFile | undefined;
       const instructorId = req.user?.id;
@@ -30,6 +29,29 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
           message: INSTRUCTOR_ERROR_MESSAGE.UNAUTHORIZED_ID,
+        });
+        return;
+      }
+
+      // Validate inputs
+      if (!title || typeof title !== "string" || title.trim().length < 3 || title.trim().length > 100) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Title must be a string between 3 and 100 characters",
+        });
+        return;
+      }
+      if (!description || typeof description !== "string" || description.trim().length < 10 || description.trim().length > 1000) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Description must be a string between 10 and 1000 characters",
+        });
+        return;
+      }
+      if (!category || !Types.ObjectId.isValid(category)) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Invalid category ID",
         });
         return;
       }
@@ -45,10 +67,28 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         return;
       }
 
-      if (!title || !description || !Array.isArray(parsedItems) || parsedItems.length === 0 || !thumbnail || !category) {
+      if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: LearningPathErrorMessages.MISSING_FIELDS,
+          message: "Items must be a non-empty array",
+        });
+        return;
+      }
+
+      for (const item of parsedItems) {
+        if (!Types.ObjectId.isValid(item.courseId) || typeof item.order !== "number" || item.order < 1) {
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: "Each item must have a valid courseId and a positive order number",
+          });
+          return;
+        }
+      }
+
+      if (!thumbnail) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Thumbnail is required",
         });
         return;
       }
@@ -61,7 +101,9 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         return;
       }
 
-      const trimmedTitle = title.trim().toLowerCase();
+
+      const trimmedTitle = title.trim().toLowerCase()
+      const sanitizedDescription = (description);
       const isAlreadyCreated = await this._learningPathService.isLearningPathAlreadyCreatedByInstructor(
         trimmedTitle,
         instructorId,
@@ -76,14 +118,14 @@ export class InstructorLearningPathController implements IInstructorLearningPath
 
       const learningPathDTO: CreateLearningPathDTO = {
         title: trimmedTitle,
-        description,
+        description: sanitizedDescription,
         instructorId: new Types.ObjectId(instructorId),
         items: parsedItems.map((item: any) => ({
           courseId: new Types.ObjectId(item.courseId),
           order: Number(item.order),
         })),
         thumbnailUrl: "",
-        category: new Types.ObjectId(category), // Add category
+        category: new Types.ObjectId(category),
       };
 
       const created = await this._learningPathService.createLearningPath(learningPathDTO, thumbnail);
@@ -106,7 +148,6 @@ export class InstructorLearningPathController implements IInstructorLearningPath
   ): Promise<void> {
     try {
       const { learningPathId } = req.params;
-
       const { title, description, items, category } = req.body;
       const thumbnail = req.file as IMulterFile | undefined;
       const instructorId = req.user?.id;
@@ -136,8 +177,16 @@ export class InstructorLearningPathController implements IInstructorLearningPath
         return;
       }
 
-      const trimmedTitle = title?.trim().toLowerCase();
-      if (trimmedTitle) {
+      const updateData: Partial<ILearningPath> = {};
+      if (title) {
+        if (typeof title !== "string" || title.trim().length < 3 || title.trim().length > 100) {
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: "Title must be a string between 3 and 100 characters",
+          });
+          return;
+        }
+        const trimmedTitle = title.trim().toLowerCase()
         const isDuplicate = await this._learningPathService.isLearningPathAlreadyCreatedByInstructorExcluding(
           trimmedTitle,
           instructorId,
@@ -150,10 +199,33 @@ export class InstructorLearningPathController implements IInstructorLearningPath
           });
           return;
         }
+        updateData.title = trimmedTitle;
       }
 
-      let parsedItems;
+      if (description) {
+        if (typeof description !== "string" || description.trim().length < 10 || description.trim().length > 1000) {
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: "Description must be a string between 10 and 1000 characters",
+          });
+          return;
+        }
+        updateData.description = description;
+      }
+
+      if (category) {
+        if (!Types.ObjectId.isValid(category)) {
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: "Invalid category ID",
+          });
+          return;
+        }
+        updateData.category = new Types.ObjectId(category);
+      }
+
       if (items) {
+        let parsedItems;
         try {
           parsedItems = typeof items === "string" ? JSON.parse(items) : items;
         } catch (error) {
@@ -163,18 +235,40 @@ export class InstructorLearningPathController implements IInstructorLearningPath
           });
           return;
         }
-      }
 
-      const updateData: Partial<ILearningPath> = {};
-      if (trimmedTitle) updateData.title = trimmedTitle;
-      if (description) updateData.description = description;
-      if (Array.isArray(parsedItems)) {
+        if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: "Items must be a non-empty array",
+          });
+          return;
+        }
+
+        for (const item of parsedItems) {
+          if (!Types.ObjectId.isValid(item.courseId) || typeof item.order !== "number" || item.order < 1) {
+            res.status(StatusCode.BAD_REQUEST).json({
+              success: false,
+              message: "Each item must have a valid courseId and a positive order number",
+            });
+            return;
+          }
+        }
+
         updateData.items = parsedItems.map((item: any) => ({
           courseId: new Types.ObjectId(item.courseId),
           order: Number(item.order),
         }));
       }
-      if (category) updateData.category = new Types.ObjectId(category); // Add category
+
+      if (thumbnail) {
+        if (!["image/jpeg", "image/png", "image/gif"].includes(thumbnail.mimetype)) {
+          res.status(StatusCode.BAD_REQUEST).json({
+            success: false,
+            message: "Thumbnail must be an image (JPEG, PNG, or GIF)",
+          });
+          return;
+        }
+      }
 
       if (learningPath.status === "accepted") {
         updateData.status = "pending";

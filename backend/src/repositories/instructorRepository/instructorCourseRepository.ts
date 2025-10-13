@@ -97,4 +97,13 @@ export class InstructorCourseRepository
       isPublished: false,
     });
   }
+
+  async validateCoursesForInstructor(courseIds: string[], instructorId: string): Promise<boolean> {
+    const count = await this.countDocuments({
+      _id: { $in: courseIds },
+      instructorId,
+      isPublished: true,
+    });
+    return count === courseIds.length;
+  }
 }

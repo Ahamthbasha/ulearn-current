@@ -1,6 +1,4 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { CourseModel } from "./courseModel";
-import { LearningPathModel, ILearningPathItem } from "./learningPathModel";
 
 export interface ICourseOffer extends Document {
   _id: Types.ObjectId;
@@ -43,45 +41,5 @@ const CourseOfferSchema = new Schema<ICourseOffer>(
     toObject: { virtuals: true },
   }
 );
-
-CourseOfferSchema.pre("save", async function (next) {
-  if (this.isModified("isActive") || this.isModified("startDate") || this.isModified("endDate") || this.isModified("discountPercentage")) {
-    try {
-      const course = await CourseModel.findById(this.courseId);
-      if (!course) {
-        return next(new Error("Course not found"));
-      }
-      const learningPaths = await LearningPathModel.find({
-        "items.courseId": this.courseId,
-      });
-      for (const path of learningPaths) {
-        const courses = await CourseModel.find({
-          _id: { $in: path.items.map((item: ILearningPathItem) => item.courseId) },
-        })
-          .populate({
-            path: "offer",
-            select: "isActive startDate endDate discountPercentage",
-          })
-          .lean();
-        path.totalPrice = courses.reduce((sum, course) => {
-          const effectivePrice = course.effectivePrice ?? course.price;
-          return sum + effectivePrice;
-        }, 0);
-        await path.save();
-      }
-      next();
-    } catch (error) {
-      next(new Error("Failed to update learning path prices"));
-    }
-  } else {
-    next();
-  }
-});
-
-CourseOfferSchema.virtual("discountedPrice").get(function (this: ICourseOffer) {
-  return this.populated("courseId")
-    ? (this.courseId as any).price * (1 - this.discountPercentage / 100)
-    : null;
-});
 
 export const CourseOfferModel = model<ICourseOffer>("CourseOffer", CourseOfferSchema);

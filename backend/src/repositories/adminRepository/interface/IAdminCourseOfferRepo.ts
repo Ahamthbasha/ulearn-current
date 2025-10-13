@@ -6,4 +6,5 @@ export interface IAdminCourseOfferRepo extends IGenericRepository<ICourseOffer> 
   findByIdPopulated(offerId: string): Promise<PopulatedCourseOffer | null>;
   updateByIdPopulated(offerId: string, data: Partial<ICourseOffer>): Promise<PopulatedCourseOffer | null>;
   getOfferRequests(page: number, limit: number, search?: string, status?: string): Promise<{ data: PopulatedCourseOffer[]; total: number }>;
+  findValidOfferByCourseId(courseId: string): Promise<ICourseOffer | null>;
 }

@@ -1,17 +1,11 @@
-import { Types } from "mongoose";
+import {Types} from "mongoose"
+import { CartItemDTO } from "../../../dto/userDTO/cartCourseDTO";
 import { ICart } from "../../../models/cartModel";
-import { CartCourseDTO } from "../../../dto/userDTO/cartCourseDTO";
 
 export interface IStudentCartService {
-  getCart(userId: Types.ObjectId): Promise<CartCourseDTO[] | null>;
-  addToCart(
-    userId: Types.ObjectId,
-    courseId: Types.ObjectId,
-  ): Promise<CartCourseDTO[] | null>;
-  removeFromCart(
-    userId: Types.ObjectId,
-    courseId: Types.ObjectId,
-  ): Promise<CartCourseDTO[] | null>;
+  getCart(userId: Types.ObjectId): Promise<CartItemDTO[] | null>;
+  addToCart(userId: Types.ObjectId, itemId: Types.ObjectId, type: "course" | "learningPath"): Promise<CartItemDTO[] | null>;
+  removeFromCart(userId: Types.ObjectId, itemId: Types.ObjectId, type: "course" | "learningPath"): Promise<CartItemDTO[] | null>;
   clearCart(userId: Types.ObjectId): Promise<boolean>;
   getCartRaw(userId: Types.ObjectId): Promise<ICart | null>;
 }

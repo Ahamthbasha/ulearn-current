@@ -530,32 +530,42 @@ export const ChapterSuccessMessages = {
 };
 
 export const CartErrorMessage = {
-  COURSE_ALREADYEXIST_IN_CART: "course already exist in cart",
+  COURSE_ALREADYEXIST_IN_CART: "Course already exists in cart",
+  LEARNING_PATH_ALREADYEXIST_IN_CART: "Learning path already exists in cart",
   FAILED_TO_ADD_COURSE_IN_CART: "Failed to add course to cart",
+  FAILED_TO_ADD_LEARNING_PATH_IN_CART: "Failed to add learning path to cart",
   FAILED_TO_REMOVE_COURSE_FROM_CART: "Failed to remove course from cart",
-  FAILED_TO_CLEAR_CARTDATE: "Failed to remove cart data",
+  FAILED_TO_REMOVE_LEARNING_PATH_FROM_CART: "Failed to remove learning path from cart",
+  FAILED_TO_CLEAR_CARTDATE: "Failed to clear cart data",
+  INVALID_ITEM_TYPE: "Invalid item type",
 };
 
 export const CartSuccessMessage = {
   CART_DATA_FETCHED: "Cart fetched successfully",
   CART_EMPTY: "Cart is empty",
   COURSE_ADDED_IN_CART: "Course added to cart",
+  LEARNING_PATH_ADDED_IN_CART: "Learning path added to cart",
   COURSE_REMOVED_FROM_CART: "Course removed from cart",
+  LEARNING_PATH_REMOVED_FROM_CART: "Learning path removed from cart",
   CART_DATA_CLEARED: "Cart cleared",
 };
 
-export const WishlistSuccessMessage = {
-  COURSE_ADDED: "Course added to wishlist successfully",
-  COURSE_REMOVED: "Course removed from wishlist successfully",
-  COURSE_LIST_FETCHED: "Wishlist fetched successfully",
-};
+export enum WishlistErrorMessage {
+  COURSE_ALREADY_IN_WISHLIST = "Course already exists in wishlist",
+  LEARNING_PATH_ALREADY_IN_WISHLIST = "Learning path already exists in wishlist",
+  FAILED_TO_REMOVE_COURSE = "Failed to remove course from wishlist",
+  FAILED_TO_REMOVE_LEARNING_PATH = "Failed to remove learning path from wishlist",
+  FAILED_TO_CHECK_EXISTENCE = "Failed to check wishlist item existence",
+  INVALID_ITEM_TYPE = "Invalid item type",
+}
 
-export const WishlistErrorMessage = {
-  COURSE_ALREADY_IN_WISHLIST: "Course already exists in wishlist",
-  FAILED_TO_REMOVE_COURSE: "Failed to remove course from wishlist",
-  FAILED_TO_FETCH_LIST: "Failed to fetch wishlist courses",
-  FAILED_TO_CHECK_EXISTENCE: "Failed to check if course is in wishlist",
-};
+export enum WishlistSuccessMessage {
+  COURSE_ADDED = "Course added to wishlist successfully",
+  LEARNING_PATH_ADDED = "Learning path added to wishlist successfully",
+  COURSE_REMOVED = "Course removed from wishlist successfully",
+  LEARNING_PATH_REMOVED = "Learning path removed from wishlist successfully",
+  ITEM_LIST_FETCHED = "Wishlist items fetched successfully",
+}
 
 export const CheckoutErrorMessages = {
   USER_NOT_AUTHENTICATED: "User not authenticated.",
@@ -781,6 +791,7 @@ export const CATEGORY_OFFER_MESSAGE = {
 
 
 export const LearningPathErrorMessages = {
+  INVALID_ID:"Invalid id",
   UNVERIFIED_COURSES :"Unverified courses",
   INVALID_STATUS : "Invalid status",
   MISSING_FIELDS: "Missing required fields",
@@ -828,4 +839,19 @@ export const COURSE_OFFER_ERROR_MESSAGE = {
 
 export const LMS_ERROR_MESSAGE = {
   LEARNING_PATH_NOT_FOUND:"Learning path not found",
+}
+
+export const STUDENT_SUCCESS_MESSAGE = {
+  COURSE_COMPLETED_NEXT_COURSE_UNLOCKED:"Course completed and next course unlocked",
+}
+
+export const STUDENT_ERROR_MESSAGE = {
+  STUDENT_UNAUTHORIZED : "unauthorized",
+  USERID_LEARNINGPATHID_REQUIRED:"User ID and Learning Path ID are required",
+  ALL_CHAPTERS_QUIZES_NEED_TO_COMPLETED:"Not all chapters or quizzes are completed for this course",
+  USER_LEARNINGPATH_COURSE_IDS_REQUIRED:"User ID, Learning Path ID, and Course ID are required",
+  COMPLETE_ENTIRE_COURSE_CHAPTERS_AND_QUIZES:"Cannot complete course. Please ensure all chapters and quizzes are finished with at least 50% score on quizzes.",
+  TRY_AGAIN:"Failed to complete course. Please try again later.",
+  CERTIFICATE_NOT_AVAILABLE:"Certificate not available",
+
 }
