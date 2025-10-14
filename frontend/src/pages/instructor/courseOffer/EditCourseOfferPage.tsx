@@ -7,13 +7,11 @@ import { getInstructorCourseOfferById, editInstructorCourseOffer } from "../../.
 import { toast } from "react-toastify";
 import type { ICourseOfferDetails } from "../interface/instructorInterface";
 
-// Helper function to get today's date in YYYY-MM-DD format
 const getTodayDate = () => {
   const today = new Date();
   return today.toISOString().split("T")[0];
 };
 
-// Helper function to convert DD-MM-YYYY to YYYY-MM-DD
 const formatDateForInput = (date: string | Date): string => {
   if (!date) return "";
   if (typeof date === "string") {

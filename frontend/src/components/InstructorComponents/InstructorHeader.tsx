@@ -46,11 +46,6 @@ const InstructorHeader = () => {
               </>
             ) : (
               <>
-                <img
-                  src={instructor.profilePicture || "/default-avatar.png"}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full"
-                />
                 <span>{instructor.name}</span>
                 <button onClick={handleLogout} className="hover:text-gray-200">
                   Logout
@@ -84,11 +79,6 @@ const InstructorHeader = () => {
             ) : (
               <>
                 <div className="flex items-center space-x-2">
-                  <img
-                    src={instructor.profilePicture || "/default-avatar.png"}
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full"
-                  />
                   <span>{instructor.name}</span>
                 </div>
                 <button onClick={handleLogout} className="block w-full text-left hover:text-gray-200 mt-2">

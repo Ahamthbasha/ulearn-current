@@ -11,27 +11,7 @@ import {
 } from "../../../api/action/InstructorActionApi";
 import { Download, RefreshCw, AlertTriangle } from "lucide-react";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-
-
-interface IMembershipOrderDetail {
-  orderId: string;
-  instructor: {
-    name: string;
-    email: string;
-  };
-  membershipPlan: {
-    name: string;
-    durationInDays: number;
-    description: string;
-    benefits: string[];
-  };
-  price: number;
-  paymentStatus: string;
-  startDate: string;
-  endDate: string;
-  razorpayOrderId: string;
-  createdAt: string;
-}
+import type { IMembershipOrderDetail } from "../interface/instructorInterface";
 
 const MembershipOrderDetail = () => {
   const { orderId } = useParams<{ orderId: string }>();

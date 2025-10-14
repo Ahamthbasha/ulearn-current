@@ -27,21 +27,36 @@ export class InstructorSpecificCourseDashboardRepository
     let totalRevenue = 0;
 
     for (const order of orders || []) {
-      const courseIndex = order.courses.findIndex(c => c.courseId.equals(courseId));
-      if (courseIndex === -1) continue;
+      // Check standalone courses
+      const standaloneCourse = order.courses.find(c => c.courseId.equals(courseId));
+      // Check learning path courses
+      const learningPathCourses = order.learningPaths.flatMap(lp => lp.courses).filter(c => c.courseId.equals(courseId));
 
-      const course = order.courses[courseIndex];
-      let finalCoursePrice = course.offerPrice || course.coursePrice;
+      // Calculate total courses (standalone + learning path courses)
+      const totalCourses = order.courses.length + order.learningPaths.reduce((sum, lp) => sum + lp.courses.length, 0);
 
-      if (order.coupon) {
-        const eachCourseDeductionAmount = order.coupon.discountAmount / order.courses.length;
-        finalCoursePrice = (course.offerPrice || course.coursePrice) - eachCourseDeductionAmount;
+      // Process standalone course
+      if (standaloneCourse) {
+        let finalCoursePrice = standaloneCourse.offerPrice || standaloneCourse.coursePrice;
+        if (order.coupon && totalCourses > 0) {
+          const perCourseDeduction = Number((order.coupon.discountAmount / totalCourses).toFixed(2));
+          finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
+        }
+        totalRevenue += Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2));
       }
 
-      totalRevenue += finalCoursePrice * INSTRUCTOR_REVENUE_SHARE;
+      // Process learning path courses
+      for (const lpCourse of learningPathCourses) {
+        let finalCoursePrice = lpCourse.offerPrice || lpCourse.coursePrice;
+        if (order.coupon && totalCourses > 0) {
+          const perCourseDeduction = Number((order.coupon.discountAmount / totalCourses).toFixed(2));
+          finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
+        }
+        totalRevenue += Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2));
+      }
     }
 
-    return totalRevenue;
+    return Number(totalRevenue.toFixed(2));
   }
 
   async getCourseEnrollmentCount(courseId: Types.ObjectId): Promise<number> {
@@ -70,23 +85,43 @@ export class InstructorSpecificCourseDashboardRepository
     const monthlyMap = new Map<string, number>();
 
     for (const order of orders || []) {
-      const courseIndex = order.courses.findIndex(c => c.courseId.equals(courseId));
-      if (courseIndex === -1) continue;
+      // Check standalone courses
+      const standaloneCourse = order.courses.find(c => c.courseId.equals(courseId));
+      // Check learning path courses
+      const learningPathCourses = order.learningPaths.flatMap(lp => lp.courses).filter(c => c.courseId.equals(courseId));
 
-      const course = order.courses[courseIndex];
-      let finalCoursePrice = course.offerPrice || course.coursePrice;
+      // Calculate total courses (standalone + learning path courses)
+      const totalCourses = order.courses.length + order.learningPaths.reduce((sum, lp) => sum + lp.courses.length, 0);
 
-      if (order.coupon) {
-        const eachCourseDeductionAmount = order.coupon.discountAmount / order.courses.length;
-        finalCoursePrice = (course.offerPrice || course.coursePrice) - eachCourseDeductionAmount;
+      // Process standalone course
+      if (standaloneCourse) {
+        let finalCoursePrice = standaloneCourse.offerPrice || standaloneCourse.coursePrice;
+        if (order.coupon && totalCourses > 0) {
+          const perCourseDeduction = Number((order.coupon.discountAmount / totalCourses).toFixed(2));
+          finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
+        }
+        const date = order.createdAt;
+        const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+        monthlyMap.set(
+          key,
+          Number(((monthlyMap.get(key) || 0) + Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2))).toFixed(2)),
+        );
       }
 
-      const date = order.createdAt;
-      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-      monthlyMap.set(
-        key,
-        (monthlyMap.get(key) || 0) + finalCoursePrice * INSTRUCTOR_REVENUE_SHARE,
-      );
+      // Process learning path courses
+      for (const lpCourse of learningPathCourses) {
+        let finalCoursePrice = lpCourse.offerPrice || lpCourse.coursePrice;
+        if (order.coupon && totalCourses > 0) {
+          const perCourseDeduction = Number((order.coupon.discountAmount / totalCourses).toFixed(2));
+          finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
+        }
+        const date = order.createdAt;
+        const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+        monthlyMap.set(
+          key,
+          Number(((monthlyMap.get(key) || 0) + Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2))).toFixed(2)),
+        );
+      }
     }
 
     return Array.from(monthlyMap.entries()).map(([key, totalSales]) => {
@@ -97,7 +132,7 @@ export class InstructorSpecificCourseDashboardRepository
 
   async getCoursePrice(courseId: Types.ObjectId): Promise<number> {
     const course = await this._courseRepo.findById(courseId.toString());
-    return course?.price || 0;
+    return Number((course?.price || 0).toFixed(2));
   }
 
   async getCourseRevenueReport(
@@ -135,7 +170,7 @@ export class InstructorSpecificCourseDashboardRepository
       let hours = date.getHours();
       const minutes = String(date.getMinutes()).padStart(2, "0");
       const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12; // Convert to 12-hour format
+      hours = hours % 12 || 12;
       return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
     };
 
@@ -145,24 +180,8 @@ export class InstructorSpecificCourseDashboardRepository
 
     switch (range) {
       case "daily":
-        start = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          0,
-          0,
-          0,
-          0,
-        );
-        end = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          23,
-          59,
-          59,
-          999,
-        );
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         break;
       case "weekly":
         start = new Date(now);
@@ -174,15 +193,7 @@ export class InstructorSpecificCourseDashboardRepository
         break;
       case "monthly":
         start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        end = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-          999,
-        );
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         break;
       case "yearly":
         start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
@@ -205,9 +216,15 @@ export class InstructorSpecificCourseDashboardRepository
 
     const totalPipeline = [
       { $match: { status: "SUCCESS", createdAt: { $gte: start, $lte: end } } },
-      { $unwind: "$courses" },
-      { $match: { "courses.courseId": courseId } },
-      { $count: "total" },
+      {
+        $match: {
+          $or: [
+            { "courses.courseId": courseId },
+            { "learningPaths.courses.courseId": courseId }
+          ]
+        }
+      },
+      { $count: "total" }
     ];
 
     const totalResult = await this._orderRepo.aggregate(totalPipeline);
@@ -217,6 +234,10 @@ export class InstructorSpecificCourseDashboardRepository
       {
         status: "SUCCESS",
         createdAt: { $gte: start, $lte: end },
+        $or: [
+          { "courses.courseId": courseId },
+          { "learningPaths.courses.courseId": courseId }
+        ]
       },
       page,
       limit,
@@ -227,35 +248,53 @@ export class InstructorSpecificCourseDashboardRepository
     const results = [];
 
     for (const order of orders || []) {
-      const courseIndex = order.courses.findIndex(c => c.courseId.equals(courseId));
-      if (courseIndex === -1) continue;
+      // Calculate total courses (standalone + learning path courses)
+      const totalCourses = order.courses.length + order.learningPaths.reduce((sum, lp) => sum + lp.courses.length, 0);
+      const perCourseDeduction = order.coupon && totalCourses > 0 ? Number((order.coupon.discountAmount / totalCourses).toFixed(2)) : 0;
 
-      const course = order.courses[courseIndex];
-      let finalCoursePrice = course.offerPrice || course.coursePrice;
-      let couponDeductionAmount = 0;
-      let couponUsed = false;
-      let couponCode: string | null = null;
-
-      if (order.coupon) {
-        couponUsed = true;
-        couponCode = order.coupon.couponName || null;
-        couponDeductionAmount = order.coupon.discountAmount / order.courses.length;
-        finalCoursePrice = (course.offerPrice || course.coursePrice) - couponDeductionAmount;
+      // Process standalone course
+      const standaloneCourse = order.courses.find(c => c.courseId.equals(courseId));
+      if (standaloneCourse) {
+        let finalCoursePrice = standaloneCourse.offerPrice || standaloneCourse.coursePrice;
+        if (order.coupon && totalCourses > 0) {
+          finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
+        }
+        results.push({
+          orderId: order._id.toString(),
+          purchaseDate: formatDate(order.createdAt),
+          courseName: standaloneCourse.courseName,
+          originalCoursePrice: Number(standaloneCourse.coursePrice.toFixed(2)),
+          courseOfferPrice: Number((standaloneCourse.offerPrice || standaloneCourse.coursePrice).toFixed(2)),
+          couponCode: order.coupon?.couponName || null,
+          couponUsed: !!order.coupon,
+          couponDeductionAmount: Number(perCourseDeduction.toFixed(2)),
+          finalCoursePrice: Number(finalCoursePrice.toFixed(2)),
+          instructorRevenue: Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2)),
+          totalEnrollments: enrollments,
+        });
       }
 
-      results.push({
-        orderId: order._id.toString(),
-        purchaseDate: formatDate(order.createdAt),
-        courseName: course.courseName,
-        originalCoursePrice: course.coursePrice,
-        courseOfferPrice: course.offerPrice || course.coursePrice,
-        couponCode,
-        couponUsed,
-        couponDeductionAmount,
-        finalCoursePrice,
-        instructorRevenue: finalCoursePrice * INSTRUCTOR_REVENUE_SHARE,
-        totalEnrollments: enrollments,
-      });
+      // Process learning path courses
+      const learningPathCourses = order.learningPaths.flatMap(lp => lp.courses).filter(c => c.courseId.equals(courseId));
+      for (const lpCourse of learningPathCourses) {
+        let finalCoursePrice = lpCourse.offerPrice || lpCourse.coursePrice;
+        if (order.coupon && totalCourses > 0) {
+          finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
+        }
+        results.push({
+          orderId: order._id.toString(),
+          purchaseDate: formatDate(order.createdAt),
+          courseName: lpCourse.courseName,
+          originalCoursePrice: Number(lpCourse.coursePrice.toFixed(2)),
+          courseOfferPrice: Number((lpCourse.offerPrice || lpCourse.coursePrice).toFixed(2)),
+          couponCode: order.coupon?.couponName || null,
+          couponUsed: !!order.coupon,
+          couponDeductionAmount: Number(perCourseDeduction.toFixed(2)),
+          finalCoursePrice: Number(finalCoursePrice.toFixed(2)),
+          instructorRevenue: Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2)),
+          totalEnrollments: enrollments,
+        });
+      }
     }
 
     return {

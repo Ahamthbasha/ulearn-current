@@ -18,7 +18,6 @@ const SlotHistoryPage = () => {
   const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
 
-  // Get debounced value from custom hook
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const fetchOrders = async (page: number, search = "", status = "") => {

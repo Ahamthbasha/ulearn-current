@@ -4,7 +4,7 @@ import { IInstructorAllDashboardController } from "./interfaces/IInstructorAllDa
 import { IInstructorAllCourseDashboardService } from "../../services/instructorServices/interface/IInstructorAllDashboardService";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
-import { ITopSellingCourse } from "../../interface/instructorInterface/IInstructorInterface";
+import { ITopSellingCourse, ITopSellingLearningPath } from "../../interface/instructorInterface/IInstructorInterface";
 import {
   generateExcelReport,
   generatePdfReport,
@@ -51,9 +51,20 @@ export class InstructorAllCourseDashboardController
         }),
       );
 
+      const topLearningPathsWithUrls = await Promise.all(
+        data.topLearningPaths.map(async (learningPath: ITopSellingLearningPath) => {
+          const signedUrl = await getPresignedUrl(learningPath.thumbnailUrl);
+          return {
+            ...learningPath,
+            thumbnailUrl: signedUrl,
+          };
+        }),
+      );
+
       const updatedData = {
         ...data,
         topCourses: topCoursesWithUrls,
+        topLearningPaths: topLearningPathsWithUrls,
       };
 
       res.status(StatusCode.OK).json({
@@ -134,8 +145,7 @@ export class InstructorAllCourseDashboardController
     }
   }
 
-
-   async exportRevenueReport(
+  async exportRevenueReport(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
@@ -187,20 +197,22 @@ export class InstructorAllCourseDashboardController
       return;
     }
 
-    // Map API response to the new ReportData interface
+    // Map API response to the ReportData interface
     const reportData: ReportData[] = result.data.map((item: any) => ({
       orderId: item.orderId.toString(),
-      orderDate: item.orderDate || new Date().toLocaleString(), // Fallback to current date if orderDate is missing
-      instructorEarning: item.instructorEarning || 0,
+      date: item.date,
+      instructorRevenue: item.instructorRevenue || 0,
       totalOrderAmount: item.totalOrderAmount || 0,
-      courses: item.courses.map((course: any) => ({
+      couponCode: item.couponCode || "N/A",
+      couponDiscount: item.couponDiscount || 0,
+      couponDiscountAmount: item.couponDiscountAmount || 0,
+      standaloneCourse: item.standaloneCourse.map((course: any) => ({
         courseName: course.courseName || "Unknown Course",
-        courseOriginalPrice: course.courseOriginalPrice || 0,
-        courseOfferPrice: course.courseOfferPrice || 0,
-        couponCode: course.couponCode || "N/A",
-        couponDiscountAmount: course.couponDiscountAmount || 0,
-        couponDiscount: course.couponDiscount || 0,
-        finalCoursePrice: course.finalCoursePrice || 0,
+        standAloneCourseTotalPrice: course.standAloneCourseTotalPrice || 0,
+      })),
+      learningPath: item.learningPath.map((lp: any) => ({
+        learningPathName: lp.learningPathName || "Unknown Learning Path",
+        learningPathTotalPrice: lp.learningPathTotalPrice || 0,
       })),
     }));
 

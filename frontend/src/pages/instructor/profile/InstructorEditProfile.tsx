@@ -21,32 +21,40 @@ const ProfileSchema = Yup.object().shape({
       "Name must be 3–30 characters and can contain letters, numbers, spaces, or underscores"
     )
     .required("Name is required"),
-
-  skills: Yup.string().test(
-    "valid-skills",
-    "Please enter at least one skill",
-    (value) => {
-      if (!value) return false;
-      const skills = value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      return skills.length > 0;
-    }
-  ),
-
-  expertise: Yup.string().test(
-    "valid-expertise",
-    "Please enter at least one expertise",
-    (value) => {
-      if (!value) return false;
-      const exp = value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      return exp.length > 0;
-    }
-  ),
+  skills: Yup.string()
+    .required("Skills are required")
+    .test(
+      "valid-skills",
+      "Each skill must be 2–50 characters, contain only letters, numbers, spaces, hyphens, or underscores, and at least one valid skill is required (max 10 skills)",
+      (value) => {
+        if (!value) return false;
+        const skills = value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (skills.length === 0 || skills.length > 10) return false;
+        return skills.every((skill) =>
+          /^[a-zA-Z0-9\s\-_]{2,50}$/.test(skill)
+        );
+      }
+    ),
+  expertise: Yup.string()
+    .required("Expertise is required")
+    .test(
+      "valid-expertise",
+      "Each expertise must be 2–50 characters, contain only letters, numbers, spaces, hyphens, or underscores, and at least one valid expertise is required (max 10 expertise)",
+      (value) => {
+        if (!value) return false;
+        const expertise = value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (expertise.length === 0 || expertise.length > 10) return false;
+        return expertise.every((exp) =>
+          /^[a-zA-Z0-9\s\-_]{2,50}$/.test(exp)
+        );
+      }
+    ),
 });
 
 const InstructorProfileEditPage = () => {
@@ -145,13 +153,13 @@ const InstructorProfileEditPage = () => {
                 name="skills"
                 label="Skills (comma separated)"
                 type="text"
-                placeholder="e.g. JavaScript, React"
+                placeholder="e.g., JavaScript, React, Node.js"
               />
               <InputField
                 name="expertise"
                 label="Expertise (comma separated)"
                 type="text"
-                placeholder="e.g. MERN Stack"
+                placeholder="e.g., MERN Stack, Web Development"
               />
 
               <div className="flex flex-col">
@@ -176,7 +184,7 @@ const InstructorProfileEditPage = () => {
                         toast.error(
                           "Only image files (JPG, JPEG, PNG, WebP) are allowed"
                         );
-                        fileInput.value = ""; // ❌ Clear the invalid file
+                        fileInput.value = "";
                         return;
                       }
 
@@ -223,6 +231,3 @@ const InstructorProfileEditPage = () => {
 };
 
 export default InstructorProfileEditPage;
-
-
-

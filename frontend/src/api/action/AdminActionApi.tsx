@@ -38,7 +38,7 @@ export const getAllInstructor = async (
   page = 1,
   limit = 1,
   search = ""
-): Promise<any> => {
+)=> {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetInstructors}?page=${page}&limit=${limit}&search=${search}`,
@@ -50,7 +50,7 @@ export const getAllInstructor = async (
   }
 };
 
-export const blockInstructor = async (email: string): Promise<any> => {
+export const blockInstructor = async (email: string) => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminBlockInstructor}/${email}`,

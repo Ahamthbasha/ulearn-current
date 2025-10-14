@@ -1,20 +1,24 @@
 import { useState, useEffect } from "react";
-import { Formik, Form } from "formik";
+import { Formik, Form, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
 import Card from "../../../components/common/Card";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
-
 import {
   instructorGetProfile,
   instructorUpdatePassword,
   instructorUpdateBankDetail,
 } from "../../../api/action/InstructorActionApi";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
+import type {
+  InstructorProfile,
+  PasswordFormValues,
+  BankFormValues,
+} from "../interface/instructorInterface";
 
 const InstructorProfilePage = () => {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<InstructorProfile | null>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showBankForm, setShowBankForm] = useState(false);
   const dispatch = useDispatch();
@@ -24,7 +28,7 @@ const InstructorProfilePage = () => {
       try {
         const response = await instructorGetProfile();
         console.log("response from profilepage instructor", response);
-        if (response.success) {
+        if (response.success && response.data) {
           dispatch(
             setInstructor({
               userId: response.data._id || null,
@@ -40,11 +44,12 @@ const InstructorProfilePage = () => {
         }
       } catch (error) {
         console.error("Failed to load instructor profile", error);
+        toast.error("Failed to load profile");
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [dispatch]);
 
   if (!profile) {
     return <div className="p-4">Loading...</div>;
@@ -92,52 +97,56 @@ const InstructorProfilePage = () => {
           )}
         </div>
 
-        <div className="space-y-2 text-sm sm:text-base">
-  <p>
-    <strong>Username:</strong> {profile.instructorName}
-  </p>
-  <p>
-    <strong>Email:</strong> {profile.email}
-  </p>
+        <div className="space-y-4 text-sm sm:text-base">
+          <p>
+            <strong>Username:</strong> {profile.instructorName}
+          </p>
+          <p>
+            <strong>Email:</strong> {profile.email}
+          </p>
 
-  <div>
-    <strong>Skills:</strong>
-    {profile.skills && profile.skills.length > 0 ? (
-      <select className="ml-2 border rounded px-2 py-1 text-sm bg-gray-50">
-        {profile.skills.map((skill: string, idx: number) => (
-          <option key={idx}>{skill}</option>
-        ))}
-      </select>
-    ) : (
-      <span className="ml-2 text-gray-500">None</span>
-    )}
-  </div>
+          <div>
+            <strong>Skills:</strong>
+            {profile.skills && profile.skills.length > 0 ? (
+              <ul className="list-disc list-inside ml-4 text-gray-700">
+                {profile.skills.map((skill, idx) => (
+                  <li key={idx} className="text-sm sm:text-base">
+                    {skill}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="ml-2 text-gray-500">None</span>
+            )}
+          </div>
 
-  <div>
-    <strong>Expertise:</strong>
-    {profile.expertise && profile.expertise.length > 0 ? (
-      <select className="ml-2 border rounded px-2 py-1 text-sm bg-gray-50">
-        {profile.expertise.map((exp: string, idx: number) => (
-          <option key={idx}>{exp}</option>
-        ))}
-      </select>
-    ) : (
-      <span className="ml-2 text-gray-500">None</span>
-    )}
-  </div>
+          <div>
+            <strong>Expertise:</strong>
+            {profile.expertise && profile.expertise.length > 0 ? (
+              <ul className="list-disc list-inside ml-4 text-gray-700">
+                {profile.expertise.map((exp, idx) => (
+                  <li key={idx} className="text-sm sm:text-base">
+                    {exp}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="ml-2 text-gray-500">None</span>
+            )}
+          </div>
 
-  <p>
-    <strong>Status:</strong> {profile.status ? "✅ Verified" : "⏳ Not Verified"}
-  </p>
-  <p>
-    <strong>Mentor:</strong> {profile.mentor ? "Yes" : "No"}
-  </p>
-  <p>
-    <strong>Bank Status:</strong>{" "}
-    {profile.bankAccountLinked ? "Linked" : "Not Linked"}
-  </p>
-</div>
-
+          <p>
+            <strong>Status:</strong>{" "}
+            {profile.status ? "✅ Verified" : "⏳ Not Verified"}
+          </p>
+          <p>
+            <strong>Mentor:</strong> {profile.mentor ? "Yes" : "No"}
+          </p>
+          <p>
+            <strong>Bank Status:</strong>{" "}
+            {profile.bankAccountLinked ? "Linked" : "Not Linked"}
+          </p>
+        </div>
       </Card>
 
       {showPasswordForm && (
@@ -165,7 +174,10 @@ const InstructorProfilePage = () => {
                 .oneOf([Yup.ref("newPassword")], "Passwords must match")
                 .required("Confirm your new password"),
             })}
-            onSubmit={async (values, { resetForm }) => {
+            onSubmit={async (
+              values: PasswordFormValues,
+              { resetForm, setFieldError }: FormikHelpers<PasswordFormValues>
+            ) => {
               try {
                 const response = await instructorUpdatePassword({
                   currentPassword: values.currentPassword,
@@ -177,10 +189,16 @@ const InstructorProfilePage = () => {
                   resetForm();
                   setShowPasswordForm(false);
                 } else {
-                  toast.error(response.message || "Password update failed");
+                  setFieldError(
+                    "currentPassword",
+                    response.message || "Password update failed"
+                  );
                 }
-              } catch (error:any) {
-                toast.error(error?.response?.data?.message);
+              } catch (error: any) {
+                setFieldError(
+                  "currentPassword",
+                  error.response?.data?.message || "An error occurred"
+                );
               }
             }}
           >
@@ -229,7 +247,12 @@ const InstructorProfilePage = () => {
             validationSchema={Yup.object({
               accountHolderName: Yup.string()
                 .required("Account holder name is required")
-                .matches(/^[a-zA-Z\s]+$/, "Only letters and spaces are allowed"),
+                .min(2, "Account holder name must be at least 2 characters")
+                .max(50, "Account holder name must not exceed 50 characters")
+                .matches(
+                  /^[a-zA-Z\s]+$/,
+                  "Account holder name can only contain letters and spaces"
+                ),
               accountNumber: Yup.string()
                 .required("Account number is required")
                 .matches(/^\d{9,18}$/, "Account number must be 9-18 digits"),
@@ -238,25 +261,40 @@ const InstructorProfilePage = () => {
                 .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code format"),
               bankName: Yup.string()
                 .required("Bank name is required")
-                .matches(/^[a-zA-Z\s]+$/, "Only letters and spaces are allowed"),
+                .min(3, "Bank name must be at least 3 characters")
+                .max(50, "Bank name must not exceed 50 characters")
+                .matches(
+                  /^[a-zA-Z\s]+$/,
+                  "Bank name can only contain letters and spaces"
+                ),
             })}
-            onSubmit={async (values, { resetForm }) => {
+            onSubmit={async (
+              values: BankFormValues,
+              { resetForm }: FormikHelpers<BankFormValues>
+            ) => {
               try {
                 const res = await instructorUpdateBankDetail(values);
-                console.log(res)
+                console.log(res);
                 if (res.success) {
                   toast.success(res.message);
-                  setProfile((prev: any) => ({
-                    ...prev,
-                    bankAccountLinked: true,
-                  }));
+                  setProfile((prev) => {
+                    if (!prev) {
+                      return null;
+                    }
+                    return {
+                      ...prev,
+                      bankAccountLinked: true,
+                    };
+                  });
                   resetForm();
                   setShowBankForm(false);
                 } else {
                   toast.error(res.message || "Bank details update failed");
                 }
-              } catch (error:any) {
-                toast.error(error.res.message);
+              } catch (error: any) {
+                toast.error(
+                  error.response?.data?.message || "Bank details update failed"
+                );
               }
             }}
           >

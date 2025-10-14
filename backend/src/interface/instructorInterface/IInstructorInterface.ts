@@ -1,108 +1,15 @@
-// export interface ITopSellingCourse {
-//   _id: string;
-//   courseName: string;
-//   thumbnailUrl: string;
-//   count: number;
-// }
-
-// export interface ICategorySales {
-//   _id: string;
-//   totalSales: number;
-//   categoryName: string;
-// }
-
-// export interface IMonthlySales {
-//   totalRevenue: number;
-//   totalSales: number;
-//   year: number;
-//   month: number;
-// }
-
-// export interface IRevenueReportItem {
-//   createdAt: Date;
-//   orderId: string;
-//   paymentMethod: string;
-//   courseName: string;
-//   coursePrice: number;
-//   instructorEarning: number;
-//   totalOrderAmount: number;
-// }
-
-// export interface IInstructorDashboard {
-//   topCourses: ITopSellingCourse[];
-//   categorySales: ICategorySales[];
-//   monthlySales: IMonthlySales[];
-//   totalRevenue: number;
-//   totalCourseSales: number;
-//   publishedCourses : number;
-//   categoryWiseCount : number;
-// }
-
-// export interface IDetailedRevenueReport {
-//   data: IRevenueReportItem[];
-//   total: number;
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { Types } from "mongoose";
 
 export interface ITopSellingCourse {
   _id: Types.ObjectId;
   courseName: string;
+  thumbnailUrl: string;
+  count: number;
+}
+
+export interface ITopSellingLearningPath {
+  _id: Types.ObjectId;
+  learningPathName: string;
   thumbnailUrl: string;
   count: number;
 }
@@ -117,32 +24,44 @@ export interface IMonthlySales {
   month: number;
   totalRevenue: number;
   totalSales: number;
+  courseSales: number;
+  learningPathSales: number;
 }
 
-export interface IRevenueReportCourse {
+export interface IStandaloneCourse {
   courseName: string;
-  courseOriginalPrice: number;
-  courseOfferPrice: number;
-  couponCode: string;
-  couponDiscountAmount: number;
-  couponDiscount: number;
-  finalCoursePrice: number;
+  offerPrice: number;
+  finalPrice: number;
+}
+
+export interface ILearningPath {
+  learningPathName: string;
+  learningPathTotalPrice: number;
+  learningPathFinalPrice: number;
 }
 
 export interface IRevenueReportItem {
   orderId: Types.ObjectId;
-  orderDate: string;
-  courses: IRevenueReportCourse[];
-  instructorEarning: number;
+  date: string;
+  totalOrderAmount: number;
+  instructorEarnings: number;
+  couponCode: string;
+  couponDiscount: number;
+  couponDiscountAmount: number;
+  standaloneCourse: IStandaloneCourse[];
+  learningPath: ILearningPath[];
 }
 
 export interface IInstructorDashboard {
   topCourses: ITopSellingCourse[];
+  topLearningPaths: ITopSellingLearningPath[];
   categorySales: ICategorySales[];
   monthlySales: IMonthlySales[];
   totalRevenue: number;
   totalCourseSales: number;
+  totalLearningPathSales: number;
   publishedCourses: number;
+  publishedLearningPaths: number;
   categoryWiseCount: number;
 }
 

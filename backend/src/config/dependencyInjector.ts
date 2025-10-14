@@ -520,7 +520,7 @@ const orderRepo : IOrderRepository = new OrderRepository()
 const courseRepo: ICourseRepository = new CourseRepository()
 
 const instructorDashboardRepo: IInstructorAllCourseDashboardRepository =
-  new InstructorAllCourseDashboardRepository(orderRepo, courseRepo);
+  new InstructorAllCourseDashboardRepository(orderRepo, courseRepo,learningPathRepo);
 
 const instructorDashboardService: IInstructorAllCourseDashboardService =
   new InstructorAllCourseDashboardService(instructorDashboardRepo);

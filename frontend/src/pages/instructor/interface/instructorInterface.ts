@@ -1,3 +1,30 @@
+export interface InstructorProfile {
+  _id?: string;
+  instructorName: string;
+  email: string;
+  role?: string;
+  isBlocked?: boolean;
+  skills?: string[];
+  expertise?: string[];
+  status: boolean;
+  mentor: boolean;
+  bankAccountLinked: boolean;
+  profilePicUrl?: string;
+}
+
+export interface PasswordFormValues {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface BankFormValues {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+}
+
 export interface Chapter {
   courseId: string;
   chapterId: string;
@@ -58,28 +85,28 @@ export interface DisplayOrder extends MembershipOrder {
   statusDisplay: string;
 }
 
-export interface MembershipPlanOrderDetail {
-  name: string;
-  durationInDays: number;
-  description?: string;
-  benefits?: string[];
-}
+// export interface MembershipPlanOrderDetail {
+//   name: string;
+//   durationInDays: number;
+//   description?: string;
+//   benefits?: string[];
+// }
 
-export interface InstructorInfoMembershipPlanOrderDetail {
-  name: string;
-  email: string;
-}
+// export interface InstructorInfoMembershipPlanOrderDetail {
+//   name: string;
+//   email: string;
+// }
 
-export interface IMembershipOrderDetail {
-  instructor: InstructorInfoMembershipPlanOrderDetail; 
-  membershipPlan: MembershipPlanOrderDetail; 
-  price: number;
-  paymentStatus: "pending" | "paid" | "failed"; 
-  txnId: string;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-}
+// export interface IMembershipOrderDetail {
+//   instructor: InstructorInfoMembershipPlanOrderDetail; 
+//   membershipPlan: MembershipPlanOrderDetail; 
+//   price: number;
+//   paymentStatus: "pending" | "paid" | "failed"; 
+//   txnId: string;
+//   startDate: string;
+//   endDate: string;
+//   createdAt: string;
+// }
 
 
 export interface SlotDetail {
@@ -223,4 +250,24 @@ export interface ICourseOfferDetails {
 export interface ICourses {
   courseId: string;
   courseName: string;
+}
+
+export interface IMembershipOrderDetail {
+  orderId: string;
+  instructor: {
+    name: string;
+    email: string;
+  };
+  membershipPlan: {
+    name: string;
+    durationInDays: number;
+    description: string;
+    benefits: string[];
+  };
+  price: number;
+  paymentStatus: string;
+  startDate: string;
+  endDate: string;
+  razorpayOrderId: string;
+  createdAt: string;
 }

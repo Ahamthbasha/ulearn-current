@@ -39,18 +39,20 @@ export class InstructorChapterRepository
   }
 
   async findByTitleOrNumberAndCourseId(
-    courseId: string,
-    chapterTitle: string,
-    chapterNumber: number,
-  ): Promise<IChapter | null> {
-    return await this.findOne({
-      courseId,
-      $or: [
-        { chapterTitle: { $regex: `^${chapterTitle}$`, $options: "i" } },
-        { chapterNumber: chapterNumber },
-      ],
-    });
-  }
+  courseId: string,
+  chapterTitle: string,
+  chapterNumber: number,
+  chapterId?: string, 
+): Promise<IChapter | null> {
+  return await this.findOne({
+    courseId,
+    _id: { $ne: chapterId }, 
+    $or: [
+      { chapterTitle: { $regex: `^${chapterTitle}$`, $options: "i" } },
+      { chapterNumber: chapterNumber },
+    ],
+  });
+}
 
   async paginateChapters(
     filter: object,

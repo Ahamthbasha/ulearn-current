@@ -18,7 +18,6 @@ const AdminCourseOfferListPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Debounce the search input with a 500ms delay
   const debouncedSearch = useDebounce(search, 500);
 
   const fetchOffers = async () => {

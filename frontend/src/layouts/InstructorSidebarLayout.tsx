@@ -1,9 +1,11 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { clearInstructorDetails } from "../redux/slices/instructorSlice";
+import { setInstructor } from "../redux/slices/instructorSlice";
 import { logout } from "../api/auth/InstructorAuthentication";
+import { instructorGetProfile } from "../api/action/InstructorActionApi";
 
 const navItems = [
   { name: "Dashboard", path: "/instructor/dashboard", icon: "📊" },
@@ -15,19 +17,50 @@ const navItems = [
   { name: "Memberships", path: "/instructor/membership", icon: "🏅" },
   { name: "PurchaseHistory", path: "/instructor/purchaseHistory", icon: "🧾" },
   { name: "LearningPath", path: "/instructor/learningPath", icon: "🗺️" },
-  { name: "courseOffer", path: "/instructor/courseOffers", icon: "🎁" }
+  { name: "courseOffer", path: "/instructor/courseOffers", icon: "🎁" },
 ];
 
 const InstructorSidebarLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const instructor = JSON.parse(localStorage.getItem("instructor") || "{}");
-
-  console.log("instructor sidebar layout", instructor);
-  const username = (instructor?.name || "Instructor").toUpperCase();
-
+  const [profile, setProfile] = useState<{ instructorName?: string; profilePicUrl?: string } | null>(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await instructorGetProfile();
+        if (response.success) {
+          const { data } = response;
+          setProfile({
+            instructorName: data.instructorName,
+            profilePicUrl: data.profilePicUrl,
+          });
+          dispatch(
+            setInstructor({
+              userId: data._id || null,
+              name: data.instructorName,
+              email: data.email,
+              role: data.role || null,
+              isBlocked: data.isBlocked || null,
+              isVerified: data.status,
+              profilePicture: data.profilePicUrl || null,
+            })
+          );
+        } else {
+          toast.error(response.message || "Failed to load profile");
+          setProfile({ instructorName: "Instructor" }); // Fallback
+        }
+      } catch (error) {
+        console.error("Error fetching profile", error);
+        toast.error("Failed to load profile");
+        setProfile({ instructorName: "Instructor" }); // Fallback
+      }
+    };
+
+    fetchProfile();
+  }, [dispatch]);
 
   const handleLogout = async () => {
     try {
@@ -48,6 +81,8 @@ const InstructorSidebarLayout = () => {
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
+
+  const username = (profile?.instructorName || "Instructor").toUpperCase();
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -132,9 +167,9 @@ const InstructorSidebarLayout = () => {
         <div className="p-6 border-b border-gray-100">
           <div className={`flex items-center ${isCollapsed ? "justify-center" : "space-x-3"}`}>
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 bg-white flex-shrink-0 shadow-md hover:shadow-lg transition-shadow duration-200">
-              {instructor?.profilePicture ? (
+              {profile?.profilePicUrl ? (
                 <img
-                  src={instructor.profilePicture}
+                  src={profile.profilePicUrl}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -251,7 +286,7 @@ const InstructorSidebarLayout = () => {
       {/* Main content */}
       <main 
         className={`flex-1 transition-all duration-300 ease-in-out ${
-          isCollapsed ? "md:ml-0" : "md:ml-0"
+          isCollapsed ? "md:ml-20" : "md:ml-72"
         } pt-16 md:pt-0 overflow-auto`}
       >
         <div className="p-4 sm:p-6 md:p-8">

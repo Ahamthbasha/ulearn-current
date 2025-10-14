@@ -129,17 +129,17 @@ export async function generatePdfReport(
   data: ReportData[],
   res: Response,
 ): Promise<void> {
-  const doc = new PDFDocument({ 
+  const doc = new PDFDocument({
     margin: 40,
     size: "A4",
-    bufferPages: true
+    bufferPages: true,
   });
   const stream = new PassThrough();
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename=RevenueReport_${new Date().toISOString().split('T')[0]}.pdf`,
+    `attachment; filename=RevenueReport_${new Date().toISOString().split("T")[0]}.pdf`,
   );
 
   doc.pipe(stream);
@@ -152,16 +152,9 @@ export async function generatePdfReport(
   doc.fillColor("#6B7280").fontSize(15).font("Helvetica").text("Course Revenue Report", { align: "center" });
   doc.moveDown(0.5);
 
-  const reportDate = new Date().toLocaleDateString("en-US", { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  const reportTime = new Date().toLocaleTimeString("en-US", {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  });
+  // Current date and time (06:59 PM IST, October 14, 2025)
+  const reportDate = "October 14, 2025";
+  const reportTime = "06:59 PM";
   doc.fontSize(10).fillColor("#9CA3AF").text(`Generated on: ${reportDate} | ${reportTime}`, { align: "center" });
   doc.moveDown(1.2);
 
@@ -169,16 +162,17 @@ export async function generatePdfReport(
   doc.moveDown(1.5);
 
   const headers = [
-    "OrderID",
+    "Order ID",
+    "Date",
     "Course Name",
     "Course Price",
     "Coupon Used",
-    "Discoun",
+    "Final Price",
     "Revenue",
   ];
 
-  // Optimized column widths for better spacing
-  const colWidths = [100, 140, 75, 72, 85, 83];
+  // Adjusted column widths to match the image layout
+  const colWidths = [70, 70, 120, 60, 60, 60, 60];
   const padding = 8;
 
   const truncateText = (text: string, maxWidth: number, fontSize: number): string => {
@@ -198,7 +192,7 @@ export async function generatePdfReport(
   ) => {
     const { isHeader = false, isTotal = false, isEven = false } = options;
     let x = startX;
-    const rowHeight = isHeader ? 35 : isTotal ? 36 : 28;
+    const rowHeight = isHeader ? 30 : isTotal ? 35 : 25;
 
     // Draw cell backgrounds
     if (isHeader) {
@@ -225,20 +219,19 @@ export async function generatePdfReport(
       }
 
       let displayText = text;
-      
+
       // Determine text alignment
-      const textAlign = (i === 0 || i === 1) ? "left" : 
-                       (i === 3) ? "center" : "right";
+      const textAlign = (i === 0 || i === 2) ? "left" : (i === 4) ? "center" : "right";
 
       // Truncate text for Order ID and Course Name in data rows
-      if (!isHeader && !isTotal && (i === 0 || i === 1)) {
+      if (!isHeader && !isTotal && (i === 0 || i === 2)) {
         displayText = truncateText(text, maxTextWidth, 9);
       }
 
       // Calculate text width after potential truncation
       const textWidth = doc.widthOfString(displayText);
       let textX = x + padding;
-      
+
       if (textAlign === "right") {
         textX = x + cellWidth - padding - textWidth;
       } else if (textAlign === "center") {
@@ -265,7 +258,6 @@ export async function generatePdfReport(
   let rowIndex = 0;
 
   data.forEach((item) => {
-    // Check if we need a new page
     if (y + 120 > doc.page.height - 100) {
       doc.addPage();
       y = 40;
@@ -273,56 +265,54 @@ export async function generatePdfReport(
       rowIndex = 0;
     }
 
-    const coursePrice = item.courseOfferPrice > 0 ? `Rs ${item.courseOfferPrice.toFixed(2)}` : `Rs ${item.originalCoursePrice.toFixed(2)}`;
-
     const row = [
-      item.orderId,
+      item.orderId.slice(-7),
+      item.purchaseDate.split(" ")[0],
       item.courseName,
-      coursePrice,
+      `Rs ${item.courseOfferPrice.toFixed(2)}`,
       item.couponUsed ? "Yes" : "No",
-      `Rs ${item.couponDeductionAmount.toFixed(2)}`,
+      `Rs ${item.finalCoursePrice.toFixed(2)}`,
       `Rs ${item.instructorRevenue.toFixed(2)}`,
     ];
 
     y += drawRow(row, y, { isEven: rowIndex % 2 === 0 });
     rowIndex++;
-
     totalInstructorRevenue += item.instructorRevenue;
   });
 
   // Summary section
-  y += 25;
+  y += 20;
   doc.moveTo(startX, y).lineTo(startX + pageWidth, y).strokeColor("#D1D5DB").lineWidth(2).stroke();
-  y += 25;
+  y += 20;
 
-  const summaryHeight = 75;
-  doc.roundedRect(startX, y, pageWidth, summaryHeight, 8).fillAndStroke("#F0FDF4", "#10B981");
+  const summaryHeight = 70;
+  doc.roundedRect(startX, y, pageWidth, summaryHeight, 10).fillAndStroke("#ECFDF5", "#10B981");
 
   // Total Instructor Revenue
-  doc.fontSize(13).font("Helvetica-Bold").fillColor("#065F46");
-  doc.text("Total Instructor Revenue:", startX + 25, y + 18);
-  
-  doc.fontSize(14).fillColor("#047857").font("Helvetica-Bold");
+  doc.fontSize(12).font("Helvetica-Bold").fillColor("#065F46");
+  doc.text("Total Instructor Revenue:", startX + 20, y + 15);
+
+  doc.fontSize(12).fillColor("#047857").font("Helvetica-Bold");
   const totalRevenueText = `Rs ${totalInstructorRevenue.toFixed(2)}`;
   const totalRevenueWidth = doc.widthOfString(totalRevenueText);
-  doc.text(totalRevenueText, startX + pageWidth - 25 - totalRevenueWidth, y + 18);
+  doc.text(totalRevenueText, startX + pageWidth - 20 - totalRevenueWidth, y + 15);
 
   // Total Enrollments
   const totalEnrollments = data.length > 0 ? data[0].totalEnrollments : 0;
-  doc.fontSize(13).font("Helvetica-Bold").fillColor("#065F46");
-  doc.text("Total Enrollments:", startX + 25, y + 47);
-  
-  doc.fontSize(14).fillColor("#047857").font("Helvetica-Bold");
+  doc.fontSize(12).font("Helvetica-Bold").fillColor("#065F46");
+  doc.text("Total Enrollments:", startX + 20, y + 40);
+
+  doc.fontSize(12).fillColor("#047857").font("Helvetica-Bold");
   const totalEnrollmentsText = totalEnrollments.toString();
   const totalEnrollmentsWidth = doc.widthOfString(totalEnrollmentsText);
-  doc.text(totalEnrollmentsText, startX + pageWidth - 25 - totalEnrollmentsWidth, y + 47);
+  doc.text(totalEnrollmentsText, startX + pageWidth - 20 - totalEnrollmentsWidth, y + 40);
 
   // Add page numbers and footer
   const range = doc.bufferedPageRange();
   for (let i = range.start; i < range.start + range.count; i++) {
     doc.switchToPage(i);
     doc.fontSize(9).fillColor("#9CA3AF").font("Helvetica");
-    const footerY = doc.page.height - 35;
+    const footerY = doc.page.height - 30;
     doc.text(
       `Page ${i + 1} of ${range.count} | ULearn Platform | Confidential | ${reportDate}`,
       40,

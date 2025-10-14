@@ -78,7 +78,7 @@ export default function InstructorWalletPage() {
       }
       setLoading(true);
 
-      const orderData = await instructorCreateWalletRechargeOrder({ amount: rechargeAmount });
+      const orderData = await instructorCreateWalletRechargeOrder({ amount: Math.round(rechargeAmount) });
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -93,7 +93,7 @@ export default function InstructorWalletPage() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              amount: rechargeAmount,
+              amount: Math.round(rechargeAmount),
             });
             toast.success("Wallet recharged successfully");
             setRechargeAmount(0);

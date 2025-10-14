@@ -21,7 +21,6 @@ const InstructorCourseOffersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 
-  // Debounce the search input with a 500ms delay
   const debouncedSearch = useDebounce(search, 500);
 
   const fetchOffers = async () => {
@@ -30,7 +29,7 @@ const InstructorCourseOffersPage: React.FC = () => {
       const { data, total } = await getInstructorCourseOffers(
         currentPage,
         limit,
-        debouncedSearch, // Use debounced search value
+        debouncedSearch,
         statusFilter === "all" ? undefined : statusFilter
       );
       setCourseOffers(data);

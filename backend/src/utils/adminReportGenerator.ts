@@ -15,7 +15,6 @@ export async function generateCourseSalesExcelReport(
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Course Sales Report");
 
-  // Define columns
   sheet.columns = [
     { header: "Order ID", key: "orderId", width: 25 },
     { header: "Date", key: "date", width: 15 },
@@ -29,7 +28,6 @@ export async function generateCourseSalesExcelReport(
     { header: "Total Admin Share", key: "totalAdminShare", width: 18 },
   ];
 
-  // Style header row
   const headerRow = sheet.getRow(1);
   headerRow.font = { bold: true, size: 11 };
   headerRow.fill = {
@@ -45,7 +43,7 @@ export async function generateCourseSalesExcelReport(
     item.courses.forEach((course, index) => {
       const row = sheet.addRow({
         orderId: index === 0 ? item.orderId : "",
-        date: index === 0 ? new Date(item.date).toLocaleDateString() : "",
+        date: index === 0 ? item.date: "",
         courseName: course.courseName,
         instructorName: course.instructorName,
         coursePrice: course.offerPrice != null ? course.offerPrice : course.coursePrice, // Use offerPrice if available
@@ -225,7 +223,7 @@ export async function generateCourseSalesPdfReport(
       
       const row = [
         index === 0 ? orderIdStr : "",
-        index === 0 ? new Date(item.date).toLocaleDateString() : "",
+        index === 0 ? item.date : "",
         truncatedCourseName,
         course.instructorName.length > 16 ? course.instructorName.substring(0, 16) + ".." : course.instructorName,
         (course.offerPrice != null ? course.offerPrice : course.coursePrice).toFixed(2), // Use offerPrice if available

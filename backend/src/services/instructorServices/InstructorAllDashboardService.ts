@@ -20,29 +20,38 @@ export class InstructorAllCourseDashboardService
   ): Promise<IInstructorDashboard> {
     const [
       topCourses,
+      topLearningPaths,
       categorySales,
       monthlySales,
       totalRevenue,
       totalCourseSales,
+      totalLearningPathSales,
       publishedCourses,
+      publishedLearningPaths,
       categoryWiseCount,
     ] = await Promise.all([
       this._dashboardRepo.getTopSellingCourses(instructorId),
+      this._dashboardRepo.getTopSellingLearningPaths(instructorId),
       this._dashboardRepo.getCategoryWiseSales(instructorId),
       this._dashboardRepo.getMonthlySalesGraph(instructorId),
       this._dashboardRepo.getTotalRevenue(instructorId),
       this._dashboardRepo.getTotalCourseSales(instructorId),
+      this._dashboardRepo.getTotalLearningPathSales(instructorId),
       this._dashboardRepo.getPublishedCoursesCount(instructorId),
+      this._dashboardRepo.getPublishedLearningPathsCount(instructorId),
       this._dashboardRepo.getCategoryWiseCreatedCourses(instructorId),
     ]);
 
     return {
       topCourses,
+      topLearningPaths,
       categorySales,
       monthlySales,
       totalRevenue,
       totalCourseSales,
+      totalLearningPathSales,
       publishedCourses,
+      publishedLearningPaths,
       categoryWiseCount,
     };
   }

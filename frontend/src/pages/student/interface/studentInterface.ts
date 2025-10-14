@@ -342,6 +342,7 @@ export interface LandingPageCourse {
   level: string;
   price: number;
   originalPrice:number;
+  discountedPrice:number;
 }
 
 

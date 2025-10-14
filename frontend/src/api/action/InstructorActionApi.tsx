@@ -58,7 +58,7 @@ export const instructorGetProfile = async () => {
 
 export const instructorUpdateProfile = async (
   formData: FormData
-): Promise<any> => {
+) => {
   try {
     const response = await API.put(
       InstructorRouterEndPoints.instructorUpdateProfile,
@@ -70,11 +70,12 @@ export const instructorUpdateProfile = async (
   }
 };
 
-export const instructorUpdatePassword = async (data: any): Promise<any> => {
+export const instructorUpdatePassword = async ({currentPassword,newPassword}:{currentPassword:string,newPassword:string})=> {
   try {
+
     const response = await API.put(
       InstructorRouterEndPoints.instructorUpdatePassword,
-      data
+      {currentPassword,newPassword}
     );
     return response.data;
   } catch (error: any) {
@@ -84,7 +85,12 @@ export const instructorUpdatePassword = async (data: any): Promise<any> => {
   }
 };
 
-export const instructorUpdateBankDetail = async (data: any) => {
+export const instructorUpdateBankDetail = async (data: {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+}) => {
   try {
     const response = await API.post(
       `${InstructorRouterEndPoints.instructorUpdateBankDetail}`,
@@ -98,7 +104,7 @@ export const instructorUpdateBankDetail = async (data: any) => {
 
 //FETCH CATEGORY
 
-export const getInstructorCategories = async (): Promise<any[]> => {
+export const getInstructorCategories = async () => {
   try {
     const response = await API.get("/api/instructor/categories");
     return response.data.data;
@@ -111,16 +117,11 @@ export const getInstructorCategories = async (): Promise<any[]> => {
 
 export const instructorCreateCourse = async (
   formData: FormData
-): Promise<any> => {
+) => {
   try {
     const response = await API.post(
       InstructorRouterEndPoints.instructorCreateCourse,
       formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
     );
     return response.data;
   } catch (error) {
@@ -132,16 +133,11 @@ export const instructorCreateCourse = async (
 export const instructorUpdateCourse = async (
   courseId: string,
   formData: FormData
-): Promise<any> => {
+)=> {
   try {
     const response = await API.put(
       `${InstructorRouterEndPoints.instructorUpdateCourse}/${courseId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      formData
     );
     return response.data;
   } catch (error) {
@@ -152,13 +148,10 @@ export const instructorUpdateCourse = async (
 // Delete Course
 export const instructorDeleteCourse = async (
   courseId: string
-): Promise<any> => {
+)=> {
   try {
     const response = await API.delete(
-      `${InstructorRouterEndPoints.instructorDeleteCourse}/${courseId}`,
-      {
-        withCredentials: true,
-      }
+      `${InstructorRouterEndPoints.instructorDeleteCourse}/${courseId}`
     );
     return response.data;
   } catch (error) {
@@ -169,13 +162,10 @@ export const instructorDeleteCourse = async (
 // Get Course By ID
 export const instructorGetCourseById = async (
   courseId: string
-): Promise<any> => {
+)=> {
   try {
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorGetCourseById}/${courseId}`,
-      {
-        withCredentials: true,
-      }
     );
     return response.data;
   } catch (error) {
@@ -237,14 +227,7 @@ export const createChapter = async (courseId: string, formData: FormData) => {
     const response = await API.post(
       `${InstructorRouterEndPoints.instructorCreateChapter}/${courseId}`,
       formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
     );
-
-    console.log("create Chapter", response.data);
     return response.data.data;
   } catch (error) {
     throw error;
@@ -259,14 +242,8 @@ export const updateChapter = async (
   try {
     const response = await API.put(
       `${InstructorRouterEndPoints.instructorUpdateChapter}/${courseId}/${chapterId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      formData
     );
-    console.log("update chapter", response.data);
     return response.data.data;
   } catch (error) {
     throw error;
@@ -290,14 +267,8 @@ export const createQuiz = async (quizData: ICreateQuizPayload) => {
   try {
     const response = await API.post(
       InstructorRouterEndPoints.instructorCreateQuiz,
-      quizData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      quizData
     );
-    console.log("Create Quiz:", response.data);
     return response.data.data;
   } catch (error) {
     throw error;
@@ -309,7 +280,6 @@ export const deleteQuiz = async (quizId: string) => {
     const response = await API.delete(
       `${InstructorRouterEndPoints.instructorDeleteQuiz}/${quizId}`
     );
-    console.log("Delete Quiz:", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -321,7 +291,6 @@ export const getQuizById = async (quizId: string) => {
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorGetQuizById}/${quizId}`
     );
-    console.log("Get Quiz By ID:", response.data);
     return response.data.data;
   } catch (error) {
     throw error;
@@ -333,7 +302,6 @@ export const getQuizByCourseId = async (courseId: string) => {
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorGetQuizByCourseId}/${courseId}`
     );
-    console.log("Get Quiz By Course ID:", response.data);
     return response.data.data;
   } catch (error) {
     throw error;
@@ -350,8 +318,7 @@ export const getPaginatedQuestionsByCourseId = async (
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorGetQuizByCourseId}/${courseId}/paginated`,
       {
-        params: { page, limit, search },
-        withCredentials: true,
+        params: { page, limit, search }
       }
     );
     return response.data.data;
@@ -368,10 +335,6 @@ export const addQuestionToQuiz = async (
     const response = await API.post(
       `${InstructorRouterEndPoints.instructorAddQuestion}/${courseId}/question`,
       questionData,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
     );
     return response.data.data;
   } catch (error) {
@@ -387,11 +350,7 @@ export const updateQuestionInQuiz = async (
   try {
     const response = await API.put(
       `${InstructorRouterEndPoints.instructorUpdateQuestion}/${quizId}/question/${questionId}`,
-      questionData,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
+      questionData
     );
     return response.data.data;
   } catch (error) {
@@ -406,7 +365,6 @@ export const deleteQuestionFromQuiz = async (
   try {
     const response = await API.delete(
       `${InstructorRouterEndPoints.instructorDeleteQuestion}/${quizId}/question/${questionId}`,
-      { withCredentials: true }
     );
     return response.data;
   } catch (error) {
@@ -460,7 +418,7 @@ export const getRevenueDashboard = async (
 
     const endpoint = InstructorRouterEndPoints.instructorGetDashboardReport;
     const response = await API.get(`${endpoint}?${queryParams.toString()}`);
-    return response.data; // Returns { success: true, data: any[], total: number }
+    return response.data; 
   } catch (error) {
     throw error;
   }
@@ -483,7 +441,7 @@ export const exportRevenueReport = async (
       "/api/instructor/dashboard/reportRevenueExport",
       {
         params,
-        responseType: "blob", // Important to handle file streams
+        responseType: "blob",
       }
     );
 
@@ -504,9 +462,6 @@ export const specificCourseDashboard = async (courseId: string) => {
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorSpecificCourse}/${courseId}`
     );
-
-    console.log("specific course", response.data);
-
     return response.data;
   } catch (error) {
     throw error;
@@ -536,10 +491,7 @@ export const specificCourseReport = async (
         InstructorRouterEndPoints.instructorSpecificCourseReport
       }/${courseId}/revenueReport?${queryParams.toString()}`
     );
-
-    console.log("specific course report response:", response); // Add logging
-
-    return response; // Return full response instead of response.data
+    return response;
   } catch (error) {
     throw error;
   }
@@ -578,7 +530,6 @@ export const exportSpecificCourseReport = async (
 
     fileDownload(response.data, filename);
   } catch (error) {
-    console.error("Failed to export specific course report:", error);
     throw error;
   }
 };
@@ -772,7 +723,6 @@ export const createRazorpayOrder = async (planId: string) => {
 
 export const cancelOrder = async (orderId: string) => {
   try {
-    console.log("orderId", orderId);
     const response = await API.post(
       `${InstructorRouterEndPoints.instructorCancelOrder}`,
       { orderId }

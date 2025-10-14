@@ -5,7 +5,7 @@ const AdminSessionRoute : React.FC<ProtectedRouteProps> = ({children}) => {
     const admin = JSON.parse(localStorage.getItem('admin') || 'null')
 
     if(admin){
-        return <Navigate to='/admin/home' replace />
+        return <Navigate to='/admin/dashboard' replace />
     }
 
     return children

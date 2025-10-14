@@ -11,16 +11,8 @@ import {
 } from "../../../api/action/StudentAction";
 import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../../utils/auth";
-import { type CourseDetail } from "../interface/studentInterface";
+import { type CourseDetail,type CartItemDTO } from "../interface/studentInterface";
 
-// Define CartItemDTO to match backend and API return type
-interface CartItemDTO {
-  itemId: string;
-  type: "course" | "learningPath";
-  title: string;
-  price: number;
-  thumbnailUrl: string;
-}
 
 const CourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();

@@ -10,6 +10,7 @@ import Modal from "react-modal";
 import type { CourseManagement } from "../interface/instructorInterface";
 
 Modal.setAppElement("#root");
+
 const CourseManagementPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -46,11 +47,16 @@ const CourseManagementPage = () => {
 
   const handleOpenPublishModal = () => {
     setIsModalOpen(true);
-    // Pre-fill publishDate if it exists, converting to datetime-local format
     if (course?.publishDate) {
-      // Parse DD-MM-YYYY hh:mm AM/PM format
-      const match = course.publishDate.match(/^(\d{2})-(\d{2})-(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/);
-      if (match) {
+      try {
+        // Parse the backend's publishDate (format: DD-MM-YYYY hh:mm AM/PM)
+        const match = course.publishDate.match(/^(\d{2})-(\d{2})-(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/);
+        if (!match) {
+          console.error("Date format mismatch:", course.publishDate);
+          setPublishDate("");
+          return;
+        }
+
         const [, day, month, year, hours, minutes, ampm] = match;
         let hours24 = parseInt(hours, 10);
         if (ampm === "PM" && hours24 !== 12) {
@@ -58,26 +64,23 @@ const CourseManagementPage = () => {
         } else if (ampm === "AM" && hours24 === 12) {
           hours24 = 0;
         }
-        const date = new Date(+year, +month - 1, +day, hours24, +minutes);
-        if (!isNaN(date.getTime())) {
-          // Format to datetime-local using local time (YYYY-MM-DDThh:mm)
-          const localDateTime = date.toLocaleString("en-US", {
-            timeZone: "Asia/Kolkata", // Match backend IST
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          }).replace(/,/, '').replace(/(\d+)\/(\d+)\/(\d+)\s(\d+):(\d+)/, "$3-$2-$1T$4:$5");
-          setPublishDate(localDateTime);
-        } else {
+
+        // Create Date object in IST (Asia/Kolkata)
+        const date = new Date(Date.UTC(+year, +month - 1, +day, hours24, +minutes));
+        if (isNaN(date.getTime())) {
           console.error("Invalid date parsed from:", course.publishDate);
-          setPublishDate(""); // Fallback to empty if invalid
+          setPublishDate("");
+          return;
         }
-      } else {
-        console.error("Date format mismatch:", course.publishDate);
-        setPublishDate(""); // Fallback if format doesn't match
+
+        // Format to YYYY-MM-DDThh:mm for datetime-local
+        const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hours24
+          .toString()
+          .padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+        setPublishDate(formattedDate);
+      } catch (error) {
+        console.error("Error parsing publishDate:", error);
+        setPublishDate("");
       }
     } else {
       setPublishDate("");
@@ -207,7 +210,7 @@ const CourseManagementPage = () => {
           {course.publishDate && (
             <div className="col-span-2">
               <p className="font-semibold">Scheduled Publish Date:</p>
-              <p>{course.publishDate}</p> {/* Display the formatted publishDate */}
+              <p>{course.publishDate}</p>
             </div>
           )}
         </div>
