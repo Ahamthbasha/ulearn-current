@@ -845,15 +845,17 @@ export const downloadReceiptForMembership = async (orderId: string) => {
   }
 };
 
-export const createSlot = async (payload: {
-  startTime: Date | string;
-  endTime: Date | string;
-  price: number;
+export const createSlot = async (data: {
+  slots?: { startTime: Date; endTime: Date; price: number }[];
+  startTime?: Date | string;
+  endTime?: Date | string;
+  price?: number;
+  repetitionMode?: "single" | "week" | "month" | "year";
 }) => {
   try {
     const response = await API.post(
       InstructorRouterEndPoints.instructorCreateSlot,
-      payload
+      data
     );
     return response.data;
   } catch (error) {
@@ -861,10 +863,10 @@ export const createSlot = async (payload: {
   }
 };
 
-export const listSlots = async () => {
+export const listSlots = async (date?:string) => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorListSlots}`
+      `${InstructorRouterEndPoints.instructorListSlots}${date ? `?date=${date}` : ''}`
     );
     return response.data;
   } catch (error) {
@@ -902,6 +904,15 @@ export const deleteSlot = async (slotId: string) => {
     throw error;
   }
 };
+
+export const deleteUnbookedSlotsForDate = async(date:string)=>{
+  try {
+    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteSlotBasedOnDate}`,{params:{date}})
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 export const slotHistory = async (
   mode: "monthly" | "yearly" | "custom",

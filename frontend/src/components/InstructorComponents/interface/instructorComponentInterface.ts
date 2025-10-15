@@ -6,13 +6,22 @@ export interface Slot {
   isBooked: boolean;
 }
 
+export interface SlotDTO {
+  slotId: string;
+  instructorId: string;
+  startTime: string; // e.g., "6:30 PM"
+  endTime: string;   // e.g., "7:30 PM"
+  price: number;
+  isBooked: boolean;
+}
+
 export interface SlotModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: "add" | "edit";
   selectedDate: Date;
   onSuccess: () => void;
-  initialData?: Slot | null;
+  initialData?: SlotDTO | null;
 }
 
 export interface SingleQuestionFormValues {

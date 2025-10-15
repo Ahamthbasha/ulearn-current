@@ -8,6 +8,7 @@ import { INSTRUCTOR_SLOT_ERROR_MESSAGE } from "../../utils/constants";
 
 export class InstructorSlotController implements IInstructorSlotController {
   private _slotService: IInstructorSlotService;
+
   constructor(slotService: IInstructorSlotService) {
     this._slotService = slotService;
   }
@@ -15,16 +16,21 @@ export class InstructorSlotController implements IInstructorSlotController {
   async createSlot(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
-      const { startTime, endTime, price } = req.body;
+      const { slots, repetitionMode, startTime, endTime, price } = req.body;
 
-      const slot = await this._slotService.createSlot(
-        instructorId,
-        new Date(startTime),
-        new Date(endTime),
-        price,
-      );
+      let result;
+      if (slots && repetitionMode) {
+        result = await this._slotService.createSlot(instructorId, { slots, repetitionMode });
+      } else {
+        result = await this._slotService.createSlot(
+          instructorId,
+          new Date(startTime),
+          new Date(endTime),
+          price,
+        );
+      }
 
-      res.status(StatusCode.CREATED).json({ success: true, slot });
+      res.status(StatusCode.CREATED).json({ success: true, slot: result });
     } catch (error: any) {
       res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
@@ -75,8 +81,9 @@ export class InstructorSlotController implements IInstructorSlotController {
   async listSlots(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
+      const date = req.query.date as string | undefined;
 
-      const slots = await this._slotService.listSlots(instructorId);
+      const slots = await this._slotService.listSlots(instructorId, date);
 
       res.status(StatusCode.OK).json({ success: true, slots });
     } catch (error: any) {
@@ -136,6 +143,27 @@ export class InstructorSlotController implements IInstructorSlotController {
         message:
           error.message ||
           INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_FETCH_SLOT_STAT,
+      });
+    }
+  }
+
+  async deleteUnbookedSlotsForDate(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const instructorId = new mongoose.Types.ObjectId(req.user?.id);
+      const date = req.query.date as string;
+
+      if (!date) {
+        throw new Error("Date is required");
+      }
+
+      await this._slotService.deleteUnbookedSlotsForDate(instructorId, date);
+
+      res.status(StatusCode.NO_CONTENT).send();
+    } catch (error: any) {
+      res.status(error.status || StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message:
+          error.message || INSTRUCTOR_SLOT_ERROR_MESSAGE.FAILED_TO_DELETE_SLOT,
       });
     }
   }

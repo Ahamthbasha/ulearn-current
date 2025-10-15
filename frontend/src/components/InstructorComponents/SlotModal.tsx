@@ -1,9 +1,20 @@
 import { Dialog } from "@headlessui/react";
-import { format, parseISO, isBefore } from "date-fns";
+import { format, isBefore, addDays, addMonths } from "date-fns";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { createSlot, updateSlot } from "../../api/action/InstructorActionApi";
 import { type SlotModalProps } from "./interface/instructorComponentInterface";
+
+const convertTo24Hour = (time12h: string) => {
+  const [time, modifier] = time12h.split(" ");
+  let [hours, minutes] = time.split(":");
+  let hoursNum = parseInt(hours, 10);
+
+  if (modifier === "PM" && hoursNum !== 12) hoursNum += 12;
+  if (modifier === "AM" && hoursNum === 12) hoursNum = 0;
+
+  return `${hoursNum.toString().padStart(2, "0")}:${minutes}`;
+};
 
 const SlotModal = ({
   isOpen,
@@ -16,19 +27,23 @@ const SlotModal = ({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [price, setPrice] = useState<number | "">("");
+  const [repetitionMode, setRepetitionMode] = useState<"single" | "week" | "month" | "year">("single");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
-      setStartTime(format(parseISO(initialData.startTime), "HH:mm"));
-      setEndTime(format(parseISO(initialData.endTime), "HH:mm"));
+      // Convert 12-hour format to 24-hour format for time inputs
+      setStartTime(convertTo24Hour(initialData.startTime));
+      setEndTime(convertTo24Hour(initialData.endTime));
       setPrice(initialData.price);
+      setRepetitionMode("single"); // Editing only supports single slot
     } else {
       setStartTime("");
       setEndTime("");
       setPrice("");
+      setRepetitionMode("single");
     }
-  }, [mode, initialData, isOpen]);
+  }, [mode, initialData, isOpen, selectedDate]);
 
   const handleSubmit = async () => {
     if (!startTime || !endTime || price === "") {
@@ -41,13 +56,9 @@ const SlotModal = ({
       return;
     }
 
-    const dateString =
-      mode === "edit" && initialData
-        ? format(parseISO(initialData.startTime), "yyyy-MM-dd")
-        : format(selectedDate, "yyyy-MM-dd");
-
-    const startDateTime = new Date(`${dateString}T${startTime}`);
-    const endDateTime = new Date(`${dateString}T${endTime}`);
+    const baseDateString = format(selectedDate, "yyyy-MM-dd");
+    const startDateTime = new Date(`${baseDateString}T${startTime}`);
+    const endDateTime = new Date(`${baseDateString}T${endTime}`);
     const now = new Date();
 
     if (isBefore(startDateTime, now)) {
@@ -63,14 +74,14 @@ const SlotModal = ({
     setLoading(true);
     try {
       if (mode === "add") {
+        const slotsToCreate = generateSlots(startDateTime, endDateTime, Number(price));
         await createSlot({
-          startTime: startDateTime,
-          endTime: endDateTime,
-          price: Number(price),
+          slots: slotsToCreate,
+          repetitionMode: repetitionMode,
         });
-        toast.success("Slot created");
+        toast.success("Slot(s) created");
       } else if (mode === "edit" && initialData) {
-        await updateSlot(initialData._id, {
+        await updateSlot(initialData.slotId, {
           startTime: startDateTime,
           endTime: endDateTime,
           price: Number(price),
@@ -79,20 +90,46 @@ const SlotModal = ({
       }
       onSuccess();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save slot");
+      toast.error(err.response?.data?.message || "Failed to save slot(s)");
     } finally {
       setLoading(false);
     }
   };
 
+  const generateSlots = (start: Date, end: Date, price: number) => {
+    const slots = [];
+
+    if (repetitionMode === "single") {
+      slots.push({ startTime: start, endTime: end, price });
+    } else if (repetitionMode === "week") {
+      for (let i = 0; i < 7; i++) {
+        const newStart = addDays(start, i);
+        const newEnd = addDays(end, i);
+        slots.push({ startTime: newStart, endTime: newEnd, price });
+      }
+    } else if (repetitionMode === "month") {
+      for (let i = 0; i < 30; i++) {
+        const newStart = addDays(start, i);
+        const newEnd = addDays(end, i);
+        slots.push({ startTime: newStart, endTime: newEnd, price });
+      }
+    } else if (repetitionMode === "year") {
+      for (let i = 0; i < 12; i++) {
+        const newStart = addMonths(start, i);
+        const newEnd = addMonths(end, i);
+        slots.push({ startTime: newStart, endTime: newEnd, price });
+      }
+    }
+
+    return slots;
+  };
+
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      {/* Enhanced backdrop with blur effect */}
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" aria-hidden="true" />
       
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 transition-all">
-          {/* Header with gradient background */}
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
             <Dialog.Title className="text-xl font-bold text-white">
               {mode === "add" ? "✨ Create New Slot" : "✏️ Edit Slot"}
@@ -102,10 +139,26 @@ const SlotModal = ({
             </p>
           </div>
 
-          {/* Content area */}
           <div className="px-6 py-6">
             <div className="space-y-5">
-              {/* Start Time */}
+              {mode === "add" && (
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    🔄 Repetition
+                  </label>
+                  <select
+                    className="w-full border-2 border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                    value={repetitionMode}
+                    onChange={(e) => setRepetitionMode(e.target.value as any)}
+                  >
+                    <option value="single">Single Day</option>
+                    <option value="week">Every Day for a Week</option>
+                    <option value="month">Every Day for a Month</option>
+                    <option value="year">Every Month for a Year</option>
+                  </select>
+                </div>
+              )}
+
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   🕐 Start Time
@@ -125,7 +178,6 @@ const SlotModal = ({
                 </div>
               </div>
 
-              {/* End Time */}
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   🕐 End Time
@@ -145,7 +197,6 @@ const SlotModal = ({
                 </div>
               </div>
 
-              {/* Price */}
               <div className="group">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   💰 Price (₹)
@@ -160,7 +211,6 @@ const SlotModal = ({
                     value={price}
                     onChange={(e) => {
                       const value = e.target.value;
-                      // Allow empty string or valid numbers
                       if (value === "") {
                         setPrice("");
                       } else {
@@ -178,7 +228,6 @@ const SlotModal = ({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-3 mt-8">
               <button
                 onClick={onClose}
@@ -202,7 +251,7 @@ const SlotModal = ({
                   </>
                 ) : (
                   <>
-                    {mode === "add" ? "➕ Create Slot" : "✅ Update Slot"}
+                    {mode === "add" ? "➕ Create Slot(s)" : "✅ Update Slot"}
                   </>
                 )}
               </button>

@@ -50,6 +50,7 @@ import EditInstructorCourseOfferPage from '../pages/instructor/courseOffer/EditC
 import OfferDetailsPage from '../pages/instructor/courseOffer/CourseOfferDetailPage'
 
 
+
 const InstructorRouter = () => {
   return (
     <Routes>

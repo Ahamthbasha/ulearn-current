@@ -640,6 +640,14 @@ router.delete(
   instructorSlotController.deleteSlot.bind(instructorSlotController)
 );
 
+router.delete(
+  "/slotDelete",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorSlotController.deleteUnbookedSlotsForDate.bind(instructorSlotController)
+)
+
 router.get(
   "/slotStats",
   authenticateToken,

@@ -1,31 +1,32 @@
 import { useEffect, useState } from "react";
-import { listSlots, deleteSlot } from "../../../api/action/InstructorActionApi";
-import { format, isSameDay, parseISO, startOfWeek, addDays } from "date-fns";
+import { listSlots, deleteSlot, deleteUnbookedSlotsForDate } from "../../../api/action/InstructorActionApi";
+import { format, isSameDay, startOfWeek, addDays } from "date-fns";
 import { toast } from "react-toastify";
 import { PlusCircle, Trash2, Pencil } from "lucide-react";
 import SlotModal from "../../../components/InstructorComponents/SlotModal";
 import { useNavigate } from "react-router-dom";
-import { type ISlotPage } from "../interface/instructorInterface";
+import type { SlotDTO } from "../../../components/InstructorComponents/interface/instructorComponentInterface";
 
 const daysToRender = 7;
 
 const SlotPage = () => {
-  const [slots, setSlots] = useState<ISlotPage[]>([]);
+  const [slots, setSlots] = useState<SlotDTO[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekStartDate, setWeekStartDate] = useState<Date>(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-  const [editingSlot, setEditingSlot] = useState<ISlotPage | null>(null);
+  const [editingSlot, setEditingSlot] = useState<SlotDTO | null>(null);
 
   const navigate = useNavigate();
 
-  const fetchSlots = async () => {
+  const fetchSlots = async (date?: Date) => {
     try {
-      const { slots } = await listSlots();
-      console.log(slots)
-      setSlots(slots);
+      const formattedDate = date ? format(date, "yyyy-MM-dd") : format(selectedDate, "yyyy-MM-dd");
+      const response = await listSlots(formattedDate);
+      console.log("Fetched slots:", response.slots); // Debug log
+      setSlots(response.slots || []);
     } catch (err) {
       toast.error("Failed to fetch slots");
     }
@@ -33,20 +34,31 @@ const SlotPage = () => {
 
   useEffect(() => {
     fetchSlots();
-  }, []);
+  }, [selectedDate]);
 
   const handleDeleteSlot = async (slotId: string) => {
     try {
       await deleteSlot(slotId);
       toast.success("Slot deleted");
-      fetchSlots();
+      fetchSlots(selectedDate);
     } catch (err) {
       toast.error("Failed to delete slot");
     }
   };
 
-  const getSlotsForDate = (date: Date) => {
-    return slots.filter((slot) => isSameDay(parseISO(slot.startTime), date));
+  const handleDeleteUnbookedSlots = async () => {
+    try {
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      await deleteUnbookedSlotsForDate(formattedDate);
+      toast.success("All unbooked slots deleted for the date");
+      fetchSlots(selectedDate);
+    } catch (err) {
+      toast.error("Failed to delete unbooked slots");
+    }
+  };
+
+  const getSlotsForDate = () => {
+    return slots; // Return all slots since backend filters by date
   };
 
   const handleOpenAddModal = () => {
@@ -55,7 +67,7 @@ const SlotPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (slot: ISlotPage) => {
+  const handleOpenEditModal = (slot: SlotDTO) => {
     setModalMode("edit");
     setEditingSlot(slot);
     setIsModalOpen(true);
@@ -138,12 +150,12 @@ const SlotPage = () => {
 
       {/* Time slots display */}
       <div className="flex flex-wrap gap-3 items-start min-h-[40px]">
-        {getSlotsForDate(selectedDate).length > 0 ? (
-          getSlotsForDate(selectedDate).map((slot) => (
+        {getSlotsForDate().length > 0 ? (
+          getSlotsForDate().map((slot) => (
             <div
-              key={slot._id}
+              key={slot.slotId}
               onClick={() =>
-                slot.isBooked ? navigate(`/instructor/slots/${slot._id}`) : undefined
+                slot.isBooked ? navigate(`/instructor/slots/${slot.slotId}`) : undefined
               }
               className={`flex items-center gap-2 px-3 py-2 rounded-full border text-sm ${
                 slot.isBooked
@@ -152,15 +164,14 @@ const SlotPage = () => {
               }`}
             >
               <span>
-                {format(parseISO(slot.startTime), "h:mm a")} -{" "}
-                {format(parseISO(slot.endTime), "h:mm a")}
+                {slot.startTime} - {slot.endTime}
               </span>
               {!slot.isBooked && (
                 <>
                   <button onClick={() => handleOpenEditModal(slot)}>
                     <Pencil className="w-4 h-4 text-blue-500" />
                   </button>
-                  <button onClick={() => handleDeleteSlot(slot._id)}>
+                  <button onClick={() => handleDeleteSlot(slot.slotId)}>
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
                 </>
@@ -172,8 +183,8 @@ const SlotPage = () => {
         )}
       </div>
 
-      {/* Add Slots Button */}
-      <div className="mt-4">
+      {/* Add and Delete Unbooked Slots Buttons */}
+      <div className="mt-4 flex gap-4">
         <button
           onClick={handleOpenAddModal}
           className="flex items-center gap-2 text-blue-600 hover:underline text-sm"
@@ -181,6 +192,15 @@ const SlotPage = () => {
           <PlusCircle className="w-4 h-4" />
           Add Slots
         </button>
+        {slots.length > 0 && (
+          <button
+            onClick={handleDeleteUnbookedSlots}
+            className="flex items-center gap-2 text-red-600 hover:underline text-sm"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete All Unbooked Slots
+          </button>
+        )}
       </div>
 
       {/* Slot Modal */}
@@ -190,7 +210,7 @@ const SlotPage = () => {
         mode={modalMode}
         selectedDate={selectedDate}
         onSuccess={() => {
-          fetchSlots();
+          fetchSlots(selectedDate);
           setIsModalOpen(false);
         }}
         initialData={editingSlot}

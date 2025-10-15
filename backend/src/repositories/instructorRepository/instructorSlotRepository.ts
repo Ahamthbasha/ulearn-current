@@ -15,9 +15,13 @@ export class InstructorSlotRepository
     return await this.create(data);
   }
 
+  async createBulkSlots(data: Partial<ISlot>[]): Promise<ISlot[]> {
+    return await this.create(data);
+  }
+
   async updateSlot(
     slotId: Types.ObjectId,
-    data: Partial<ISlot>,
+    data: Partial<ISlot>
   ): Promise<ISlot | null> {
     return await this.update(slotId.toString(), data);
   }
@@ -30,15 +34,22 @@ export class InstructorSlotRepository
     return await this.findById(slotId.toString());
   }
 
-  async getSlotsByInstructor(instructorId: Types.ObjectId): Promise<ISlot[]> {
-    return await this.find({ instructorId }, undefined, { startTime: 1 });
+  async getSlotsByInstructor(instructorId: Types.ObjectId, date?: string): Promise<ISlot[]> {
+    const query: any = { instructorId };
+    if (date) {
+      const startOfDay = new Date(`${date}T00:00:00.000Z`);
+      const endOfDay = new Date(`${date}T23:59:59.999Z`);
+      query.startTime = { $gte: startOfDay, $lte: endOfDay };
+    }
+    const slots = await this.find(query, undefined, { startTime: 1 });
+    return slots;
   }
 
   async checkOverlap(
     instructorId: Types.ObjectId,
     startTime: Date,
     endTime: Date,
-    excludeSlotId?: Types.ObjectId,
+    excludeSlotId?: Types.ObjectId
   ): Promise<boolean> {
     const filter: any = {
       instructorId,
@@ -66,7 +77,7 @@ export class InstructorSlotRepository
       year?: number;
       startDate?: Date;
       endDate?: Date;
-    },
+    }
   ) {
     let startDate: Date;
     let endDate: Date;
@@ -121,5 +132,18 @@ export class InstructorSlotRepository
     ]);
 
     return result;
+  }
+
+  async deleteUnbookedSlotsForDate(
+    instructorId: Types.ObjectId,
+    date: string
+  ): Promise<void> {
+    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    const endOfDay = new Date(`${date}T23:59:59.999Z`);
+    await this.deleteMany({
+      instructorId,
+      startTime: { $gte: startOfDay, $lte: endOfDay },
+      isBooked: false,
+    });
   }
 }

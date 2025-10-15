@@ -1,13 +1,14 @@
+import { SlotDTO } from "src/dto/instructorDTO/slotDTO";
 import { ISlot } from "../../../models/slotModel";
 import { Types } from "mongoose";
 
 export interface IInstructorSlotService {
   createSlot(
     instructorId: Types.ObjectId,
-    startTime: Date,
-    endTime: Date,
-    price: number,
-  ): Promise<ISlot>;
+    startTime: Date | { slots: { startTime: Date; endTime: Date; price: number }[]; repetitionMode: string },
+    endTime?: Date,
+    price?: number,
+  ): Promise<ISlot | ISlot[]>;
   updateSlot(
     instructorId: Types.ObjectId,
     slotId: Types.ObjectId,
@@ -17,8 +18,7 @@ export interface IInstructorSlotService {
     instructorId: Types.ObjectId,
     slotId: Types.ObjectId,
   ): Promise<void>;
-  listSlots(instructorId: Types.ObjectId): Promise<ISlot[]>;
-
+  listSlots(instructorId: Types.ObjectId, date?: string): Promise<SlotDTO[]>;
   getSlotStats(
     instructorId: Types.ObjectId,
     mode: "monthly" | "yearly" | "custom",
@@ -35,4 +35,8 @@ export interface IInstructorSlotService {
       bookedSlots: number;
     }[]
   >;
+  deleteUnbookedSlotsForDate(
+    instructorId: Types.ObjectId,
+    date: string
+  ): Promise<void>;
 }
