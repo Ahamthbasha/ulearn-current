@@ -3,21 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
-import { getPublishedCourses, createInstructorCourseOffer } from "../../../api/action/InstructorActionApi";
+import { getVerifiedCourses, createInstructorCourseOffer } from "../../../api/action/InstructorActionApi";
 import { toast } from "react-toastify";
 import type { ICourses } from "../interface/instructorInterface";
 
-// Helper function to get today's date in YYYY-MM-DD format
 const getTodayDate = () => {
   const today = new Date();
   return today.toISOString().split("T")[0];
 };
 
-// Validation schema with enhanced rules
 const validationSchema = Yup.object({
   courseId: Yup.string().required("Please select a course"),
   discountPercentage: Yup.number()
-    .min(0, "Discount must be at least 0%")
+    .min(1, "Discount must be at least 1%")
     .max(100, "Discount cannot exceed 100%")
     .required("Discount percentage is required"),
   startDate: Yup.date()
@@ -48,8 +46,7 @@ const AddInstructorCourseOfferPage: React.FC = () => {
     setLoading(true);
     const fetchCourses = async () => {
       try {
-        const response = await getPublishedCourses();
-        console.log("getPublishedCourses Response:", response);
+        const response = await getVerifiedCourses();
         if (response && "success" in response && response.success && response.data) {
           setCourses(response.data as ICourses[]);
         } else if (Array.isArray(response)) {

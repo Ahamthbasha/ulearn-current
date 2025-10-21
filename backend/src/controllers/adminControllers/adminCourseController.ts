@@ -101,12 +101,32 @@ export class AdminCourseController implements IAdminCourseController {
     }
   }
 
-  async toggleVerificationStatus(req: Request, res: Response): Promise<void> {
+  async verifyCourse(req: Request, res: Response): Promise<void> {
     try {
       const { courseId } = req.params;
+      const { status, review } = req.body;
 
-      const updatedCourseDTO =
-        await this._adminCourseService.toggleCourseVerification(courseId);
+      if (!status || (status !== "approved" && status !== "rejected")) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: AdminErrorMessages.INVALID_INPUT,
+        });
+        return;
+      }
+
+      if (status === "rejected" && (!review || !review.trim())) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: AdminErrorMessages.REJECTION_REASON_REQUIRED,
+        });
+        return;
+      }
+
+      const updatedCourseDTO = await this._adminCourseService.verifyCourse(
+        courseId,
+        status,
+        review,
+      );
 
       if (!updatedCourseDTO) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -124,7 +144,7 @@ export class AdminCourseController implements IAdminCourseController {
         .status(StatusCode.OK)
         .json({ success: true, message, data: updatedCourseDTO });
     } catch (error) {
-      console.error("Error toggling verification status:", error);
+      console.error("Error verifying course:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,

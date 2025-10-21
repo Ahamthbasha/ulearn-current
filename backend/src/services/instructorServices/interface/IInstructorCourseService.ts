@@ -28,4 +28,8 @@ export interface IInstructorCourseService {
   ): Promise<boolean>;
   publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null>;
   canPublishCourse(courseId: string): Promise<boolean>;
+  submitCourseForVerification(courseId: string): Promise<ICourse | null>;
+  getVerifiedInstructorCourses(
+    instructorId: string,
+  ): Promise<{ courseId: string; courseName: string }[]>;
 }

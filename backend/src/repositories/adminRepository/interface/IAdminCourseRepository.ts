@@ -15,5 +15,6 @@ export interface IAdminCourseRepository {
   }>;
 
   toggleListingStatus(courseId: string): Promise<ICourse | null>;
-  toggleVerificationStatus(courseId: string): Promise<ICourse | null>;
+  verifyCourse(courseId: string, status: "approved" | "rejected", review?: string): Promise<ICourse | null>; 
+
 }

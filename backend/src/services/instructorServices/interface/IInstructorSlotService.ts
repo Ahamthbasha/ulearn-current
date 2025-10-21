@@ -5,18 +5,25 @@ import { Types } from "mongoose";
 export interface IInstructorSlotService {
   createSlot(
     instructorId: Types.ObjectId,
-    startTime: Date | { slots: { startTime: Date; endTime: Date; price: number }[]; repetitionMode: string },
-    endTime?: Date,
-    price?: number,
+    data: {
+      startTime: Date;
+      endTime: Date;
+      price: number;
+      recurrenceRule?: {
+        daysOfWeek: number[];
+        startDate: Date;
+        endDate: Date;
+      };
+    }
   ): Promise<ISlot | ISlot[]>;
   updateSlot(
     instructorId: Types.ObjectId,
     slotId: Types.ObjectId,
-    data: Partial<ISlot>,
+    data: Partial<ISlot>
   ): Promise<ISlot>;
   deleteSlot(
     instructorId: Types.ObjectId,
-    slotId: Types.ObjectId,
+    slotId: Types.ObjectId
   ): Promise<void>;
   listSlots(instructorId: Types.ObjectId, date?: string): Promise<SlotDTO[]>;
   getSlotStats(
@@ -27,7 +34,7 @@ export interface IInstructorSlotService {
       year?: number;
       startDate?: Date;
       endDate?: Date;
-    },
+    }
   ): Promise<
     {
       date: string;

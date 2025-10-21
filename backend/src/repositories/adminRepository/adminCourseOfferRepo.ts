@@ -13,7 +13,7 @@ export class AdminCourseOfferRepo extends GenericRepository<ICourseOffer> implem
   async findByIdPopulated(offerId: string): Promise<PopulatedCourseOffer | null> {
     const result = await this.model
       .findById(offerId)
-      .populate({ path: "courseId", select: "courseName price" })
+      .populate({ path: "courseId", select: "courseName price isVerified" })
       .populate({ path: "instructorId", select: "username email" })
       .exec();
     return result as unknown as PopulatedCourseOffer | null;
@@ -22,7 +22,7 @@ export class AdminCourseOfferRepo extends GenericRepository<ICourseOffer> implem
   async updateByIdPopulated(offerId: string, data: Partial<ICourseOffer>): Promise<PopulatedCourseOffer | null> {
     const result = await this.model
       .findByIdAndUpdate(offerId, data, { new: true })
-      .populate({ path: "courseId", select: "courseName price" })
+      .populate({ path: "courseId", select: "courseName price isVerified" })
       .populate({ path: "instructorId", select: "username email" })
       .exec();
     return result as unknown as PopulatedCourseOffer | null;
@@ -82,7 +82,7 @@ export class AdminCourseOfferRepo extends GenericRepository<ICourseOffer> implem
       {
         $project: {
           _id: 1,
-          courseId: { _id: 1, courseName: 1, price: 1 },
+          courseId: { _id: 1, courseName: 1, price: 1,isVerified:1 },
           instructorId: { _id: 1, username: 1, email: 1 },
           discountPercentage: 1,
           startDate: 1,

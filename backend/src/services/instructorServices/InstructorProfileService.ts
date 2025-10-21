@@ -4,6 +4,7 @@ import { IInstructor } from "../../models/instructorModel";
 import { InstructorProfileDTO } from "../../models/instructorModel";
 import { toInstructorProfileDTO } from "../../mappers/instructorMapper/instructorProfileMapper";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import bcrypt from "bcrypt";
 
 export class InstructorProfileService implements IInstructorProfileService {
   private _instructorProfileRepo: IInstructorProfileRepository;
@@ -19,7 +20,6 @@ export class InstructorProfileService implements IInstructorProfileService {
       return null;
     }
 
-    // Handle profile picture URL if exists
     const profilePicUrl = instructor.profilePicUrl
       ? await getPresignedUrl(instructor.profilePicUrl)
       : undefined;
@@ -40,7 +40,6 @@ export class InstructorProfileService implements IInstructorProfileService {
       return null;
     }
 
-    // Handle profile picture URL for updated instructor
     const profilePicUrl = updatedInstructor.profilePicUrl
       ? await getPresignedUrl(updatedInstructor.profilePicUrl)
       : undefined;
@@ -48,15 +47,72 @@ export class InstructorProfileService implements IInstructorProfileService {
     return toInstructorProfileDTO(updatedInstructor, profilePicUrl);
   }
 
-  async updatePassword(email: string, password: string): Promise<boolean> {
+  async updatePassword(
+    email: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<boolean> {
+    const instructor = await this._instructorProfileRepo.getByEmail(email);
+
+    if (!instructor) {
+      return false;
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, instructor.password);
+
+    if (!isMatch) {
+      return false;
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
     const updated = await this._instructorProfileRepo.updatePassword(
       email,
-      password,
+      hashed,
     );
+
     return !!updated;
   }
 
-  // Additional method to get raw instructor data if needed internally
+  async updateBankAccount(
+    id: string,
+    bankAccount: {
+      accountHolderName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      bankName?: string;
+    },
+  ): Promise<InstructorProfileDTO | null> {
+    const bankAccountData: Partial<IInstructor> = {
+      bankAccount: {
+        ...(bankAccount.accountHolderName && {
+          accountHolderName: bankAccount.accountHolderName,
+        }),
+        ...(bankAccount.accountNumber && {
+          accountNumber: await bcrypt.hash(bankAccount.accountNumber, 10),
+        }),
+        ...(bankAccount.ifscCode && {
+          ifscCode: await bcrypt.hash(bankAccount.ifscCode, 10),
+        }),
+        ...(bankAccount.bankName && { bankName: bankAccount.bankName }),
+      },
+    };
+
+    const updatedInstructor = await this._instructorProfileRepo.updateProfile(
+      id,
+      bankAccountData,
+    );
+
+    if (!updatedInstructor) {
+      return null;
+    }
+
+    const profilePicUrl = updatedInstructor.profilePicUrl
+      ? await getPresignedUrl(updatedInstructor.profilePicUrl)
+      : undefined;
+
+    return toInstructorProfileDTO(updatedInstructor, profilePicUrl);
+  }
+
   async getInstructorRaw(email: string): Promise<IInstructor | null> {
     return await this._instructorProfileRepo.getByEmail(email);
   }

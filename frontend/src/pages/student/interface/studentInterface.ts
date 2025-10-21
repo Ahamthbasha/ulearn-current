@@ -319,6 +319,15 @@ export interface Slot {
   isBooked: boolean;
 }
 
+export interface SlotDTO{
+  slotId: string;
+  instructorId: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+  isBooked: boolean;
+}
+
 
 export interface Transaction {
   amount: number;

@@ -191,7 +191,7 @@ const InstructorSidebarLayout = () => {
         </div>
 
         {/* Navigation */}
-        <div className="p-6 flex-1 overflow-y-auto">
+        <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
           {!isCollapsed && (
             <h2 className="text-xs text-gray-400 uppercase mb-6 tracking-widest font-semibold">
               Navigation
@@ -285,9 +285,7 @@ const InstructorSidebarLayout = () => {
 
       {/* Main content */}
       <main 
-        className={`flex-1 transition-all duration-300 ease-in-out ${
-          isCollapsed ? "md:ml-20" : "md:ml-72"
-        } pt-16 md:pt-0 overflow-auto`}
+        className="flex-1 pt-16 md:pt-0 overflow-auto"
       >
         <div className="p-4 sm:p-6 md:p-8">
           <div className="max-w-7xl mx-auto">
@@ -303,6 +301,31 @@ const InstructorSidebarLayout = () => {
           onClick={toggleMobileMenu}
         ></div>
       )}
+
+      {/* Custom Scrollbar Styles */}
+      <style>
+        {`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #f59e0b; /* Amber color to match theme */
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #d97706; /* Darker amber on hover */
+          }
+          /* Firefox scrollbar styling */
+          .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #f59e0b #f1f1f1;
+          }
+        `}
+      </style>
     </div>
   );
 };

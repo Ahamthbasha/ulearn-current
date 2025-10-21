@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import {
   instructorGetCourseById,
   publishCourse,
+  submitCourseForVerification,
 } from "../../../api/action/InstructorActionApi";
 import Card from "../../../components/common/Card";
 import Modal from "react-modal";
@@ -46,10 +47,13 @@ const CourseManagementPage = () => {
   }, [courseId]);
 
   const handleOpenPublishModal = () => {
+    if (!course?.isVerified) {
+      toast.info("Course must be verified before publishing");
+      return;
+    }
     setIsModalOpen(true);
     if (course?.publishDate) {
       try {
-        // Parse the backend's publishDate (format: DD-MM-YYYY hh:mm AM/PM)
         const match = course.publishDate.match(/^(\d{2})-(\d{2})-(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/);
         if (!match) {
           console.error("Date format mismatch:", course.publishDate);
@@ -65,7 +69,6 @@ const CourseManagementPage = () => {
           hours24 = 0;
         }
 
-        // Create Date object in IST (Asia/Kolkata)
         const date = new Date(Date.UTC(+year, +month - 1, +day, hours24, +minutes));
         if (isNaN(date.getTime())) {
           console.error("Invalid date parsed from:", course.publishDate);
@@ -73,7 +76,6 @@ const CourseManagementPage = () => {
           return;
         }
 
-        // Format to YYYY-MM-DDThh:mm for datetime-local
         const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hours24
           .toString()
           .padStart(2, "0")}:${minutes.padStart(2, "0")}`;
@@ -98,9 +100,9 @@ const CourseManagementPage = () => {
       return;
     }
     try {
-      const res = await publishCourse(courseId); // No publishDate for immediate
+      const res = await publishCourse(courseId);
       toast.success(res?.message || "Course published successfully");
-      await fetchCourseDetails(); // Refresh to reflect isPublished
+      await fetchCourseDetails();
       handleClosePublishModal();
     } catch (error: any) {
       const errMsg = error?.response?.data?.message || "Publish failed";
@@ -125,7 +127,7 @@ const CourseManagementPage = () => {
     try {
       const res = await publishCourse(courseId, publishDate);
       toast.success(res?.message || "Course scheduled for publishing");
-      await fetchCourseDetails(); // Refresh to reflect publishDate
+      await fetchCourseDetails();
       handleClosePublishModal();
     } catch (error: any) {
       const errMsg = error?.response?.data?.message || "Failed to schedule publish";
@@ -139,12 +141,27 @@ const CourseManagementPage = () => {
       return;
     }
     try {
-      const res = await publishCourse(courseId); // Send null to clear publishDate
+      const res = await publishCourse(courseId);
       toast.success(res?.message || "Publish schedule canceled");
-      await fetchCourseDetails(); // Refresh to reflect no publishDate
+      await fetchCourseDetails();
       handleClosePublishModal();
     } catch (error: any) {
       const errMsg = error?.response?.data?.message || "Failed to cancel schedule";
+      toast.error(errMsg);
+    }
+  };
+
+  const handleSubmitForVerification = async () => {
+    if (!courseId) {
+      toast.error("Course ID is missing");
+      return;
+    }
+    try {
+      const res = await submitCourseForVerification(courseId);
+      toast.success(res?.message || "Course submitted for verification");
+      await fetchCourseDetails();
+    } catch (error: any) {
+      const errMsg = error?.response?.data?.message || "Failed to submit course for verification";
       toast.error(errMsg);
     }
   };
@@ -183,6 +200,24 @@ const CourseManagementPage = () => {
             <p className="font-semibold">Price:</p>
             <p>₹{course.price}</p>
           </div>
+          <div>
+            <p className="font-semibold">Verification Status:</p>
+            <p>{course.isVerified ? "Verified" : "Not Verified"}</p>
+          </div>
+          <div>
+            <p className="font-semibold">Submitted for Verification:</p>
+            <p>{course.isSubmitted ? "Yes" : "No"}</p>
+          </div>
+          <div>
+            <p className="font-semibold">Published:</p>
+            <p>{course.isPublished ? "Yes" : "No"}</p>
+          </div>
+          {course.review && (
+            <div className="col-span-2">
+              <p className="font-semibold text-red-600">Admin Review:</p>
+              <p>{course.review}</p>
+            </div>
+          )}
           <div className="col-span-2">
             <p className="font-semibold">Description:</p>
             <p className="whitespace-pre-wrap">{course.description}</p>
@@ -229,6 +264,14 @@ const CourseManagementPage = () => {
         >
           🧠 View Quiz
         </button>
+        {!course.isSubmitted && !course.isVerified && (
+          <button
+            onClick={handleSubmitForVerification}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+          >
+            📤 Submit for Verification
+          </button>
+        )}
         {course.isPublished ? (
           <button
             disabled
@@ -246,7 +289,10 @@ const CourseManagementPage = () => {
         ) : (
           <button
             onClick={handleOpenPublishModal}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+            disabled={!course.isVerified}
+            className={`bg-yellow-600 text-white px-5 py-2 rounded-md text-sm font-medium shadow ${
+              !course.isVerified ? "opacity-70 cursor-not-allowed" : "hover:bg-yellow-700"
+            }`}
           >
             🚀 Publish Course
           </button>
@@ -282,7 +328,7 @@ const CourseManagementPage = () => {
               value={publishDate}
               onChange={(e) => setPublishDate(e.target.value)}
               className="w-full border border-gray-300 rounded-md p-2"
-              min={new Date().toISOString().slice(0, 16)} // Prevent past dates
+              min={new Date().toISOString().slice(0, 16)}
             />
             <button
               onClick={handleLatePublish}

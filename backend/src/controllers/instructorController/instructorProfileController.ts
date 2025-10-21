@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { IInstructorProfileService } from "../../services/instructorServices/interface/IInstructorProfileService";
 import { IInstructorProfileController } from "./interfaces/IInstructorProfileController";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
-import bcrypt from "bcrypt";
 import { StatusCode } from "../../utils/enums";
 import {
   InstructorErrorMessages,
@@ -107,32 +106,11 @@ export class InstructorProfileController
       const email = decoded.email;
       const { currentPassword, newPassword } = req.body;
 
-      // Use raw data for password comparison
-      const instructor = await this._profileService.getInstructorRaw(email);
-
-      if (!instructor) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: InstructorErrorMessages.INSTRUCTOR_NOT_FOUND,
-        });
-        return;
-      }
-
-      const isMatch = await bcrypt.compare(
+      const updated = await this._profileService.updatePassword(
+        email,
         currentPassword,
-        instructor.password,
+        newPassword,
       );
-
-      if (!isMatch) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: InstructorErrorMessages.CURRENT_PASSWORD_INCORRECT,
-        });
-        return;
-      }
-
-      const hashed = await bcrypt.hash(newPassword, 10);
-      const updated = await this._profileService.updatePassword(email, hashed);
 
       if (!updated) {
         res.status(StatusCode.BAD_REQUEST).json({
@@ -162,18 +140,9 @@ export class InstructorProfileController
 
       const { accountHolderName, accountNumber, ifscCode, bankName } = req.body;
 
-      const bankAccountData = {
-        bankAccount: {
-          ...(accountHolderName && { accountHolderName }),
-          ...(accountNumber && { accountNumber }),
-          ...(ifscCode && { ifscCode }),
-          ...(bankName && { bankName }),
-        },
-      };
-
-      const updatedProfile = await this._profileService.updateProfile(
+      const updatedProfile = await this._profileService.updateBankAccount(
         userId,
-        bankAccountData,
+        { accountHolderName, accountNumber, ifscCode, bankName },
       );
 
       if (!updatedProfile) {
@@ -187,7 +156,7 @@ export class InstructorProfileController
       res.status(StatusCode.OK).json({
         success: true,
         message: InstructorSuccessMessages.BANK_ACCOUNT_UPDATED,
-        data: updatedProfile, // Now returning the updated profile data
+        data: updatedProfile,
       });
     } catch (err) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({

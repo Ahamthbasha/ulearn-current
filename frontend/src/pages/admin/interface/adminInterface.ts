@@ -28,6 +28,8 @@ interface Course {
   isListed: boolean;
   isPublished: boolean;
   isVerified: boolean;
+  isSubmitted:boolean;
+  review:string
   demoVideo: string;
   thumbnailUrl: string;
 }

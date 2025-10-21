@@ -19,6 +19,8 @@ const InstructorRouterEndPoints = {
     instructorUpdateCourse : '/api/instructor/course',
     instructorDeleteCourse : '/api/instructor/course',
     instructorGetCourseById :  '/api/instructor/course',
+    instructorSubmitVerificationForCourse : '/api/instructor/course',
+    GetVerifiedCourses:"/api/instructor/getVerifiedCourses",
     //publish course
 
     instructorPublishCourseById : '/api/instructor/course',

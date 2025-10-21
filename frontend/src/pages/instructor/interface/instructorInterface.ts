@@ -58,6 +58,8 @@ export interface CourseManagement {
   demoVideoUrlSigned?: string;
   isPublished: boolean;
   isListed: boolean;
+  isSubmitted:boolean;
+  review:string;
   isVerified: boolean;
   publishDate?: string; 
 }

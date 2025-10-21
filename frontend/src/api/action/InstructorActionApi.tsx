@@ -189,6 +189,24 @@ export const fetchInstructorCourses = async (
   }
 };
 
+export const getVerifiedCourses = async()=>{
+  try {
+    const response = await API.get(`${InstructorRouterEndPoints.GetVerifiedCourses}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const submitCourseForVerification = async(courseId:string)=>{
+  try {
+    const response = await API.patch(`${InstructorRouterEndPoints.instructorSubmitVerificationForCourse}/${courseId}/submit`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
 //chapter related actions
 
 export const getChaptersByCourse = async (
@@ -845,12 +863,120 @@ export const downloadReceiptForMembership = async (orderId: string) => {
   }
 };
 
+// slots managment //
+
+// export const createSlot = async (data: {
+//   slots?: { startTime: Date; endTime: Date; price: number }[];
+//   startTime?: Date | string;
+//   endTime?: Date | string;
+//   price?: number;
+//   repetitionMode?: "single" | "week" | "month" | "year";
+// }) => {
+//   try {
+//     const response = await API.post(
+//       InstructorRouterEndPoints.instructorCreateSlot,
+//       data
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const listSlots = async (date?:string) => {
+//   try {
+//     const response = await API.get(
+//       `${InstructorRouterEndPoints.instructorListSlots}${date ? `?date=${date}` : ''}`
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const updateSlot = async (
+//   slotId: string,
+//   payload: {
+//     startTime?: Date | string;
+//     endTime?: Date | string;
+//     price?: number;
+//   }
+// ) => {
+//   try {
+//     const response = await API.put(
+//       `${InstructorRouterEndPoints.instructorUpdateSlot}/${slotId}`,
+//       payload
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const deleteSlot = async (slotId: string) => {
+//   try {
+//     const response = await API.delete(
+//       `${InstructorRouterEndPoints.instructorDeleteSlot}/${slotId}`
+//     );
+
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const deleteUnbookedSlotsForDate = async(date:string)=>{
+//   try {
+//     const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteSlotBasedOnDate}`,{params:{date}})
+//     return response.data
+//   } catch (error) {
+//     throw error
+//   }
+// }
+
+// export const slotHistory = async (
+//   mode: "monthly" | "yearly" | "custom",
+//   params: {
+//     month?: number;
+//     year?: number;
+//     startDate?: string;
+//     endDate?: string;
+//   }
+// ) => {
+//   try {
+//     const queryParams = new URLSearchParams({
+//       mode,
+//       ...params,
+//     } as any).toString();
+//     const response = await API.get(
+//       `${InstructorRouterEndPoints.instructorSlotHistory}?${queryParams}`
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const slotDetailsInInstructor = async (slotId: string) => {
+//   try {
+//     const response = await API.get(
+//       `${InstructorRouterEndPoints.instructorSlotDetail}/${slotId}`
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
 export const createSlot = async (data: {
-  slots?: { startTime: Date; endTime: Date; price: number }[];
   startTime?: Date | string;
   endTime?: Date | string;
   price?: number;
-  repetitionMode?: "single" | "week" | "month" | "year";
+  recurrenceRule?: {
+    daysOfWeek: number[];
+    startDate: Date | string;
+    endDate: Date | string;
+  };
 }) => {
   try {
     const response = await API.post(
@@ -863,10 +989,10 @@ export const createSlot = async (data: {
   }
 };
 
-export const listSlots = async (date?:string) => {
+export const listSlots = async (date?: string) => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorListSlots}${date ? `?date=${date}` : ''}`
+      `${InstructorRouterEndPoints.instructorListSlots}${date ? `?date=${date}` : ""}`
     );
     return response.data;
   } catch (error) {
@@ -898,21 +1024,23 @@ export const deleteSlot = async (slotId: string) => {
     const response = await API.delete(
       `${InstructorRouterEndPoints.instructorDeleteSlot}/${slotId}`
     );
-
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const deleteUnbookedSlotsForDate = async(date:string)=>{
+export const deleteUnbookedSlotsForDate = async (date: string) => {
   try {
-    const response = await API.delete(`${InstructorRouterEndPoints.instructorDeleteSlotBasedOnDate}`,{params:{date}})
-    return response.data
+    const response = await API.delete(
+      `${InstructorRouterEndPoints.instructorDeleteSlotBasedOnDate}`,
+      { params: { date } }
+    );
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const slotHistory = async (
   mode: "monthly" | "yearly" | "custom",

@@ -218,14 +218,23 @@ export const listUnListCourse = async (courseId: string) => {
   }
 };
 
-export const verifyCourse = async (courseId: string) => {
+export const verifyCourse = async ({
+  courseId,
+  status,
+  review,
+}: {
+  courseId: string;
+  status: "approved" | "rejected";
+  review?: string;
+}) => {
   try {
     const response = await API.patch(
-      `${AdminRoutersEndPoints.adminVerifyCourse}/${courseId}/verifyCourse`
+      `${AdminRoutersEndPoints.adminVerifyCourse}/${courseId}/verifyCourse`,
+      { status, review }
     );
     return response.data;
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    throw error?.response?.data || error;
   }
 };
 

@@ -265,6 +265,34 @@ export class InstructorCourseController implements IInstructorCourseController {
     }
   }
 
+  async getVerifiedInstructorCourses(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const instructorId = await getId(req);
+      if (!instructorId) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
+        });
+        return;
+      }
+
+      const courses = await this._courseService.getVerifiedInstructorCourses(
+        instructorId,
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: courses,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async publishCourse(
     req: Request,
     res: Response,
@@ -308,6 +336,43 @@ export class InstructorCourseController implements IInstructorCourseController {
         message: parsedPublishDate
           ? INSTRUCTOR_SUCCESS_MESSAGE.COURSE_SCHEDULED
           : INSTRUCTOR_SUCCESS_MESSAGE.COURSE_PUBLISHED,
+        data: updatedCourse,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async submitCourseForVerification(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { courseId } = req.params;
+      const instructorId = await getId(req);
+
+      if (!instructorId) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
+        });
+        return;
+      }
+
+      const updatedCourse = await this._courseService.submitCourseForVerification(courseId);
+
+      if (!updatedCourse) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: CourseErrorMessages.COURSE_NOT_FOUND,
+        });
+        return;
+      }
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: INSTRUCTOR_SUCCESS_MESSAGE.COURSE_SUBMITTED_FOR_VERIFICATION,
         data: updatedCourse,
       });
     } catch (error) {

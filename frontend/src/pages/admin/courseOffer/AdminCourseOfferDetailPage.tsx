@@ -4,7 +4,7 @@ import { getCourseOfferDetail, verifyCourseOfferRequest } from "../../../api/act
 import Card from "../../../components/common/Card";
 import { toast } from "react-toastify";
 import { Check, X } from "lucide-react";
-import ConfirmationModal from "../../../components/common/ConfirmationModal"; // Adjust path as needed
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import type { IAdminCourseOfferDetail } from "../../../types/interfaces/IAdminInterface";
 
 const AdminCourseOfferDetailPage: React.FC = () => {
@@ -79,10 +79,22 @@ const AdminCourseOfferDetailPage: React.FC = () => {
         <p>
           <strong>Status:</strong> {offer.status ? offer.status.charAt(0).toUpperCase() + offer.status.slice(1) : "N/A"}
         </p>
+        <p><strong>Course Verified:</strong> {offer.courseVerified ? "Yes" : "No"}</p>
         <p><strong>Admin Reviews:</strong> {offer.review || "No reviews"}</p>
 
         {offer.status === "pending" && (
           <div className="mt-4">
+            {!offer.courseVerified && (
+              <div className="mb-4 text-red-600">
+                <p>Verify the course before approving the offer.</p>
+                <button
+                  onClick={() => navigate(`/admin/courses/${offer.courseId}`)}
+                  className="underline text-blue-600 hover:text-blue-800"
+                >
+                  Go to Course Verification
+                </button>
+              </div>
+            )}
             <div className="mb-4">
               <label htmlFor="rejectReason" className="block text-sm font-medium text-gray-700">
                 Rejection Reason (required for rejection)
@@ -98,9 +110,11 @@ const AdminCourseOfferDetailPage: React.FC = () => {
             </div>
             <div className="flex space-x-3">
               <button
-                disabled={verifying}
+                disabled={verifying || !offer.courseVerified} // Disable if course is not verified
                 onClick={() => openModal("approve")}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center space-x-2"
+                className={`bg-green-600 text-white px-4 py-2 rounded flex items-center space-x-2 ${
+                  !offer.courseVerified ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+                }`}
               >
                 <Check size={20} />
                 <span>Approve</span>

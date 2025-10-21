@@ -7,6 +7,11 @@ export interface ISlot extends Document {
   endTime: Date;
   price: number;
   isBooked: boolean;
+  recurrenceRule?: {
+    daysOfWeek: number[];
+    startDate: Date;
+    endDate: Date;
+  };
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -41,10 +46,18 @@ const SlotSchema = new Schema<ISlot>(
       type: Boolean,
       default: false,
     },
+    recurrenceRule: {
+      type: {
+        daysOfWeek: [{ type: Number, min: 0, max: 6 }],
+        startDate: { type: Date },
+        endDate: { type: Date },
+      },
+      required: false,
+    },
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 export default model<ISlot>("Slot", SlotSchema);

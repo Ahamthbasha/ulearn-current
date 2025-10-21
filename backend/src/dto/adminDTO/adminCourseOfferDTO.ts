@@ -24,12 +24,14 @@ export interface ICourseOfferDetailDTO {
   review: string;
   coursePrice : number;
   discountedPrice : number;
+  courseVerified:boolean;
 }
 
 interface PopulatedCourse {
   _id: Types.ObjectId;
   courseName: string;
   price: number;
+  isVerified:boolean
 }
 
 interface PopulatedInstructor {

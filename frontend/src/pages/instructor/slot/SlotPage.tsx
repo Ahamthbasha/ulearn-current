@@ -25,7 +25,7 @@ const SlotPage = () => {
     try {
       const formattedDate = date ? format(date, "yyyy-MM-dd") : format(selectedDate, "yyyy-MM-dd");
       const response = await listSlots(formattedDate);
-      console.log("Fetched slots:", response.slots); // Debug log
+      console.log("Fetched slots:", response.slots);
       setSlots(response.slots || []);
     } catch (err) {
       toast.error("Failed to fetch slots");
@@ -58,7 +58,7 @@ const SlotPage = () => {
   };
 
   const getSlotsForDate = () => {
-    return slots; // Return all slots since backend filters by date
+    return slots;
   };
 
   const handleOpenAddModal = () => {
@@ -89,7 +89,6 @@ const SlotPage = () => {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Select Time Slot</h2>
         <button
@@ -100,7 +99,6 @@ const SlotPage = () => {
         </button>
       </div>
 
-      {/* Week navigation */}
       <div className="flex justify-between items-center mb-4">
         <button
           className="text-sm text-blue-600 hover:underline"
@@ -119,7 +117,6 @@ const SlotPage = () => {
         </button>
       </div>
 
-      {/* Day selector */}
       <div className="grid grid-cols-7 gap-3 mb-6">
         {[...Array(daysToRender)].map((_, index) => {
           const day = addDays(weekStartDate, index);
@@ -143,12 +140,10 @@ const SlotPage = () => {
         })}
       </div>
 
-      {/* Date label */}
       <div className="text-sm font-semibold mb-2">
         {format(selectedDate, "EEEE, MMM d")}
       </div>
 
-      {/* Time slots display */}
       <div className="flex flex-wrap gap-3 items-start min-h-[40px]">
         {getSlotsForDate().length > 0 ? (
           getSlotsForDate().map((slot) => (
@@ -183,7 +178,6 @@ const SlotPage = () => {
         )}
       </div>
 
-      {/* Add and Delete Unbooked Slots Buttons */}
       <div className="mt-4 flex gap-4">
         <button
           onClick={handleOpenAddModal}
@@ -203,7 +197,6 @@ const SlotPage = () => {
         )}
       </div>
 
-      {/* Slot Modal */}
       <SlotModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

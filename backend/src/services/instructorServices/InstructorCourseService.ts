@@ -39,7 +39,6 @@ export class InstructorCourseService implements IInstructorCourseService {
 
     if (!updatedCourse) return null;
 
-    // Generate presigned URLs
     const thumbnailSignedUrl = updatedCourse.thumbnailUrl
       ? await getPresignedUrl(updatedCourse.thumbnailUrl)
       : null;
@@ -48,7 +47,6 @@ export class InstructorCourseService implements IInstructorCourseService {
       ? await getPresignedUrl(updatedCourse.demoVideo.url)
       : null;
 
-    // Create response object with signed URLs
     const responseData = {
       ...updatedCourse.toObject(),
       thumbnailSignedUrl,
@@ -72,7 +70,6 @@ export class InstructorCourseService implements IInstructorCourseService {
 
     const courseObj = course.toObject();
 
-    // Generate signed URLs
     const thumbnailSignedUrl = courseObj.thumbnailUrl
       ? await getPresignedUrl(courseObj.thumbnailUrl)
       : null;
@@ -108,13 +105,12 @@ export class InstructorCourseService implements IInstructorCourseService {
         status,
       );
 
-    // Generate signed URLs and map to DTOs
     const coursesWithSignedUrl = await Promise.all(
       result.data.map(async (course) => {
         const signedUrl = await getPresignedUrl(course.thumbnailUrl);
         return mapCourseToInstructorDTO({
           ...course.toObject(),
-          thumbnailUrl: signedUrl, // override with signed URL
+          thumbnailUrl: signedUrl,
         });
       }),
     );
@@ -164,5 +160,17 @@ export class InstructorCourseService implements IInstructorCourseService {
 
   async publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null> {
     return await this._courseRepository.publishCourse(courseId, publishDate);
+  }
+
+  async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
+    return await this._courseRepository.submitCourseForVerification(courseId);
+  }
+
+  async getVerifiedInstructorCourses(
+    instructorId: string,
+  ): Promise<{ courseId: string; courseName: string }[]> {
+    return await this._courseRepository.getVerifiedCoursesByInstructor(
+      instructorId,
+    );
   }
 }

@@ -1,8 +1,7 @@
-
 import { ICourseOffer } from "../../models/courseOfferModel";
 import { IAdminCourseOfferRepo } from "../../repositories/adminRepository/interface/IAdminCourseOfferRepo";
 import { IAdminCourseOfferService } from "./interface/IAdminCourseOfferService";
-import { ICourseOfferListDTO, ICourseOfferDetailDTO,} from "../../dto/adminDTO/adminCourseOfferDTO";
+import { ICourseOfferListDTO, ICourseOfferDetailDTO } from "../../dto/adminDTO/adminCourseOfferDTO";
 import { mapToCourseOfferListDTO, mapToCourseOfferDetailDTO } from "../../mappers/adminMapper/adminCourseOfferMapper";
 
 export class AdminCourseOfferService implements IAdminCourseOfferService {
@@ -23,6 +22,11 @@ export class AdminCourseOfferService implements IAdminCourseOfferService {
   async verifyCourseOffer(offerId: string, status: "approved" | "rejected", reviews?: string): Promise<ICourseOfferDetailDTO> {
     const offer = await this._adminCourseOfferRepo.findByIdPopulated(offerId);
     if (!offer) throw new Error("Course offer request not found.");
+
+    // Check if the course is verified before approving the offer
+    if (status === "approved" && !offer.courseId.isVerified) {
+      throw new Error("Cannot approve offer: The associated course is not verified.");
+    }
 
     const updateData: Partial<ICourseOffer> = {
       status,

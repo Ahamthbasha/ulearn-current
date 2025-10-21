@@ -241,7 +241,7 @@ const LearningPathDetailPage: React.FC = () => {
                         onClick={() => navigate(`/admin/courses/${item.courseId}`)}
                         className="mt-2 text-blue-500 hover:text-blue-600 text-sm font-medium underline"
                       >
-                        View Course Details and verify
+                        View individual Course Details
                       </button>
                     </div>
                   </div>

@@ -1,3 +1,4 @@
+import { FilterQuery } from "mongoose";
 import { CourseModel, ICourse } from "../../models/courseModel";
 import { GenericRepository } from "../genericRepository";
 import { IInstructorCourseRepository } from "./interface/IInstructorCourseRepository";
@@ -39,7 +40,7 @@ export class InstructorCourseRepository
     search: string = "",
     status: string = "",
   ): Promise<{ data: ICourse[]; total: number }> {
-    const filter: any = { instructorId };
+    const filter: FilterQuery<ICourse> = { instructorId };
 
     if (search) {
       filter.courseName = { $regex: new RegExp(search, "i") };
@@ -105,5 +106,22 @@ export class InstructorCourseRepository
       isPublished: true,
     });
     return count === courseIds.length;
+  }
+
+  async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
+    return await this.update(courseId, { isSubmitted: true, review: "" });
+  }
+
+  async getVerifiedCoursesByInstructor(
+    instructorId: string,
+  ): Promise<{ courseId: string; courseName: string }[]> {
+    const filter: FilterQuery<ICourse> = { instructorId, isVerified: true };
+
+    const courses = await this.findWithProjection(filter, { _id: 1, courseName: 1 });
+
+    return courses.map((course) => ({
+      courseId: course._id.toString(),
+      courseName: course.courseName,
+    }));
   }
 }

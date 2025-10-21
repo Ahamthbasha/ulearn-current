@@ -5,6 +5,7 @@ import { Types } from "mongoose";
 import createHttpError from "http-errors";
 import { SlotDTO } from "../../dto/instructorDTO/slotDTO";
 import { mapSlotsToDTO } from "../../mappers/instructorMapper/slotMapper";
+import { addDays, differenceInDays, format } from "date-fns";
 
 export class InstructorSlotService implements IInstructorSlotService {
   private _slotRepo: IInstructorSlotRepository;
@@ -15,128 +16,115 @@ export class InstructorSlotService implements IInstructorSlotService {
 
   async createSlot(
     instructorId: Types.ObjectId,
-    startTime: Date | { slots: { startTime: Date; endTime: Date; price: number }[]; repetitionMode: string },
-    endTime?: Date,
-    price?: number,
-    repetitionMode?: string,
+    data: {
+      startTime: Date;
+      endTime: Date;
+      price: number;
+      recurrenceRule?: {
+        daysOfWeek: number[];
+        startDate: Date;
+        endDate: Date;
+      };
+    }
   ): Promise<ISlot | ISlot[]> {
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    if ('slots' in startTime) {
-      // Handle bulk slot creation with repetition
-      const { slots } = startTime;
-      const createdSlots: ISlot[] = [];
+    if (data.endTime <= data.startTime) {
+      throw createHttpError.BadRequest("End time must be after start time");
+    }
 
-      for (const slot of slots) {
-        if (slot.startTime <= now) {
-          throw createHttpError.BadRequest(`Cannot create a slot in the past for ${slot.startTime}`);
-        }
+    if (data.recurrenceRule) {
+      const { daysOfWeek, startDate, endDate } = data.recurrenceRule;
+      const slotsToCreate: Partial<ISlot>[] = [];
 
-        if (slot.endTime <= slot.startTime) {
-          throw createHttpError.BadRequest(`End time must be after start time for ${slot.startTime}`);
-        }
-
-        const hasOverlap = await this._slotRepo.checkOverlap(
-          instructorId,
-          slot.startTime,
-          slot.endTime,
-        );
-        if (!hasOverlap) {
-          const newSlot = await this._slotRepo.createSlot({
-            instructorId,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            price: slot.price,
-            isBooked: false,
-          });
-          createdSlots.push(newSlot);
-        }
+      // Validate start date (date only)
+      let effectiveStartDate = new Date(startDate);
+      effectiveStartDate = new Date(effectiveStartDate.getFullYear(), effectiveStartDate.getMonth(), effectiveStartDate.getDate());
+      if (effectiveStartDate < today) {
+        throw createHttpError.BadRequest("Recurrence start date must be today or in the future");
       }
 
-      return createdSlots;
-    } else {
-      // Handle single or repeated slot creation
-      if (!endTime || !price) {
-        throw createHttpError.BadRequest("End time and price are required for single slot creation");
+      if (effectiveStartDate > endDate) {
+        throw createHttpError.BadRequest("End date must be after or equal to start date");
       }
 
-      if (startTime <= now) {
-        throw createHttpError.BadRequest("Cannot create a slot in the past");
-      }
+      const duration = differenceInDays(endDate, effectiveStartDate);
+      for (let i = 0; i <= duration; i++) {
+        const currentDate = addDays(effectiveStartDate, i);
+        const dayOfWeek = currentDate.getDay();
+        if (daysOfWeek.includes(dayOfWeek)) {
+          const timeDifference = data.endTime.getTime() - data.startTime.getTime();
+          const newStartTime = new Date(currentDate);
+          newStartTime.setHours(
+            data.startTime.getHours(),
+            data.startTime.getMinutes(),
+            0,
+            0
+          );
+          const newEndTime = new Date(newStartTime.getTime() + timeDifference);
 
-      if (endTime <= startTime) {
-        throw createHttpError.BadRequest("End time must be after start time");
-      }
-
-      // Generate slots based on repetition mode
-      const slotsToCreate: { startTime: Date; endTime: Date; price: number }[] = [];
-      const daysToAdd = {
-        week: 7,
-        month: 30,
-        year: 12,
-      } as const;
-
-      const effectiveRepetitionMode = repetitionMode || "single";
-
-      if (["week", "month", "year"].includes(effectiveRepetitionMode)) {
-        const maxIterations = daysToAdd[effectiveRepetitionMode as keyof typeof daysToAdd];
-        for (let i = 0; i < maxIterations; i++) {
-          const newStartTime = new Date(startTime);
-          const newEndTime = new Date(endTime);
-          if (effectiveRepetitionMode === "year") {
-            newStartTime.setMonth(newStartTime.getMonth() + i);
-            newEndTime.setMonth(newEndTime.getMonth() + i);
-          } else {
-            newStartTime.setDate(newStartTime.getDate() + i);
-            newEndTime.setDate(newEndTime.getDate() + i);
-          }
-
-          if (newStartTime > now) {
+          // Skip slots in the past
+          if (newStartTime >= now) {
             const hasOverlap = await this._slotRepo.checkOverlap(
               instructorId,
               newStartTime,
-              newEndTime,
+              newEndTime
             );
-            if (!hasOverlap) {
-              slotsToCreate.push({ startTime: newStartTime, endTime: newEndTime, price });
+            if (hasOverlap) {
+              throw createHttpError.Conflict(
+                `Slot on ${format(newStartTime, "yyyy-MM-dd")} overlaps with an existing one`
+              );
             }
+            slotsToCreate.push({
+              instructorId,
+              startTime: newStartTime,
+              endTime: newEndTime,
+              price: data.price,
+              isBooked: false,
+              recurrenceRule: {
+                daysOfWeek,
+                startDate: effectiveStartDate,
+                endDate,
+              },
+            });
           }
         }
-
-        const createdSlots = await this._slotRepo.createBulkSlots(
-          slotsToCreate.map(slot => ({
-            instructorId,
-            ...slot,
-            isBooked: false,
-          }))
-        );
-        return createdSlots;
-      } else {
-        // Single slot creation
-        const hasOverlap = await this._slotRepo.checkOverlap(
-          instructorId,
-          startTime,
-          endTime,
-        );
-        if (hasOverlap) {
-          throw createHttpError.Conflict("Slot overlaps with an existing one");
-        }
-
-        return await this._slotRepo.createSlot({
-          instructorId,
-          startTime,
-          endTime,
-          price,
-          isBooked: false,
-        });
       }
+
+      if (slotsToCreate.length === 0) {
+        throw createHttpError.BadRequest("No valid future slots could be created");
+      }
+
+      return await this._slotRepo.createBulkSlots(slotsToCreate);
+    } else {
+      if (data.startTime <= now) {
+        throw createHttpError.BadRequest("Cannot create a slot in the past");
+      }
+
+      const hasOverlap = await this._slotRepo.checkOverlap(
+        instructorId,
+        data.startTime,
+        data.endTime
+      );
+      if (hasOverlap) {
+        throw createHttpError.Conflict("There is already an existing slot created on that time");
+      }
+
+      return await this._slotRepo.createSlot({
+        instructorId,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        price: data.price,
+        isBooked: false,
+      });
     }
   }
 
   async updateSlot(
     instructorId: Types.ObjectId,
     slotId: Types.ObjectId,
-    data: Partial<ISlot>,
+    data: Partial<ISlot>
   ): Promise<ISlot> {
     const slot = await this._slotRepo.getSlotById(slotId);
     if (!slot) throw createHttpError.NotFound("Slot not found");
@@ -144,7 +132,6 @@ export class InstructorSlotService implements IInstructorSlotService {
       throw createHttpError.Forbidden("Access denied");
 
     const now = new Date();
-
     const newStartTime = data.startTime
       ? new Date(data.startTime)
       : slot.startTime;
@@ -162,7 +149,7 @@ export class InstructorSlotService implements IInstructorSlotService {
       instructorId,
       newStartTime,
       newEndTime,
-      slot._id as Types.ObjectId,
+      slot._id as Types.ObjectId
     );
     if (
       hasOverlap &&
@@ -170,7 +157,7 @@ export class InstructorSlotService implements IInstructorSlotService {
         newEndTime.getTime() !== slot.endTime.getTime())
     ) {
       throw createHttpError.Conflict(
-        "Updated slot overlaps with an existing one",
+        "Updated slot overlaps with an existing one"
       );
     }
 
@@ -186,7 +173,7 @@ export class InstructorSlotService implements IInstructorSlotService {
 
   async deleteSlot(
     instructorId: Types.ObjectId,
-    slotId: Types.ObjectId,
+    slotId: Types.ObjectId
   ): Promise<void> {
     const slot = await this._slotRepo.getSlotById(slotId);
     if (!slot) throw createHttpError.NotFound("Slot not found");
@@ -209,7 +196,7 @@ export class InstructorSlotService implements IInstructorSlotService {
       year?: number;
       startDate?: Date;
       endDate?: Date;
-    },
+    }
   ) {
     return await this._slotRepo.getSlotStats(instructorId, mode, options);
   }

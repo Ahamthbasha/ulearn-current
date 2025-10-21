@@ -135,7 +135,7 @@ router.patch(
   "/courses/:courseId/verifyCourse",
   authenticateToken,
   isAdmin,
-  adminCourseController.toggleVerificationStatus.bind(adminCourseController),
+  adminCourseController.verifyCourse.bind(adminCourseController),
 );
 
 // wallet related routes

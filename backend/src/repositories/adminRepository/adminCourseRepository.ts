@@ -6,7 +6,7 @@ import { QuizDetailRepository } from "../QuizRepository";
 import { IChapter } from "../../models/chapterModel";
 import { IQuiz } from "../../models/quizModel";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
-
+import { FilterQuery } from "mongoose";
 export class AdminCourseRepository
   extends GenericRepository<ICourse>
   implements IAdminCourseRepository
@@ -27,9 +27,11 @@ export class AdminCourseRepository
     page = 1,
     limit = 10,
   ): Promise<{ data: ICourse[]; total: number }> {
-    const filter = search
-      ? { courseName: { $regex: search, $options: "i" } }
-      : {};
+    const filter: FilterQuery<ICourse> = { isSubmitted: true }; // Only show submitted courses
+
+    if (search) {
+      filter.courseName = { $regex: search, $options: "i" };
+    }
 
     return await this.paginate(filter, page, limit, { createdAt: -1 });
   }
@@ -69,16 +71,17 @@ export class AdminCourseRepository
     return await this.update(courseId, { isListed: !course.isListed });
   }
 
-  async toggleVerificationStatus(courseId: string): Promise<ICourse | null> {
+   async verifyCourse(courseId: string, status: "approved" | "rejected", review?: string): Promise<ICourse | null> {
     const course = await this.findById(courseId);
     if (!course) return null;
 
-    const newVerificationStatus = !course.isVerified;
-    const updatedCourse = await this.update(courseId, {
-      isVerified: newVerificationStatus,
-      isListed: newVerificationStatus,
-    });
+    const updateData: Partial<ICourse> = {
+      isVerified: status === "approved",
+      isListed: status === "approved",
+      review: status === "rejected" ? review || "" : "",
+      isSubmitted: status === "rejected" ? false : course.isSubmitted, // Reset isSubmitted on rejection
+    };
 
-    return updatedCourse;
+    return await this.update(courseId, updateData);
   }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FieldArray, useField } from "formik";
 import InputField from "../common/InputField";
-import { fetchInstructorCourses } from "../../api/action/InstructorActionApi";
+import { getVerifiedCourses } from "../../api/action/InstructorActionApi";
 import type { CourseDTO } from "../../types/interfaces/IInstructorInterface";
 
 interface CourseSelectorProps {
@@ -17,7 +17,7 @@ const CourseSelector: React.FC<CourseSelectorProps> = ({ name, label }) => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetchInstructorCourses({});
+        const response = await getVerifiedCourses();
         if (response.success) {
           setCourses(response.data); // Only published courses
         } else {

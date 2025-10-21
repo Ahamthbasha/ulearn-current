@@ -27,6 +27,8 @@ export interface ICourse extends Document {
   isPublished: boolean;
   isVerified: boolean;
   isListed: boolean;
+  isSubmitted:boolean;
+  review:string;
   createdAt: Date;
   updatedAt: Date;
   originalPrice?: number;
@@ -69,6 +71,8 @@ const CourseSchema = new Schema<ICourse>(
     isPublished: { type: Boolean, default: false },
     isListed: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
+    isSubmitted: { type: Boolean, default: false },
+    review: { type: String, default: "" }, 
     publishDate: { type: Date, required: false },
   },
   {

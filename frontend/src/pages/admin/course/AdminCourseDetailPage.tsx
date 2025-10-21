@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   getCourseDetails,
   verifyCourse,
@@ -14,23 +15,31 @@ import {
   Globe,
   Shield,
   PlayCircle,
+  Check,
+  X,
 } from "lucide-react";
-
-import { type CourseDetailsResponse } from "../interface/adminInterface";
+import type { CourseDetailsResponse } from "../interface/adminInterface";
 
 const AdminCourseDetailPage = () => {
-  const { courseId } = useParams();
+  const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
   const [courseData, setCourseData] = useState<CourseDetailsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState<boolean>(false);
+  const [rejectReason, setRejectReason] = useState<string>("");
+  const [showRejectReason, setShowRejectReason] = useState<boolean>(false);
 
   const fetchCourseDetails = async () => {
+    if (!courseId) {
+      setError("Course ID is missing");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const response = await getCourseDetails(courseId!);
+      const response = await getCourseDetails(courseId);
       if (response?.data) {
         setCourseData(response.data);
       } else {
@@ -48,13 +57,28 @@ const AdminCourseDetailPage = () => {
     fetchCourseDetails();
   }, [courseId]);
 
-  const handleVerify = async () => {
+  const handleVerify = async (action: "approve" | "reject") => {
+    if (!courseId) return;
+
+    if (action === "reject" && !rejectReason.trim()) {
+      toast.error("Rejection reason is required");
+      return;
+    }
+
     setVerifying(true);
     try {
-      await verifyCourse(courseId!);
-      await fetchCourseDetails();
-    } catch (err) {
+      await verifyCourse({
+        courseId,
+        status: action === "approve" ? "approved" : "rejected",
+        review: action === "reject" ? rejectReason : undefined,
+      });
+      toast.success(`Course ${action === "approve" ? "approved" : "rejected"} successfully`);
+      await fetchCourseDetails(); // Refresh to reflect updated status
+      setRejectReason("");
+      setShowRejectReason(false);
+    } catch (err: any) {
       console.error("Failed to verify course", err);
+      toast.error(err?.response?.data?.message || "Verification failed");
     } finally {
       setVerifying(false);
     }
@@ -115,19 +139,6 @@ const AdminCourseDetailPage = () => {
                 {course.courseName}
               </h1>
             </div>
-
-            {!course.isVerified && (
-              <button
-                onClick={handleVerify}
-                disabled={verifying}
-                className="inline-flex items-center px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm focus:ring-2 focus:ring-purple-500"
-                aria-label={verifying ? "Verifying..." : "Verify Course"}
-              >
-                <CheckCircle size={14} className="mr-2 sm:size-16" />
-                <span className="hidden sm:inline">{verifying ? "Verifying..." : "Verify Course"}</span>
-                <span className="sm:hidden">Verify</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -181,6 +192,16 @@ const AdminCourseDetailPage = () => {
                     <Shield size={12} className="mr-1 sm:mr-2 sm:size-14" />
                     {course.isVerified ? "Verified" : "Not Verified"}
                   </span>
+                  <span
+                    className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold shadow-sm hover:scale-105 transition-transform duration-200 ${
+                      course.isSubmitted
+                        ? "bg-blue-200 text-blue-800 border border-blue-300"
+                        : "bg-gray-200 text-gray-700 border border-gray-300"
+                    }`}
+                  >
+                    <CheckCircle size={12} className="mr-1 sm:mr-2 sm:size-14" />
+                    {course.isSubmitted ? "Submitted" : "Not Submitted"}
+                  </span>
                 </div>
 
                 {/* Course Stats */}
@@ -221,6 +242,14 @@ const AdminCourseDetailPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Review Section */}
+                {course.review && !course.isVerified && (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-6 shadow-md">
+                    <h3 className="text-lg sm:text-xl font-bold text-red-900 mb-2">Rejection Reason</h3>
+                    <p className="text-sm sm:text-base text-red-700">{course.review}</p>
+                  </div>
+                )}
               </div>
 
               {/* Thumbnail */}
@@ -344,7 +373,7 @@ const AdminCourseDetailPage = () => {
         </div>
 
         {/* Quiz Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 p-4 sm:p-6 animate-fade-in">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
             <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-0">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
@@ -440,6 +469,67 @@ const AdminCourseDetailPage = () => {
             </div>
           )}
         </div>
+
+        {/* Verification Section */}
+        {course.isSubmitted && !course.isVerified && (
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+                <Shield size={20} className="text-white sm:size-24" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Course Verification</h3>
+            </div>
+            <div className="space-y-4">
+              {showRejectReason && (
+                <div>
+                  <label htmlFor="rejectReason" className="block font-medium text-gray-700">
+                    Rejection Reason (Required)
+                  </label>
+                  <textarea
+                    id="rejectReason"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md p-2 mt-1 focus:ring-2 focus:ring-blue-500"
+                    rows={4}
+                    placeholder="Enter the reason for rejection"
+                  />
+                </div>
+              )}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowRejectReason(false);
+                    handleVerify("approve");
+                  }}
+                  disabled={verifying}
+                  className="inline-flex items-center px-3 sm:px-4 py-2 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm focus:ring-2 focus:ring-green-500"
+                  aria-label={verifying ? "Verifying..." : "Approve Course"}
+                >
+                  <Check size={14} className="mr-2 sm:size-16" />
+                  <span className="hidden sm:inline">{verifying ? "Verifying..." : "Approve Course"}</span>
+                  <span className="sm:hidden">Approve</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRejectReason(true);
+                    if (showRejectReason) {
+                      handleVerify("reject");
+                    }
+                  }}
+                  disabled={verifying || (showRejectReason && !rejectReason.trim())}
+                  className="inline-flex items-center px-3 sm:px-4 py-2 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm focus:ring-2 focus:ring-red-500"
+                  aria-label={verifying ? "Verifying..." : showRejectReason ? "Submit Rejection" : "Reject Course"}
+                >
+                  <X size={14} className="mr-2 sm:size-16" />
+                  <span className="hidden sm:inline">
+                    {verifying ? "Verifying..." : showRejectReason ? "Submit Rejection" : "Reject Course"}
+                  </span>
+                  <span className="sm:hidden">{showRejectReason ? "Submit" : "Reject"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

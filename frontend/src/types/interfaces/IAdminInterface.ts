@@ -40,6 +40,7 @@ export interface IAdminCourseOfferDetail{
   review: string;
   coursePrice:number;
   discountedPrice:number;
+  courseVerified:boolean;
 }
 
 export interface ICourseAdmin {

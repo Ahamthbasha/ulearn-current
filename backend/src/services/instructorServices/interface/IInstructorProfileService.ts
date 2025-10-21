@@ -7,6 +7,19 @@ export interface IInstructorProfileService {
     id: string,
     data: Partial<IInstructor>,
   ): Promise<InstructorProfileDTO | null>;
-  updatePassword(email: string, password: string): Promise<boolean>;
+  updatePassword(
+    email: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<boolean>;
+  updateBankAccount(
+    id: string,
+    bankAccount: {
+      accountHolderName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      bankName?: string;
+    },
+  ): Promise<InstructorProfileDTO | null>;
   getInstructorRaw(email: string): Promise<IInstructor | null>;
 }

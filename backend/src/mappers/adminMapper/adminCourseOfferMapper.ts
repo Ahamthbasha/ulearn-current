@@ -27,5 +27,6 @@ export const mapToCourseOfferDetailDTO = (offer: PopulatedCourseOffer): ICourseO
     review: offer.reviews || "",
     coursePrice: offer.courseId.price,
     discountedPrice: offer.discountedPrice || offer.courseId.price * (1 - offer.discountPercentage / 100),
+    courseVerified:offer.courseId.isVerified
   };
 };

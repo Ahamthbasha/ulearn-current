@@ -24,10 +24,9 @@ const formatDateForInput = (date: string | Date): string => {
   return date.toISOString().split("T")[0];
 };
 
-// Validation schema with enhanced rules
 const validationSchema = Yup.object({
   discount: Yup.number()
-    .min(0, "Discount must be at least 0%")
+    .min(1, "Discount must be at least 1%")
     .max(100, "Discount cannot exceed 100%")
     .required("Discount percentage is required"),
   startDate: Yup.date()

@@ -25,6 +25,8 @@ export function mapToCourseResponseDto(course: any): CourseResponseDto {
     isPublished: course.isPublished,
     isListed: course.isListed,
     isVerified: course.isVerified,
+    isSubmitted:course.isSubmitted,
+    review:course.review || "",
     publishDate: course.publishDate ? formatDateTo12Hour(new Date(course.publishDate)) : undefined,
   };
 }

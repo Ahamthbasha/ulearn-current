@@ -192,6 +192,14 @@ router.get(
   )
 );
 
+router.get(
+  "/getVerifiedCourses",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorCourseController.getVerifiedInstructorCourses.bind(instructorCourseController)
+)
+
 //publish course
 
 router.patch(
@@ -201,6 +209,14 @@ router.patch(
   isInstructor,
   instructorCourseController.publishCourse.bind(instructorCourseController)
 );
+
+router.patch(
+  "/course/:courseId/submit",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorCourseController.submitCourseForVerification.bind(instructorCourseController)
+)
 
 //chapter routes
 

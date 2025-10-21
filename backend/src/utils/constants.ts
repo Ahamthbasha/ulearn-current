@@ -37,6 +37,8 @@ export const INSTRUCTOR_MESSAGES = {
 };
 
 export const AdminErrorMessages = {
+  REJECTION_REASON_REQUIRED:"Rejection reason needed",
+  INVALID_INPUT:"input invalid",
   INVALID_CREDENTIALS: "Invalid email or password.",
   EMAIL_INCORRECT: "Incorrect email.",
   PASSWORD_INCORRECT: "Incorrect password.",
@@ -716,6 +718,7 @@ export const INSTRUCTOR_ERROR_MESSAGE = {
 };
 
 export const INSTRUCTOR_SUCCESS_MESSAGE = {
+  COURSE_SUBMITTED_FOR_VERIFICATION:"course verification submitted successfully",
   COURSE_SCHEDULED : "Course scheduled for publishing",
   COURSE_PUBLISHED: "Course published successfully",
   REVIFICATION_SUBMITTED: "Reverification submitted successfully.",
