@@ -14,7 +14,7 @@ export interface IInstructorChapterService {
     courseId: string,
     chapterTitle: string,
     chapterNumber: number,
-     chapterId?: string,
+    chapterId?: string,
   ): Promise<IChapter | null>;
   paginateChapters(
     filter: object,

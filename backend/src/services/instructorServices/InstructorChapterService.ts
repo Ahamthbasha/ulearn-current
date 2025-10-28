@@ -48,13 +48,13 @@ export class InstructorChapterService implements IInstructorChapterService {
     courseId: string,
     chapterTitle: string,
     chapterNumber: number,
-     chapterId?: string,
+    chapterId?: string,
   ): Promise<IChapter | null> {
     return this._chapterRepo.findByTitleOrNumberAndCourseId(
       courseId,
       chapterTitle,
       chapterNumber,
-      chapterId
+      chapterId,
     );
   }
 

@@ -5,7 +5,7 @@ import { type IMembershipPayload } from "../../types/interfaces/IMembershipPaylo
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
 import { type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
-import type { CouponData , LearningPathDTO, LearningPathSummaryDTO} from "../../types/interfaces/IAdminInterface";
+import type { CouponData } from "../../types/interfaces/IAdminInterface";
 
 export const getAllUser = async (
   page = 1,
@@ -90,7 +90,7 @@ export const getVerificationRequestByemail = async (email: string) => {
 export const updateVerificationStatus = async (
   email: string,
   status: "approved" | "rejected",
-  reason?: string // ✅ Add this optional field
+  reason?: string
 ) => {
   try {
     const body: { email: string; status: string; reason?: string } = {
@@ -99,7 +99,7 @@ export const updateVerificationStatus = async (
     };
 
     if (status === "rejected" && reason) {
-      body.reason = reason; // ✅ Attach reason only for rejected status
+      body.reason = reason;
     }
 
     const response = await API.post(
@@ -521,7 +521,7 @@ export const getMembershipPurchaseHistory = async (
     if (search && search.trim() !== "") {
       params.search = search.trim();
     }
-    if (status && status.trim() !== "" && ["paid", "failed"].includes(status.trim())) {
+    if (status && status.trim() !== "" && ["paid", "failed","cancelled"].includes(status.trim())) {
       params.status = status.trim(); // Only allow "paid" or "failed"
     }
 
@@ -642,7 +642,6 @@ export const exportReport = async (
       new Date().toISOString().split("T")[0]
     }.${extension}`;
 
-    // Use js-file-download to handle the download
     fileDownload(response.data, filename);
 
     return { success: true };
@@ -746,46 +745,5 @@ export const verifyCourseOfferRequest = async (payload: { offerId: string; statu
   return res.data;
   } catch (error) {
     throw error
-  }
-};
-
-//learning paths
-
-export const getAdminLearningPaths = async (
-  page: number,
-  limit: number,
-  search?: string,
-  status?: string
-): Promise<{ data: LearningPathSummaryDTO[]; total: number; page: number; limit: number }> => {
-  const response = await API.get(`${AdminRoutersEndPoints.adminGetLearningPaths}`, {
-    params: { page, limit, search, status },
-  });
-  return response.data;
-};
-
-export const getAdminLearningPathById = async (
-  learningPathId: string
-): Promise<LearningPathDTO> => {
-  try {
-    const response = await API.get(`${AdminRoutersEndPoints.adminGetLearningPathById}/${learningPathId}`);
-    return response.data.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch learning path");
-  }
-};
-
-export const verifyLearningPath = async (
-  learningPathId: string,
-  status: "accepted" | "rejected",
-  adminReview: string
-): Promise<LearningPathDTO> => {
-  try {
-    const response = await API.put(
-      `${AdminRoutersEndPoints.adminVerifyLearningPath}/${learningPathId}/verify`,
-      { status, adminReview }
-    );
-    return response.data.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to verify learning path");
   }
 };

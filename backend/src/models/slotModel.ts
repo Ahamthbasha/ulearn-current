@@ -57,7 +57,7 @@ const SlotSchema = new Schema<ISlot>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export default model<ISlot>("Slot", SlotSchema);

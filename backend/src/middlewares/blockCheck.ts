@@ -4,6 +4,7 @@ import { AuthErrorMsg } from "../utils/constants";
 import { StudentRepository } from "../repositories/studentRepository/studentRepository";
 import InstructorRepository from "../repositories/instructorRepository/instructorRepository";
 import { AuthenticatedRequest } from "./authenticatedRoutes";
+import { appLogger } from "../utils/logger";
 
 export const restrictBlockedUser = async (
   req: AuthenticatedRequest,
@@ -59,7 +60,7 @@ export const restrictBlockedUser = async (
     }
     next();
   } catch (error: any) {
-    console.error("Restrict Blocked User Error:", error);
+    appLogger.error("Restrict Blocked User Error:", error);
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
     res.status(StatusCode.INTERNAL_SERVER_ERROR).json({

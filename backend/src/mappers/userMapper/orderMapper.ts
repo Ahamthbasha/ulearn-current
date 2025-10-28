@@ -1,7 +1,16 @@
-import { ICourseOrderDetails, ILearningPathOrderDetails, ICouponDetails } from "../../models/orderModel";
-import { CourseInfoDTO, CouponInfoDTO, UserInfoDTO } from "../../dto/userDTO/courseInfoDTO";
-import { LearningPathInfoDTO } from "../../dto/userDTO/orderDetailsDTO"; 
+import {
+  ICourseOrderDetails,
+  ILearningPathOrderDetails,
+  ICouponDetails,
+} from "../../models/orderModel";
+import {
+  CourseInfoDTO,
+  CouponInfoDTO,
+  UserInfoDTO,
+} from "../../dto/userDTO/courseInfoDTO";
+import { LearningPathInfoDTO } from "../../dto/userDTO/orderDetailsDTO";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { appLogger } from "../../utils/logger";
 
 export async function mapCourses(
   courses: ICourseOrderDetails[],
@@ -22,7 +31,7 @@ export async function mapCourses(
         try {
           courseInfo.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
         } catch (error) {
-          console.error(
+          appLogger.error(
             `Failed to generate pre-signed URL for course ${course.courseId}:`,
             error,
           );
@@ -41,7 +50,10 @@ export async function mapLearningPaths(
 ): Promise<LearningPathInfoDTO[]> {
   return await Promise.all(
     learningPaths.map(async (learningPath) => {
-      const coursesInfo = await mapCourses(learningPath.courses, includeThumbnail);
+      const coursesInfo = await mapCourses(
+        learningPath.courses,
+        includeThumbnail,
+      );
 
       const learningPathInfo: LearningPathInfoDTO = {
         learningPathId: learningPath.learningPathId,
@@ -54,9 +66,11 @@ export async function mapLearningPaths(
 
       if (includeThumbnail && learningPath.thumbnailUrl) {
         try {
-          learningPathInfo.thumbnailUrl = await getPresignedUrl(learningPath.thumbnailUrl);
+          learningPathInfo.thumbnailUrl = await getPresignedUrl(
+            learningPath.thumbnailUrl,
+          );
         } catch (error) {
-          console.error(
+          appLogger.error(
             `Failed to generate pre-signed URL for learning path ${learningPath.learningPathId}:`,
             error,
           );

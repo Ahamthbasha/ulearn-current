@@ -4,6 +4,7 @@ import { JwtService } from "../utils/jwt";
 import { AuthErrorMsg } from "../utils/constants";
 import { StatusCode } from "../utils/enums";
 import dotenv from "dotenv";
+import { appLogger } from "../utils/logger";
 
 dotenv.config();
 
@@ -28,7 +29,7 @@ const authenticateToken = async (
   const refreshToken = req.cookies["refreshToken"];
 
   if (!accessToken) {
-    console.log("❌ No accessToken found in cookies");
+    appLogger.info("❌ No accessToken found in cookies");
     return res
       .status(StatusCode.UNAUTHORIZED)
       .json({ failToken: true, message: AuthErrorMsg.NO_ACCESS_TOKEN });
@@ -79,7 +80,7 @@ const authenticateToken = async (
           role: refreshPayload.role,
         });
 
-        console.log("new Access Token", newAccessToken);
+        appLogger.info("new Access Token", newAccessToken);
 
         res.cookie("accessToken", newAccessToken, {
           httpOnly: true,

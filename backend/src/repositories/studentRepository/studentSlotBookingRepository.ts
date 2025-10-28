@@ -72,8 +72,9 @@ export class StudentSlotBookingRepository
     searchQuery?: string,
     populate: PopulateOptions[] = [],
   ): Promise<{ data: IBooking[]; total: number }> {
-    const baseFilter = { studentId: new Types.ObjectId(studentId) ,
-       status:{$in:["confirmed","pending","failed"]}
+    const baseFilter = {
+      studentId: new Types.ObjectId(studentId),
+      status: { $in: ["confirmed", "pending", "failed"] },
     };
 
     if (!searchQuery || !searchQuery.trim()) {

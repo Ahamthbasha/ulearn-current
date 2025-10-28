@@ -9,8 +9,16 @@ export interface IStudentLmsRepo extends IGenericRepository<ILearningPath> {
     page?: number,
     limit?: number,
     category?: string,
-    sort?: "name-asc" | "name-desc" | "price-asc" | "price-desc"
-  ): Promise<{ paths: ILearningPath[]; total: number; offers: Map<string, ICourseOffer> }>;
-  getLearningPathById(pathId: Types.ObjectId): Promise<{ path: ILearningPath | null; offers: Map<string, ICourseOffer> }>;
-  getLearningPathsByIds(ids: Types.ObjectId[]): Promise<{ paths: ILearningPath[]; offers: Map<string, ICourseOffer> }>;
+    sort?: "name-asc" | "name-desc" | "price-asc" | "price-desc",
+  ): Promise<{
+    paths: ILearningPath[];
+    total: number;
+    offers: Map<string, ICourseOffer>;
+  }>;
+  getLearningPathById(
+    pathId: Types.ObjectId,
+  ): Promise<{ path: ILearningPath | null; offers: Map<string, ICourseOffer> }>;
+  getLearningPathsByIds(
+    ids: Types.ObjectId[],
+  ): Promise<{ paths: ILearningPath[]; offers: Map<string, ICourseOffer> }>;
 }

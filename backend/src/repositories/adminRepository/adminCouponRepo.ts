@@ -3,7 +3,10 @@ import { CouponModel, ICoupon } from "../../models/couponModel";
 import { IAdminCouponRepo } from "./interface/IAdminCouponRepo";
 import { GenericRepository } from "../genericRepository";
 
-export class AdminCouponRepo extends GenericRepository<ICoupon> implements IAdminCouponRepo {
+export class AdminCouponRepo
+  extends GenericRepository<ICoupon>
+  implements IAdminCouponRepo
+{
   constructor() {
     super(CouponModel);
   }
@@ -16,17 +19,23 @@ export class AdminCouponRepo extends GenericRepository<ICoupon> implements IAdmi
     }
   }
 
-  async getAllCoupons(page: number, limit: number, searchCode?: string): Promise<{ coupons: ICoupon[], total: number }> {
+  async getAllCoupons(
+    page: number,
+    limit: number,
+    searchCode?: string,
+  ): Promise<{ coupons: ICoupon[]; total: number }> {
     try {
       let query: any = {};
       if (searchCode && searchCode.trim()) {
-        query.code = { 
-          $regex: searchCode.trim(), 
-          $options: 'i' 
+        query.code = {
+          $regex: searchCode.trim(),
+          $options: "i",
         };
       }
-      
-      const { data, total } = await this.paginate(query, page, limit, { createdAt: -1 });
+
+      const { data, total } = await this.paginate(query, page, limit, {
+        createdAt: -1,
+      });
       return { coupons: data, total };
     } catch (error: any) {
       throw new Error(`Failed to fetch coupons: ${error.message}`);
@@ -49,7 +58,10 @@ export class AdminCouponRepo extends GenericRepository<ICoupon> implements IAdmi
     }
   }
 
-  async updateCoupon(id: Types.ObjectId, couponData: Partial<ICoupon>): Promise<ICoupon | null> {
+  async updateCoupon(
+    id: Types.ObjectId,
+    couponData: Partial<ICoupon>,
+  ): Promise<ICoupon | null> {
     try {
       return await this.update(id.toString(), couponData);
     } catch (error: any) {
@@ -66,7 +78,10 @@ export class AdminCouponRepo extends GenericRepository<ICoupon> implements IAdmi
     }
   }
 
-  async toggleCouponStatus(id: Types.ObjectId, status: boolean): Promise<ICoupon | null> {
+  async toggleCouponStatus(
+    id: Types.ObjectId,
+    status: boolean,
+  ): Promise<ICoupon | null> {
     try {
       return await this.update(id.toString(), { status });
     } catch (error: any) {

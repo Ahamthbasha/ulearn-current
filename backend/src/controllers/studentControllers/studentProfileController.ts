@@ -9,6 +9,7 @@ import {
 } from "../../utils/constants";
 import bcrypt from "bcrypt";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
+import { appLogger } from "../../utils/logger";
 
 export class StudentProfileController implements IStudentProfileController {
   private _studentProfileService: IStudentProfileService;
@@ -47,7 +48,7 @@ export class StudentProfileController implements IStudentProfileController {
         data: studentDTO,
       });
     } catch (error) {
-      console.error("getProfile error:", error);
+      appLogger.error("getProfile error:", error);
       res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: StudentErrorMessages.TOKEN_INVALID,
@@ -106,7 +107,7 @@ export class StudentProfileController implements IStudentProfileController {
         data: updatedDTO,
       });
     } catch (error) {
-      console.error("updateProfile error:", error);
+      appLogger.error("updateProfile error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.INTERNAL_ERROR,
@@ -167,7 +168,7 @@ export class StudentProfileController implements IStudentProfileController {
         message: StudentSuccessMessages.PASSWORD_UPDATED,
       });
     } catch (error) {
-      console.error("updatePassword error:", error);
+      appLogger.error("updatePassword error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.INTERNAL_ERROR,

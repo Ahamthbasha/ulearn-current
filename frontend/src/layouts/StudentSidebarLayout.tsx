@@ -15,6 +15,7 @@ const navItems = [
   { name: "Settings", path: "/user/profile", icon: "⚙️" },
   { name: "Wallet", path: "/user/wallet", icon: "💵" },
   { name: "Order", path: "/user/order", icon: "📦" },
+  { name: "CreateLMS", path: "/user/createdLms", icon: "🗺️" },
 ];
 
 const StudentSidebarLayout = () => {

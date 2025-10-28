@@ -6,6 +6,7 @@ import {
   AdminErrorMessages,
   AdminSuccessMessages,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class AdminCourseController implements IAdminCourseController {
   private _adminCourseService: IAdminCourseService;
@@ -34,7 +35,7 @@ export class AdminCourseController implements IAdminCourseController {
         limit: parsedLimit,
       });
     } catch (error) {
-      console.error("Error fetching courses:", error);
+      appLogger.error("Error fetching courses:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -62,7 +63,7 @@ export class AdminCourseController implements IAdminCourseController {
         data: courseDetailsDTO,
       });
     } catch (error) {
-      console.error("Error fetching course details:", error);
+      appLogger.error("Error fetching course details:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -93,7 +94,7 @@ export class AdminCourseController implements IAdminCourseController {
         .status(StatusCode.OK)
         .json({ success: true, message, data: updatedCourseDTO });
     } catch (error) {
-      console.error("Error toggling listing status:", error);
+      appLogger.error("Error toggling listing status:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -144,7 +145,7 @@ export class AdminCourseController implements IAdminCourseController {
         .status(StatusCode.OK)
         .json({ success: true, message, data: updatedCourseDTO });
     } catch (error) {
-      console.error("Error verifying course:", error);
+      appLogger.error("Error verifying course:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,

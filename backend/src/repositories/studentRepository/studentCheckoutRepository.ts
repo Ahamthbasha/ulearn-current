@@ -81,10 +81,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     session?: mongoose.ClientSession,
   ): Promise<IEnrollment[]> {
     if (session) {
-      return this._enrollmentRepo.createManyWithSession(
-        enrollments,
-        session,
-      );
+      return this._enrollmentRepo.createManyWithSession(enrollments, session);
     }
     return this._enrollmentRepo.createMany(enrollments);
   }
@@ -162,8 +159,11 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
             const courseId = course._id.toString();
             const offer = offerMap.get(courseId);
             const price = offer
-              ? Math.floor(course.price * (100 - offer.discountPercentage) / 100 * 100) / 100
-              : course.effectivePrice ?? course.price;
+              ? Math.floor(
+                  ((course.price * (100 - offer.discountPercentage)) / 100) *
+                    100,
+                ) / 100
+              : (course.effectivePrice ?? course.price);
             totalPrice += price;
           }
         }
@@ -172,7 +172,7 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
           name: path.title,
           totalPrice: Math.floor(totalPrice * 100) / 100,
         };
-      })
+      }),
     );
 
     return result;
@@ -233,8 +233,8 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
       p.items.map((item) =>
         item.courseId instanceof Types.ObjectId
           ? item.courseId
-          : item.courseId._id
-      )
+          : item.courseId._id,
+      ),
     );
   }
 
@@ -311,17 +311,19 @@ export class StudentCheckoutRepository implements IStudentCheckoutRepository {
     courseIds: Types.ObjectId[],
     session?: mongoose.ClientSession,
   ): Promise<Map<string, ICourseOffer>> {
-    const courseIdStrings = courseIds.map(id => id.toString());
+    const courseIdStrings = courseIds.map((id) => id.toString());
     let offers: ICourseOffer[] = [];
 
     if (session) {
-      offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIdStrings);
+      offers =
+        await this._courseOfferRepo.findValidOffersByCourseIds(courseIdStrings);
     } else {
-      offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIdStrings);
+      offers =
+        await this._courseOfferRepo.findValidOffersByCourseIds(courseIdStrings);
     }
 
     return new Map<string, ICourseOffer>(
-      offers.map((offer: ICourseOffer) => [offer.courseId.toString(), offer])
+      offers.map((offer: ICourseOffer) => [offer.courseId.toString(), offer]),
     );
   }
 }

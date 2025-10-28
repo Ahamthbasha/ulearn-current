@@ -32,7 +32,6 @@ export class AdminMembershipOrderService
     razorpayOrderId: string,
   ): Promise<InstructorMembershipOrderDTO> {
     const order = await this._orderRepo.findByTxnId(razorpayOrderId);
-    console.log(order);
     if (!order) {
       throw new Error("Order not found");
     }

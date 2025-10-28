@@ -7,29 +7,30 @@ import {
   ResponseError,
 } from "../../utils/constants";
 import { IEmail } from "../../types/Email";
+import { BadRequestError, NotFoundError } from "../../utils/error";
+import { appLogger } from "../../utils/logger";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
+import IAdminVerificationController from "./interface/IAdminVerificationController";
 
-export class AdminVerificationController {
-  private _verificationService: IAdminVerificationService;
-  private _emailService: IEmail;
-
+export class AdminVerificationController implements IAdminVerificationController {
   constructor(
-    verificationService: IAdminVerificationService,
-    emailService: IEmail,
-  ) {
-    this._verificationService = verificationService;
-    this._emailService = emailService;
-  }
+    private readonly verificationService: IAdminVerificationService,
+    private readonly emailService: IEmail
+  ) {}
 
   async getAllRequests(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.max(
+        1,
+        Math.min(100, parseInt(req.query.limit as string) || 10)
+      );
       const search = (req.query.search as string) || "";
 
-      const { data, total } = await this._verificationService.getAllRequests(
+      const { data, total } = await this.verificationService.getAllRequests(
         page,
         limit,
-        search,
+        search
       );
 
       res.status(StatusCode.OK).json({
@@ -40,35 +41,36 @@ export class AdminVerificationController {
         page,
         totalPages: Math.ceil(total / limit),
       });
-    } catch (error: any) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message:
-          error.message || AdminErrorMessages.ADMIN_VERIFICATION_FETCH_ERROR,
-      });
+    } catch (error) {
+      appLogger.error("Error getting all verification requests", { error });
+      handleControllerError(error, res);
     }
   }
 
   async getRequestData(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.params;
-      const requestData =
-        await this._verificationService.getRequestDataByEmail(email);
-
-      if (!requestData) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND,
-        });
-        return;
+      
+      if (!email) {
+        throw new BadRequestError("Email parameter is required");
       }
 
-      res.status(StatusCode.OK).json({ data: requestData });
-    } catch (error: any) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: error.message,
+      const requestData =
+        await this.verificationService.getRequestDataByEmail(email);
+
+      if (!requestData) {
+        throw new NotFoundError(
+          AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND
+        );
+      }
+
+      res.status(StatusCode.OK).json({ 
+        success: true, 
+        data: requestData 
       });
+    } catch (error) {
+      appLogger.error("Error getting verification request data", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -76,54 +78,55 @@ export class AdminVerificationController {
     try {
       const { email, status, reason } = req.body;
 
-      const approvedRequest = await this._verificationService.approveRequest(
+      // Validation
+      if (!email || !status) {
+        throw new BadRequestError("Email and status are required");
+      }
+
+      if (status !== "approved" && status !== "rejected") {
+        throw new BadRequestError(
+          AdminErrorMessages.ADMIN_INVALID_REQUEST_STATUS
+        );
+      }
+
+      if (status === "rejected" && !reason) {
+        throw new BadRequestError(
+          AdminErrorMessages.ADMIN_VERIFICATION_REJECTION
+        );
+      }
+
+      const approvedRequest = await this.verificationService.approveRequest(
         email,
         status,
-        reason,
+        reason
       );
 
       if (!approvedRequest) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND,
-        });
-        return;
+        throw new NotFoundError("Verification request not found");
       }
 
       const name = approvedRequest.username;
 
       if (status === "approved") {
-        await this._emailService.sendVerificationSuccessEmail(name, email);
+        await this.emailService.sendVerificationSuccessEmail(name, email);
         res.status(StatusCode.OK).json({
           success: true,
           message: ResponseError.APPROVE_INSTRUCTOR,
           data: approvedRequest,
         });
-      } else if (status === "rejected") {
-        if (!reason) {
-          res.status(StatusCode.BAD_REQUEST).json({
-            success: false,
-            message: AdminErrorMessages.ADMIN_VERIFICATION_REJECTION,
-          });
-          return;
-        }
-
-        await this._emailService.sendRejectionEmail(name, email, reason);
+      } else {
+        await this.emailService.sendRejectionEmail(name, email, reason);
         res.status(StatusCode.OK).json({
           success: true,
           message: ResponseError.REJECT_INSTRUCTOR,
           data: approvedRequest,
         });
-      } else {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: AdminErrorMessages.ADMIN_INVALID_REQUEST_STATUS,
-        });
       }
-    } catch (error: any) {
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
+    } catch (error) {
+      appLogger.error("Error approving/rejecting verification request", { 
+        error 
+      });
+      handleControllerError(error, res);
     }
   }
 }

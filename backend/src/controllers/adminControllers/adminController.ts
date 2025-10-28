@@ -9,6 +9,7 @@ import {
   ResponseError,
 } from "../../utils/constants";
 import { IJwtService } from "../../services/interface/IJwtService";
+import { appLogger } from "../../utils/logger";
 
 config();
 
@@ -76,6 +77,7 @@ export class AdminController implements IAdminController {
           },
         });
     } catch (error) {
+      appLogger.error("Admin login error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -96,7 +98,7 @@ export class AdminController implements IAdminController {
       throw error;
     }
   }
-  async getAllUsers(req: Request, res: Response): Promise<any> {
+  async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -108,7 +110,7 @@ export class AdminController implements IAdminController {
         search,
       );
 
-      return res.status(StatusCode.OK).json({
+      res.status(StatusCode.OK).json({
         success: true,
         message:
           users.length > 0
@@ -119,16 +121,18 @@ export class AdminController implements IAdminController {
         page,
         totalPages: Math.ceil(total / limit),
       });
+      return
     } catch (error) {
-      console.error("Error fetching users:", error);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      appLogger.error("Error fetching users:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.FETCH_ERROR,
       });
+      return
     }
   }
 
-  async getAllInstructors(req: Request, res: Response): Promise<any> {
+  async getAllInstructors(req: Request, res: Response): Promise<void> {
     try {
       const { page = 1, limit = 10, search = "" } = req.query;
 
@@ -138,7 +142,7 @@ export class AdminController implements IAdminController {
         String(search),
       );
 
-      return res.status(StatusCode.OK).json({
+      res.status(StatusCode.OK).json({
         success: true,
         message:
           instructors.length > 0
@@ -149,26 +153,29 @@ export class AdminController implements IAdminController {
         page: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
       });
+      return
     } catch (error) {
-      console.error("Error fetching instructors:", error);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      appLogger.error("Error fetching instructors:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.FETCH_ERROR,
       });
+      return
     }
   }
 
-  async blockUser(req: Request, res: Response): Promise<any> {
+  async blockUser(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.params;
 
       const userData = await this._adminService.getUserData(email);
 
       if (!userData) {
-        return res.status(StatusCode.NOT_FOUND).json({
+        res.status(StatusCode.NOT_FOUND).json({
           success: false,
           message: ResponseError.USER_NOT_FOUND,
         });
+        return
       }
 
       const emailId = userData.email;
@@ -178,30 +185,34 @@ export class AdminController implements IAdminController {
         isBlocked,
       });
 
-      return res.status(StatusCode.OK).json({
+      res.status(StatusCode.OK).json({
         success: true,
         message: userStatus?.isBlocked
           ? ResponseError.ACCOUNT_BLOCKED
           : ResponseError.ACCOUNT_UNBLOCKED,
       });
+      return
     } catch (error) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      appLogger.error("Error blocking user", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.INTERNAL_SERVER_ERROR,
       });
+      return
     }
   }
 
-  async blockInstructor(req: Request, res: Response): Promise<any> {
+  async blockInstructor(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.params;
       const userData = await this._adminService.getInstructorData(email);
 
       if (!userData) {
-        return res.status(StatusCode.NOT_FOUND).json({
+        res.status(StatusCode.NOT_FOUND).json({
           success: false,
           message: ResponseError.NOT_FOUND,
         });
+        return
       }
 
       const emailId = userData.email;
@@ -212,17 +223,20 @@ export class AdminController implements IAdminController {
         { isBlocked },
       );
 
-      return res.status(StatusCode.OK).json({
+      res.status(StatusCode.OK).json({
         success: true,
         message: userStatus?.isBlocked
           ? ResponseError.ACCOUNT_BLOCKED
           : ResponseError.ACCOUNT_UNBLOCKED,
       });
+      return
     } catch (error) {
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      appLogger.error("Error blocking instructor", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.INTERNAL_SERVER_ERROR,
       });
+      return
     }
   }
 }

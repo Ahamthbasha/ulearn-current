@@ -16,5 +16,9 @@ export interface IInstructorCourseController {
     next: NextFunction,
   ): Promise<void>;
   publishCourse(req: Request, res: Response, next: NextFunction): Promise<void>;
-  submitCourseForVerification(req: Request, res: Response, next: NextFunction): Promise<void>;
+  submitCourseForVerification(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void>;
 }

@@ -5,6 +5,7 @@ import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IAdminWalletController } from "./interface/IAdminWalletController";
 import { AdminErrorMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class AdminWalletController implements IAdminWalletController {
   private _walletService: IWalletService;
@@ -18,7 +19,7 @@ export class AdminWalletController implements IAdminWalletController {
       const wallet = await this._walletService.getWallet(ownerId);
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("admin getting wallet error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.ADMIN_FAILED_TO_FETCH_WALLET,
@@ -38,7 +39,7 @@ export class AdminWalletController implements IAdminWalletController {
       );
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("admin credit wallet error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.ADMIN_FAILED_TO_CREDIT_WALLET,
@@ -68,7 +69,7 @@ export class AdminWalletController implements IAdminWalletController {
 
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("admin debit wallet error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.ADMIN_FAILED_TO_DEBIT_WALLET,
@@ -104,7 +105,7 @@ export class AdminWalletController implements IAdminWalletController {
         },
       });
     } catch (error) {
-      console.error("Failed to fetch admin wallet transactions:", error);
+      appLogger.error("Failed to fetch admin wallet transactions:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.ADMIN_FAILED_TO_FETCH_TRANSACTIONS,

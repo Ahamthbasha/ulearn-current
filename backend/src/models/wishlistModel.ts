@@ -34,10 +34,14 @@ const wishlistSchema = new Schema<IWishlist>(
 // Ensure only one of courseId or learningPathId is set
 wishlistSchema.pre("save", function (next) {
   if (this.courseId && this.learningPathId) {
-    return next(new Error("Wishlist item cannot have both courseId and learningPathId"));
+    return next(
+      new Error("Wishlist item cannot have both courseId and learningPathId"),
+    );
   }
   if (!this.courseId && !this.learningPathId) {
-    return next(new Error("Wishlist item must have either courseId or learningPathId"));
+    return next(
+      new Error("Wishlist item must have either courseId or learningPathId"),
+    );
   }
   next();
 });

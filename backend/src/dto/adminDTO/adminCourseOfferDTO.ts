@@ -22,16 +22,16 @@ export interface ICourseOfferDetailDTO {
   endDate: string;
   status: "pending" | "approved" | "rejected";
   review: string;
-  coursePrice : number;
-  discountedPrice : number;
-  courseVerified:boolean;
+  coursePrice: number;
+  discountedPrice: number;
+  courseVerified: boolean;
 }
 
 interface PopulatedCourse {
   _id: Types.ObjectId;
   courseName: string;
   price: number;
-  isVerified:boolean
+  isVerified: boolean;
 }
 
 interface PopulatedInstructor {
@@ -40,7 +40,8 @@ interface PopulatedInstructor {
   email: string;
 }
 
-export interface PopulatedCourseOffer extends Omit<ICourseOffer, "courseId" | "instructorId"> {
+export interface PopulatedCourseOffer
+  extends Omit<ICourseOffer, "courseId" | "instructorId"> {
   courseId: PopulatedCourse;
   instructorId: PopulatedInstructor;
 }

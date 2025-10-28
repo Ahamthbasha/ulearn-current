@@ -50,7 +50,6 @@ export async function uploadToS3Bucket(
 
     return uploadedResult.Key;
   } catch (error: any) {
-    console.error("s3 upload failed", error.message);
     throw error;
   }
 }

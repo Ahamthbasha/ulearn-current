@@ -8,7 +8,7 @@ import { type CartItemDTO } from "../../../types/interfaces/IStudentInterface";
 const CartPage = () => {
   const [items, setItems] = useState<CartItemDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isRemoving, setIsRemoving] = useState<string | null>(null); // Track removal loading state
+  const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +27,7 @@ const CartPage = () => {
           if (item.type === "course" && item.isAlreadyEnrolled) {
             return `"${item.title}" is already enrolled and will not be charged.`;
           }
-          if (item.type === "learningPath" && item.enrolledCourses?.length) {
+          if (item.type === "learningPath" && item.enrolledCourses && item.enrolledCourses.length > 0) {
             return `Some courses in "${item.title}" are already enrolled and will not be charged.`;
           }
           if (item.type === "learningPath" && item.price === 0) {
@@ -67,7 +67,6 @@ const CartPage = () => {
     }
   };
 
-  // Adjusted totalPrice to exclude prices of enrolled courses
   const totalPrice = items.reduce((sum, item) => {
     if (item.isAlreadyEnrolled && item.type === "course") return sum;
     return sum + item.price;
@@ -95,7 +94,7 @@ const CartPage = () => {
               Browse Courses
             </button>
             <button
-              onClick={() => navigate("/user/lms")}
+              onClick={() => navigate("/user/createdLms")}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg shadow-md text-sm sm:text-base w-full sm:w-auto mt-4 sm:mt-0 sm:ml-4"
             >
               Browse Learning Paths
@@ -133,7 +132,7 @@ const CartPage = () => {
                               Already enrolled - no additional cost
                             </div>
                           )}
-                          {item.type === "learningPath" && item.enrolledCourses?.length && (
+                          {item.type === "learningPath" && item.enrolledCourses && item.enrolledCourses.length > 0 && (
                             <div className="text-xs text-green-600 mt-1">
                               Some courses already enrolled - excluded from total
                             </div>
@@ -192,7 +191,7 @@ const CartPage = () => {
                 Browse Courses
               </button>
               <button
-                onClick={() => navigate("/user/lms")}
+                onClick={() => navigate("/user/createdLms")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg shadow-md text-sm sm:text-base w-full sm:w-auto"
               >
                 Browse Learning Paths

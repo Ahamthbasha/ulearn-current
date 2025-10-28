@@ -4,6 +4,7 @@ import { IInstructorMembershipService } from "../../services/instructorServices/
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorMembershipController
   implements IInstructorMembershipController
@@ -18,7 +19,7 @@ export class InstructorMembershipController
       const plans = await this._membershipService.getAvailablePlans();
       res.status(StatusCode.OK).json(plans);
     } catch (err) {
-      console.error("Error fetching membership plans:", err);
+      appLogger.error("Error fetching membership plans:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG,
       });
@@ -44,7 +45,7 @@ export class InstructorMembershipController
 
       res.status(StatusCode.OK).json({ isMentor: instructor.isMentor });
     } catch (err) {
-      console.error("Error getting mentor status:", err);
+      appLogger.error("Error getting mentor status:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG,
       });
@@ -66,7 +67,7 @@ export class InstructorMembershipController
         await this._membershipService.getMembershipStatus(instructorId);
       res.status(StatusCode.OK).json(status);
     } catch (err) {
-      console.error("Error fetching membership status:", err);
+      appLogger.error("Error fetching membership status:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: INSTRUCTOR_MEMBERSHIP_ERROR_MESSAGE.SOMETHING_WENT_WRONG,
       });

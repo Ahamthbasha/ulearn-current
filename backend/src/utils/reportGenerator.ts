@@ -15,7 +15,7 @@ export interface LearningPathData {
 
 export interface ReportData {
   orderId: string;
-  date: string; 
+  date: string;
   instructorRevenue: number;
   totalOrderAmount: number;
   couponCode: string;
@@ -51,11 +51,15 @@ export async function generateExcelReport(
     order.standaloneCourse.forEach((course) => {
       const courseInstructorRevenue = course.standAloneCourseTotalPrice * 0.9;
       sheet.addRow({
-        orderInfo: isFirstRow ? `Order ID: ${order.orderId}, Date: ${order.date}, Total: ${order.totalOrderAmount.toFixed(2)}, Coupon: ${order.couponCode} (${order.couponDiscount}%), Discount: ${order.couponDiscountAmount.toFixed(2)}` : "",
+        orderInfo: isFirstRow
+          ? `Order ID: ${order.orderId}, Date: ${order.date}, Total: ${order.totalOrderAmount.toFixed(2)}, Coupon: ${order.couponCode} (${order.couponDiscount}%), Discount: ${order.couponDiscountAmount.toFixed(2)}`
+          : "",
         itemName: course.courseName,
         type: "Course",
         finalPrice: course.standAloneCourseTotalPrice,
-        coupon: isFirstRow ? `${order.couponCode} (${order.couponDiscount}%) ${order.couponDiscountAmount.toFixed(2)}` : "",
+        coupon: isFirstRow
+          ? `${order.couponCode} (${order.couponDiscount}%) ${order.couponDiscountAmount.toFixed(2)}`
+          : "",
         instructorRevenue: courseInstructorRevenue,
       });
 
@@ -70,11 +74,15 @@ export async function generateExcelReport(
     order.learningPath.forEach((lp) => {
       const lpInstructorRevenue = lp.learningPathTotalPrice * 0.9;
       sheet.addRow({
-        orderInfo: isFirstRow ? `Order ID: ${order.orderId}, Date: ${order.date}, Total: ${order.totalOrderAmount.toFixed(2)}, Coupon: ${order.couponCode} (${order.couponDiscount}%), Discount: ${order.couponDiscountAmount.toFixed(2)}` : "",
+        orderInfo: isFirstRow
+          ? `Order ID: ${order.orderId}, Date: ${order.date}, Total: ${order.totalOrderAmount.toFixed(2)}, Coupon: ${order.couponCode} (${order.couponDiscount}%), Discount: ${order.couponDiscountAmount.toFixed(2)}`
+          : "",
         itemName: lp.learningPathName,
         type: "Learning Path",
         finalPrice: lp.learningPathTotalPrice,
-        coupon: isFirstRow ? `${order.couponCode} (${order.couponDiscount}%) ${order.couponDiscountAmount.toFixed(2)}` : "",
+        coupon: isFirstRow
+          ? `${order.couponCode} (${order.couponDiscount}%) ${order.couponDiscountAmount.toFixed(2)}`
+          : "",
         instructorRevenue: lpInstructorRevenue,
       });
 
@@ -128,7 +136,7 @@ export async function generatePdfReport(
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
   const margin = 40;
-  const contentWidth = pageWidth - (margin * 2);
+  const contentWidth = pageWidth - margin * 2;
 
   // Header Section with Background
   doc.rect(0, 0, pageWidth, 100).fill("#4A90E2");
@@ -155,7 +163,9 @@ export async function generatePdfReport(
     hour12: true,
     timeZone: "Asia/Kolkata",
   });
-  doc.fontSize(9).text(`Generated on: ${reportDate} IST`, margin, 80, { align: "left" });
+  doc
+    .fontSize(9)
+    .text(`Generated on: ${reportDate} IST`, margin, 80, { align: "left" });
 
   // Move below header
   doc.fillColor("black");
@@ -185,23 +195,54 @@ export async function generatePdfReport(
   const summaryY = 120;
   const cardSpacing = 10;
   const cardsPerRow = 3;
-  const cardWidth = (contentWidth - (cardSpacing * (cardsPerRow - 1))) / cardsPerRow;
+  const cardWidth =
+    (contentWidth - cardSpacing * (cardsPerRow - 1)) / cardsPerRow;
   const cardHeight = 70;
 
   const summaryCards = [
-    { label: "Total Orders", value: totalOrders.toString(), color: "#4A90E2", bg: "#E8F4F8" },
-    { label: "Course Sales", value: totalCourseSales.toString(), color: "#FF9800", bg: "#FFF4E6" },
-    { label: "LP Sales", value: totalLearningPathSales.toString(), color: "#4CAF50", bg: "#E8F5E9" },
-    { label: "Total Discount", value: totalDiscount.toFixed(2), color: "#9C27B0", bg: "#F3E5F5" },
-    { label: "Order Amount", value: totalOrderAmount.toFixed(2), color: "#FF5722", bg: "#FBE9E7" },
-    { label: "Your Revenue", value: totalRevenue.toFixed(2), color: "#4CAF50", bg: "#E8F5E9" },
+    {
+      label: "Total Orders",
+      value: totalOrders.toString(),
+      color: "#4A90E2",
+      bg: "#E8F4F8",
+    },
+    {
+      label: "Course Sales",
+      value: totalCourseSales.toString(),
+      color: "#FF9800",
+      bg: "#FFF4E6",
+    },
+    {
+      label: "LP Sales",
+      value: totalLearningPathSales.toString(),
+      color: "#4CAF50",
+      bg: "#E8F5E9",
+    },
+    {
+      label: "Total Discount",
+      value: totalDiscount.toFixed(2),
+      color: "#9C27B0",
+      bg: "#F3E5F5",
+    },
+    {
+      label: "Order Amount",
+      value: totalOrderAmount.toFixed(2),
+      color: "#FF5722",
+      bg: "#FBE9E7",
+    },
+    {
+      label: "Your Revenue",
+      value: totalRevenue.toFixed(2),
+      color: "#4CAF50",
+      bg: "#E8F5E9",
+    },
   ];
 
   summaryCards.forEach((card, index) => {
     const row = Math.floor(index / cardsPerRow);
     const col = index % cardsPerRow;
-    const x = margin + (col * (cardWidth + cardSpacing));
-    const y = summaryY + (row * (cardHeight + cardSpacing));
+    const x = margin + col * (cardWidth + cardSpacing);
+    const y = summaryY + row * (cardHeight + cardSpacing);
 
     // Card background
     doc
@@ -231,14 +272,17 @@ export async function generatePdfReport(
   });
 
   // Table starts after cards
-  const tableTop = summaryY + (Math.ceil(summaryCards.length / cardsPerRow) * (cardHeight + cardSpacing)) + 20;
+  const tableTop =
+    summaryY +
+    Math.ceil(summaryCards.length / cardsPerRow) * (cardHeight + cardSpacing) +
+    20;
   let currentY = tableTop;
 
   // Responsive column widths based on content width
   const colWidths = {
     orderId: contentWidth * 0.12,
-    date: contentWidth * 0.10,
-    item: contentWidth * 0.30,
+    date: contentWidth * 0.1,
+    item: contentWidth * 0.3,
     type: contentWidth * 0.12,
     price: contentWidth * 0.12,
     coupon: contentWidth * 0.12,
@@ -250,9 +294,27 @@ export async function generatePdfReport(
     date: margin + colWidths.orderId,
     item: margin + colWidths.orderId + colWidths.date,
     type: margin + colWidths.orderId + colWidths.date + colWidths.item,
-    price: margin + colWidths.orderId + colWidths.date + colWidths.item + colWidths.type,
-    coupon: margin + colWidths.orderId + colWidths.date + colWidths.item + colWidths.type + colWidths.price,
-    revenue: margin + colWidths.orderId + colWidths.date + colWidths.item + colWidths.type + colWidths.price + colWidths.coupon,
+    price:
+      margin +
+      colWidths.orderId +
+      colWidths.date +
+      colWidths.item +
+      colWidths.type,
+    coupon:
+      margin +
+      colWidths.orderId +
+      colWidths.date +
+      colWidths.item +
+      colWidths.type +
+      colWidths.price,
+    revenue:
+      margin +
+      colWidths.orderId +
+      colWidths.date +
+      colWidths.item +
+      colWidths.type +
+      colWidths.price +
+      colWidths.coupon,
   };
 
   // Function to draw table header
@@ -297,14 +359,14 @@ export async function generatePdfReport(
   // Draw table rows
   data.forEach((order, orderIndex) => {
     const allItems = [
-      ...order.standaloneCourse.map(course => ({
-        type: 'course' as const,
+      ...order.standaloneCourse.map((course) => ({
+        type: "course" as const,
         name: course.courseName,
         price: course.standAloneCourseTotalPrice,
         revenue: course.standAloneCourseTotalPrice * 0.9,
       })),
-      ...order.learningPath.map(lp => ({
-        type: 'lp' as const,
+      ...order.learningPath.map((lp) => ({
+        type: "lp" as const,
         name: lp.learningPathName,
         price: lp.learningPathTotalPrice,
         revenue: lp.learningPathTotalPrice * 0.9,
@@ -354,11 +416,16 @@ export async function generatePdfReport(
       });
 
       // Type
-      doc.text(item.type === 'course' ? 'Course' : 'LP', colPositions.type + 5, currentY + 8, {
-        width: colWidths.type - 10,
-        align: "center",
-        lineBreak: false,
-      });
+      doc.text(
+        item.type === "course" ? "Course" : "LP",
+        colPositions.type + 5,
+        currentY + 8,
+        {
+          width: colWidths.type - 10,
+          align: "center",
+          lineBreak: false,
+        },
+      );
 
       // Price
       doc.text(item.price.toFixed(2), colPositions.price + 5, currentY + 8, {
@@ -369,9 +436,10 @@ export async function generatePdfReport(
 
       // Coupon (only for first item)
       if (isFirstItem) {
-        const couponText = order.couponCode !== 'N/A' 
-          ? `${order.couponCode}\n${order.couponDiscount}% (-${order.couponDiscountAmount.toFixed(2)})`
-          : 'N/A';
+        const couponText =
+          order.couponCode !== "N/A"
+            ? `${order.couponCode}\n${order.couponDiscount}% (-${order.couponDiscountAmount.toFixed(2)})`
+            : "N/A";
         doc
           .fillColor("#FF9800")
           .fontSize(7)
@@ -415,10 +483,15 @@ export async function generatePdfReport(
     });
   doc
     .fontSize(14)
-    .text(totalRevenue.toFixed(2), margin + contentWidth * 0.55, currentY + 10, {
-      width: contentWidth * 0.45,
-      align: "right",
-    });
+    .text(
+      totalRevenue.toFixed(2),
+      margin + contentWidth * 0.55,
+      currentY + 10,
+      {
+        width: contentWidth * 0.45,
+        align: "right",
+      },
+    );
 
   currentY += 40;
 
@@ -434,44 +507,43 @@ export async function generatePdfReport(
     });
   doc
     .fontSize(14)
-    .text(totalOrderAmount.toFixed(2), margin + contentWidth * 0.55, currentY + 10, {
-      width: contentWidth * 0.45,
-      align: "right",
-    });
+    .text(
+      totalOrderAmount.toFixed(2),
+      margin + contentWidth * 0.55,
+      currentY + 10,
+      {
+        width: contentWidth * 0.45,
+        align: "right",
+      },
+    );
 
   // Footer on all pages
   const pageCount = doc.bufferedPageRange().count;
   for (let i = 0; i < pageCount; i++) {
     doc.switchToPage(i);
-    
+
     // Footer line
     doc
       .moveTo(margin, pageHeight - 35)
       .lineTo(pageWidth - margin, pageHeight - 35)
       .stroke("#E0E0E0");
-    
+
     doc
       .fontSize(8)
       .fillColor("#777777")
-      .text(
-        `Page ${i + 1} of ${pageCount}`,
-        margin,
-        pageHeight - 25,
-        { align: "left" }
-      );
-    
-    doc.text(
-      "ULearn Revenue Report",
-      pageWidth / 2,
-      pageHeight - 25,
-      { align: "center" }
-    );
-    
+      .text(`Page ${i + 1} of ${pageCount}`, margin, pageHeight - 25, {
+        align: "left",
+      });
+
+    doc.text("ULearn Revenue Report", pageWidth / 2, pageHeight - 25, {
+      align: "center",
+    });
+
     doc.text(
       new Date().getFullYear().toString(),
       pageWidth - margin,
       pageHeight - 25,
-      { align: "right" }
+      { align: "right" },
     );
   }
 

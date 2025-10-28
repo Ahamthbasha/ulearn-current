@@ -1,4 +1,7 @@
-import { LearningPathListDTOUSER , LearningPathDetailDTO } from "../../../dto/userDTO/userLearningPathDTO";
+import {
+  LearningPathListDTOUSER,
+  LearningPathDetailDTO,
+} from "../../../dto/userDTO/userLearningPathDTO";
 
 export interface IStudentLmsService {
   getLearningPaths(
@@ -6,7 +9,7 @@ export interface IStudentLmsService {
     page?: number,
     limit?: number,
     category?: string,
-    sort?: "name-asc" | "name-desc" | "price-asc" | "price-desc"
+    sort?: "name-asc" | "name-desc" | "price-asc" | "price-desc",
   ): Promise<{ paths: LearningPathListDTOUSER[]; total: number }>;
 
   getLearningPathById(pathId: string): Promise<LearningPathDetailDTO | null>;

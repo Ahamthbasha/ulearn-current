@@ -17,8 +17,6 @@ export class JwtService implements IJwtService {
       expiresIn: JwtErrorMsg.JWT_EXPIRATION,
     });
 
-    console.log("payload", payload);
-
     return verifyToken;
   }
 
@@ -29,7 +27,7 @@ export class JwtService implements IJwtService {
     if (!secret) {
       throw new Error(EnvErrorMsg.JWT_NOT_FOUND);
     }
-    console.log("accessToken", payload);
+
     return jwt.sign(payload, secret, {
       expiresIn: JwtErrorMsg.JWT_EXPIRATION,
     });
@@ -58,7 +56,6 @@ export class JwtService implements IJwtService {
 
       return data;
     } catch (error) {
-      console.error("Token verification failed:", error);
       throw error;
     }
   }

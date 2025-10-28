@@ -5,6 +5,7 @@ import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IStudentWalletController } from "./interfaces/IStudentWalletController";
 import { StudentErrorMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentWalletController implements IStudentWalletController {
   private _walletService: IWalletService;
@@ -16,11 +17,9 @@ export class StudentWalletController implements IStudentWalletController {
     try {
       const ownerId = new Types.ObjectId(req.user?.id);
       const wallet = await this._walletService.getWallet(ownerId);
-
-      console.log(wallet);
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in get wallet", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_WALLET,
@@ -40,7 +39,7 @@ export class StudentWalletController implements IStudentWalletController {
       );
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in credit wallet", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_CREDIT_WALLET,
@@ -70,7 +69,7 @@ export class StudentWalletController implements IStudentWalletController {
 
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in debit wallet", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_DEBIT_WALLET,
@@ -104,7 +103,7 @@ export class StudentWalletController implements IStudentWalletController {
         },
       });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in paginated transactions", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_TRANSACTIONS,

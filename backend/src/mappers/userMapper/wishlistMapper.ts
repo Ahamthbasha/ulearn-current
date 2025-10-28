@@ -6,7 +6,7 @@ import { ILearningPath } from "../../models/learningPathModel";
 export const mapWishlistToDTO = (
   wishlist: IWishlist[],
   courseDetailsMap: Map<string, { price: number; thumbnailUrl: string }>,
-  learningPathDetailsMap: Map<string, { price: number; thumbnailUrl: string }>
+  learningPathDetailsMap: Map<string, { price: number; thumbnailUrl: string }>,
 ): WishlistItemDTO[] => {
   return wishlist
     .filter((item) => item.courseId || item.learningPathId) // Filter out invalid items
@@ -17,18 +17,28 @@ export const mapWishlistToDTO = (
         return {
           itemId: course._id.toString(),
           name: course.courseName || "Unknown Course",
-          price: courseDetails?.price ?? course.effectivePrice ?? course.price ?? 0,
-          thumbnailUrl: courseDetails?.thumbnailUrl ?? course.thumbnailUrl ?? "",
+          price:
+            courseDetails?.price ?? course.effectivePrice ?? course.price ?? 0,
+          thumbnailUrl:
+            courseDetails?.thumbnailUrl ?? course.thumbnailUrl ?? "",
           type: "course" as const,
         };
-      } else if (item.learningPathId && (item.learningPathId as ILearningPath)._id) {
+      } else if (
+        item.learningPathId &&
+        (item.learningPathId as ILearningPath)._id
+      ) {
         const learningPath = item.learningPathId as ILearningPath;
-        const learningPathDetails = learningPathDetailsMap.get(learningPath._id.toString());
+        const learningPathDetails = learningPathDetailsMap.get(
+          learningPath._id.toString(),
+        );
         return {
           itemId: learningPath._id.toString(),
           name: learningPath.title || "Unknown Learning Path",
           price: learningPathDetails?.price ?? learningPath.totalPrice ?? 0,
-          thumbnailUrl: learningPathDetails?.thumbnailUrl ?? learningPath.thumbnailUrl ?? "",
+          thumbnailUrl:
+            learningPathDetails?.thumbnailUrl ??
+            learningPath.thumbnailUrl ??
+            "",
           type: "learningPath" as const,
         };
       }

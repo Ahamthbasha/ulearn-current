@@ -3,12 +3,16 @@ import { IWalletPaymentService } from "../../services/interface/IWalletPaymentSe
 import { Model, Roles, StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IAdminWalletPaymentController } from "./interface/IAdminWalletPaymentController";
-import { AdminErrorMessages } from "../../utils/constants";
+import { AdminSuccessMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
+import { BadRequestError, UnauthorizedError } from "../../utils/error";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 
 export class AdminWalletPaymentController
   implements IAdminWalletPaymentController
 {
   private _walletPaymentService: IWalletPaymentService;
+
   constructor(walletPaymentService: IWalletPaymentService) {
     this._walletPaymentService = walletPaymentService;
   }
@@ -17,19 +21,41 @@ export class AdminWalletPaymentController
     try {
       const { amount } = req.body;
 
-      const order = await this._walletPaymentService.createOrder(amount);
+      // Validation
+      if (!amount) {
+        throw new BadRequestError("Amount is required");
+      }
 
-      res.status(StatusCode.OK).json({ success: true, order });
-    } catch (error) {
-      console.error(error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: AdminErrorMessages.ADMIN_FAILED_TO_ADD_RAZORPAY,
+      const parsedAmount = parseFloat(amount);
+
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new BadRequestError("Amount must be a positive number");
+      }
+
+      const MIN_AMOUNT = 1;
+      if (parsedAmount < MIN_AMOUNT) {
+        throw new BadRequestError(
+          `Minimum recharge amount is ₹${MIN_AMOUNT}`
+        );
+      }
+
+      const order = await this._walletPaymentService.createOrder(parsedAmount);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Payment order created successfully",
+        order,
       });
+    } catch (error) {
+      appLogger.error("Error in createOrder controller", { error });
+      handleControllerError(error, res);
     }
   }
 
-  async verifyPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async verifyPayment(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const {
         razorpay_order_id,
@@ -37,34 +63,48 @@ export class AdminWalletPaymentController
         razorpay_signature,
         amount,
       } = req.body;
+
       const userId = req.user?.id;
 
+      // Validation
       if (!userId) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: AdminErrorMessages.ADMIN_NOT_FOUND,
-        });
-        return;
+        throw new UnauthorizedError("User authentication required");
+      }
+
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        throw new BadRequestError("Missing payment verification details");
+      }
+
+      if (!amount) {
+        throw new BadRequestError("Amount is required");
+      }
+
+      const parsedAmount = parseFloat(amount);
+
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new BadRequestError("Invalid amount");
       }
 
       const wallet = await this._walletPaymentService.verifyAndCreditWallet({
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id,
         signature: razorpay_signature,
-        amount,
+        amount: parsedAmount,
         userId,
         role: Roles.ADMIN,
         onModel: Model.ADMIN,
       });
 
-      res.status(StatusCode.OK).json({ success: true, wallet });
-    } catch (error: any) {
-      console.error(error);
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message:
-          error.message || AdminErrorMessages.ADMIN_PAYMENT_VERIFICATION_FAILED,
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: AdminSuccessMessages.ADMIN_WALLET_RECHARGED_SUCCESSFULLY,
+        wallet: {
+          balance: wallet.balance,
+        },
       });
+    } catch (error) {
+      appLogger.error("Error in verifyPayment controller", { error });
+      handleControllerError(error, res);
     }
   }
 }

@@ -4,7 +4,7 @@ import { IStudentEnrollmentRepository } from "../../repositories/studentReposito
 import { IEnrollment } from "../../models/enrollmentModel";
 import { EnrolledCourseDTO } from "../../dto/userDTO/enrollmentCourseDTO";
 import { mapEnrollmentToDTO } from "../../mappers/userMapper/mapEnrollmentToDTO";
-import { ICourseRepository } from "../../repositories/interfaces/ICourseRepository"; 
+import { ICourseRepository } from "../../repositories/interfaces/ICourseRepository";
 import { ICourse } from "../../models/courseModel";
 
 export class StudentEnrollmentService implements IStudentEnrollmentService {
@@ -13,29 +13,38 @@ export class StudentEnrollmentService implements IStudentEnrollmentService {
 
   constructor(
     enrollmentRepo: IStudentEnrollmentRepository,
-    courseRepo: ICourseRepository
+    courseRepo: ICourseRepository,
   ) {
     this._enrollmentRepo = enrollmentRepo;
     this._courseRepo = courseRepo;
   }
 
-  async getAllEnrolledCourses(userId: Types.ObjectId): Promise<EnrolledCourseDTO[]> {
-    const enrollmentData = await this._enrollmentRepo.getAllEnrolledCourses(userId);
-    
+  async getAllEnrolledCourses(
+    userId: Types.ObjectId,
+  ): Promise<EnrolledCourseDTO[]> {
+    const enrollmentData =
+      await this._enrollmentRepo.getAllEnrolledCourses(userId);
+
     // Batch fetch course data
-    const courseIds = enrollmentData.map(({ enrollment }) => enrollment.courseId);
-    const courses = await this._courseRepo.find({
-      _id: { $in: courseIds }
-    }, [], { courseName: 1 });
+    const courseIds = enrollmentData.map(
+      ({ enrollment }) => enrollment.courseId,
+    );
+    const courses = await this._courseRepo.find(
+      {
+        _id: { $in: courseIds },
+      },
+      [],
+      { courseName: 1 },
+    );
     const courseMap = new Map<string, ICourse>(
-      courses.map(course => [course._id.toString(), course])
+      courses.map((course) => [course._id.toString(), course]),
     );
 
     const dtos = await Promise.all(
       enrollmentData.map(async ({ enrollment, order }) => {
         const course = courseMap.get(enrollment.courseId.toString());
         return await mapEnrollmentToDTO(enrollment, order, course);
-      })
+      }),
     );
 
     // Filter out null DTOs (e.g., missing courses)

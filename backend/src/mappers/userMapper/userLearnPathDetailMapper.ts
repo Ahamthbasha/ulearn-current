@@ -10,15 +10,22 @@ interface ICategoryPopulated {
 }
 
 function isCategoryPopulated(obj: unknown): obj is ICategoryPopulated {
-  return typeof obj === "object" && obj !== null && "_id" in obj && "categoryName" in obj;
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "_id" in obj &&
+    "categoryName" in obj
+  );
 }
 
 export async function mapToLearningPathDetailDTO(
   path: ILearningPath,
   getPresignedUrl: (key: string) => Promise<string>,
-  offers: Map<string, ICourseOffer>
+  offers: Map<string, ICourseOffer>,
 ): Promise<LearningPathDetailDTO> {
-  const thumbnailUrl = path.thumbnailUrl ? await getPresignedUrl(path.thumbnailUrl) : "";
+  const thumbnailUrl = path.thumbnailUrl
+    ? await getPresignedUrl(path.thumbnailUrl)
+    : "";
 
   // Handle category
   let categoryId = "";
@@ -30,7 +37,9 @@ export async function mapToLearningPathDetailDTO(
     } else if (typeof path.category === "string") {
       try {
         const parsed = JSON.parse(path.category);
-        categoryId = parsed._id ? new Types.ObjectId(parsed._id).toString() : path.category;
+        categoryId = parsed._id
+          ? new Types.ObjectId(parsed._id).toString()
+          : path.category;
         categoryName = parsed.categoryName || "";
       } catch {
         categoryId = path.category;
@@ -47,7 +56,8 @@ export async function mapToLearningPathDetailDTO(
 
       const offer = offers.get(course._id.toString());
       if (offer && offer.isActive && offer.status === "approved") {
-        totalPrice += (course.price ?? 0) * (1 - offer.discountPercentage / 100);
+        totalPrice +=
+          (course.price ?? 0) * (1 - offer.discountPercentage / 100);
       } else {
         totalPrice += course.effectivePrice ?? course.price ?? 0;
       }
@@ -64,13 +74,15 @@ export async function mapToLearningPathDetailDTO(
     learningPathId: path._id.toString(),
     title: path.title,
     description: path.description || "",
-    instructorId: path.instructorId.toString(),
-    instructorName: path.instructorName || path.instructor?.username || "Unknown Instructor",
+    // instructorId: path.instructorId.toString(),
+    // instructorName:
+      // path.instructorName || path.instructor?.username || "Unknown Instructor",
     noOfCourses: path.courses?.length || path.items?.length || 0,
     hoursOfCourses:
       path.courses?.reduce(
-        (sum: number, course: Partial<ICourse>) => sum + (parseFloat(course.duration || "0") || 0),
-        0
+        (sum: number, course: Partial<ICourse>) =>
+          sum + (parseFloat(course.duration || "0") || 0),
+        0,
       ) || 0,
     courses,
     learningPathThumbnailUrl: thumbnailUrl,

@@ -12,5 +12,9 @@ export interface IAdminCourseService {
 
   toggleCourseListing(courseId: string): Promise<ICourseDTO | null>;
 
-  verifyCourse(courseId: string, status: "approved" | "rejected", review?: string): Promise<ICourseDTO | null>; 
+  verifyCourse(
+    courseId: string,
+    status: "approved" | "rejected",
+    review?: string,
+  ): Promise<ICourseDTO | null>;
 }

@@ -10,6 +10,7 @@ import {
 } from "../../utils/adminReportGenerator";
 import { StatusCode } from "../../utils/enums";
 import { AdminErrorMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class AdminDashboardController implements IAdminDashboardController {
   private _dashboardService: IAdminDashboardService;
@@ -22,6 +23,7 @@ export class AdminDashboardController implements IAdminDashboardController {
       const data = await this._dashboardService.getDashboardMetrics();
       res.status(StatusCode.OK).json({ success: true, data });
     } catch (error) {
+      appLogger.error("dashboard data", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -83,6 +85,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         currentPage,
       });
     } catch (error) {
+      appLogger.error("course Sales report error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -151,6 +154,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         currentPage,
       });
     } catch (error) {
+      appLogger.error("membershipSales report error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -196,6 +200,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         await generateCourseSalesPdfReport(items, totalAdminShare, res);
       }
     } catch (error) {
+      appLogger.error("export course sales report error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
@@ -244,6 +249,7 @@ export class AdminDashboardController implements IAdminDashboardController {
         await generateMembershipSalesPdfReport(items, res);
       }
     } catch (error) {
+      appLogger.error("export membership sales excel report", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: AdminErrorMessages.INTERNAL_SERVER_ERROR,

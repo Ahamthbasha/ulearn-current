@@ -29,8 +29,6 @@ import WithdrawalDetailsPage from "../pages/admin/withdrawal/WithdrawalDetails";
 import CouponListPage from "../pages/admin/Coupon/CouponManagementPage";
 import AddCouponPage from "../pages/admin/Coupon/AddCoupon";
 import EditCouponPage from "../pages/admin/Coupon/EditCoupon";
-import LearningPathListPage from "../pages/admin/learningPath/LearningPathListPage";
-import LearningPathDetailPage from "../pages/admin/learningPath/LearningPathDetailPage";
 import AdminCourseOfferDetailPage from "../pages/admin/courseOffer/AdminCourseOfferDetailPage";
 import AdminCourseOfferListPage from "../pages/admin/courseOffer/CourseOffersPage";
 
@@ -99,11 +97,6 @@ const AdminRouter = () => {
 
           <Route path="courseOffers" element={<AdminCourseOfferListPage/>}/>
           <Route path="courseOffer/:offerId" element={<AdminCourseOfferDetailPage/>}/>
-
-          {/* learning path */}
-
-          <Route path="learningPaths" element={<LearningPathListPage/>}/>
-          <Route path="learningPaths/:learningPathId" element={<LearningPathDetailPage/>}/>
         </Route>
 
       </Route>

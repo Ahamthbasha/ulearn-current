@@ -6,6 +6,7 @@ import {
   StudentErrorMessages,
   StudentSuccessMessages,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentCourseController implements IStudentCourseController {
   private _studentCourseService: IStudentCourseService;
@@ -25,7 +26,7 @@ export class StudentCourseController implements IStudentCourseController {
         data: courses,
       });
     } catch (error) {
-      console.error("Error fetching all courses:", error);
+      appLogger.error("Error fetching all courses:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.COURSE_FETCH_FAILED,
@@ -88,7 +89,7 @@ export class StudentCourseController implements IStudentCourseController {
         totalPages: Math.ceil(result.total / parsedLimit),
       });
     } catch (error) {
-      console.error("Error fetching filtered courses:", error);
+      appLogger.error("Error fetching filtered courses:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.COURSE_FETCH_FAILED,
@@ -125,10 +126,31 @@ export class StudentCourseController implements IStudentCourseController {
         data: courseDTO,
       });
     } catch (error) {
-      console.error("Error fetching course details:", error);
+      appLogger.error("Error fetching course details:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.COURSE_DEATILFETCH_FAILED,
+      });
+    }
+  }
+
+  async getCourses(req: Request, res: Response): Promise<void> {
+    try {
+
+      const {category} = req.query
+
+      const categoryId = category ? category.toString() : undefined
+      const courses = await this._studentCourseService.getCourses(categoryId);
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: StudentSuccessMessages.COURSES_FETCHED,
+        data: courses,
+      });
+    } catch (error) {
+      appLogger.error("Error fetching courses for selector:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: StudentErrorMessages.COURSE_FETCH_FAILED,
       });
     }
   }

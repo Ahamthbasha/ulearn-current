@@ -4,14 +4,12 @@ import type { userData } from "../../types/userData";
 import authenticationRoutes from "../../types/endPoints/authEndpoints";
 import type { Login } from "../../types/LoginTypes";
 
-export const signup = async (userData: userData): Promise<any> => {
+export const signup = async (userData: userData)=> {
   try {
     const response = await API.post(
       authenticationRoutes.instructorSignUp,
-      userData,
-      { withCredentials: true }
+      userData
     );
-    console.log("Signup response in instructor", response.data);
 
     return response.data;
   } catch (error) {
@@ -19,43 +17,36 @@ export const signup = async (userData: userData): Promise<any> => {
   }
 };
 
-export const resendOtp = async (email: string): Promise<any> => {
+export const resendOtp = async (email: string)=> {
   try {
     const response = await API.post(authenticationRoutes.instructorResendOtp, {
       email,
     });
 
-    console.log("instructor resend otp response", response.data);
-
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const verifyOtp = async (otp: string): Promise<any> => {
+export const verifyOtp = async (otp: string) => {
   try {
     const response = await API.post(authenticationRoutes.instructorVerifyOtp, {
       otp,
     });
 
-    console.log("instructor verify otp", response.data);
-
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const login = async ({ email, password, role }: Login): Promise<any> => {
+export const login = async ({ email, password, role }: Login) => {
   try {
     const response = await API.post(
       authenticationRoutes.instructorLogin,
-      { email, password, role },
-      { withCredentials: true }
+      { email, password, role }
     );
-
-    console.log("instructorLogin response", response.data);
 
     return response.data;
   } catch (error) {
@@ -63,15 +54,12 @@ export const login = async ({ email, password, role }: Login): Promise<any> => {
   }
 };
 
-export const logout = async (): Promise<any> => {
+export const logout = async () => {
   try {
     const response = await API.post(
       authenticationRoutes.instructorLogout,
-      {},
-      { withCredentials: true }
+      {}
     );
-
-    console.log("Instructor logout response", response.data);
 
     return response.data;
   } catch (error) {
@@ -79,14 +67,12 @@ export const logout = async (): Promise<any> => {
   }
 };
 
-export const instructorVerifyEmail = async (email: string): Promise<any> => {
+export const instructorVerifyEmail = async (email: string) => {
   try {
     const response = await API.post(
       authenticationRoutes.instructorVerifyEmail,
       { email }
     );
-
-    console.log("instructor response verify email", response.data);
 
     return response.data;
   } catch (error) {
@@ -98,11 +84,8 @@ export const instructorVerifyResetOtp = async (email: string, otp: string) => {
   try {
     const response = await API.post(
       authenticationRoutes.instructorVerifyResetOtp,
-      { email, otp },
-      { withCredentials: true }
+      { email, otp }
     );
-
-    console.log("instructor verify otp response", response.data);
 
     return response.data;
   } catch (error) {
@@ -116,7 +99,6 @@ export const instructorForgotResendOtp = async (email: string) => {
       authenticationRoutes.instructorForgotResendOtp,
       { email }
     );
-    console.log("instructor resendotp", response.data);
     return response.data;
   } catch (error) {
     throw error;
@@ -125,15 +107,12 @@ export const instructorForgotResendOtp = async (email: string) => {
 
 export const instructorResetPassword = async (
   password: string
-): Promise<any> => {
+)=> {
   try {
     const response = await API.post(
       authenticationRoutes.instructorResetPassword,
-      { password },
-      { withCredentials: true }
+      { password }
     );
-
-    console.log("reset password instructor", response.data);
 
     return response.data;
   } catch (error) {
@@ -141,14 +120,12 @@ export const instructorResetPassword = async (
   }
 };
 
-export const googleLogin = async (login: object): Promise<any> => {
+export const googleLogin = async (login: object)=> {
   try {
     const response = await API.post(
       authenticationRoutes.instructorGoogleLogin,
-      login,
-      { withCredentials: true }
+      login
     );
-    console.log("google login instructor", response.data);
     return response.data;
   } catch (error) {
     throw error;

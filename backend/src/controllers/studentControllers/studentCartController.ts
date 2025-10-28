@@ -9,7 +9,11 @@ import {
   StudentErrorMessages,
 } from "../../utils/constants";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
-import { PopulatedCartCourse, PopulatedLearningPath } from "../../models/cartModel";
+import {
+  PopulatedCartCourse,
+  PopulatedLearningPath,
+} from "../../models/cartModel";
+import { appLogger } from "../../utils/logger";
 
 export class StudentCartController implements IStudentCartController {
   private _cartService: IStudentCartService;
@@ -37,7 +41,7 @@ export class StudentCartController implements IStudentCartController {
         });
       }
     } catch (error) {
-      console.error("getCart error:", error);
+      appLogger.error("getCart error:", error);
       res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: StudentErrorMessages.TOKEN_INVALID,
@@ -65,12 +69,19 @@ export class StudentCartController implements IStudentCartController {
         if (type === "course" && Array.isArray(rawCart.courses)) {
           alreadyInCart = rawCart.courses.some(
             (c: Types.ObjectId | PopulatedCartCourse) =>
-              (c instanceof Types.ObjectId ? c.toString() : c._id.toString()) === itemId.toString()
+              (c instanceof Types.ObjectId
+                ? c.toString()
+                : c._id.toString()) === itemId.toString(),
           );
-        } else if (type === "learningPath" && Array.isArray(rawCart.learningPaths)) {
+        } else if (
+          type === "learningPath" &&
+          Array.isArray(rawCart.learningPaths)
+        ) {
           alreadyInCart = rawCart.learningPaths.some(
             (lp: Types.ObjectId | PopulatedLearningPath) =>
-              (lp instanceof Types.ObjectId ? lp.toString() : lp._id.toString()) === itemId.toString()
+              (lp instanceof Types.ObjectId
+                ? lp.toString()
+                : lp._id.toString()) === itemId.toString(),
           );
         }
       }
@@ -86,7 +97,11 @@ export class StudentCartController implements IStudentCartController {
         return;
       }
 
-      const updatedCartData = await this._cartService.addToCart(userId, itemId, type);
+      const updatedCartData = await this._cartService.addToCart(
+        userId,
+        itemId,
+        type,
+      );
 
       if (!updatedCartData) {
         res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
@@ -108,7 +123,7 @@ export class StudentCartController implements IStudentCartController {
         data: updatedCartData,
       });
     } catch (error) {
-      console.error("addToCart error:", error);
+      appLogger.error("addToCart error:", error);
       const type = req.body.type as "course" | "learningPath" | undefined;
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
@@ -120,7 +135,10 @@ export class StudentCartController implements IStudentCartController {
     }
   }
 
-  async removeFromCart(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async removeFromCart(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
       const itemId = new Types.ObjectId(req.params.itemId);
@@ -134,7 +152,11 @@ export class StudentCartController implements IStudentCartController {
         return;
       }
 
-      const updatedCartData = await this._cartService.removeFromCart(userId, itemId, type);
+      const updatedCartData = await this._cartService.removeFromCart(
+        userId,
+        itemId,
+        type,
+      );
 
       if (updatedCartData === null) {
         res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
@@ -156,7 +178,7 @@ export class StudentCartController implements IStudentCartController {
         data: updatedCartData,
       });
     } catch (error) {
-      console.error("removeFromCart error:", error);
+      appLogger.error("removeFromCart error:", error);
       const type = req.query.type as "course" | "learningPath" | undefined;
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
@@ -187,7 +209,7 @@ export class StudentCartController implements IStudentCartController {
         data: [],
       });
     } catch (error) {
-      console.error("clearCart error:", error);
+      appLogger.error("clearCart error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: CartErrorMessage.FAILED_TO_CLEAR_CARTDATE,

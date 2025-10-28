@@ -58,11 +58,9 @@ export class SendEmail implements IEmail {
 
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully");
       return info;
     } catch (error) {
-      console.error("Error sending email:", error);
-      throw new Error("Failed to send verification email");
+      throw error;
     }
   }
 
@@ -115,11 +113,9 @@ export class SendEmail implements IEmail {
 
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log("Rejection email sent successfully");
       return info;
     } catch (error) {
-      console.error("Error sending rejection email:", error);
-      throw new Error("Failed to send rejection email");
+      throw error;
     }
   }
 
@@ -167,11 +163,9 @@ export class SendEmail implements IEmail {
 
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log("Verification success email sent successfully");
       return info;
     } catch (error) {
-      console.error("Error sending verification success email:", error);
-      throw new Error("Failed to send verification success email");
+      throw error;
     }
   }
 

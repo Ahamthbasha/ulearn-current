@@ -1,6 +1,9 @@
-import {Types} from "mongoose"
+import { Types } from "mongoose";
 import { Document } from "mongoose";
-
+import { adminCouponDto } from "../../dto/adminDTO/adminCouponDTO";
+import { ICourseOfferListDTO,ICourseOfferDetailDTO } from "../../dto/adminDTO/adminCourseOfferDTO";
+import { AdminMembershipOrderListDTO} from "../../dto/adminDTO/membershipOrderListDTO";
+import { InstructorMembershipOrderDTO } from "../../models/instructorMembershipOrderModel";
 export interface CourseDetails {
   courseName: string;
   instructorName: string;
@@ -10,13 +13,10 @@ export interface CourseDetails {
   adminShare: number;
 }
 
-
 export interface InstructorDocument {
   _id: Types.ObjectId;
   username: string;
 }
-
-
 
 export interface ICourseOrderDetails {
   courseId: Types.ObjectId;
@@ -106,4 +106,76 @@ export interface OrderDocument extends Document {
     discountPercentage: number;
     discountAmount: number;
   };
+}
+
+export interface ICouponResponse {
+  success: boolean;
+  message?: string;
+  data?: adminCouponDto;
+}
+
+export interface ICouponsResponse {
+  success: boolean;
+  data: {
+    coupons: adminCouponDto[];
+    total: number;
+  };
+  pagination: {
+    currentPage: number;
+    limit: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+export interface IDeleteCouponResponse {
+  success: boolean;
+  message: string;
+}
+
+
+
+export interface IOfferRequestsResponse {
+  success: boolean;
+  message: string;
+  data?: ICourseOfferListDTO[];
+  total?: number;
+}
+
+export interface IVerifyOfferResponse {
+  success: boolean;
+  message: string;
+  data?: ICourseOfferDetailDTO;
+}
+
+export interface IOfferByIdResponse {
+  success: boolean;
+  message: string;
+  data?: ICourseOfferDetailDTO;
+}
+
+export interface IMembershipOrderDTO {
+  orderId: string;
+  userId: string;
+  amount: number;
+  status: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  razorpayOrderId: string;
+  membershipPlanId: Types.ObjectId;
+}
+
+export interface IGetAllOrdersResponse {
+  success: boolean;
+  message: string;
+  data?: AdminMembershipOrderListDTO[];
+  total?: number;
+  currentPage?: number;
+  totalPages?: number;
+}
+
+export interface IGetOrderDetailResponse {
+  success: boolean;
+  message: string;
+  data?: InstructorMembershipOrderDTO | null;
 }

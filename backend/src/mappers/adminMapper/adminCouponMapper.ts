@@ -1,7 +1,7 @@
 import { formatDate } from "../../utils/dateFormat";
 import { adminCouponDto } from "../../dto/adminDTO/adminCouponDTO";
 
-import {ICoupon} from "../../models/couponModel"
+import { ICoupon } from "../../models/couponModel";
 export const mapToCouponDto = (coupon: ICoupon): adminCouponDto => {
   return {
     couponId: coupon._id.toString(),

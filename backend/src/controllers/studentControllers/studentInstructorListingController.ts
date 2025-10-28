@@ -3,6 +3,7 @@ import { IStudentInstructorListingService } from "../../services/studentServices
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/enums";
 import { StudentErrorMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentInstructorListingController
   implements IStudentInstructorListingController
@@ -33,7 +34,7 @@ export class StudentInstructorListingController
 
       res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in list mentors", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_LIST_INSTRUCTOR,
@@ -57,6 +58,7 @@ export class StudentInstructorListingController
 
       res.status(StatusCode.OK).json({ success: true, data: mentor });
     } catch (error) {
+      appLogger.error("error in get mentor", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_INSTRUCTOR_DETAIL,
@@ -70,7 +72,7 @@ export class StudentInstructorListingController
         await this._instructorListingService.getAvailableFilters();
       res.status(StatusCode.OK).json({ success: true, ...filters });
     } catch (error) {
-      console.log(error);
+      appLogger.error("error in filters", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_FILTER_OPTION,

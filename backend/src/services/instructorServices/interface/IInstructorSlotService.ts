@@ -14,16 +14,16 @@ export interface IInstructorSlotService {
         startDate: Date;
         endDate: Date;
       };
-    }
+    },
   ): Promise<ISlot | ISlot[]>;
   updateSlot(
     instructorId: Types.ObjectId,
     slotId: Types.ObjectId,
-    data: Partial<ISlot>
+    data: Partial<ISlot>,
   ): Promise<ISlot>;
   deleteSlot(
     instructorId: Types.ObjectId,
-    slotId: Types.ObjectId
+    slotId: Types.ObjectId,
   ): Promise<void>;
   listSlots(instructorId: Types.ObjectId, date?: string): Promise<SlotDTO[]>;
   getSlotStats(
@@ -34,7 +34,7 @@ export interface IInstructorSlotService {
       year?: number;
       startDate?: Date;
       endDate?: Date;
-    }
+    },
   ): Promise<
     {
       date: string;
@@ -44,6 +44,6 @@ export interface IInstructorSlotService {
   >;
   deleteUnbookedSlotsForDate(
     instructorId: Types.ObjectId,
-    date: string
+    date: string,
   ): Promise<void>;
 }

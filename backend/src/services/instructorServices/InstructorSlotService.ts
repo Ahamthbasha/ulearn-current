@@ -25,7 +25,7 @@ export class InstructorSlotService implements IInstructorSlotService {
         startDate: Date;
         endDate: Date;
       };
-    }
+    },
   ): Promise<ISlot | ISlot[]> {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -40,13 +40,21 @@ export class InstructorSlotService implements IInstructorSlotService {
 
       // Validate start date (date only)
       let effectiveStartDate = new Date(startDate);
-      effectiveStartDate = new Date(effectiveStartDate.getFullYear(), effectiveStartDate.getMonth(), effectiveStartDate.getDate());
+      effectiveStartDate = new Date(
+        effectiveStartDate.getFullYear(),
+        effectiveStartDate.getMonth(),
+        effectiveStartDate.getDate(),
+      );
       if (effectiveStartDate < today) {
-        throw createHttpError.BadRequest("Recurrence start date must be today or in the future");
+        throw createHttpError.BadRequest(
+          "Recurrence start date must be today or in the future",
+        );
       }
 
       if (effectiveStartDate > endDate) {
-        throw createHttpError.BadRequest("End date must be after or equal to start date");
+        throw createHttpError.BadRequest(
+          "End date must be after or equal to start date",
+        );
       }
 
       const duration = differenceInDays(endDate, effectiveStartDate);
@@ -54,13 +62,14 @@ export class InstructorSlotService implements IInstructorSlotService {
         const currentDate = addDays(effectiveStartDate, i);
         const dayOfWeek = currentDate.getDay();
         if (daysOfWeek.includes(dayOfWeek)) {
-          const timeDifference = data.endTime.getTime() - data.startTime.getTime();
+          const timeDifference =
+            data.endTime.getTime() - data.startTime.getTime();
           const newStartTime = new Date(currentDate);
           newStartTime.setHours(
             data.startTime.getHours(),
             data.startTime.getMinutes(),
             0,
-            0
+            0,
           );
           const newEndTime = new Date(newStartTime.getTime() + timeDifference);
 
@@ -69,11 +78,11 @@ export class InstructorSlotService implements IInstructorSlotService {
             const hasOverlap = await this._slotRepo.checkOverlap(
               instructorId,
               newStartTime,
-              newEndTime
+              newEndTime,
             );
             if (hasOverlap) {
               throw createHttpError.Conflict(
-                `Slot on ${format(newStartTime, "yyyy-MM-dd")} overlaps with an existing one`
+                `Slot on ${format(newStartTime, "yyyy-MM-dd")} overlaps with an existing one`,
               );
             }
             slotsToCreate.push({
@@ -93,7 +102,9 @@ export class InstructorSlotService implements IInstructorSlotService {
       }
 
       if (slotsToCreate.length === 0) {
-        throw createHttpError.BadRequest("No valid future slots could be created");
+        throw createHttpError.BadRequest(
+          "No valid future slots could be created",
+        );
       }
 
       return await this._slotRepo.createBulkSlots(slotsToCreate);
@@ -105,10 +116,12 @@ export class InstructorSlotService implements IInstructorSlotService {
       const hasOverlap = await this._slotRepo.checkOverlap(
         instructorId,
         data.startTime,
-        data.endTime
+        data.endTime,
       );
       if (hasOverlap) {
-        throw createHttpError.Conflict("There is already an existing slot created on that time");
+        throw createHttpError.Conflict(
+          "There is already an existing slot created on that time",
+        );
       }
 
       return await this._slotRepo.createSlot({
@@ -124,7 +137,7 @@ export class InstructorSlotService implements IInstructorSlotService {
   async updateSlot(
     instructorId: Types.ObjectId,
     slotId: Types.ObjectId,
-    data: Partial<ISlot>
+    data: Partial<ISlot>,
   ): Promise<ISlot> {
     const slot = await this._slotRepo.getSlotById(slotId);
     if (!slot) throw createHttpError.NotFound("Slot not found");
@@ -149,7 +162,7 @@ export class InstructorSlotService implements IInstructorSlotService {
       instructorId,
       newStartTime,
       newEndTime,
-      slot._id as Types.ObjectId
+      slot._id as Types.ObjectId,
     );
     if (
       hasOverlap &&
@@ -157,7 +170,7 @@ export class InstructorSlotService implements IInstructorSlotService {
         newEndTime.getTime() !== slot.endTime.getTime())
     ) {
       throw createHttpError.Conflict(
-        "Updated slot overlaps with an existing one"
+        "Updated slot overlaps with an existing one",
       );
     }
 
@@ -173,7 +186,7 @@ export class InstructorSlotService implements IInstructorSlotService {
 
   async deleteSlot(
     instructorId: Types.ObjectId,
-    slotId: Types.ObjectId
+    slotId: Types.ObjectId,
   ): Promise<void> {
     const slot = await this._slotRepo.getSlotById(slotId);
     if (!slot) throw createHttpError.NotFound("Slot not found");
@@ -183,7 +196,10 @@ export class InstructorSlotService implements IInstructorSlotService {
     await this._slotRepo.deleteSlot(slotId);
   }
 
-  async listSlots(instructorId: Types.ObjectId, date?: string): Promise<SlotDTO[]> {
+  async listSlots(
+    instructorId: Types.ObjectId,
+    date?: string,
+  ): Promise<SlotDTO[]> {
     const slots = await this._slotRepo.getSlotsByInstructor(instructorId, date);
     return mapSlotsToDTO(slots);
   }
@@ -196,14 +212,14 @@ export class InstructorSlotService implements IInstructorSlotService {
       year?: number;
       startDate?: Date;
       endDate?: Date;
-    }
+    },
   ) {
     return await this._slotRepo.getSlotStats(instructorId, mode, options);
   }
 
   async deleteUnbookedSlotsForDate(
     instructorId: Types.ObjectId,
-    date: string
+    date: string,
   ): Promise<void> {
     const slots = await this._slotRepo.getSlotsByInstructor(instructorId, date);
     if (!slots || slots.length === 0) {

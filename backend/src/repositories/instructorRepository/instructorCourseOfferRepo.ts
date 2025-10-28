@@ -3,24 +3,36 @@ import { GenericRepository } from "../genericRepository";
 import { IInstructorCourseOfferRepo } from "./interface/IInstructorCourseofferRepo";
 import { PipelineStage, Types } from "mongoose";
 
-export class InstructorCourseOfferRepo extends GenericRepository<ICourseOffer> implements IInstructorCourseOfferRepo {
+export class InstructorCourseOfferRepo
+  extends GenericRepository<ICourseOffer>
+  implements IInstructorCourseOfferRepo
+{
   constructor() {
     super(CourseOfferModel);
   }
 
   async findById(offerId: string): Promise<ICourseOffer | null> {
-    return this.model.findById(offerId).populate("courseId", "courseName price").exec();
+    return this.model
+      .findById(offerId)
+      .populate("courseId", "courseName price")
+      .exec();
   }
 
   async createOffer(data: Partial<ICourseOffer>): Promise<ICourseOffer> {
     return new this.model(data).save();
   }
 
-  async updateById(offerId: string, data: Partial<ICourseOffer>): Promise<ICourseOffer | null> {
+  async updateById(
+    offerId: string,
+    data: Partial<ICourseOffer>,
+  ): Promise<ICourseOffer | null> {
     return this.model.findByIdAndUpdate(offerId, data, { new: true }).exec();
   }
 
-  async deleteById(offerId: string, instructorId: string): Promise<ICourseOffer | null> {
+  async deleteById(
+    offerId: string,
+    instructorId: string,
+  ): Promise<ICourseOffer | null> {
     return this.model.findOneAndDelete({ _id: offerId, instructorId }).exec();
   }
 
@@ -29,7 +41,7 @@ export class InstructorCourseOfferRepo extends GenericRepository<ICourseOffer> i
     page: number,
     limit: number,
     search?: string,
-    status?: string
+    status?: string,
   ): Promise<{ data: ICourseOffer[]; total: number }> {
     const pipeline: PipelineStage[] = [
       // Match offers by instructorId
@@ -90,19 +102,26 @@ export class InstructorCourseOfferRepo extends GenericRepository<ICourseOffer> i
           discountedPrice: {
             $cond: {
               if: { $ne: ["$courseId.price", null] },
-              then: { $multiply: ["$courseId.price", { $subtract: [1, { $divide: ["$discountPercentage", 100] }] }] },
+              then: {
+                $multiply: [
+                  "$courseId.price",
+                  { $subtract: [1, { $divide: ["$discountPercentage", 100] }] },
+                ],
+              },
               else: null,
             },
           },
         },
-      }
+      },
     );
 
     const data = await this.model.aggregate<ICourseOffer>(pipeline).exec();
     return { data, total };
   }
 
-  async getActiveOfferByCourseId(courseId: string): Promise<ICourseOffer | null> {
+  async getActiveOfferByCourseId(
+    courseId: string,
+  ): Promise<ICourseOffer | null> {
     return await this.findOne({
       courseId: new Types.ObjectId(courseId),
       isActive: true,

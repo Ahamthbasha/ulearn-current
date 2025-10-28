@@ -47,9 +47,6 @@ const Header = () => {
           <button onClick={() => navigate("/user/instructors")} className="hover:text-gray-300">
             Instructors
           </button>
-          <button onClick={() => navigate("/user/lms")} className="hover:text-gray-300">
-            Lms
-          </button>
           <button onClick={() => navigate("/user/aboutUs")} className="hover:text-gray-300">
             About Us
           </button>
@@ -124,9 +121,6 @@ const Header = () => {
           </button>
           <button onClick={() => { setIsOpen(false); navigate("/user/instructors"); }} className="block w-full text-left hover:text-gray-300">
             Instructors
-          </button>
-          <button onClick={() => { setIsOpen(false); navigate("/user/lms"); }} className="block w-full text-left hover:text-gray-300">
-            Lms
           </button>
           <button onClick={() => { setIsOpen(false); navigate("/user/aboutUs"); }} className="block w-full text-left hover:text-gray-300">
             About Us

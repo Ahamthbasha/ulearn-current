@@ -2,53 +2,101 @@ import { Request, Response } from "express";
 import { IAdminMembershipOrderController } from "./interface/IAdminMembershipOrderController";
 import { IAdminMembershipOrderService } from "../../services/adminServices/interface/IAdminMembershipOrderService";
 import { StatusCode } from "../../utils/enums";
+import {
+  MEMBERSHIP_ORDER_ERROR_MESSAGE,
+  MEMBERSHIP_ORDER_SUCCESS_MESSAGE,
+} from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
+import {
+  IGetAllOrdersResponse,
+  IGetOrderDetailResponse,
+} from "../../interface/adminInterface/IadminInterface";
+import { MembershipOrderValidator } from "../../utils/adminUtilities/membershipOrderValidator";
 
-export class AdminMembershipOrderController
-  implements IAdminMembershipOrderController
-{
-  private _membershipOrderService: IAdminMembershipOrderService;
-  constructor(membershipOrderService: IAdminMembershipOrderService) {
-    this._membershipOrderService = membershipOrderService;
+export class AdminMembershipOrderController implements IAdminMembershipOrderController {
+  constructor(private readonly service: IAdminMembershipOrderService) {}
+
+  private parseQuery(req: Request) {
+    const raw = {
+      page: req.query.page as string | undefined,
+      limit: req.query.limit as string | undefined,
+      search: req.query.search as string | undefined,
+      status: req.query.status as string | undefined,
+    };
+
+    return {
+      page: raw.page ? Math.max(1, parseInt(raw.page, 10)) : 1,
+      limit: raw.limit ? Math.max(1, Math.min(100, parseInt(raw.limit, 10))) : 10,
+      search: raw.search?.trim() || undefined,
+      status:
+        raw.status && ["paid", "failed","cancelled"].includes(raw.status.trim())
+          ? raw.status.trim()
+          : undefined,
+    };
   }
 
   async getAllOrders(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = (req.query.search as string) || "";
-      const status = (req.query.status as string) || "";
+      const { page, limit, search, status } = this.parseQuery(req);
 
-      const { data, total } = await this._membershipOrderService.getAllOrders(
-        page,
-        limit,
-        search,
-        status,
-      );
+      const err = MembershipOrderValidator.validateList({ page, limit, search, status });
+      if (err) {
+        res
+          .status(StatusCode.BAD_REQUEST)
+          .json({ success: false, message: err } as IGetAllOrdersResponse);
+        return;
+      }
+
+      const { data, total } = await this.service.getAllOrders(page, limit, search, status);
 
       res.status(StatusCode.OK).json({
+        success: true,
+        message: MEMBERSHIP_ORDER_SUCCESS_MESSAGE.FETCH_ORDERS_SUCCESS,
         data,
         total,
         currentPage: page,
         totalPages: Math.ceil(total / limit),
-      });
-    } catch (error: any) {
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        message: error.message || "Failed to fetch orders",
-      });
+      } as IGetAllOrdersResponse);
+    } catch (e: unknown) {
+      const msg =
+        e instanceof Error ? e.message : MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_FETCH_ORDERS;
+      appLogger.error("Get all orders error:", e);
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: msg } as IGetAllOrdersResponse);
     }
   }
 
   async getOrderDetail(req: Request, res: Response): Promise<void> {
     try {
       const { razorpayOrderId } = req.params;
-      console.log(razorpayOrderId);
-      const order =
-        await this._membershipOrderService.getOrderDetail(razorpayOrderId);
-      res.status(StatusCode.OK).json({ data: order });
-    } catch (error: any) {
-      res.status(StatusCode.NOT_FOUND).json({
-        message: error.message || "Order not found",
-      });
+
+      const err = MembershipOrderValidator.validateDetail({ razorpayOrderId });
+      if (err) {
+        res
+          .status(StatusCode.BAD_REQUEST)
+          .json({ success: false, message: err } as IGetOrderDetailResponse);
+        return;
+      }
+
+      const order = await this.service.getOrderDetail(razorpayOrderId);
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: MEMBERSHIP_ORDER_SUCCESS_MESSAGE.FETCH_ORDER_DETAIL_SUCCESS,
+        data: order,
+      } as IGetOrderDetailResponse);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : MEMBERSHIP_ORDER_ERROR_MESSAGE.GENERIC;
+      if (msg === "Order not found") {
+        res
+          .status(StatusCode.NOT_FOUND)
+          .json({ success: false, message: MEMBERSHIP_ORDER_ERROR_MESSAGE.ORDER_NOT_FOUND } as IGetOrderDetailResponse);
+        return;
+      }
+      appLogger.error("Get order detail error:", e);
+      res
+        .status(StatusCode.INTERNAL_SERVER_ERROR)
+        .json({ success: false, message: msg } as IGetOrderDetailResponse);
     }
   }
 }

@@ -27,16 +27,16 @@ export interface ICourse extends Document {
   isPublished: boolean;
   isVerified: boolean;
   isListed: boolean;
-  isSubmitted:boolean;
-  review:string;
+  isSubmitted: boolean;
+  review: string;
   createdAt: Date;
   updatedAt: Date;
   originalPrice?: number;
   effectivePrice?: number;
-  discountedPrice?:number;
+  discountedPrice?: number;
   publishDate?: Date;
-  Chapters?:IChapter[];
-  quizzes?:IQuiz[];
+  Chapters?: IChapter[];
+  quizzes?: IQuiz[];
 }
 
 const demoVideoSchema = new Schema<IDemoVideo>({
@@ -72,14 +72,14 @@ const CourseSchema = new Schema<ICourse>(
     isListed: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
     isSubmitted: { type: Boolean, default: false },
-    review: { type: String, default: "" }, 
+    review: { type: String, default: "" },
     publishDate: { type: Date, required: false },
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
+  },
 );
 
 CourseSchema.index({ courseName: "text" });
@@ -97,6 +97,5 @@ CourseSchema.virtual("quizzes", {
   foreignField: "courseId",
   justOne: false,
 });
-
 
 export const CourseModel = model<ICourse>("Course", CourseSchema);

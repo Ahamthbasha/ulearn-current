@@ -5,13 +5,13 @@ export interface CourseOfferListDTO {
   discount: number;
   status: string;
   startDate: string;
-  endDate: string;   
+  endDate: string;
 }
 
 export interface CourseOfferDetailDTO {
   courseOfferId: string;
   courseId: string;
-  courseName:string;
+  courseName: string;
   courseOriginalPrice: number;
   discount: number;
   courseDiscountPrice: number;

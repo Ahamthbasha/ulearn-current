@@ -10,13 +10,12 @@ export interface LearningPathListDTOUSER {
   categoryName: string;
 }
 
-
 export interface LearningPathDetailDTO {
   learningPathId: string;
   title: string;
   description: string;
-  instructorId: string;
-  instructorName: string;
+  // instructorId: string;
+  // instructorName: string;
   noOfCourses: number;
   hoursOfCourses: number;
   courses: { courseId: string; courseName: string }[];

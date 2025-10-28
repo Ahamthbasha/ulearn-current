@@ -1,3 +1,9 @@
+export const VALID_OFFER_STATUSES = ["approved", "rejected"] as const;
+export type OfferStatus = typeof VALID_OFFER_STATUSES[number];
+
+export const VALID_ORDER_STATUSES = ["pending", "paid", "failed","cancelled"] as const;
+export type OrderStatus = typeof VALID_ORDER_STATUSES[number];
+
 export const INSTRUCTOR_MESSAGES = {
   // General Messages
   EMAIL_PASSWORD_USERNAME_REQUIRED:
@@ -37,8 +43,9 @@ export const INSTRUCTOR_MESSAGES = {
 };
 
 export const AdminErrorMessages = {
-  REJECTION_REASON_REQUIRED:"Rejection reason needed",
-  INVALID_INPUT:"input invalid",
+  UNEXPECTED_ERROR:"An unexpected error occurred",
+  REJECTION_REASON_REQUIRED: "Rejection reason needed",
+  INVALID_INPUT: "input invalid",
   INVALID_CREDENTIALS: "Invalid email or password.",
   EMAIL_INCORRECT: "Incorrect email.",
   PASSWORD_INCORRECT: "Incorrect password.",
@@ -80,6 +87,7 @@ export const AdminErrorMessages = {
 };
 
 export const AdminSuccessMessages = {
+  ADMIN_WALLET_RECHARGED_SUCCESSFULLY:"admin wallet recharged successfully",
   ADMIN_APPROVE_WITHDRAWAL: "Withdrawal request approved successfully",
   ADMIN_REJECT_WITHDRAWAL: "Withdrawal request rejected successfully",
   LOGIN_SUCCESS: "Welcome Admin",
@@ -537,7 +545,8 @@ export const CartErrorMessage = {
   FAILED_TO_ADD_COURSE_IN_CART: "Failed to add course to cart",
   FAILED_TO_ADD_LEARNING_PATH_IN_CART: "Failed to add learning path to cart",
   FAILED_TO_REMOVE_COURSE_FROM_CART: "Failed to remove course from cart",
-  FAILED_TO_REMOVE_LEARNING_PATH_FROM_CART: "Failed to remove learning path from cart",
+  FAILED_TO_REMOVE_LEARNING_PATH_FROM_CART:
+    "Failed to remove learning path from cart",
   FAILED_TO_CLEAR_CARTDATE: "Failed to clear cart data",
   INVALID_ITEM_TYPE: "Invalid item type",
 };
@@ -669,7 +678,7 @@ export const INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER = {
 };
 
 export const INSTRUCTOR_ERROR_MESSAGE = {
-  INVALID_PUBLISH_DATE : "Publish date cannot be in the past",
+  INVALID_PUBLISH_DATE: "Publish date cannot be in the past",
   NOT_FOUND: "not found",
   ONLY_REJECTED: "Only rejected",
   UNAUTHORIZED_ID: "Unauthorized: Instructor ID not found.",
@@ -718,8 +727,9 @@ export const INSTRUCTOR_ERROR_MESSAGE = {
 };
 
 export const INSTRUCTOR_SUCCESS_MESSAGE = {
-  COURSE_SUBMITTED_FOR_VERIFICATION:"course verification submitted successfully",
-  COURSE_SCHEDULED : "Course scheduled for publishing",
+  COURSE_SUBMITTED_FOR_VERIFICATION:
+    "course verification submitted successfully",
+  COURSE_SCHEDULED: "Course scheduled for publishing",
   COURSE_PUBLISHED: "Course published successfully",
   REVIFICATION_SUBMITTED: "Reverification submitted successfully.",
   WITHDRAWAL_REQUEST_CREATED: "Withdrawal request created successfully",
@@ -765,23 +775,26 @@ export const MESSAGES = {
 };
 
 export const COUPONMESSAGE = {
-  COUPON_NOT_FOUND:"Coupon not found",
-  COUPON_DELETED_SUCCESSFULLY:"Coupon deleted successfully",
-}
-
+  COUPON_CREATION_FAILED:"Coupon creation failed",
+  COUPON_FETCH_FAILED:"Coupon fetch failed",
+  COUPON_UPDATE_FAILED:"Coupon update failed",
+  COUPON_DELETION_FAILED:"Coupon delete failed",
+  COUPON_STATUS_TOGGLE_FAILED:"",
+  COUPON_NOT_FOUND: "Coupon not found",
+  COUPON_DELETED_SUCCESSFULLY: "Coupon deleted successfully",
+};
 
 export const COURSE_OFFER_MESSAGE = {
-  COURSE_OFFER_CREATED:"Course offer created successfully",
-  COURSE_OFFER_EDITED:"Course offer edited successfully",
-  COURSE_OFFER_DELETED:"Course offer deleted successfully",
-  INVALID_INPUT: "Invalid input data", 
+  COURSE_OFFER_CREATED: "Course offer created successfully",
+  COURSE_OFFER_EDITED: "Course offer edited successfully",
+  COURSE_OFFER_DELETED: "Course offer deleted successfully",
+  INVALID_INPUT: "Invalid input data",
   OFFER_NOT_FOUND: "Offer not found",
   GENERIC: "An error occurred while processing the request",
   GET_OFFER_REQUESTS: "Course offer requests retrieved successfully",
   VERIFY_OFFER: (status: string) => `Offer ${status}`,
   GET_OFFER_BY_ID: "Course offer retrieved successfully",
-
-}
+};
 
 export const CATEGORY_OFFER_MESSAGE = {
   CATEGORY_OFFER_CREATED: "Category offer created successfully",
@@ -789,23 +802,19 @@ export const CATEGORY_OFFER_MESSAGE = {
   CATEGORY_OFFER_DELETED: "Category offer deleted successfully",
 };
 
-
-
-
-
 export const LearningPathErrorMessages = {
-  INVALID_ID:"Invalid id",
-  UNVERIFIED_COURSES :"Unverified courses",
-  INVALID_STATUS : "Invalid status",
+  INVALID_ID: "Invalid id",
+  UNVERIFIED_COURSES: "Unverified courses",
+  INVALID_STATUS: "Invalid status",
   MISSING_FIELDS: "Missing required fields",
   ALREADY_CREATED: "Learning path with this title already exists",
   NOT_FOUND: "Learning path not found",
   INVALID_COURSES: "Invalid courses provided",
   PUBLISH_CONDITION: "Learning path must have at least one course to publish",
   INVALID_PUBLISH_DATE: "Publish date must be in the future",
-  ALREADY_SUBMITTED:"Learning path already submitted for review",
-  NOT_SUBMITTED:"Learning path not submitted for review",
-  ALREADY_VERIFIED:"Learning path already verified",
+  ALREADY_SUBMITTED: "Learning path already submitted for review",
+  NOT_SUBMITTED: "Learning path not submitted for review",
+  ALREADY_VERIFIED: "Learning path already verified",
 };
 
 export const LearningPathSuccessMessages = {
@@ -815,14 +824,11 @@ export const LearningPathSuccessMessages = {
   RETRIEVED: "Learning path retrieved successfully",
   PUBLISHED: "Learning path published successfully",
   SCHEDULED: "Learning path scheduled for publishing",
-  SUBMITTED : "Learning path submitted for admin review",
-  RESUBMITTED : "Learning path resubmitted for admin review",
-  APPROVED : "Learning path approved by admin",
-  REJECTED : "Learning path rejected by admin"
+  SUBMITTED: "Learning path submitted for admin review",
+  RESUBMITTED: "Learning path resubmitted for admin review",
+  APPROVED: "Learning path approved by admin",
+  REJECTED: "Learning path rejected by admin",
 };
-
-
-
 
 export const COURSE_OFFER_SUCCESS_MESSAGE = {
   COURSE_OFFER_CREATED: "Course offer created successfully",
@@ -834,27 +840,47 @@ export const COURSE_OFFER_SUCCESS_MESSAGE = {
 };
 
 export const COURSE_OFFER_ERROR_MESSAGE = {
+  INVALID_INPUT_STATUS:"Invalid input status",
+  INVALID_INPUT_OFFER_ID:"Invalid input offer id",
   INVALID_INPUT: "Invalid input data",
+  INVALID_INPUT_REVIEWS:"Invalid input reviews",
   OFFER_NOT_FOUND: "Offer not found",
   GENERIC: "An error occurred while processing the request",
 };
 
-
 export const LMS_ERROR_MESSAGE = {
-  LEARNING_PATH_NOT_FOUND:"Learning path not found",
-}
+  LEARNING_PATH_NOT_FOUND: "Learning path not found",
+};
 
 export const STUDENT_SUCCESS_MESSAGE = {
-  COURSE_COMPLETED_NEXT_COURSE_UNLOCKED:"Course completed and next course unlocked",
-}
+  COURSE_COMPLETED_NEXT_COURSE_UNLOCKED:
+    "Course completed and next course unlocked",
+};
 
 export const STUDENT_ERROR_MESSAGE = {
-  STUDENT_UNAUTHORIZED : "unauthorized",
-  USERID_LEARNINGPATHID_REQUIRED:"User ID and Learning Path ID are required",
-  ALL_CHAPTERS_QUIZES_NEED_TO_COMPLETED:"Not all chapters or quizzes are completed for this course",
-  USER_LEARNINGPATH_COURSE_IDS_REQUIRED:"User ID, Learning Path ID, and Course ID are required",
-  COMPLETE_ENTIRE_COURSE_CHAPTERS_AND_QUIZES:"Cannot complete course. Please ensure all chapters and quizzes are finished with at least 50% score on quizzes.",
-  TRY_AGAIN:"Failed to complete course. Please try again later.",
-  CERTIFICATE_NOT_AVAILABLE:"Certificate not available",
+  STUDENT_UNAUTHORIZED: "unauthorized",
+  USERID_LEARNINGPATHID_REQUIRED: "User ID and Learning Path ID are required",
+  ALL_CHAPTERS_QUIZES_NEED_TO_COMPLETED:
+    "Not all chapters or quizzes are completed for this course",
+  USER_LEARNINGPATH_COURSE_IDS_REQUIRED:
+    "User ID, Learning Path ID, and Course ID are required",
+  COMPLETE_ENTIRE_COURSE_CHAPTERS_AND_QUIZES:
+    "Cannot complete course. Please ensure all chapters and quizzes are finished with at least 50% score on quizzes.",
+  TRY_AGAIN: "Failed to complete course. Please try again later.",
+  CERTIFICATE_NOT_AVAILABLE: "Certificate not available",
+};
 
-}
+
+export const MEMBERSHIP_ORDER_ERROR_MESSAGE = {
+  GENERIC: "An unexpected error occurred",
+  FAILED_TO_FETCH_ORDERS: "Failed to fetch orders",
+  ORDER_NOT_FOUND: "Order not found",
+  INVALID_PAGE_OR_LIMIT: "Page and limit must be positive numbers",
+  INVALID_ORDER_ID: "Invalid or missing order ID",
+  INVALID_STATUS: "Invalid status value",
+};
+
+export const MEMBERSHIP_ORDER_SUCCESS_MESSAGE = {
+  FETCH_ORDERS_SUCCESS: "Orders fetched successfully",
+  FETCH_ORDER_DETAIL_SUCCESS: "Order details fetched successfully",
+};

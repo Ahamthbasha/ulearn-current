@@ -9,6 +9,9 @@ import {
   AdminSuccessMessages,
   AdminWithdrawalMessage,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
+import { BadRequestError, NotFoundError } from "../../utils/error";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 
 export class AdminWithdrawalController implements IAdminWithdrawalController {
   private _withdrawalRequestService: IWithdrawalRequestService;
@@ -28,27 +31,15 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
       const status = (req.query.status as string) || "";
 
       if (page < 1) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: AdminErrorMessages.ADMIN_PAGENO_VALIDATION,
-        });
-        return;
+        throw new BadRequestError(AdminErrorMessages.ADMIN_PAGENO_VALIDATION);
       }
 
       if (limit < 1 || limit > 100) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: AdminErrorMessages.ADMIN_LIMIT_VALIDATION,
-        });
-        return;
+        throw new BadRequestError(AdminErrorMessages.ADMIN_LIMIT_VALIDATION);
       }
 
       if (status && !["pending", "approved", "rejected"].includes(status)) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: AdminWithdrawalMessage.STATUS_FILTER,
-        });
-        return;
+        throw new BadRequestError(AdminWithdrawalMessage.STATUS_FILTER);
       }
 
       const { transactions, total } =
@@ -70,12 +61,9 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
           status: status.trim(),
         },
       });
-    } catch (error: any) {
-      console.error(error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: AdminErrorMessages.ADMIN_FAILED_FETCH_WITHDRAWAL_REQUEST,
-      });
+    } catch (error) {
+      appLogger.error("Error getting all withdrawal requests", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -86,6 +74,10 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
     try {
       const adminId = new Types.ObjectId(req.user?.id);
       const { requestId, remarks } = req.body;
+
+      if (!requestId) {
+        throw new BadRequestError("Request ID is required");
+      }
 
       const request =
         await this._withdrawalRequestService.approveWithdrawalRequest(
@@ -99,14 +91,9 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
         message: AdminSuccessMessages.ADMIN_APPROVE_WITHDRAWAL,
         data: request,
       });
-    } catch (error: any) {
-      console.error(error);
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message:
-          error.message ||
-          AdminErrorMessages.ADMIN_FAILED_TO_APPROVE_WITHDRAWAL,
-      });
+    } catch (error) {
+      appLogger.error("Error approving withdrawal request", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -117,6 +104,10 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
     try {
       const adminId = new Types.ObjectId(req.user?.id);
       const { requestId, remarks } = req.body;
+
+      if (!requestId) {
+        throw new BadRequestError("Request ID is required");
+      }
 
       const request =
         await this._withdrawalRequestService.rejectWithdrawalRequest(
@@ -130,13 +121,9 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
         message: AdminSuccessMessages.ADMIN_REJECT_WITHDRAWAL,
         data: request,
       });
-    } catch (error: any) {
-      console.error(error);
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message:
-          error.message || AdminErrorMessages.ADMIN_FAILED_TO_REJECT_WITHDRAWAL,
-      });
+    } catch (error) {
+      appLogger.error("Error rejecting withdrawal request", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -148,11 +135,7 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
       const { requestId } = req.params;
 
       if (!Types.ObjectId.isValid(requestId)) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: AdminErrorMessages.ADMIN_INVALID_ID_FORMAT,
-        });
-        return;
+        throw new BadRequestError(AdminErrorMessages.ADMIN_INVALID_ID_FORMAT);
       }
 
       const withdrawalDetailRequest =
@@ -160,29 +143,19 @@ export class AdminWithdrawalController implements IAdminWithdrawalController {
           new Types.ObjectId(requestId),
         );
 
+      if (!withdrawalDetailRequest) {
+        throw new NotFoundError(
+          AdminErrorMessages.ADMIN_WITHDRAWAL_REQUEST_NOTFOUND
+        );
+      }
+
       res.status(StatusCode.OK).json({
         success: true,
         data: withdrawalDetailRequest,
       });
-    } catch (error: any) {
-      console.error("Error fetching withdrawal request by ID:", error);
-
-      if (
-        error.message === AdminErrorMessages.ADMIN_WITHDRAWAL_REQUEST_NOTFOUND
-      ) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: error.message,
-        });
-        return;
-      }
-
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message:
-          error.message ||
-          AdminErrorMessages.ADMIN_FAILED_TO_FETCH_WITHDRAWAL_REQUEST,
-      });
+    } catch (error) {
+      appLogger.error("Error fetching withdrawal request by ID", { error });
+      handleControllerError(error, res);
     }
   }
 }

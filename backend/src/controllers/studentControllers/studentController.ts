@@ -12,6 +12,7 @@ import IOtpServices from "../../services/interface/IOtpService";
 import { IOtpGenerate } from "../../types/types";
 import { IJwtService } from "../../services/interface/IJwtService";
 import { IEmail } from "../../types/Email";
+import { appLogger } from "../../utils/logger";
 
 export class StudentController implements IStudentController {
   private _studentService: IStudentService;
@@ -85,7 +86,7 @@ export class StudentController implements IStudentController {
         });
       }
     } catch (error: any) {
-      console.error("Student SignUp Error:", error);
+      appLogger.error("Student SignUp Error:", error);
       return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -109,7 +110,7 @@ export class StudentController implements IStudentController {
       const existingOtp = await this._otpService.otpExists(email);
       if (existingOtp) {
         const remainingTime = await this._otpService.getOtpRemainingTime(email);
-        console.log(
+        appLogger.info(
           `Existing OTP found for ${email}, remaining time: ${remainingTime}`,
         );
       }
@@ -131,7 +132,7 @@ export class StudentController implements IStudentController {
         message: MESSAGES.OTP_SENT,
       });
     } catch (error: any) {
-      console.error("Resend OTP Error:", error);
+      appLogger.error("Resend OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -192,7 +193,7 @@ export class StudentController implements IStudentController {
         });
       }
     } catch (error: any) {
-      console.error("Create User Error:", error);
+      appLogger.error("Create User Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -264,7 +265,7 @@ export class StudentController implements IStudentController {
           },
         });
     } catch (error: any) {
-      console.error("Login Error:", error);
+      appLogger.error("Login Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -283,7 +284,7 @@ export class StudentController implements IStudentController {
         message: MESSAGES.LOGOUT_SUCCESS,
       });
     } catch (error: any) {
-      console.error("Logout Error:", error);
+      appLogger.error("Logout Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -336,7 +337,7 @@ export class StudentController implements IStudentController {
         });
       }
     } catch (error: any) {
-      console.error("Verify Email Error:", error);
+      appLogger.error("Verify Email Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -359,8 +360,6 @@ export class StudentController implements IStudentController {
 
       const isOtpValid = await this._otpService.verifyOtp(email, otp);
 
-      console.log("isOtpValid", isOtpValid);
-
       if (isOtpValid) {
         let token = await this._JWT.createToken({ email });
 
@@ -380,7 +379,7 @@ export class StudentController implements IStudentController {
         });
       }
     } catch (error: any) {
-      console.error("Verify Reset OTP Error:", error);
+      appLogger.error("Verify Reset OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -419,7 +418,7 @@ export class StudentController implements IStudentController {
         message: MESSAGES.OTP_SENT,
       });
     } catch (error: any) {
-      console.error("Forgot Resend OTP Error:", error);
+      appLogger.error("Forgot Resend OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -431,7 +430,6 @@ export class StudentController implements IStudentController {
   async resetPassword(req: Request, res: Response): Promise<void> {
     try {
       const { password } = req.body;
-      console.log(password);
       if (!password) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
@@ -441,8 +439,6 @@ export class StudentController implements IStudentController {
       }
 
       const token = req.cookies.forgotToken;
-
-      console.log(req.cookies.forgotToken);
 
       if (!token) {
         res.status(StatusCode.UNAUTHORIZED).json({
@@ -480,7 +476,7 @@ export class StudentController implements IStudentController {
         });
       }
     } catch (error: any) {
-      console.error("Reset Password Error:", error);
+      appLogger.error("Reset Password Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
@@ -575,7 +571,7 @@ export class StudentController implements IStudentController {
         }
       }
     } catch (error: any) {
-      console.error("Google Login Error:", error);
+      appLogger.error("Google Login Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,

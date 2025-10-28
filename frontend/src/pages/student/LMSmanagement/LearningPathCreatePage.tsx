@@ -5,9 +5,9 @@ import * as Yup from "yup";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InputField from "../../../components/common/InputField";
-import CourseSelector from "../../../components/InstructorComponents/CourseSelector";
-import { createLearningPath, getInstructorCategories } from "../../../api/action/InstructorActionApi";
-import type { CreateLearningPathRequest } from "../../../types/interfaces/IInstructorInterface";
+import CourseSelector from "../../../components/StudentComponents/CourseSelector";
+import { createLearningPath, getAllCategories } from "../../../api/action/StudentAction";
+import type { CreateLearningPathRequest } from "../../../types/interfaces/IStudentInterface";
 
 const isValidObjectId = (id: string): boolean => {
   return /^[0-9a-fA-F]{24}$/.test(id);
@@ -117,8 +117,8 @@ const LearningPathCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await getInstructorCategories();
-        console.log("Fetched categories:", data); // Debug categories
+        const data = await getAllCategories();
+        console.log("Fetched categories:", data);
         setCategories(data);
       } catch (error) {
         console.error("Failed to load categories", error);
@@ -144,7 +144,6 @@ const LearningPathCreatePage: React.FC = () => {
     { setSubmitting, setFieldError }: FormikHelpers<CreateLearningPathRequest & { thumbnail?: File }>
   ) => {
     try {
-      // Validate items manually to trigger toast for course selection
       if (!values.items || values.items.length === 0 || values.items.some(item => !item.courseId || !isValidObjectId(item.courseId))) {
         setFieldError("items", "At least one valid course is required");
         toast.error("Please select at least one valid course", {
@@ -182,7 +181,7 @@ const LearningPathCreatePage: React.FC = () => {
         position: "top-right",
         autoClose: 3000,
       });
-      navigate("/instructor/learningPath");
+      navigate("/user/createdLms");
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Failed to create learning path";
       toast.error(errorMessage, {
@@ -225,7 +224,7 @@ const LearningPathCreatePage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   const selectedCategory = e.target.value;
                   setFieldValue("category", selectedCategory);
-                  console.log("Category selected:", selectedCategory, "Form state category:", values.category); // Debug
+                  console.log("Category selected:", selectedCategory, "Form state category:", values.category);
                 }}
               >
                 <option value="">Select a category</option>
@@ -238,7 +237,7 @@ const LearningPathCreatePage: React.FC = () => {
               <ErrorMessage name="category" component="p" className="text-red-500 text-sm mt-1" />
             </div>
 
-            <CourseSelector name="items" label="Courses" />
+            <CourseSelector name="items" label="Courses" categoryId={values.category} /> {/* Pass the selected category */}
             {errors.items && touched.items && (
               <div className="text-red-500 text-sm mt-1">
                 {typeof errors.items === "string" ? (
@@ -330,7 +329,7 @@ const LearningPathCreatePage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/instructor/learningPath")}
+                onClick={() => navigate("/user/createdLms")}
                 className="bg-gray-200 px-4 py-2 rounded-lg"
               >
                 Cancel

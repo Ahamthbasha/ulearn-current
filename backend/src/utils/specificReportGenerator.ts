@@ -46,21 +46,26 @@ export async function generateExcelReport(
   const totalEnrollments = data.length > 0 ? data[0].totalEnrollments : 0;
 
   data.forEach((item) => {
-    const coursePrice = item.courseOfferPrice > 0 ? `Rs ${item.courseOfferPrice.toFixed(2)}` : `Rs ${item.originalCoursePrice.toFixed(2)}`;
+    const coursePrice =
+      item.courseOfferPrice > 0
+        ? `Rs ${item.courseOfferPrice.toFixed(2)}`
+        : `Rs ${item.originalCoursePrice.toFixed(2)}`;
 
-    sheet.addRow({
-      orderId: item.orderId,
-      courseName: item.courseName,
-      coursePrice: coursePrice,
-      couponUsed: item.couponUsed ? "Yes" : "No",
-      couponDeductionAmount: `Rs ${item.couponDeductionAmount.toFixed(2)}`,
-      instructorRevenue: `Rs ${item.instructorRevenue.toFixed(2)}`,
-    }).eachCell((cell) => {
-      cell.alignment = { vertical: "middle", horizontal: "right" };
-      if (["orderId", "courseName"].includes(cell.col)) {
-        cell.alignment = { vertical: "middle", horizontal: "left" };
-      }
-    });
+    sheet
+      .addRow({
+        orderId: item.orderId,
+        courseName: item.courseName,
+        coursePrice: coursePrice,
+        couponUsed: item.couponUsed ? "Yes" : "No",
+        couponDeductionAmount: `Rs ${item.couponDeductionAmount.toFixed(2)}`,
+        instructorRevenue: `Rs ${item.instructorRevenue.toFixed(2)}`,
+      })
+      .eachCell((cell) => {
+        cell.alignment = { vertical: "middle", horizontal: "right" };
+        if (["orderId", "courseName"].includes(cell.col)) {
+          cell.alignment = { vertical: "middle", horizontal: "left" };
+        }
+      });
 
     totalInstructorRevenue += item.instructorRevenue;
   });
@@ -76,8 +81,14 @@ export async function generateExcelReport(
     instructorRevenue: `Rs ${totalInstructorRevenue.toFixed(2)}`,
   });
   totalRevenueRow.font = { bold: true };
-  totalRevenueRow.getCell("couponDeductionAmount").font = { bold: true, color: { argb: "FF000000" } };
-  totalRevenueRow.getCell("instructorRevenue").font = { bold: true, color: { argb: "FF008000" } };
+  totalRevenueRow.getCell("couponDeductionAmount").font = {
+    bold: true,
+    color: { argb: "FF000000" },
+  };
+  totalRevenueRow.getCell("instructorRevenue").font = {
+    bold: true,
+    color: { argb: "FF008000" },
+  };
   totalRevenueRow.alignment = { vertical: "middle", horizontal: "right" };
   totalRevenueRow.height = 20;
 
@@ -90,8 +101,14 @@ export async function generateExcelReport(
     instructorRevenue: totalEnrollments.toString(),
   });
   totalEnrollmentsRow.font = { bold: true };
-  totalEnrollmentsRow.getCell("couponDeductionAmount").font = { bold: true, color: { argb: "FF000000" } };
-  totalEnrollmentsRow.getCell("instructorRevenue").font = { bold: true, color: { argb: "FF008000" } };
+  totalEnrollmentsRow.getCell("couponDeductionAmount").font = {
+    bold: true,
+    color: { argb: "FF000000" },
+  };
+  totalEnrollmentsRow.getCell("instructorRevenue").font = {
+    bold: true,
+    color: { argb: "FF008000" },
+  };
   totalEnrollmentsRow.alignment = { vertical: "middle", horizontal: "right" };
   totalEnrollmentsRow.height = 20;
 
@@ -119,7 +136,7 @@ export async function generateExcelReport(
   );
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename=RevenueReport_${new Date().toISOString().split('T')[0]}.xlsx`,
+    `attachment; filename=RevenueReport_${new Date().toISOString().split("T")[0]}.xlsx`,
   );
   await workbook.xlsx.write(res);
   res.end();
@@ -148,17 +165,33 @@ export async function generatePdfReport(
   const startX = 40;
 
   // Header section
-  doc.fillColor("#1E40AF").fontSize(26).font("Helvetica-Bold").text("ULearn", { align: "center" });
-  doc.fillColor("#6B7280").fontSize(15).font("Helvetica").text("Course Revenue Report", { align: "center" });
+  doc
+    .fillColor("#1E40AF")
+    .fontSize(26)
+    .font("Helvetica-Bold")
+    .text("ULearn", { align: "center" });
+  doc
+    .fillColor("#6B7280")
+    .fontSize(15)
+    .font("Helvetica")
+    .text("Course Revenue Report", { align: "center" });
   doc.moveDown(0.5);
 
   // Current date and time (06:59 PM IST, October 14, 2025)
   const reportDate = "October 14, 2025";
   const reportTime = "06:59 PM";
-  doc.fontSize(10).fillColor("#9CA3AF").text(`Generated on: ${reportDate} | ${reportTime}`, { align: "center" });
+  doc
+    .fontSize(10)
+    .fillColor("#9CA3AF")
+    .text(`Generated on: ${reportDate} | ${reportTime}`, { align: "center" });
   doc.moveDown(1.2);
 
-  doc.moveTo(startX, doc.y).lineTo(doc.page.width - startX, doc.y).strokeColor("#3B82F6").lineWidth(2).stroke();
+  doc
+    .moveTo(startX, doc.y)
+    .lineTo(doc.page.width - startX, doc.y)
+    .strokeColor("#3B82F6")
+    .lineWidth(2)
+    .stroke();
   doc.moveDown(1.5);
 
   const headers = [
@@ -175,11 +208,18 @@ export async function generatePdfReport(
   const colWidths = [70, 70, 120, 60, 60, 60, 60];
   const padding = 8;
 
-  const truncateText = (text: string, maxWidth: number, fontSize: number): string => {
+  const truncateText = (
+    text: string,
+    maxWidth: number,
+    fontSize: number,
+  ): string => {
     doc.fontSize(fontSize).font("Helvetica");
     if (doc.widthOfString(text) <= maxWidth) return text;
     let truncated = text;
-    while (doc.widthOfString(truncated + "...") > maxWidth && truncated.length > 0) {
+    while (
+      doc.widthOfString(truncated + "...") > maxWidth &&
+      truncated.length > 0
+    ) {
       truncated = truncated.slice(0, -1);
     }
     return truncated + "...";
@@ -196,18 +236,24 @@ export async function generatePdfReport(
 
     // Draw cell backgrounds
     if (isHeader) {
-      doc.rect(startX, yOffset, pageWidth, rowHeight).fillAndStroke("#3B82F6", "#1E40AF");
+      doc
+        .rect(startX, yOffset, pageWidth, rowHeight)
+        .fillAndStroke("#3B82F6", "#1E40AF");
     } else if (isTotal) {
-      doc.rect(startX, yOffset, pageWidth, rowHeight).fillAndStroke("#ECFDF5", "#10B981");
+      doc
+        .rect(startX, yOffset, pageWidth, rowHeight)
+        .fillAndStroke("#ECFDF5", "#10B981");
     } else {
       const fillColor = isEven ? "#F9FAFB" : "#FFFFFF";
-      doc.rect(startX, yOffset, pageWidth, rowHeight).fillAndStroke(fillColor, "#E5E7EB");
+      doc
+        .rect(startX, yOffset, pageWidth, rowHeight)
+        .fillAndStroke(fillColor, "#E5E7EB");
     }
 
     // Draw cell content
     row.forEach((text, i) => {
       const cellWidth = colWidths[i];
-      const maxTextWidth = cellWidth - (padding * 2);
+      const maxTextWidth = cellWidth - padding * 2;
 
       // Set font styles
       if (isHeader) {
@@ -221,7 +267,8 @@ export async function generatePdfReport(
       let displayText = text;
 
       // Determine text alignment
-      const textAlign = (i === 0 || i === 2) ? "left" : (i === 4) ? "center" : "right";
+      const textAlign =
+        i === 0 || i === 2 ? "left" : i === 4 ? "center" : "right";
 
       // Truncate text for Order ID and Course Name in data rows
       if (!isHeader && !isTotal && (i === 0 || i === 2)) {
@@ -238,7 +285,7 @@ export async function generatePdfReport(
         textX = x + (cellWidth - textWidth) / 2;
       }
 
-      const textY = yOffset + (rowHeight / 2) - 5;
+      const textY = yOffset + rowHeight / 2 - 5;
 
       doc.text(displayText, textX, textY, {
         lineBreak: false,
@@ -282,11 +329,18 @@ export async function generatePdfReport(
 
   // Summary section
   y += 20;
-  doc.moveTo(startX, y).lineTo(startX + pageWidth, y).strokeColor("#D1D5DB").lineWidth(2).stroke();
+  doc
+    .moveTo(startX, y)
+    .lineTo(startX + pageWidth, y)
+    .strokeColor("#D1D5DB")
+    .lineWidth(2)
+    .stroke();
   y += 20;
 
   const summaryHeight = 70;
-  doc.roundedRect(startX, y, pageWidth, summaryHeight, 10).fillAndStroke("#ECFDF5", "#10B981");
+  doc
+    .roundedRect(startX, y, pageWidth, summaryHeight, 10)
+    .fillAndStroke("#ECFDF5", "#10B981");
 
   // Total Instructor Revenue
   doc.fontSize(12).font("Helvetica-Bold").fillColor("#065F46");
@@ -295,7 +349,11 @@ export async function generatePdfReport(
   doc.fontSize(12).fillColor("#047857").font("Helvetica-Bold");
   const totalRevenueText = `Rs ${totalInstructorRevenue.toFixed(2)}`;
   const totalRevenueWidth = doc.widthOfString(totalRevenueText);
-  doc.text(totalRevenueText, startX + pageWidth - 20 - totalRevenueWidth, y + 15);
+  doc.text(
+    totalRevenueText,
+    startX + pageWidth - 20 - totalRevenueWidth,
+    y + 15,
+  );
 
   // Total Enrollments
   const totalEnrollments = data.length > 0 ? data[0].totalEnrollments : 0;
@@ -305,7 +363,11 @@ export async function generatePdfReport(
   doc.fontSize(12).fillColor("#047857").font("Helvetica-Bold");
   const totalEnrollmentsText = totalEnrollments.toString();
   const totalEnrollmentsWidth = doc.widthOfString(totalEnrollmentsText);
-  doc.text(totalEnrollmentsText, startX + pageWidth - 20 - totalEnrollmentsWidth, y + 40);
+  doc.text(
+    totalEnrollmentsText,
+    startX + pageWidth - 20 - totalEnrollmentsWidth,
+    y + 40,
+  );
 
   // Add page numbers and footer
   const range = doc.bufferedPageRange();
@@ -317,7 +379,7 @@ export async function generatePdfReport(
       `Page ${i + 1} of ${range.count} | ULearn Platform | Confidential | ${reportDate}`,
       40,
       footerY,
-      { align: "center", width: doc.page.width - 80 }
+      { align: "center", width: doc.page.width - 80 },
     );
   }
 

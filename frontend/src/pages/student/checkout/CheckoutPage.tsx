@@ -12,13 +12,19 @@ import {
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { debounce } from "lodash";
-import type { checkoutCartItem,Wallet, ICoupon} from "../interface/studentInterface";
+import type {
+  checkoutCartItem,
+  Wallet,
+  ICoupon,
+} from "../interface/studentInterface";
 
 const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState<checkoutCartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "wallet">("razorpay");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "wallet">(
+    "razorpay"
+  );
   const [isRazorpayProcessing, setIsRazorpayProcessing] = useState(false);
   const [isWalletProcessing, setIsWalletProcessing] = useState(false);
   const [isCancelProcessing, setIsCancelProcessing] = useState(false);
@@ -30,7 +36,8 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const razorpayInstanceRef = useRef<any>(null);
 
-  const isProcessing = isRazorpayProcessing || isWalletProcessing || isCancelProcessing;
+  const isProcessing =
+    isRazorpayProcessing || isWalletProcessing || isCancelProcessing;
 
   useEffect(() => {
     fetchCartItems();
@@ -53,7 +60,13 @@ const CheckoutPage = () => {
       setLoading(true);
       const response = await getCart();
       const items: checkoutCartItem[] = (response || []).map((item: any) => {
-        if (!item.itemId || !item.type || !item.title || item.price == null || !item.thumbnailUrl) {
+        if (
+          !item.itemId ||
+          !item.type ||
+          !item.title ||
+          item.price == null ||
+          !item.thumbnailUrl
+        ) {
           throw new Error("Invalid cart item data");
         }
         return {
@@ -143,12 +156,23 @@ const CheckoutPage = () => {
     return sum + item.price;
   }, 0);
 
-  const handleBackendError = async (error: any, paymentType: "razorpay" | "wallet") => {
-    let errorMessage = error?.response?.data?.message || error?.message || "An unexpected error occurred";
+  const handleBackendError = async (
+    error: any,
+    paymentType: "razorpay" | "wallet"
+  ) => {
+    let errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "An unexpected error occurred";
     const orderId = error?.response?.data?.orderId;
 
-    if (errorMessage.includes("Request failed with status code 500") && error?.response?.data?.message) {
-      const backendLogMatch = error?.response?.data?.message.match(/Already enrolled in (.+)\./);
+    if (
+      errorMessage.includes("Request failed with status code 500") &&
+      error?.response?.data?.message
+    ) {
+      const backendLogMatch = error?.response?.data?.message.match(
+        /Already enrolled in (.+)\./
+      );
       if (backendLogMatch) {
         errorMessage = `Already enrolled in ${backendLogMatch[1]}.`;
       }
@@ -162,16 +186,20 @@ const CheckoutPage = () => {
     });
 
     if (errorMessage.includes("they are included in the learning path(s)")) {
-      toast.error(`${errorMessage} Please remove the overlapping course(s) from your cart.`);
+      toast.error(
+        `${errorMessage} Please remove the overlapping course(s) from your cart.`
+      );
     } else if (errorMessage.includes("A pending order already exists")) {
       toast.error(
-        "A payment is already in progress for these items. Cancel it to proceed with a new payment or wait 15 minutes for it to expire.",
+        "A payment is already in progress for these items. Cancel it to proceed with a new payment or wait 15 minutes for it to expire."
       );
       if (orderId) {
         setPendingOrderId(orderId);
       } else {
         console.error("No orderId in pending order error response");
-        toast.error("Unable to identify pending order. Please try again later.");
+        toast.error(
+          "Unable to identify pending order. Please try again later."
+        );
       }
     } else if (errorMessage.includes("already enrolled")) {
       const match = errorMessage.match(/Already enrolled in (.+)\./);
@@ -188,11 +216,13 @@ const CheckoutPage = () => {
         if (confirmRemove) {
           try {
             await removeFromCart(enrolledItem._id, enrolledItem.type);
-            setCartItems((prev) => prev.filter((item) => item._id !== enrolledItem._id));
+            setCartItems((prev) =>
+              prev.filter((item) => item._id !== enrolledItem._id)
+            );
             setSelectedCoupon(null);
             setDiscountedAmount(null);
             toast.info(
-              `"${enrolledTitle}" has been removed from your cart. You can now retry checkout.`,
+              `"${enrolledTitle}" has been removed from your cart. You can now retry checkout.`
             );
           } catch (removeError: any) {
             toast.error(
@@ -213,7 +243,9 @@ const CheckoutPage = () => {
         navigate("/user/enrolled");
       }
     } else if (errorMessage.includes("Order already processed")) {
-      toast.success("Payment already completed! Redirecting to enrolled items.");
+      toast.success(
+        "Payment already completed! Redirecting to enrolled items."
+      );
       navigate("/user/enrolled");
     } else if (errorMessage.includes("Payment cancelled")) {
       toast.error(errorMessage);
@@ -222,7 +254,9 @@ const CheckoutPage = () => {
     } else if (errorMessage.includes("Order was cancelled")) {
       toast.error("This order was cancelled. Please start a new checkout.");
     } else if (errorMessage.includes("Insufficient wallet balance")) {
-      toast.error("Insufficient wallet balance. Please use Razorpay or recharge your wallet.");
+      toast.error(
+        "Insufficient wallet balance. Please use Razorpay or recharge your wallet."
+      );
       setPaymentMethod("razorpay");
     } else if (errorMessage.includes("Order not found")) {
       toast.error("Order not found. Please try again.");
@@ -249,7 +283,9 @@ const CheckoutPage = () => {
       toast.error("Invalid enrollment data. Please try again.");
     } else {
       toast.error(
-        `${paymentType === "razorpay" ? "Payment" : "Wallet payment"} failed: ${errorMessage}`,
+        `${
+          paymentType === "razorpay" ? "Payment" : "Wallet payment"
+        } failed: ${errorMessage}`
       );
     }
   };
@@ -263,11 +299,15 @@ const CheckoutPage = () => {
     setIsCancelProcessing(true);
     try {
       await cancelPendingOrder(pendingOrderId);
-      toast.success("Pending order cancelled successfully. You can now proceed with a new payment.");
+      toast.success(
+        "Pending order cancelled successfully. You can now proceed with a new payment."
+      );
       setPendingOrderId(null);
     } catch (error: any) {
       console.error("Cancel pending order error:", error);
-      toast.error(error?.response?.data?.message || "Failed to cancel pending order.");
+      toast.error(
+        error?.response?.data?.message || "Failed to cancel pending order."
+      );
     } finally {
       setIsCancelProcessing(false);
     }
@@ -280,7 +320,9 @@ const CheckoutPage = () => {
       navigate("/user/order", { replace: true });
     } catch (error: any) {
       console.error("Failed to mark order as failed:", error);
-      toast.error(error?.response?.data?.message || "Failed to mark order as failed.");
+      toast.error(
+        error?.response?.data?.message || "Failed to mark order as failed."
+      );
     } finally {
       setIsRazorpayProcessing(false);
     }
@@ -305,12 +347,27 @@ const CheckoutPage = () => {
     setIsRazorpayProcessing(true);
 
     try {
-      const courseIds = cartItems.filter((item) => item.type === "course").map((item) => item._id);
-      const learningPathIds = cartItems.filter((item) => item.type === "learningPath").map((item) => item._id);
-      const response = await initiateCheckout(courseIds, learningPathIds, totalAmount, "razorpay", selectedCoupon?._id);
+      const courseIds = cartItems
+        .filter((item) => item.type === "course")
+        .map((item) => item._id);
+      const learningPathIds = cartItems
+        .filter((item) => item.type === "learningPath")
+        .map((item) => item._id);
+      const response = await initiateCheckout(
+        courseIds,
+        learningPathIds,
+        totalAmount,
+        "razorpay",
+        selectedCoupon?._id
+      );
       const order = response?.order;
 
-      if (!order || !order._id || !order.gatewayOrderId || order.amount == null) {
+      if (
+        !order ||
+        !order._id ||
+        !order.gatewayOrderId ||
+        order.amount == null
+      ) {
         throw new Error("Invalid order data from backend");
       }
 
@@ -384,16 +441,28 @@ const CheckoutPage = () => {
     }
 
     if (!wallet || wallet.balance < (discountedAmount || totalAmount)) {
-      toast.error("Insufficient wallet balance. Please use Razorpay or recharge your wallet.");
+      toast.error(
+        "Insufficient wallet balance. Please use Razorpay or recharge your wallet."
+      );
       return;
     }
 
     setIsWalletProcessing(true);
 
     try {
-      const courseIds = cartItems.filter((item) => item.type === "course").map((item) => item._id);
-      const learningPathIds = cartItems.filter((item) => item.type === "learningPath").map((item) => item._id);
-      const response = await initiateCheckout(courseIds, learningPathIds, totalAmount, "wallet", selectedCoupon?._id);
+      const courseIds = cartItems
+        .filter((item) => item.type === "course")
+        .map((item) => item._id);
+      const learningPathIds = cartItems
+        .filter((item) => item.type === "learningPath")
+        .map((item) => item._id);
+      const response = await initiateCheckout(
+        courseIds,
+        learningPathIds,
+        totalAmount,
+        "wallet",
+        selectedCoupon?._id
+      );
       if (!response?.order || response.order.amount == null) {
         throw new Error("Invalid order data from backend");
       }
@@ -417,7 +486,11 @@ const CheckoutPage = () => {
     }
   }, 1000);
 
-  const handleRemove = async (itemId: string, title: string, type: "course" | "learningPath") => {
+  const handleRemove = async (
+    itemId: string,
+    title: string,
+    type: "course" | "learningPath"
+  ) => {
     if (isProcessing) {
       toast.warn("Cannot modify cart during payment or cancellation process.");
       return;
@@ -446,11 +519,14 @@ const CheckoutPage = () => {
     navigate("/user/cart");
   };
 
-  const canProceedWithWallet = wallet && wallet.balance >= (discountedAmount || totalAmount);
+  const canProceedWithWallet =
+    wallet && wallet.balance >= (discountedAmount || totalAmount);
 
   const handleApplyCoupon = (coupon: ICoupon) => {
     if (totalAmount < coupon.minPurchase) {
-      toast.error(`Minimum purchase amount of ₹${coupon.minPurchase} required for this coupon`);
+      toast.error(
+        `Minimum purchase amount of ₹${coupon.minPurchase} required for this coupon`
+      );
       return;
     }
     setSelectedCoupon(coupon);
@@ -486,8 +562,12 @@ const CheckoutPage = () => {
       ) : cartItems.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🛒</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
-          <p className="text-gray-600 mb-6">Browse our courses and learning paths to get started!</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Your cart is empty
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Browse our courses and learning paths to get started!
+          </p>
           <button
             onClick={() => navigate("/user/courses")}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
@@ -503,20 +583,29 @@ const CheckoutPage = () => {
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
                 <div className="text-blue-800">
                   <div className="font-medium">Processing</div>
-                  <div className="text-sm">Please don't refresh or close this tab until the process is complete.</div>
+                  <div className="text-sm">
+                    Please don't refresh or close this tab until the process is
+                    complete.
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {pendingOrderId && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6" style={{ zIndex: 1000 }}>
+            <div
+              className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6"
+              style={{ zIndex: 1000 }}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="text-2xl mr-3">⚠️</div>
                   <div className="text-yellow-800">
                     <div className="font-medium">Pending Order Detected</div>
-                    <div className="text-sm">A payment is in progress for these items. Cancel it to start a new payment or wait 15 minutes for it to expire.</div>
+                    <div className="text-sm">
+                      A payment is in progress for these items. Cancel it to
+                      start a new payment or wait 15 minutes for it to expire.
+                    </div>
                   </div>
                 </div>
                 <button
@@ -569,23 +658,34 @@ const CheckoutPage = () => {
                           />
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 line-clamp-2">
-                              {item.title} ({item.type === "course" ? "Course" : "Learning Path"})
+                              {item.title} (
+                              {item.type === "course"
+                                ? "Course"
+                                : "Learning Path"}
+                              )
                             </div>
-                            {item.isAlreadyEnrolled && item.type === "course" && (
-                              <div className="text-xs text-green-600">
-                                Already enrolled - no additional cost
-                              </div>
-                            )}
-                            {item.type === "learningPath" && item.enrolledCourses?.length && (
-                              <div className="text-xs text-green-600">
-                                Some courses already enrolled - excluded from total
-                              </div>
-                            )}
-                            {item.type === "learningPath" && item.price === 0 && (
-                              <div className="text-xs text-yellow-600">
-                                All courses enrolled - please remove this learning path
-                              </div>
-                            )}
+                            {item.isAlreadyEnrolled &&
+                              item.type === "course" && (
+                                <div className="text-xs text-green-600">
+                                  Already enrolled - no additional cost
+                                </div>
+                              )}
+                            {item.type === "learningPath" &&
+                              item.enrolledCourses &&
+                              item.enrolledCourses.length > 0 && (
+                                <div className="text-xs text-green-600">
+                                  Some courses already enrolled - excluded from
+                                  total
+                                </div>
+                              )}
+
+                            {item.type === "learningPath" &&
+                              item.price === 0 && (
+                                <div className="text-xs text-yellow-600">
+                                  All courses enrolled - please remove this
+                                  learning path
+                                </div>
+                              )}
                           </div>
                         </div>
                       </td>
@@ -601,7 +701,9 @@ const CheckoutPage = () => {
                       </td>
                       <td className="py-4 px-6 text-center">
                         <button
-                          onClick={() => handleRemove(item._id, item.title, item.type)}
+                          onClick={() =>
+                            handleRemove(item._id, item.title, item.type)
+                          }
                           disabled={isProcessing}
                           className={`text-sm px-3 py-1 rounded transition-colors ${
                             isProcessing
@@ -646,7 +748,9 @@ const CheckoutPage = () => {
           </div>
 
           <div className="bg-white border rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Apply Coupon</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Apply Coupon
+            </h3>
             <div
               className="cursor-pointer p-3 border rounded-lg transition-colors hover:bg-gray-50"
               onClick={toggleCouponDropdown}
@@ -664,7 +768,8 @@ const CheckoutPage = () => {
                     className="flex items-center justify-between p-3 border rounded-lg bg-gray-50"
                   >
                     <span>
-                      {coupon.code} - {coupon.discount}% (Min. ₹{coupon.minPurchase})
+                      {coupon.code} - {coupon.discount}% (Min. ₹
+                      {coupon.minPurchase})
                     </span>
                     <button
                       onClick={() => handleApplyCoupon(coupon)}
@@ -675,7 +780,9 @@ const CheckoutPage = () => {
                           : "bg-blue-600 text-white hover:bg-blue-700"
                       }`}
                     >
-                      {selectedCoupon?.code === coupon.code ? "Applied" : "Apply"}
+                      {selectedCoupon?.code === coupon.code
+                        ? "Applied"
+                        : "Apply"}
                     </button>
                   </div>
                 ))}
@@ -684,9 +791,13 @@ const CheckoutPage = () => {
             {selectedCoupon && (
               <div className="mt-4 flex items-center justify-between">
                 <div className="text-green-600 font-medium">
-                  Coupon {selectedCoupon.code} applied! Discount: {selectedCoupon.discount}%
+                  Coupon {selectedCoupon.code} applied! Discount:{" "}
+                  {selectedCoupon.discount}%
                   {discountedAmount !== null && (
-                    <span> - Final Amount: ₹{discountedAmount.toLocaleString()}</span>
+                    <span>
+                      {" "}
+                      - Final Amount: ₹{discountedAmount.toLocaleString()}
+                    </span>
                   )}
                 </div>
                 <button
@@ -705,8 +816,12 @@ const CheckoutPage = () => {
                 <div className="flex items-center">
                   <div className="text-2xl mr-3">💰</div>
                   <div>
-                    <div className="font-medium text-blue-900">Wallet Balance</div>
-                    <div className="text-sm text-blue-700">Available for instant payment</div>
+                    <div className="font-medium text-blue-900">
+                      Wallet Balance
+                    </div>
+                    <div className="text-sm text-blue-700">
+                      Available for instant payment
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -714,7 +829,9 @@ const CheckoutPage = () => {
                     ₹{wallet.balance.toLocaleString()}
                   </div>
                   {!canProceedWithWallet && (
-                    <div className="text-xs text-red-600">Insufficient balance</div>
+                    <div className="text-xs text-red-600">
+                      Insufficient balance
+                    </div>
                   )}
                 </div>
               </div>
@@ -722,11 +839,15 @@ const CheckoutPage = () => {
           )}
 
           <div className="bg-white border rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Choose Payment Method</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Choose Payment Method
+            </h3>
             <div className="space-y-3">
               <label
                 className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                  paymentMethod === "razorpay" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
+                  paymentMethod === "razorpay"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:bg-gray-50"
                 } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <input
@@ -741,15 +862,23 @@ const CheckoutPage = () => {
                   <div className="text-2xl mr-3">💳</div>
                   <div>
                     <div className="font-medium">Razorpay</div>
-                    <div className="text-sm text-gray-600">Credit/Debit Card, UPI, Net Banking</div>
+                    <div className="text-sm text-gray-600">
+                      Credit/Debit Card, UPI, Net Banking
+                    </div>
                   </div>
                 </div>
               </label>
 
               <label
                 className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                  paymentMethod === "wallet" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-                } ${isProcessing || !canProceedWithWallet ? "opacity-50 cursor-not-allowed" : ""}`}
+                  paymentMethod === "wallet"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:bg-gray-50"
+                } ${
+                  isProcessing || !canProceedWithWallet
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
               >
                 <input
                   type="radio"
@@ -764,7 +893,9 @@ const CheckoutPage = () => {
                   <div>
                     <div className="font-medium">Wallet Payment</div>
                     <div className="text-sm text-gray-600">
-                      {canProceedWithWallet ? "Instant payment from your wallet" : "Insufficient wallet balance"}
+                      {canProceedWithWallet
+                        ? "Instant payment from your wallet"
+                        : "Insufficient wallet balance"}
                     </div>
                   </div>
                 </div>
@@ -773,7 +904,9 @@ const CheckoutPage = () => {
           </div>
 
           <div className="bg-white border rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Complete Payment</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Complete Payment
+            </h3>
             <div className="flex flex-col gap-4 sm:flex-row">
               <button
                 onClick={handlePayment}
@@ -798,7 +931,9 @@ const CheckoutPage = () => {
                     Processing Wallet Payment...
                   </>
                 ) : (
-                  `💰 Pay via Wallet (₹${(discountedAmount || totalAmount).toLocaleString()})`
+                  `💰 Pay via Wallet (₹${(
+                    discountedAmount || totalAmount
+                  ).toLocaleString()})`
                 )}
               </button>
 
@@ -823,7 +958,9 @@ const CheckoutPage = () => {
                     Processing Razorpay Payment...
                   </>
                 ) : (
-                  `💳 Pay via Razorpay (₹${(discountedAmount || totalAmount).toLocaleString()})`
+                  `💳 Pay via Razorpay (₹${(
+                    discountedAmount || totalAmount
+                  ).toLocaleString()})`
                 )}
               </button>
             </div>

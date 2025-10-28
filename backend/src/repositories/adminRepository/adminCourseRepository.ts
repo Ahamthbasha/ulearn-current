@@ -71,7 +71,11 @@ export class AdminCourseRepository
     return await this.update(courseId, { isListed: !course.isListed });
   }
 
-   async verifyCourse(courseId: string, status: "approved" | "rejected", review?: string): Promise<ICourse | null> {
+  async verifyCourse(
+    courseId: string,
+    status: "approved" | "rejected",
+    review?: string,
+  ): Promise<ICourse | null> {
     const course = await this.findById(courseId);
     if (!course) return null;
 

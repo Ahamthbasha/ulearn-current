@@ -1,11 +1,16 @@
 import { ICourseOffer } from "../../models/courseOfferModel";
-import { CourseOfferListDTO, CourseOfferDetailDTO } from "../../dto/instructorDTO/courseOfferDTO";
+import {
+  CourseOfferListDTO,
+  CourseOfferDetailDTO,
+} from "../../dto/instructorDTO/courseOfferDTO";
 import { formatDate } from "../../utils/dateFormat";
 
 export const CourseOfferMapper = {
-  
   toCourseOfferDTO(offer: ICourseOffer): CourseOfferListDTO {
-    const course = offer.courseId as unknown as { courseName: string; _id: string };
+    const course = offer.courseId as unknown as {
+      courseName: string;
+      _id: string;
+    };
     return {
       courseOfferId: offer._id.toString(),
       courseId: course._id,
@@ -18,19 +23,24 @@ export const CourseOfferMapper = {
   },
 
   toCourseOfferListDTOs(offers: ICourseOffer[]): CourseOfferListDTO[] {
-    return offers.map(offer => this.toCourseOfferDTO(offer));
+    return offers.map((offer) => this.toCourseOfferDTO(offer));
   },
 
   toCourseOfferDetailDTO(offer: ICourseOffer): CourseOfferDetailDTO {
-    const course = offer.courseId as unknown as { price: number; _id: string; courseName: string };
-    const discountPrice = ('discountedPrice' in offer && typeof offer.discountedPrice === "number")
-      ? offer.discountedPrice
-      : course.price * (1 - offer.discountPercentage / 100);
+    const course = offer.courseId as unknown as {
+      price: number;
+      _id: string;
+      courseName: string;
+    };
+    const discountPrice =
+      "discountedPrice" in offer && typeof offer.discountedPrice === "number"
+        ? offer.discountedPrice
+        : course.price * (1 - offer.discountPercentage / 100);
 
     return {
       courseOfferId: offer._id.toString(),
       courseId: course._id,
-      courseName:course.courseName,
+      courseName: course.courseName,
       courseOriginalPrice: course.price,
       discount: offer.discountPercentage,
       courseDiscountPrice: discountPrice,
@@ -39,5 +49,5 @@ export const CourseOfferMapper = {
       status: offer.status,
       reviews: offer.reviews || "",
     };
-  }
+  },
 };

@@ -22,14 +22,15 @@ const Orders: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
 
-  const debouncedSearch = useDebounce(searchTerm, 500);
+  const debouncedSearch = useDebounce(searchTerm, 1000);
   const limit = 5;
 
-  // Available status options for filtering
+  // Updated status options including "cancelled"
   const statusOptions = [
     { value: "", label: "All Status" },
     { value: "paid", label: "Paid" },
     { value: "failed", label: "Failed" },
+    { value: "cancelled", label: "Cancelled" },
   ];
 
   const fetchOrders = async (pageNum = 1, search = "", status: string = "") => {
@@ -43,7 +44,6 @@ const Orders: React.FC = () => {
         status
       );
 
-      // Map the response data directly since it matches the expected format
       setOrders(res.data || []);
       setTotal(res.total || 0);
       setTotalPages(Math.ceil((res.total || 0) / limit));
@@ -93,12 +93,15 @@ const Orders: React.FC = () => {
     fetchOrders(page, debouncedSearch, statusFilter);
   }, [page, debouncedSearch, statusFilter]);
 
+  // Updated getStatusColor to include "cancelled"
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "paid":
         return "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium capitalize border border-green-200";
       case "failed":
         return "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium capitalize border border-red-200";
+      case "cancelled":
+        return "bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium capitalize border border-orange-200";
       case "pending":
         return "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium capitalize border border-yellow-200";
       default:
@@ -144,7 +147,7 @@ const Orders: React.FC = () => {
       key: "membershipName", 
       title: "Membership", 
       minWidth: "120px",
-      hideOnMobile: true, // Hide on mobile to save space
+      hideOnMobile: true,
       render: (value) => (
         <span className="text-sm text-gray-900 truncate" title={value}>
           {value}
@@ -221,6 +224,8 @@ const Orders: React.FC = () => {
                         ? "bg-green-500 text-white shadow-md"
                         : option.value === "failed"
                         ? "bg-red-500 text-white shadow-md"
+                        : option.value === "cancelled"
+                        ? "bg-orange-500 text-white shadow-md"
                         : "bg-blue-500 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
                   }`}
@@ -261,11 +266,27 @@ const Orders: React.FC = () => {
                     </span>
                   )}
                   {statusFilter && (
-                    <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                    <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${
+                      statusFilter === "paid"
+                        ? "bg-green-100 text-green-800 border-green-200"
+                        : statusFilter === "failed"
+                        ? "bg-red-100 text-red-800 border-red-200"
+                        : statusFilter === "cancelled"
+                        ? "bg-orange-100 text-orange-800 border-orange-200"
+                        : "bg-blue-100 text-blue-800 border-blue-200"
+                    }`}>
                       Status: "{statusFilter}"
                       <button
                         onClick={() => handleStatusFilterChange("")}
-                        className="ml-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-0.5"
+                        className={`ml-1.5 rounded-full p-0.5 ${
+                          statusFilter === "paid"
+                            ? "text-green-600 hover:text-green-800 hover:bg-green-200"
+                            : statusFilter === "failed"
+                            ? "text-red-600 hover:text-red-800 hover:bg-red-200"
+                            : statusFilter === "cancelled"
+                            ? "text-orange-600 hover:text-orange-800 hover:bg-orange-200"
+                            : "text-blue-600 hover:text-blue-800 hover:bg-blue-200"
+                        }`}
                       >
                         <X size={10} />
                       </button>

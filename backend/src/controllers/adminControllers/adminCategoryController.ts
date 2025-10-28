@@ -10,8 +10,11 @@ import {
 } from "../../utils/constants";
 import { StatusCode } from "../../utils/enums";
 import { ICategoryModel } from "../../models/categoryModel";
-export class AdminCategoryContoller implements IAdminCategoryController {
+import { appLogger } from "../../utils/logger";
+
+export class AdminCategoryController implements IAdminCategoryController {
   private _categoryService: IAdminCategoryService;
+
   constructor(categoryService: IAdminCategoryService) {
     this._categoryService = categoryService;
   }
@@ -19,31 +22,35 @@ export class AdminCategoryContoller implements IAdminCategoryController {
   async addCategory(req: Request, res: Response): Promise<void> {
     try {
       const { categoryName } = req.body;
-      const existingCategory =
-        await this._categoryService.findCategoryByName(categoryName);
+      const existingCategory = await this._categoryService.findCategoryByName(categoryName);
       if (existingCategory) {
-        res
-          .status(StatusCode.CONFLICT)
-          .send({ success: false, message: CategoryErrorMsg.CATEGORY_EXISTS });
+        res.status(StatusCode.CONFLICT).json({
+          success: false,
+          message: CategoryErrorMsg.CATEGORY_EXISTS,
+        });
         return;
       }
 
-      const createdCategory =
-        await this._categoryService.addCategory(categoryName);
+      const createdCategory = await this._categoryService.addCategory(categoryName);
       if (createdCategory) {
-        res.status(StatusCode.CREATED).send({
+        res.status(StatusCode.CREATED).json({
           success: true,
           message: CategorySuccessMsg.CATEGORY_ADDED,
           data: createdCategory,
         });
       } else {
-        res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: CategoryErrorMsg.CATEGORY_NOT_CREATED,
         });
       }
-    } catch (error) {
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : CategoryErrorMsg.CATEGORY_NOT_CREATED;
+      appLogger.error("Add Category Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      });
     }
   }
 
@@ -51,40 +58,36 @@ export class AdminCategoryContoller implements IAdminCategoryController {
     try {
       const { categoryName, id } = req.body;
 
-      const existingCategory = (await this._categoryService.findCategoryByName(
-        categoryName,
-      )) as ICategoryModel | null;
+      const existingCategory = await this._categoryService.findCategoryByName(categoryName) as ICategoryModel | null;
 
       if (existingCategory && existingCategory._id.toString() !== id) {
-        res.status(StatusCode.CONFLICT).send({
+        res.status(StatusCode.CONFLICT).json({
           success: false,
           message: CategoryErrorMsg.CATEGORY_EXISTS,
         });
         return;
       }
 
-      const updatedCategory = await this._categoryService.updateCategory(
-        id,
-        categoryName,
-      );
+      const updatedCategory = await this._categoryService.updateCategory(id, categoryName);
 
       if (updatedCategory) {
-        res.status(StatusCode.OK).send({
+        res.status(StatusCode.OK).json({
           success: true,
           message: CategorySuccessMsg.CATEGORY_UPDATED,
           data: updatedCategory,
         });
       } else {
-        res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: CategoryErrorMsg.CATEGORY_NOT_UPDATED,
         });
       }
-    } catch (error) {
-      console.error("Edit Category Error:", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : CategoryErrorMsg.CATEGORY_NOT_UPDATED;
+      appLogger.error("Edit Category Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: CategoryErrorMsg.CATEGORY_NOT_UPDATED,
+        message: errorMessage,
       });
     }
   }
@@ -95,12 +98,7 @@ export class AdminCategoryContoller implements IAdminCategoryController {
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";
 
-      const { data, total } =
-        await this._categoryService.getAllCategoriesPaginated(
-          page,
-          limit,
-          search,
-        );
+      const { data, total } = await this._categoryService.getAllCategoriesPaginated(page, limit, search);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -110,11 +108,12 @@ export class AdminCategoryContoller implements IAdminCategoryController {
         page,
         totalPages: Math.ceil(total / limit),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : AdminErrorMessages.ADMIN_CATEGORY_FETCHEDERROR;
+      appLogger.error("Get All Categories Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message:
-          error.message || AdminErrorMessages.ADMIN_CATEGORY_FETCHEDERROR,
+        message: errorMessage,
       });
     }
   }
@@ -124,17 +123,29 @@ export class AdminCategoryContoller implements IAdminCategoryController {
       const { id } = req.params;
       const response = await this._categoryService.listOrUnlistCategory(id);
 
-      if (!response)
-        throw new Error(GeneralServerErrorMsg.INTERNAL_SERVER_ERROR);
+      if (!response) {
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          message: GeneralServerErrorMsg.INTERNAL_SERVER_ERROR,
+        });
+        return;
+      }
 
       const message = response.isListed
         ? CategorySuccessMsg.CATEGORY_LISTED
         : CategorySuccessMsg.CATEGORY_UNLISTED;
-      res
-        .status(StatusCode.OK)
-        .send({ success: true, message, data: response });
-    } catch (error) {
-      throw error;
+      res.status(StatusCode.OK).json({
+        success: true,
+        message,
+        data: response,
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : GeneralServerErrorMsg.INTERNAL_SERVER_ERROR;
+      appLogger.error("List/Unlist Category Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      });
     }
   }
 
@@ -143,16 +154,26 @@ export class AdminCategoryContoller implements IAdminCategoryController {
       const { categoryId } = req.params;
       const response = await this._categoryService.findCategoryById(categoryId);
 
-      if (!response)
-        throw new Error(GeneralServerErrorMsg.INTERNAL_SERVER_ERROR);
+      if (!response) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: CategoryErrorMsg.CATEGORY_NOT_FOUND,
+        });
+        return;
+      }
 
-      res.status(StatusCode.OK).send({
+      res.status(StatusCode.OK).json({
         success: true,
         message: CategorySuccessMsg.CATEGORY_FETCHED,
         data: response,
       });
-    } catch (error) {
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : CategoryErrorMsg.CATEGORY_NOT_FOUND;
+      appLogger.error("Find Category By ID Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      });
     }
   }
 }

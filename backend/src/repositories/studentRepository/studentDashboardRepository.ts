@@ -24,7 +24,6 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     this._orderRepo = orderRepo;
   }
 
-  
   async getTotalCoursesPurchased(userId: string): Promise<number> {
     return this._enrollmentRepo.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
@@ -65,7 +64,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
     return this._enrollmentRepo.countDocuments({
       userId: new mongoose.Types.ObjectId(userId),
       completionStatus: { $in: ["NOT_STARTED", "IN_PROGRESS"] },
-      learningPathId:{$exists:false}
+      learningPathId: { $exists: false },
     });
   }
 
@@ -82,11 +81,7 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
           _id: "$learningPathId",
           allCompleted: {
             $min: {
-              $cond: [
-                { $eq: ["$completionStatus", "COMPLETED"] },
-                true,
-                false,
-              ],
+              $cond: [{ $eq: ["$completionStatus", "COMPLETED"] }, true, false],
             },
           },
         },
@@ -105,26 +100,26 @@ export class StudentDashboardRepository implements IStudentDashboardRepository {
   }
 
   async getTotalLearningPathsNotCompleted(userId: string): Promise<number> {
-  const enrollments = await this._enrollmentRepo.aggregate([
-    {
-      $match: {
-        userId: new mongoose.Types.ObjectId(userId),
-        learningPathId: { $exists: true, $ne: null },
-        completionStatus: { $in: ["NOT_STARTED", "IN_PROGRESS"] },
+    const enrollments = await this._enrollmentRepo.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          learningPathId: { $exists: true, $ne: null },
+          completionStatus: { $in: ["NOT_STARTED", "IN_PROGRESS"] },
+        },
       },
-    },
-    {
-      $group: {
-        _id: "$learningPathId",
+      {
+        $group: {
+          _id: "$learningPathId",
+        },
       },
-    },
-    {
-      $count: "total",
-    },
-  ]);
+      {
+        $count: "total",
+      },
+    ]);
 
-  return enrollments.length > 0 ? enrollments[0].total : 0;
-}
+    return enrollments.length > 0 ? enrollments[0].total : 0;
+  }
 
   // Get total cost of courses purchased (excluding learning path courses)
   async getTotalCoursePurchaseCost(userId: string): Promise<number> {

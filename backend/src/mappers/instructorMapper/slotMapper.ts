@@ -1,6 +1,6 @@
 import { ISlot } from "../../models/slotModel";
 import { format } from "date-fns";
-import {SlotDTO} from "../../dto/instructorDTO/slotDTO"
+import { SlotDTO } from "../../dto/instructorDTO/slotDTO";
 
 export const mapSlotToDTO = (slot: ISlot): SlotDTO => {
   return {

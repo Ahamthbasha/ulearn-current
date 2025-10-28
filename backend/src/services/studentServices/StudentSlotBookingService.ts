@@ -218,9 +218,6 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
         return populated;
       });
     } catch (error: any) {
-      console.error(
-        `Payment verification failed for slot ${slotId}: ${error.message}`,
-      );
       throw error;
     } finally {
       await session.endSession();
@@ -341,9 +338,6 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
         return finalPopulated;
       });
     } catch (error: any) {
-      console.error(
-        `Retry payment verification failed for booking ${bookingId}: ${error.message}`,
-      );
       throw error;
     } finally {
       await session.endSession();
@@ -453,9 +447,6 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
         return populated;
       });
     } catch (error: any) {
-      console.error(
-        `Wallet booking failed for slot ${slotId}: ${error.message}`,
-      );
       throw error;
     } finally {
       await session.endSession();
@@ -766,9 +757,6 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
         };
       });
     } catch (error: any) {
-      console.error(
-        `Retry payment failed for booking ${bookingId}: ${error.message}`,
-      );
       throw error;
     } finally {
       await session.endSession();

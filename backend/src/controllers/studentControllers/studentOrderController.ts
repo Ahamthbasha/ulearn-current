@@ -9,6 +9,7 @@ import {
   StudentErrorMessages,
   StudentSuccessMessages,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentOrderController implements IStudentOrderController {
   private _orderService: IStudentOrderService;
@@ -53,7 +54,7 @@ export class StudentOrderController implements IStudentOrderController {
         totalPages: Math.ceil(total / limit),
       });
     } catch (err) {
-      console.error("Error fetching order history:", err);
+      appLogger.error("Error fetching order history:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_ORDER_HISTORY,
@@ -96,7 +97,7 @@ export class StudentOrderController implements IStudentOrderController {
         order: orderDetailsDTO,
       });
     } catch (err) {
-      console.error("Error fetching order details:", err);
+      appLogger.error("Error fetching order details:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_ORDER_DETAILS,
@@ -121,7 +122,6 @@ export class StudentOrderController implements IStudentOrderController {
       }
 
       const order = await this._orderService.getOrderDetails(orderId, userId);
-      console.log("orderDetail",order)
       if (!order) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
@@ -149,7 +149,7 @@ export class StudentOrderController implements IStudentOrderController {
 
       res.send(pdfBuffer);
     } catch (err) {
-      console.error("Error downloading invoice:", err);
+      appLogger.error("Error downloading invoice:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_DOWNLOAD_INVOICE,
@@ -179,7 +179,7 @@ export class StudentOrderController implements IStudentOrderController {
 
       res.status(StatusCode.OK).json(result);
     } catch (err: any) {
-      console.error("Error initiating payment retry:", err);
+      appLogger.error("Error initiating payment retry:", err);
       res
         .status(
           err.message.includes(StudentErrorMessages.ALREADY_IN_PROGRESS)
@@ -240,7 +240,7 @@ export class StudentOrderController implements IStudentOrderController {
         order: result.order,
       });
     } catch (err: any) {
-      console.error("Error marking order as failed:", err);
+      appLogger.error("Error marking order as failed:", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message:

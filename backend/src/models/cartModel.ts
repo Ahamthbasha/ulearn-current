@@ -13,7 +13,7 @@ export interface PopulatedLearningPath {
 export interface ICart extends Document {
   userId: Types.ObjectId;
   courses: Types.ObjectId[] | PopulatedCartCourse[];
-  learningPaths:Types.ObjectId[] | PopulatedLearningPath[];
+  learningPaths: Types.ObjectId[] | PopulatedLearningPath[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -33,13 +33,13 @@ const cartSchema = new Schema<ICart>(
         required: true,
       },
     ],
-    learningPaths:[
+    learningPaths: [
       {
-       type: Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "LearningPath",
         required: true,
-      }
-    ]
+      },
+    ],
   },
   { timestamps: true },
 );

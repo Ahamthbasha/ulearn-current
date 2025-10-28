@@ -14,21 +14,19 @@ export interface IEnrollmentRepository extends IGenericRepository<IEnrollment> {
     courseId: string,
     populateOptions: any[],
   ): Promise<IEnrollment | null>;
-  createMany(
-    enrollments: Partial<IEnrollment>[]
-  ): Promise<IEnrollment[]>;
+  createMany(enrollments: Partial<IEnrollment>[]): Promise<IEnrollment[]>;
   createManyWithSession(
     enrollments: Partial<IEnrollment>[],
-    session: mongoose.ClientSession
+    session: mongoose.ClientSession,
   ): Promise<IEnrollment[]>;
   findByUserAndCoursesWithSession(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
-    session: mongoose.ClientSession
+    session: mongoose.ClientSession,
   ): Promise<IEnrollment[]>;
   updateEnrollmentWithSession(
     enrollmentId: Types.ObjectId,
     updates: Partial<IEnrollment>,
-    session: mongoose.ClientSession
+    session: mongoose.ClientSession,
   ): Promise<IEnrollment | null>;
 }

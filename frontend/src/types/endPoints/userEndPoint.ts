@@ -8,6 +8,7 @@ const UserRouterEndpoints = {
   userCourseList: "/api/student/courses",
   userCourseDetail: "/api/student/courses",
   userCourseFilter: "/api/student/courses/filter",
+  userGetAllCourse: "/api/student/allCourse",
 
   //userCategories
   userGetAllCategories: "/api/student/categories",
@@ -100,7 +101,14 @@ const UserRouterEndpoints = {
 
   userGetAllEnrollments : "/api/student/lms/enrollments",
   userGetSpecificLmsEnrollments : "/api/student/lms/enrollments",
-  userCompleteCourseAndUnlockNext : "/api/student/lms/completeCourse" 
+  userCompleteCourseAndUnlockNext : "/api/student/lms/completeCourse",
+
+  //learning path
+  userGetLearningPaths: "/api/student/learningPaths",
+  userGetLearningPathById: "/api/student/learningPath",
+  userCreateLearningPath: "/api/student/createLearningPath",
+  userUpdateLearningPath: "/api/student/learningPath",
+  userDeleteLearningPath: "/api/student/learningPath",
   
 };
 

@@ -5,12 +5,13 @@ import {
   VerificationRequestDTO,
   VerificationRequestDetailDTO,
 } from "../../dto/adminDTO/verificationRequestDTO";
-
 import {
   mapVerificationArrayToDTO,
   mapVerificationToDTO,
 } from "../../mappers/adminMapper/verificationListMapper";
 import { getViewableUrl } from "../../utils/getViewableUrl";
+import { NotFoundError, InternalServerError } from "../../utils/error";
+import { appLogger } from "../../utils/logger";
 
 export class AdminVerificationService implements IAdminVerificationService {
   private _verificationRepository: IAdminVerificationRepository;
@@ -29,34 +30,55 @@ export class AdminVerificationService implements IAdminVerificationService {
     limit: number,
     search = "",
   ): Promise<{ data: VerificationRequestDTO[]; total: number }> {
-    const { data, total } = await this._verificationRepository.getAllRequests(
-      page,
-      limit,
-      search,
-    );
-    return { data: mapVerificationArrayToDTO(data), total };
+    try {
+      const { data, total } = await this._verificationRepository.getAllRequests(
+        page,
+        limit,
+        search,
+      );
+      return { data: mapVerificationArrayToDTO(data), total };
+    } catch (error) {
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
+      
+      appLogger.error("Error in getAllRequests service", { error });
+      throw new InternalServerError("Failed to retrieve verification requests");
+    }
   }
 
   async getRequestDataByEmail(
     email: string,
   ): Promise<VerificationRequestDetailDTO | null> {
-    const request =
-      await this._verificationRepository.getRequestDataByEmail(email);
-    if (!request) return null;
+    try {
+      const request =
+        await this._verificationRepository.getRequestDataByEmail(email);
+      
+      if (!request) {
+        return null;
+      }
 
-    const resumeUrl = await getViewableUrl(request.resumeUrl);
-    const degreeCertificateUrl = await getViewableUrl(
-      request.degreeCertificateUrl,
-    );
+      const resumeUrl = await getViewableUrl(request.resumeUrl);
+      const degreeCertificateUrl = await getViewableUrl(
+        request.degreeCertificateUrl,
+      );
 
-    return {
-      id: request._id.toString(),
-      username: request.username,
-      email: request.email,
-      status: request.status,
-      resumeUrl,
-      degreeCertificateUrl,
-    };
+      return {
+        id: request._id.toString(),
+        username: request.username,
+        email: request.email,
+        status: request.status,
+        resumeUrl,
+        degreeCertificateUrl,
+      };
+    } catch (error) {
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
+      
+      appLogger.error("Error in getRequestDataByEmail service", { error });
+      throw new InternalServerError("Failed to retrieve verification request details");
+    }
   }
 
   async approveRequest(
@@ -64,16 +86,34 @@ export class AdminVerificationService implements IAdminVerificationService {
     status: string,
     reason?: string,
   ): Promise<VerificationRequestDTO | null> {
-    const result = await this._verificationRepository.approveRequest(
-      email,
-      status,
-      reason,
-    );
+    try {
+      const result = await this._verificationRepository.approveRequest(
+        email,
+        status,
+        reason,
+      );
+      if (result && status === "approved") {
+        try {
+          await this._instructorService.setInstructorVerified(email);
+        } catch (error) {
+          appLogger.error("Error setting instructor verified status", { 
+            error, 
+            email 
+          });
+        }
+      }
 
-    if (result && status === "approved") {
-      await this._instructorService.setInstructorVerified(email);
+      return result ? mapVerificationToDTO(result) : null;
+    } catch (error) {
+      if (
+        error instanceof NotFoundError || 
+        error instanceof InternalServerError
+      ) {
+        throw error;
+      }
+      
+      appLogger.error("Error in approveRequest service", { error });
+      throw new InternalServerError("Failed to process verification request");
     }
-
-    return result ? mapVerificationToDTO(result) : null;
   }
 }

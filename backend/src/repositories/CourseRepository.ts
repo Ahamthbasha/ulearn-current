@@ -13,7 +13,10 @@ export class CourseRepository extends GenericRepository<ICourse> {
       .exec();
   }
 
-  async updateById(courseId: string, data: Partial<ICourse>): Promise<ICourse | null> {
+  async updateById(
+    courseId: string,
+    data: Partial<ICourse>,
+  ): Promise<ICourse | null> {
     return await this.model
       .findByIdAndUpdate(courseId, { $set: data }, { new: true })
       .exec();

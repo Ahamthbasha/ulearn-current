@@ -47,9 +47,16 @@ export class AdminCourseService implements IAdminCourseService {
     return updatedCourse ? mapCourseDetailsToDTO(updatedCourse) : null;
   }
 
-  async verifyCourse(courseId: string, status: "approved" | "rejected", review?: string): Promise<ICourseDTO | null> {
-    const updatedCourse =
-      await this._courseRepository.verifyCourse(courseId, status, review);
+  async verifyCourse(
+    courseId: string,
+    status: "approved" | "rejected",
+    review?: string,
+  ): Promise<ICourseDTO | null> {
+    const updatedCourse = await this._courseRepository.verifyCourse(
+      courseId,
+      status,
+      review,
+    );
     return updatedCourse ? mapCourseDetailsToDTO(updatedCourse) : null;
   }
 }

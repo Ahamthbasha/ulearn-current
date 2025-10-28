@@ -5,17 +5,17 @@ export interface IStudentWishlistRepository {
   addToWishlist(
     userId: Types.ObjectId,
     itemId: Types.ObjectId,
-    type: "course" | "learningPath"
+    type: "course" | "learningPath",
   ): Promise<IWishlist>;
   removeFromWishlist(
     userId: Types.ObjectId,
     itemId: Types.ObjectId,
-    type: "course" | "learningPath"
+    type: "course" | "learningPath",
   ): Promise<void>;
   getWishlistItems(userId: Types.ObjectId): Promise<IWishlist[]>;
   isItemInWishlist(
     userId: Types.ObjectId,
     itemId: Types.ObjectId,
-    type: "course" | "learningPath"
+    type: "course" | "learningPath",
   ): Promise<boolean>;
 }

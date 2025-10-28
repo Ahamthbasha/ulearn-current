@@ -7,6 +7,7 @@ import {
   QuizErrorMessages,
   QuizSuccessMessages,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorQuizController implements IInstructorQuizController {
   private _quizService: IInstructorQuizService;
@@ -186,7 +187,7 @@ export class InstructorQuizController implements IInstructorQuizController {
         data: updated,
       });
     } catch (err: any) {
-      console.log(err);
+      appLogger.error("error in update question", err);
       if (err.message?.includes("already exists")) {
         res.status(StatusCode.CONFLICT).json({
           success: false,

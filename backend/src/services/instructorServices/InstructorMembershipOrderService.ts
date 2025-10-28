@@ -12,6 +12,7 @@ import IInstructorRepository from "../../repositories/instructorRepository/inter
 import { IMembershipPlan } from "../../models/membershipPlanModel";
 import { IWalletService } from "../interface/IWalletService";
 import { IEmail } from "../../types/Email";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorMembershipOrderService
   implements IInstructorMembershipOrderService
@@ -370,6 +371,7 @@ export class InstructorMembershipOrderService
           { session },
         );
       } catch (err) {
+        appLogger.error("purchase with wallet error", err);
         await this._walletService.creditWallet(
           new Types.ObjectId(instructor._id.toString()),
           amount,
@@ -488,8 +490,6 @@ export class InstructorMembershipOrderService
     session.startTransaction();
 
     try {
-      console.log("orderId", orderId);
-
       const order = await this._membershipOrderRepo.findByOrderId(orderId);
 
       if (!order) {
@@ -511,7 +511,6 @@ export class InstructorMembershipOrderService
 
       await this._membershipOrderRepo.cancelOrder(orderId, session);
       await session.commitTransaction();
-      console.log(`Order ${orderId} cancelled for instructor ${instructorId}`);
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -530,9 +529,6 @@ export class InstructorMembershipOrderService
     try {
       const order =
         await this._membershipOrderRepo.findByRazorpayOrderId(orderId);
-
-      console.log("razorpayOrderId", orderId);
-      console.log("order", order);
 
       if (!order) {
         throw new Error("Order not found");
@@ -555,9 +551,6 @@ export class InstructorMembershipOrderService
       );
 
       await session.commitTransaction();
-      console.log(
-        `Order ${order.orderId} marked as failed for instructor ${instructorId}`,
-      );
     } catch (error) {
       await session.abortTransaction();
       throw error;

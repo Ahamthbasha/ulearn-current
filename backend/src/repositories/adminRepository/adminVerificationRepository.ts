@@ -3,7 +3,10 @@ import { GenericRepository } from "../genericRepository";
 import VerificationModel from "../../models/verificationModel";
 import { IAdminVerificationRepository } from "./interface/IAdminVerificationRepository";
 import { InstructorErrorMessages } from "../../utils/constants";
+import { NotFoundError, InternalServerError } from "../../utils/error";
 import type { SortOrder } from "mongoose";
+import { appLogger } from "../../utils/logger";
+
 export class AdminVerificationRepository
   extends GenericRepository<IVerificationModel>
   implements IAdminVerificationRepository
@@ -31,7 +34,8 @@ export class AdminVerificationRepository
 
       return await this.paginate(filter, page, limit, sort);
     } catch (error) {
-      throw error;
+      appLogger.error("Error in getAllRequests repository", { error });
+      throw new InternalServerError("Failed to fetch verification requests");
     }
   }
 
@@ -41,7 +45,8 @@ export class AdminVerificationRepository
     try {
       return await this.findOne({ email });
     } catch (error) {
-      throw error;
+      appLogger.error("Error in getRequestDataByEmail repository", { error });
+      throw new InternalServerError("Failed to fetch verification request");
     }
   }
 
@@ -52,8 +57,10 @@ export class AdminVerificationRepository
   ): Promise<IVerificationModel | null> {
     try {
       const instructor = await this.findOne({ email });
-      if (!instructor)
-        throw new Error(InstructorErrorMessages.INSTRUCTOR_NOT_FOUND);
+      
+      if (!instructor) {
+        throw new NotFoundError(InstructorErrorMessages.INSTRUCTOR_NOT_FOUND);
+      }
 
       const instructorId = instructor._id as unknown as string;
 
@@ -63,9 +70,19 @@ export class AdminVerificationRepository
         rejectionReason: status === "rejected" ? reason : undefined,
       };
 
-      return await this.update(instructorId, updateData);
+      const updated = await this.update(instructorId, updateData);
+      
+      if (!updated) {
+        throw new InternalServerError("Failed to update verification request");
+      }
+
+      return updated;
     } catch (error) {
-      throw error;
+      if (error instanceof NotFoundError || error instanceof InternalServerError) {
+        throw error;
+      }
+      appLogger.error("Error in approveRequest repository", { error });
+      throw new InternalServerError("Failed to process verification request");
     }
   }
 }

@@ -6,11 +6,17 @@ import { IStudentCartRepository } from "../../repositories/studentRepository/int
 import { IWalletService } from "../interface/IWalletService";
 import { IStudentCouponRepo } from "../../repositories/studentRepository/interface/IStudentCouponRepo";
 import { razorpay } from "../../utils/razorpay";
-import { IOrder, ICourseOrderDetails, ILearningPathOrderDetails, ICouponDetails } from "../../models/orderModel";
+import {
+  IOrder,
+  ICourseOrderDetails,
+  ILearningPathOrderDetails,
+  ICouponDetails,
+} from "../../models/orderModel";
 import { IEnrollment } from "../../models/enrollmentModel";
 import { IEnrollmentRepository } from "../../repositories/interfaces/IEnrollmentRepository";
 import { ICourseRepository } from "../../repositories/interfaces/ICourseRepository";
 import { ILearningPathRepository } from "../../repositories/interfaces/ILearningPathRepository";
+import { appLogger } from "../../utils/logger";
 
 export class StudentCheckoutService implements IStudentCheckoutService {
   private _checkoutRepo: IStudentCheckoutRepository;
@@ -24,7 +30,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     cartRepo: IStudentCartRepository,
     walletService: IWalletService,
     couponRepo: IStudentCouponRepo,
-    enrollmentRepo: IEnrollmentRepository
+    enrollmentRepo: IEnrollmentRepository,
   ) {
     this._checkoutRepo = checkoutRepo;
     this._cartRepo = cartRepo;
@@ -45,27 +51,48 @@ export class StudentCheckoutService implements IStudentCheckoutService {
 
     try {
       return await session.withTransaction(async () => {
-        const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(userId, session);
-        const enrolledLearningPathIds = await this._checkoutRepo.getEnrolledLearningPathIds(userId, session);
+        const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(
+          userId,
+          session,
+        );
+        const enrolledLearningPathIds =
+          await this._checkoutRepo.getEnrolledLearningPathIds(userId, session);
 
         const alreadyEnrolledPaths = learningPathIds.filter((pid) =>
           enrolledLearningPathIds.some((eid) => eid.equals(pid)),
         );
 
         if (alreadyEnrolledPaths.length > 0) {
-          const pathDetails = await this._checkoutRepo.getLearningPathNamesByIds(alreadyEnrolledPaths, session);
-          throw new Error(`Already enrolled in ${pathDetails.map((p) => p.name).join(", ")}.`);
+          const pathDetails =
+            await this._checkoutRepo.getLearningPathNamesByIds(
+              alreadyEnrolledPaths,
+              session,
+            );
+          throw new Error(
+            `Already enrolled in ${pathDetails.map((p) => p.name).join(", ")}.`,
+          );
         }
 
-        const learningPathCourseIds = await this._checkoutRepo.getAllCourseIdsFromLearningPaths(learningPathIds, session);
+        const learningPathCourseIds =
+          await this._checkoutRepo.getAllCourseIdsFromLearningPaths(
+            learningPathIds,
+            session,
+          );
 
         const overlappingCourseIds = courseIds.filter((courseId) =>
-          learningPathCourseIds.some((lpCourseId) => lpCourseId.equals(courseId)),
+          learningPathCourseIds.some((lpCourseId) =>
+            lpCourseId.equals(courseId),
+          ),
         );
 
         if (overlappingCourseIds.length > 0) {
-          const courseNames = await this._checkoutRepo.getCourseNamesByIds(overlappingCourseIds, session);
-          throw new Error(`Remove ${courseNames.join(", ")}, they are included in the learning path(s).`);
+          const courseNames = await this._checkoutRepo.getCourseNamesByIds(
+            overlappingCourseIds,
+            session,
+          );
+          throw new Error(
+            `Remove ${courseNames.join(", ")}, they are included in the learning path(s).`,
+          );
         }
 
         const alreadyEnrolledIndividual = courseIds.filter((id) =>
@@ -73,35 +100,58 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         );
 
         if (alreadyEnrolledIndividual.length > 0) {
-          const names = await this._checkoutRepo.getCourseNamesByIds(alreadyEnrolledIndividual, session);
-          throw new Error(`Remove ${names.join(", ")} from cart, already enrolled.`);
+          const names = await this._checkoutRepo.getCourseNamesByIds(
+            alreadyEnrolledIndividual,
+            session,
+          );
+          throw new Error(
+            `Remove ${names.join(", ")} from cart, already enrolled.`,
+          );
         }
 
-        const allPurchasedCourseIds = [...new Set([...courseIds, ...learningPathCourseIds])];
+        const allPurchasedCourseIds = [
+          ...new Set([...courseIds, ...learningPathCourseIds]),
+        ];
 
-        await this._checkoutRepo.markStalePendingOrdersAsFailed(userId, allPurchasedCourseIds, session);
-
-        const existingOrder = await this._checkoutRepo.findPendingOrderWithOverlappingCourses(
+        await this._checkoutRepo.markStalePendingOrdersAsFailed(
           userId,
           allPurchasedCourseIds,
           session,
         );
 
+        const existingOrder =
+          await this._checkoutRepo.findPendingOrderWithOverlappingCourses(
+            userId,
+            allPurchasedCourseIds,
+            session,
+          );
+
         if (existingOrder) {
           const staleThreshold = new Date(Date.now() - 15 * 60 * 1000);
           if (existingOrder.createdAt > staleThreshold) {
-            const error = new Error("A pending order already exists for these items. Please complete or cancel it first.");
+            const error = new Error(
+              "A pending order already exists for these items. Please complete or cancel it first.",
+            );
             (error as any).orderId = existingOrder._id.toString();
             throw error;
           }
-          await this._checkoutRepo.updateOrderStatus(existingOrder._id, "FAILED", session);
+          await this._checkoutRepo.updateOrderStatus(
+            existingOrder._id,
+            "FAILED",
+            session,
+          );
         }
 
         const courseRepo = this._checkoutRepo.getCourseRepo();
         const learningPathRepo = this._checkoutRepo.getLearningPathRepo();
 
-        const allCourseIds = [...new Set([...courseIds, ...learningPathCourseIds])];
-        const offerMap = await this._checkoutRepo.getValidCourseOffers(allCourseIds, session);
+        const allCourseIds = [
+          ...new Set([...courseIds, ...learningPathCourseIds]),
+        ];
+        const offerMap = await this._checkoutRepo.getValidCourseOffers(
+          allCourseIds,
+          session,
+        );
 
         let individualCourses: ICourseOrderDetails[] = [];
         if (courseIds.length > 0) {
@@ -109,19 +159,27 @@ export class StudentCheckoutService implements IStudentCheckoutService {
             courseIds.map(async (courseId) => {
               const course = await courseRepo.findById(courseId.toString());
               if (!course) throw new Error(`Course ${courseId} not found`);
-              if (!course.instructorId) throw new Error(`Course ${courseId} has no instructor assigned`);
+              if (!course.instructorId)
+                throw new Error(
+                  `Course ${courseId} has no instructor assigned`,
+                );
 
               const offer = offerMap.get(courseId.toString());
               const offerPrice = offer
-                ? Math.floor(course.price * (100 - offer.discountPercentage) / 100 * 100) / 100
-                : course.effectivePrice ?? course.price;
+                ? Math.floor(
+                    ((course.price * (100 - offer.discountPercentage)) / 100) *
+                      100,
+                  ) / 100
+                : (course.effectivePrice ?? course.price);
 
               return {
                 courseId,
                 courseName: course.courseName,
                 coursePrice: course.price,
                 thumbnailUrl: course.thumbnailUrl,
-                courseOfferPercentage: offer ? offer.discountPercentage : undefined,
+                courseOfferPercentage: offer
+                  ? offer.discountPercentage
+                  : undefined,
                 offerPrice,
                 instructorId: new Types.ObjectId(course.instructorId),
                 isAlreadyEnrolled: false,
@@ -136,24 +194,38 @@ export class StudentCheckoutService implements IStudentCheckoutService {
             learningPathIds.map(async (pathId) => {
               const path = await learningPathRepo.findById(pathId.toString());
               if (!path) throw new Error(`Learning path ${pathId} not found`);
-              if (!path.isPublished || path.status !== "accepted") {
-                throw new Error(`Learning path ${pathId} not available for purchase`);
+              if (path.isPurchased) {
+                throw new Error(
+                  `Learning path ${pathId} not available for purchase`,
+                );
               }
 
               const pathCourses = await Promise.all(
                 path.items
                   .sort((a, b) => a.order - b.order)
                   .map(async (item) => {
-                    const course = await courseRepo.findById(item.courseId.toString());
-                    if (!course) throw new Error(`Course ${item.courseId} not found`);
-                    if (!course.instructorId) throw new Error(`Course ${item.courseId} has no instructor assigned`);
+                    const course = await courseRepo.findById(
+                      item.courseId.toString(),
+                    );
+                    if (!course)
+                      throw new Error(`Course ${item.courseId} not found`);
+                    if (!course.instructorId)
+                      throw new Error(
+                        `Course ${item.courseId} has no instructor assigned`,
+                      );
 
                     const offer = offerMap.get(item.courseId.toString());
                     let offerPrice = offer
-                      ? Math.floor(course.price * (100 - offer.discountPercentage) / 100 * 100) / 100
-                      : course.effectivePrice ?? course.price;
+                      ? Math.floor(
+                          ((course.price * (100 - offer.discountPercentage)) /
+                            100) *
+                            100,
+                        ) / 100
+                      : (course.effectivePrice ?? course.price);
 
-                    const isAlreadyEnrolled = enrolledCourseIds.some(e => e.equals(item.courseId as Types.ObjectId));
+                    const isAlreadyEnrolled = enrolledCourseIds.some((e) =>
+                      e.equals(item.courseId as Types.ObjectId),
+                    );
                     if (isAlreadyEnrolled) {
                       offerPrice = 0;
                     }
@@ -163,7 +235,9 @@ export class StudentCheckoutService implements IStudentCheckoutService {
                       courseName: course.courseName,
                       coursePrice: course.price,
                       thumbnailUrl: course.thumbnailUrl,
-                      courseOfferPercentage: offer ? offer.discountPercentage : undefined,
+                      courseOfferPercentage: offer
+                        ? offer.discountPercentage
+                        : undefined,
                       offerPrice,
                       instructorId: new Types.ObjectId(course.instructorId),
                       isAlreadyEnrolled,
@@ -171,12 +245,19 @@ export class StudentCheckoutService implements IStudentCheckoutService {
                   }),
               );
 
-              const totalPrice = Math.floor(
-                pathCourses.reduce((sum, course) => sum + (course.offerPrice ?? course.coursePrice), 0) * 100
-              ) / 100;
+              const totalPrice =
+                Math.floor(
+                  pathCourses.reduce(
+                    (sum, course) =>
+                      sum + (course.offerPrice ?? course.coursePrice),
+                    0,
+                  ) * 100,
+                ) / 100;
 
               if (totalPrice === 0) {
-                throw new Error(`All courses in ${path.title} already enrolled, remove from cart.`);
+                throw new Error(
+                  `All courses in ${path.title} already enrolled, remove from cart.`,
+                );
               }
 
               return {
@@ -195,42 +276,56 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           ...learningPathDetails.flatMap((lp) => lp.courses),
         ];
 
-        const originalTotalAmount = Math.floor(
-          (individualCourses.reduce(
-            (sum, course) => sum + (course.offerPrice ?? course.coursePrice),
-            0,
-          ) + learningPathDetails.reduce(
-            (sum, lp) => sum + lp.totalPrice,
-            0,
-          )) * 100
-        ) / 100;
+        const originalTotalAmount =
+          Math.floor(
+            (individualCourses.reduce(
+              (sum, course) => sum + (course.offerPrice ?? course.coursePrice),
+              0,
+            ) +
+              learningPathDetails.reduce((sum, lp) => sum + lp.totalPrice, 0)) *
+              100,
+          ) / 100;
 
         let finalAmount = originalTotalAmount;
         let coupon: ICouponDetails | undefined;
         let perCourseDeduction = 0;
 
         if (couponId) {
-          const appliedCoupon = await this._couponRepo.getCouponById(couponId, session);
+          const appliedCoupon = await this._couponRepo.getCouponById(
+            couponId,
+            session,
+          );
           if (!appliedCoupon) throw new Error("Invalid coupon");
           if (!appliedCoupon.status || appliedCoupon.expiryDate < new Date()) {
             throw new Error("Coupon is expired or inactive");
           }
           if (originalTotalAmount < appliedCoupon.minPurchase) {
-            throw new Error(`Minimum purchase amount of ₹${appliedCoupon.minPurchase} required for this coupon`);
+            throw new Error(
+              `Minimum purchase amount of ₹${appliedCoupon.minPurchase} required for this coupon`,
+            );
           }
           if (appliedCoupon.usedBy.includes(userId)) {
             throw new Error("Coupon already used by this user");
           }
-          const discountAmount = Math.floor((originalTotalAmount * appliedCoupon.discount) / 100 * 100) / 100;
+          const discountAmount =
+            Math.floor(
+              ((originalTotalAmount * appliedCoupon.discount) / 100) * 100,
+            ) / 100;
           finalAmount = originalTotalAmount - discountAmount;
-          if (appliedCoupon.maxDiscount && finalAmount < originalTotalAmount - appliedCoupon.maxDiscount) {
+          if (
+            appliedCoupon.maxDiscount &&
+            finalAmount < originalTotalAmount - appliedCoupon.maxDiscount
+          ) {
             finalAmount = originalTotalAmount - appliedCoupon.maxDiscount;
           }
 
           const totalDiscount = originalTotalAmount - finalAmount;
-          perCourseDeduction = allCoursesForPricing.length > 0
-            ? Math.floor(totalDiscount / allCoursesForPricing.length * 100) / 100
-            : 0;
+          perCourseDeduction =
+            allCoursesForPricing.length > 0
+              ? Math.floor(
+                  (totalDiscount / allCoursesForPricing.length) * 100,
+                ) / 100
+              : 0;
 
           coupon = {
             couponId,
@@ -241,7 +336,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         }
 
         if (Math.abs(totalAmount - originalTotalAmount) > 0.01) {
-          console.warn(
+          appLogger.warn(
             `Total amount mismatch: Frontend sent ${totalAmount}, calculated ${originalTotalAmount}`,
           );
         }
@@ -291,7 +386,10 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       throw new Error("Insufficient wallet balance");
     }
 
-    const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(userId, session);
+    const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(
+      userId,
+      session,
+    );
 
     const orderData: Partial<IOrder> = {
       userId,
@@ -320,7 +418,9 @@ export class StudentCheckoutService implements IStudentCheckoutService {
 
     await this._checkoutRepo.updateOrderStatus(order._id, "SUCCESS", session);
 
-    const individualCourseIds = individualCourses.map((course) => course.courseId);
+    const individualCourseIds = individualCourses.map(
+      (course) => course.courseId,
+    );
     await this._checkoutRepo.createEnrollments(
       individualCourseIds.map((courseId) => ({
         userId,
@@ -333,11 +433,12 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     );
 
     for (const lp of learningPathDetails) {
-      const existingEnrollments = await this._enrollmentRepo.findByUserAndCoursesWithSession(
-        userId,
-        lp.courses.map(c => c.courseId),
-        session,
-      );
+      const existingEnrollments =
+        await this._enrollmentRepo.findByUserAndCoursesWithSession(
+          userId,
+          lp.courses.map((c) => c.courseId),
+          session,
+        );
 
       for (const enrollment of existingEnrollments) {
         if (!enrollment.learningPathId) {
@@ -350,7 +451,9 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       }
 
       const newEnrollments = lp.courses
-        .filter((course) => !enrolledCourseIds.some((e) => e.equals(course.courseId)))
+        .filter(
+          (course) => !enrolledCourseIds.some((e) => e.equals(course.courseId)),
+        )
         .map((course) => ({
           userId,
           courseId: course.courseId,
@@ -364,13 +467,18 @@ export class StudentCheckoutService implements IStudentCheckoutService {
 
       const completedCourses = await Promise.all(
         lp.courses.map(async (course) => {
-          const enrollment = existingEnrollments.find((e: IEnrollment) => e.courseId.equals(course.courseId));
+          const enrollment = existingEnrollments.find((e: IEnrollment) =>
+            e.courseId.equals(course.courseId),
+          );
           return {
             courseId: course.courseId,
             isCompleted: enrollment?.completionStatus === "COMPLETED" || false,
-            completedAt: enrollment?.completionStatus === "COMPLETED" ? enrollment.updatedAt : undefined,
+            completedAt:
+              enrollment?.completionStatus === "COMPLETED"
+                ? enrollment.updatedAt
+                : undefined,
           };
-        })
+        }),
       );
 
       await this._checkoutRepo.createLearningPathEnrollments(
@@ -387,13 +495,24 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         ],
         session,
       );
+
+      // Update isPurchased to true for the learning path
+      await this._checkoutRepo.getLearningPathRepo().updateWithSession(
+        lp.learningPathId.toString(),
+        { isPurchased: true },
+        session,
+      );
     }
 
     if (coupon) {
       await this._couponRepo.addUserToCoupon(coupon.couponId, userId, session);
     }
 
-    await this.processRevenueSharing(allCoursesForPricing, order._id.toString(), perCourseDeduction);
+    await this.processRevenueSharing(
+      allCoursesForPricing,
+      order._id.toString(),
+      perCourseDeduction,
+    );
 
     await this._cartRepo.clear(userId);
     return order;
@@ -432,14 +551,20 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     paymentId: string,
     method: string,
     amount: number,
-    session: mongoose.ClientSession,
+    session?: mongoose.ClientSession,
   ): Promise<{
     order: IOrder;
     enrollments: IEnrollment[];
   }> {
+    if (!session) {
+      throw new Error("Session is required for verifyAndCompleteCheckout");
+    }
+
     try {
-      console.log(`Verifying payment for order ${orderId}, amount: ${amount}`);
-      const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, session);
+      const order = await this._checkoutRepo.getOrderByIdWithLock(
+        orderId,
+        session,
+      );
 
       if (!order) {
         throw new Error("Order not found");
@@ -454,17 +579,19 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       }
 
       if (Math.abs(order.amount - amount) > 0.01) {
-        console.error(`Amount mismatch: Expected ${order.amount}, received ${amount}`);
+        appLogger.error(
+          `Amount mismatch: Expected ${order.amount}, received ${amount}`,
+        );
         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", session);
         throw new Error("Payment amount mismatch");
       }
 
-      const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(order.userId, session);
-
-      console.log(`Updating order ${orderId} status to PENDING`);
+      const enrolledCourseIds = await this._checkoutRepo.getEnrolledCourseIds(
+        order.userId,
+        session,
+      );
       await this._checkoutRepo.updateOrderStatus(orderId, "PENDING", session);
 
-      console.log(`Updating order ${orderId} with payment details and status SUCCESS`);
       const updatedOrder = await this._checkoutRepo.updateOrder(
         orderId,
         {
@@ -475,11 +602,10 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           paymentAmount: amount,
           paymentCreatedAt: new Date(),
         },
-        session
+        session,
       );
-      if (!updatedOrder) throw new Error("Order not found or could not be updated");
-
-      console.log(`Creating enrollments for order ${orderId}`);
+      if (!updatedOrder)
+        throw new Error("Order not found or could not be updated");
       const individualEnrollments = await this._checkoutRepo.createEnrollments(
         updatedOrder.courses.map((course) => ({
           userId: updatedOrder.userId,
@@ -494,11 +620,12 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       const allEnrollments = [...individualEnrollments];
 
       for (const lp of updatedOrder.learningPaths) {
-        const existingEnrollments = await this._enrollmentRepo.findByUserAndCoursesWithSession(
-          updatedOrder.userId,
-          lp.courses.map(c => c.courseId),
-          session,
-        );
+        const existingEnrollments =
+          await this._enrollmentRepo.findByUserAndCoursesWithSession(
+            updatedOrder.userId,
+            lp.courses.map((c) => c.courseId),
+            session,
+          );
 
         for (const enrollment of existingEnrollments) {
           if (!enrollment.learningPathId) {
@@ -511,7 +638,10 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         }
 
         const newEnrollments = lp.courses
-          .filter((course) => !enrolledCourseIds.some((e) => e.equals(course.courseId)))
+          .filter(
+            (course) =>
+              !enrolledCourseIds.some((e) => e.equals(course.courseId)),
+          )
           .map((course) => ({
             userId: updatedOrder.userId,
             courseId: course.courseId,
@@ -521,18 +651,25 @@ export class StudentCheckoutService implements IStudentCheckoutService {
             enrolledAt: new Date(),
           }));
 
-        const pathCourseEnrollments = await this._checkoutRepo.createEnrollments(newEnrollments, session);
+        const pathCourseEnrollments =
+          await this._checkoutRepo.createEnrollments(newEnrollments, session);
         allEnrollments.push(...pathCourseEnrollments);
 
         const completedCourses = await Promise.all(
           lp.courses.map(async (course) => {
-            const enrollment = existingEnrollments.find((e: IEnrollment) => e.courseId.equals(course.courseId));
+            const enrollment = existingEnrollments.find((e: IEnrollment) =>
+              e.courseId.equals(course.courseId),
+            );
             return {
               courseId: course.courseId,
-              isCompleted: enrollment?.completionStatus === "COMPLETED" || false,
-              completedAt: enrollment?.completionStatus === "COMPLETED" ? enrollment.updatedAt : undefined,
+              isCompleted:
+                enrollment?.completionStatus === "COMPLETED" || false,
+              completedAt:
+                enrollment?.completionStatus === "COMPLETED"
+                  ? enrollment.updatedAt
+                  : undefined,
             };
-          })
+          }),
         );
 
         await this._checkoutRepo.createLearningPathEnrollments(
@@ -549,14 +686,30 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           ],
           session,
         );
+
+        // Update isPurchased to true for the learning path
+        await this._checkoutRepo.getLearningPathRepo().updateWithSession(
+          lp.learningPathId.toString(),
+          { isPurchased: true },
+          session,
+        );
       }
 
       if (updatedOrder.coupon) {
-        await this._couponRepo.addUserToCoupon(updatedOrder.coupon.couponId, updatedOrder.userId, session);
+        await this._couponRepo.addUserToCoupon(
+          updatedOrder.coupon.couponId,
+          updatedOrder.userId,
+          session,
+        );
       }
 
       const perCourseDeduction = updatedOrder.coupon
-        ? Math.floor(updatedOrder.coupon.discountAmount / (updatedOrder.learningPaths.flatMap((lp) => lp.courses).length + updatedOrder.courses.length) * 100) / 100
+        ? Math.floor(
+            (updatedOrder.coupon.discountAmount /
+              (updatedOrder.learningPaths.flatMap((lp) => lp.courses).length +
+                updatedOrder.courses.length)) *
+              100,
+          ) / 100
         : 0;
 
       const allCourses = [
@@ -564,14 +717,19 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         ...updatedOrder.learningPaths.flatMap((lp) => lp.courses),
       ];
 
-      await this.processRevenueSharing(allCourses, orderId.toString(), perCourseDeduction);
+      await this.processRevenueSharing(
+        allCourses,
+        orderId.toString(),
+        perCourseDeduction,
+      );
 
       await this._cartRepo.clear(updatedOrder.userId);
-
-      console.log(`Verification completed for order ${orderId}`);
       return { order: updatedOrder, enrollments: allEnrollments };
     } catch (error: any) {
-      console.error(`Verification failed for order ${orderId}: ${error.message}`, error);
+      appLogger.error(
+        `Verification failed for order ${orderId}: ${error.message}`,
+        error,
+      );
       throw error;
     }
   }
@@ -583,17 +741,27 @@ export class StudentCheckoutService implements IStudentCheckoutService {
   ): Promise<void> {
     for (const course of courses) {
       try {
-        if (!course.instructorId || (course.offerPrice ?? course.coursePrice) === 0 || course.isAlreadyEnrolled) {
-          console.warn(`Skipping revenue sharing for course ${course.courseId}: no instructor, zero price, or already enrolled`);
+        if (
+          !course.instructorId ||
+          (course.offerPrice ?? course.coursePrice) === 0 ||
+          course.isAlreadyEnrolled
+        ) {
+          appLogger.warn(
+            `Skipping revenue sharing for course ${course.courseId}: no instructor, zero price, or already enrolled`,
+          );
           continue;
         }
 
         const effectivePrice = course.offerPrice ?? course.coursePrice;
-        const finalPrice = Math.floor((effectivePrice - perCourseDeduction) * 100) / 100;
-        const instructorShare = Math.floor(finalPrice * 90 / 100 * 100) / 100;
+        const finalPrice =
+          Math.floor((effectivePrice - perCourseDeduction) * 100) / 100;
+        const instructorShare =
+          Math.floor(((finalPrice * 90) / 100) * 100) / 100;
         const adminShare = finalPrice - instructorShare;
 
-        let instructorWallet = await this._walletService.getWallet(course.instructorId);
+        let instructorWallet = await this._walletService.getWallet(
+          course.instructorId,
+        );
         if (!instructorWallet) {
           instructorWallet = await this._walletService.initializeWallet(
             course.instructorId,
@@ -617,34 +785,57 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           ),
         ]);
       } catch (error) {
-        console.error(`Failed to process revenue sharing for course ${course.courseId}:`, error);
+        appLogger.error(
+          `Failed to process revenue sharing for course ${course.courseId}:`,
+          error,
+        );
       }
     }
   }
 
-  async cancelPendingOrder(orderId: Types.ObjectId, userId: Types.ObjectId): Promise<void> {
+  async cancelPendingOrder(
+    orderId: Types.ObjectId,
+    userId: Types.ObjectId,
+  ): Promise<void> {
     const session = await mongoose.startSession();
     try {
       await session.withTransaction(async () => {
-        const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, session);
+        const order = await this._checkoutRepo.getOrderByIdWithLock(
+          orderId,
+          session,
+        );
         if (!order) throw new Error("Order not found");
-        if (!order.userId.equals(userId)) throw new Error("Unauthorized to cancel this order");
-        if (order.status !== "PENDING") throw new Error("Only pending orders can be cancelled");
-        await this._checkoutRepo.updateOrderStatus(orderId, "CANCELLED", session);
+        if (!order.userId.equals(userId))
+          throw new Error("Unauthorized to cancel this order");
+        if (order.status !== "PENDING")
+          throw new Error("Only pending orders can be cancelled");
+        await this._checkoutRepo.updateOrderStatus(
+          orderId,
+          "CANCELLED",
+          session,
+        );
       });
     } finally {
       await session.endSession();
     }
   }
 
-  async markOrderAsFailed(orderId: Types.ObjectId, userId: Types.ObjectId): Promise<void> {
+  async markOrderAsFailed(
+    orderId: Types.ObjectId,
+    userId: Types.ObjectId,
+  ): Promise<void> {
     const session = await mongoose.startSession();
     try {
       await session.withTransaction(async () => {
-        const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, session);
+        const order = await this._checkoutRepo.getOrderByIdWithLock(
+          orderId,
+          session,
+        );
         if (!order) throw new Error("Order not found");
-        if (!order.userId.equals(userId)) throw new Error("Unauthorized to mark this order as failed");
-        if (order.status !== "PENDING") throw new Error("Only pending orders can be marked as failed");
+        if (!order.userId.equals(userId))
+          throw new Error("Unauthorized to mark this order as failed");
+        if (order.status !== "PENDING")
+          throw new Error("Only pending orders can be marked as failed");
         await this._checkoutRepo.updateOrderStatus(orderId, "FAILED", session);
       });
     } finally {
@@ -662,13 +853,25 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     try {
       if (sessionLocal && userId) {
         return await sessionLocal.withTransaction(async () => {
-          const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, sessionLocal);
+          const order = await this._checkoutRepo.getOrderByIdWithLock(
+            orderId,
+            sessionLocal,
+          );
           if (!order) throw new Error("Order not found");
-          if (!order.userId.equals(userId)) throw new Error("Unauthorized to update this order");
-          return await this._checkoutRepo.updateOrderStatus(orderId, status, sessionLocal);
+          if (!order.userId.equals(userId))
+            throw new Error("Unauthorized to update this order");
+          return await this._checkoutRepo.updateOrderStatus(
+            orderId,
+            status,
+            sessionLocal,
+          );
         });
       }
-      return await this._checkoutRepo.updateOrderStatus(orderId, status, session);
+      return await this._checkoutRepo.updateOrderStatus(
+        orderId,
+        status,
+        session,
+      );
     } finally {
       if (sessionLocal) await sessionLocal.endSession();
     }
@@ -681,9 +884,13 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
     if (session && userId) {
-      const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, session);
+      const order = await this._checkoutRepo.getOrderByIdWithLock(
+        orderId,
+        session,
+      );
       if (!order) throw new Error("Order not found");
-      if (!order.userId.equals(userId)) throw new Error("Unauthorized to update this order");
+      if (!order.userId.equals(userId))
+        throw new Error("Unauthorized to update this order");
       return await this._checkoutRepo.updateOrder(orderId, updates, session);
     }
 
@@ -691,10 +898,18 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     try {
       if (localSession && userId) {
         return await localSession.withTransaction(async () => {
-          const order = await this._checkoutRepo.getOrderByIdWithLock(orderId, localSession);
+          const order = await this._checkoutRepo.getOrderByIdWithLock(
+            orderId,
+            localSession,
+          );
           if (!order) throw new Error("Order not found");
-          if (!order.userId.equals(userId)) throw new Error("Unauthorized to update this order");
-          return await this._checkoutRepo.updateOrder(orderId, updates, localSession);
+          if (!order.userId.equals(userId))
+            throw new Error("Unauthorized to update this order");
+          return await this._checkoutRepo.updateOrder(
+            orderId,
+            updates,
+            localSession,
+          );
         });
       }
       return await this._checkoutRepo.updateOrder(orderId, updates);
@@ -703,11 +918,17 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     }
   }
 
-  async getEnrolledCourseIds(userId: Types.ObjectId, session?: mongoose.ClientSession): Promise<Types.ObjectId[]> {
+  async getEnrolledCourseIds(
+    userId: Types.ObjectId,
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]> {
     return this._checkoutRepo.getEnrolledCourseIds(userId, session);
   }
 
-  async getEnrolledLearningPathIds(userId: Types.ObjectId, session?: mongoose.ClientSession): Promise<Types.ObjectId[]> {
+  async getEnrolledLearningPathIds(
+    userId: Types.ObjectId,
+    session?: mongoose.ClientSession,
+  ): Promise<Types.ObjectId[]> {
     return this._checkoutRepo.getEnrolledLearningPathIds(userId, session);
   }
 

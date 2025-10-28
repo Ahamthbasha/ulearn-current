@@ -3,6 +3,7 @@ import { CourseModel } from "./courseModel";
 import { ICourse } from "./courseModel";
 import { ICategoryModel } from "./categoryModel";
 import { CourseOfferModel, ICourseOffer } from "./courseOfferModel";
+import { appLogger } from "../utils/logger";
 
 export interface ILearningPathItem {
   courseId: Types.ObjectId | ICourse;
@@ -13,15 +14,12 @@ export interface ILearningPath extends Document {
   _id: Types.ObjectId;
   title: string;
   description: string;
-  instructorId: Types.ObjectId;
-  instructorName?: string;
-  instructor?: { username: string; email: string };
+  studentId: Types.ObjectId;
+  student?: { username: string; email: string };
   items: ILearningPathItem[];
-  isPublished: boolean;
+  isPurchased: boolean;
   createdAt: Date;
   updatedAt: Date;
-  status: "pending" | "accepted" | "rejected" | "draft";
-  adminReview?: string;
   thumbnailUrl?: string;
   category: Types.ObjectId | ICategoryModel;
   categoryDetails?: ICategoryModel;
@@ -32,7 +30,7 @@ export interface ILearningPath extends Document {
 export interface CreateLearningPathDTO {
   title: string;
   description: string;
-  instructorId: Types.ObjectId;
+  studentId: Types.ObjectId;
   items: ILearningPathItem[];
   thumbnailUrl: string;
   category: Types.ObjectId;
@@ -43,31 +41,32 @@ const LearningPathItemSchema = new Schema<ILearningPathItem>(
     courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
     order: { type: Number, required: true, min: 1 },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const LearningPathSchema = new Schema<ILearningPath>(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    instructorId: { type: Schema.Types.ObjectId, ref: "Instructor", required: true },
-    items: [LearningPathItemSchema],
-    isPublished: { type: Boolean, default: false },
-    status: {
-      type: String,
-      enum: ["draft", "pending", "accepted", "rejected"],
-      default: "draft",
+    studentId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    adminReview: { type: String, required: false },
+    items: [LearningPathItemSchema],
+    isPurchased: { type: Boolean, default: false },
     thumbnailUrl: { type: String, required: false },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
   },
-  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
 
-LearningPathSchema.index({ instructorId: 1, title: 1 }, { unique: true });
+LearningPathSchema.index({ studentId: 1, title: 1 }, { unique: true });
 LearningPathSchema.index({ category: 1 });
-LearningPathSchema.index({ status: 1 });
 
 LearningPathSchema.pre("save", async function (next) {
   const orders = this.items.map((item) => item.order);
@@ -77,7 +76,10 @@ LearningPathSchema.pre("save", async function (next) {
   }
 
   const courseIds = this.items.map((item) =>
-    (item.courseId instanceof Types.ObjectId ? item.courseId : item.courseId._id).toString()
+    (item.courseId instanceof Types.ObjectId
+      ? item.courseId
+      : item.courseId._id
+    ).toString(),
   );
   const uniqueCourseIds = new Set(courseIds);
   if (courseIds.length !== uniqueCourseIds.size) {
@@ -85,7 +87,9 @@ LearningPathSchema.pre("save", async function (next) {
   }
 
   try {
-    const categoryExists = await model("Category").findById(this.category).lean();
+    const categoryExists = await model("Category")
+      .findById(this.category)
+      .lean();
     if (!categoryExists) {
       return next(new Error("Invalid category ID"));
     }
@@ -95,9 +99,12 @@ LearningPathSchema.pre("save", async function (next) {
       isPublished: true,
     }).lean();
     if (courses.length !== courseIds.length) {
-      return next(new Error("One or more courses are invalid or not published"));
+      return next(
+        new Error("One or more courses are invalid or not published"),
+      );
     }
   } catch (error) {
+    appLogger.error("learningPath model error", error);
     return next(new Error("Failed to validate category or courses"));
   }
 
@@ -118,14 +125,16 @@ LearningPathSchema.virtual("categoryDetails", {
   justOne: true,
 });
 
-LearningPathSchema.virtual("instructor", {
-  ref: "Instructor",
-  localField: "instructorId",
+LearningPathSchema.virtual("student", {
+  ref: "User",
+  localField: "studentId",
   foreignField: "_id",
   justOne: true,
 });
 
-LearningPathSchema.virtual("totalPrice").get(async function (this: ILearningPath) {
+LearningPathSchema.virtual("totalPrice").get(async function (
+  this: ILearningPath,
+) {
   if (!this.courses || !Array.isArray(this.courses)) {
     await this.populate("courses");
   }
@@ -134,7 +143,7 @@ LearningPathSchema.virtual("totalPrice").get(async function (this: ILearningPath
   if (courseIds.length === 0) {
     return 0;
   }
-  
+
   const offers = await CourseOfferModel.find({
     courseId: { $in: courseIds.map((id) => new Types.ObjectId(id)) },
     isActive: true,
@@ -145,7 +154,7 @@ LearningPathSchema.virtual("totalPrice").get(async function (this: ILearningPath
   }).lean();
 
   const offerMap = new Map<string, ICourseOffer>(
-    offers.map((offer) => [offer.courseId.toString(), offer])
+    offers.map((offer) => [offer.courseId.toString(), offer]),
   );
 
   let totalPrice = 0;
@@ -154,11 +163,14 @@ LearningPathSchema.virtual("totalPrice").get(async function (this: ILearningPath
     const offer = offerMap.get(courseId);
     const price = offer
       ? course.price * (1 - offer.discountPercentage / 100)
-      : course.effectivePrice ?? course.price;
+      : (course.effectivePrice ?? course.price);
     totalPrice += price;
   }
 
   return totalPrice;
 });
 
-export const LearningPathModel = model<ILearningPath>("LearningPath", LearningPathSchema);
+export const LearningPathModel = model<ILearningPath>(
+  "LearningPath",
+  LearningPathSchema,
+);

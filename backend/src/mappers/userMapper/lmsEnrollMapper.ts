@@ -1,14 +1,22 @@
 import { Types } from "mongoose";
 import { ILearningPath } from "../../models/learningPathModel";
 import { ILearningPathEnrollment } from "../../models/learningPathEnrollmentModel";
-import { LearningPathDTO, LearningPathDetailsDTO, CourseDetailsDTO } from "../../dto/userDTO/lmsEnrollDTO";
+import {
+  LearningPathDTO,
+  LearningPathDetailsDTO,
+  CourseDetailsDTO,
+} from "../../dto/userDTO/lmsEnrollDTO";
 import { ICourse } from "../../models/courseModel";
 import { isPresignedUrl } from "../../utils/isPresignedUrl";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { IOrderRepository } from "../../repositories/interfaces/IOrderRepository";
 
 export const mapToLearningPathDTO = async (
-  learningPath: ILearningPath & { noOfCourses?: number; noOfHours?: number; totalCompletionPercentageOfLearningPath?: number },
+  learningPath: ILearningPath & {
+    noOfCourses?: number;
+    noOfHours?: number;
+    totalCompletionPercentageOfLearningPath?: number;
+  },
   enrollment: ILearningPathEnrollment,
   orderRepository: IOrderRepository,
   userId: Types.ObjectId,
@@ -16,12 +24,15 @@ export const mapToLearningPathDTO = async (
   const presignedThumbnailUrl =
     learningPath.thumbnailUrl && !isPresignedUrl(learningPath.thumbnailUrl)
       ? await getPresignedUrl(learningPath.thumbnailUrl)
-      : learningPath.thumbnailUrl ?? "";
+      : (learningPath.thumbnailUrl ?? "");
 
   // Fetch totalPrice from OrderModel
-  const order = await orderRepository.findByUserAndLearningPath(userId, learningPath._id);
-  const learningPathOrder = order?.learningPaths.find(lp =>
-    lp.learningPathId.equals(learningPath._id)
+  const order = await orderRepository.findByUserAndLearningPath(
+    userId,
+    learningPath._id,
+  );
+  const learningPathOrder = order?.learningPaths.find((lp) =>
+    lp.learningPathId.equals(learningPath._id),
   );
   const totalPrice = learningPathOrder?.totalPrice ?? 0;
 
@@ -34,29 +45,39 @@ export const mapToLearningPathDTO = async (
     noOfHours: learningPath.noOfHours ?? 0,
     presignedThumbnailUrl,
     learningPathCompleted: enrollment.completionStatus === "COMPLETED",
-    totalCompletionPercentageOfLearningPath: learningPath.totalCompletionPercentageOfLearningPath ?? 0,
+    totalCompletionPercentageOfLearningPath:
+      learningPath.totalCompletionPercentageOfLearningPath ?? 0,
   };
 };
 
 export const mapToLearningPathDetailsDTO = async (
   learningPath: ILearningPath,
   enrollment: ILearningPathEnrollment,
-  courses: Array<ICourse & { certificateUrl?: string; completionPercentage?: number }>,
+  courses: Array<
+    ICourse & { certificateUrl?: string; completionPercentage?: number }
+  >,
   orderRepository: IOrderRepository,
   userId: Types.ObjectId,
   getPresignedUrlFn: (url: string) => Promise<string> = getPresignedUrl,
 ): Promise<LearningPathDetailsDTO> => {
   // Fetch totalPrice from OrderModel
-  const order = await orderRepository.findByUserAndLearningPath(userId, learningPath._id);
-  const learningPathOrder = order?.learningPaths.find(lp =>
-    lp.learningPathId.equals(learningPath._id)
+  const order = await orderRepository.findByUserAndLearningPath(
+    userId,
+    learningPath._id,
+  );
+  const learningPathOrder = order?.learningPaths.find((lp) =>
+    lp.learningPathId.equals(learningPath._id),
   );
   const totalPrice = learningPathOrder?.totalPrice ?? 0;
 
   const courseDetails: CourseDetailsDTO[] = await Promise.all(
     learningPath.items.map(async (item) => {
       const course = courses.find((c) =>
-        c._id.equals(item.courseId instanceof Types.ObjectId ? item.courseId : item.courseId._id)
+        c._id.equals(
+          item.courseId instanceof Types.ObjectId
+            ? item.courseId
+            : item.courseId._id,
+        ),
       );
       if (!course) {
         throw new Error(`Course not found for courseId: ${item.courseId}`);
@@ -65,18 +86,19 @@ export const mapToLearningPathDetailsDTO = async (
       const presignedThumbnailUrl =
         course.thumbnailUrl && !isPresignedUrl(course.thumbnailUrl)
           ? await getPresignedUrlFn(course.thumbnailUrl)
-          : course.thumbnailUrl ?? "";
+          : (course.thumbnailUrl ?? "");
 
       const isCompleted = enrollment.completedCourses.some(
         (cc) => cc.courseId.equals(course._id) && cc.isCompleted,
       );
 
       // Fetch coursePrice from OrderModel
-      const courseOrder = learningPathOrder?.courses.find(c =>
-        c.courseId.equals(course._id)
+      const courseOrder = learningPathOrder?.courses.find((c) =>
+        c.courseId.equals(course._id),
       );
       const coursePrice = courseOrder?.coursePrice ?? course.price;
-      const effectivePrice = courseOrder?.offerPrice ?? course.effectivePrice ?? coursePrice;
+      const effectivePrice =
+        courseOrder?.offerPrice ?? course.effectivePrice ?? coursePrice;
 
       return {
         courseId: course._id.toString(),
@@ -96,7 +118,10 @@ export const mapToLearningPathDetailsDTO = async (
   const unlockedCourses = learningPath.items
     .filter((item) => item.order <= enrollment.unlockedOrder)
     .map((item) =>
-      (item.courseId instanceof Types.ObjectId ? item.courseId : item.courseId._id).toString(),
+      (item.courseId instanceof Types.ObjectId
+        ? item.courseId
+        : item.courseId._id
+      ).toString(),
     );
 
   return {

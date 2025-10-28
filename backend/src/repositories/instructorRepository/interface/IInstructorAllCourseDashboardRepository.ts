@@ -8,8 +8,12 @@ import {
 } from "../../../interface/instructorInterface/IInstructorInterface";
 
 export interface IInstructorAllCourseDashboardRepository {
-  getTopSellingCourses(instructorId: Types.ObjectId): Promise<ITopSellingCourse[]>;
-  getTopSellingLearningPaths(instructorId: Types.ObjectId): Promise<ITopSellingLearningPath[]>;
+  getTopSellingCourses(
+    instructorId: Types.ObjectId,
+  ): Promise<ITopSellingCourse[]>;
+  getTopSellingLearningPaths(
+    instructorId: Types.ObjectId,
+  ): Promise<ITopSellingLearningPath[]>;
   getCategoryWiseSales(instructorId: Types.ObjectId): Promise<ICategorySales[]>;
   getMonthlySalesGraph(instructorId: Types.ObjectId): Promise<IMonthlySales[]>;
   getTotalRevenue(instructorId: Types.ObjectId): Promise<number>;

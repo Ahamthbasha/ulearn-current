@@ -1,7 +1,13 @@
 import { formatDate } from "../../utils/dateFormat";
-import { ICourseOfferListDTO, ICourseOfferDetailDTO,PopulatedCourseOffer } from "../../dto/adminDTO/adminCourseOfferDTO";
+import {
+  ICourseOfferListDTO,
+  ICourseOfferDetailDTO,
+  PopulatedCourseOffer,
+} from "../../dto/adminDTO/adminCourseOfferDTO";
 
-export const mapToCourseOfferListDTO = (offer: PopulatedCourseOffer): ICourseOfferListDTO => {
+export const mapToCourseOfferListDTO = (
+  offer: PopulatedCourseOffer,
+): ICourseOfferListDTO => {
   return {
     offerId: offer._id.toString(),
     courseId: offer.courseId._id.toString(),
@@ -13,7 +19,9 @@ export const mapToCourseOfferListDTO = (offer: PopulatedCourseOffer): ICourseOff
   };
 };
 
-export const mapToCourseOfferDetailDTO = (offer: PopulatedCourseOffer): ICourseOfferDetailDTO => {
+export const mapToCourseOfferDetailDTO = (
+  offer: PopulatedCourseOffer,
+): ICourseOfferDetailDTO => {
   return {
     courseOfferId: offer._id.toString(),
     courseId: offer.courseId._id.toString(),
@@ -26,7 +34,9 @@ export const mapToCourseOfferDetailDTO = (offer: PopulatedCourseOffer): ICourseO
     status: offer.status,
     review: offer.reviews || "",
     coursePrice: offer.courseId.price,
-    discountedPrice: offer.discountedPrice || offer.courseId.price * (1 - offer.discountPercentage / 100),
-    courseVerified:offer.courseId.isVerified
+    discountedPrice:
+      offer.discountedPrice ||
+      offer.courseId.price * (1 - offer.discountPercentage / 100),
+    courseVerified: offer.courseId.isVerified,
   };
 };

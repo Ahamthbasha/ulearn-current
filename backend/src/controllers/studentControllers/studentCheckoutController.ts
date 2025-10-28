@@ -8,6 +8,8 @@ import {
   CheckoutSuccessMessage,
 } from "../../utils/constants";
 import { Types } from "mongoose";
+import { appLogger } from "../../utils/logger";
+import mongoose from "mongoose";
 
 export class StudentCheckoutController implements IStudentCheckoutController {
   private _checkoutService: IStudentCheckoutService;
@@ -16,9 +18,18 @@ export class StudentCheckoutController implements IStudentCheckoutController {
     this._checkoutService = checkoutService;
   }
 
-  async initiateCheckout(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async initiateCheckout(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
-      const { courseIds = [], learningPathIds = [], totalAmount, paymentMethod, couponId } = req.body;
+      const {
+        courseIds = [],
+        learningPathIds = [],
+        totalAmount,
+        paymentMethod,
+        couponId,
+      } = req.body;
       const userId = req.user?.id ? new Types.ObjectId(req.user.id) : null;
 
       if (!userId) {
@@ -40,7 +51,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       if (typeof totalAmount !== "number" || totalAmount <= 0) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Total amount must be a positive number",
+          message: "Total amount must be a positive number or remove the course from the cart",
         });
         return;
       }
@@ -76,7 +87,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         order,
       });
     } catch (error: any) {
-      console.error("Initiate checkout error:", error);
+      appLogger.error("Initiate checkout error:", error);
 
       const errorMsg = error.message || CheckoutErrorMessages.CHECKOUT_FAILED;
       if (
@@ -112,6 +123,8 @@ export class StudentCheckoutController implements IStudentCheckoutController {
   }
 
   async completeCheckout(req: Request, res: Response): Promise<void> {
+    const session = await mongoose.startSession();
+    let result;
     try {
       const { orderId, paymentId, method, amount } = req.body;
 
@@ -147,12 +160,15 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         return;
       }
 
-      const result = await this._checkoutService.verifyAndCompleteCheckout(
-        new Types.ObjectId(orderId),
-        paymentId,
-        method,
-        amount,
-      );
+      await session.withTransaction(async () => {
+        result = await this._checkoutService.verifyAndCompleteCheckout(
+          new Types.ObjectId(orderId),
+          paymentId,
+          method,
+          amount,
+          session,
+        );
+      });
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -160,7 +176,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         data: result,
       });
     } catch (error: any) {
-      console.error("Payment Completion Error:", error);
+      appLogger.error("Payment Completion Error:", error);
       const errorMsg = error.message || CheckoutErrorMessages.PAYMENT_FAILED;
 
       if (
@@ -181,6 +197,8 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         success: false,
         message: CheckoutErrorMessages.PAYMENT_FAILED,
       });
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -218,8 +236,9 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         message: CheckoutSuccessMessage.ORDER_CANCELLED_SUCCESSFULLY,
       });
     } catch (error: any) {
-      console.error("Cancel Order Error:", error);
-      const errorMsg = error.message || CheckoutErrorMessages.FAILED_TO_CANCEL_ORDER;
+      appLogger.error("Cancel Order Error:", error);
+      const errorMsg =
+        error.message || CheckoutErrorMessages.FAILED_TO_CANCEL_ORDER;
 
       if (
         errorMsg.includes("Order not found") ||
@@ -274,8 +293,9 @@ export class StudentCheckoutController implements IStudentCheckoutController {
         message: CheckoutSuccessMessage.ORDER_MARKED_AS_FAILED_SUCCESSFULLY,
       });
     } catch (error: any) {
-      console.error("Mark Order as Failed Error:", error);
-      const errorMsg = error.message || CheckoutErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED;
+      appLogger.error("Mark Order as Failed Error:", error);
+      const errorMsg =
+        error.message || CheckoutErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED;
 
       if (
         errorMsg.includes("Order not found") ||

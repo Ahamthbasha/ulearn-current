@@ -3,6 +3,7 @@ import { IWalletPaymentService } from "../../services/interface/IWalletPaymentSe
 import { Model, Roles, StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StudentErrorMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentWalletPaymentController {
   private _walletPaymentService: IWalletPaymentService;
@@ -16,7 +17,7 @@ export class StudentWalletPaymentController {
       const order = await this._walletPaymentService.createOrder(amount);
       res.status(StatusCode.OK).json({ success: true, order });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in create order", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_CREATE_RAZORPAY_ORDER,
@@ -54,7 +55,7 @@ export class StudentWalletPaymentController {
 
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error: any) {
-      console.error(error);
+      appLogger.error("error in verify payment", error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:

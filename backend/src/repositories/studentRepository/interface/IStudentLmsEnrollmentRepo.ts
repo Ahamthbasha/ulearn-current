@@ -4,20 +4,31 @@ import { ILearningPathEnrollment } from "../../../models/learningPathEnrollmentM
 import { ICourse } from "../../../models/courseModel";
 
 export interface IStudentLmsEnrollmentRepo {
-  getEnrolledLearningPaths(userId: Types.ObjectId): Promise<Array<{
-    learningPath: ILearningPath;
-    enrollment: ILearningPathEnrollment;
-  }>>;
+  getEnrolledLearningPaths(userId: Types.ObjectId): Promise<
+    Array<{
+      learningPath: ILearningPath;
+      enrollment: ILearningPathEnrollment;
+    }>
+  >;
 
-  getLearningPathDetails(userId: Types.ObjectId, learningPathId: Types.ObjectId): Promise<{
+  getLearningPathDetails(
+    userId: Types.ObjectId,
+    learningPathId: Types.ObjectId,
+  ): Promise<{
     learningPath: ILearningPath;
     enrollment: ILearningPathEnrollment;
     courses: ICourse[];
   }>;
 
-  updateUnlockedOrder(enrollmentId: Types.ObjectId, unlockedOrder: number): Promise<ILearningPathEnrollment>;
+  updateUnlockedOrder(
+    enrollmentId: Types.ObjectId,
+    unlockedOrder: number,
+  ): Promise<ILearningPathEnrollment>;
 
-  markCourseCompleted(enrollmentId: Types.ObjectId, courseId: Types.ObjectId): Promise<ILearningPathEnrollment>;
+  markCourseCompleted(
+    enrollmentId: Types.ObjectId,
+    courseId: Types.ObjectId,
+  ): Promise<ILearningPathEnrollment>;
 
   generateLearningPathCertificate(
     enrollmentId: Types.ObjectId,

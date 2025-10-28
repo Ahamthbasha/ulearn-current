@@ -11,6 +11,7 @@ import {
   ResponseMessages,
 } from "../../utils/constants";
 import { generateMembershipReceiptPdf } from "../../utils/generateMembershipReceiptPdf";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorMembershipOrderController
   implements IInstructorMembershipOrderController
@@ -69,7 +70,7 @@ export class InstructorMembershipOrderController
         );
       res.status(StatusCode.OK).json(result);
     } catch (error: any) {
-      console.error("Checkout error:", error);
+      appLogger.error("Checkout error:", error);
 
       if (
         error.message?.includes(
@@ -138,7 +139,7 @@ export class InstructorMembershipOrderController
         );
       res.status(StatusCode.OK).json(result);
     } catch (error: any) {
-      console.error("Razorpay order creation error:", error);
+      appLogger.error("Razorpay order creation error:", error);
 
       if (
         error.message?.includes(
@@ -230,7 +231,7 @@ export class InstructorMembershipOrderController
 
       res.status(StatusCode.OK).json(result);
     } catch (error: any) {
-      console.error("Retry order error:", error);
+      appLogger.error("Retry order error:", error);
 
       if (
         error.message?.includes(
@@ -303,7 +304,7 @@ export class InstructorMembershipOrderController
         .status(StatusCode.OK)
         .json({ message: ResponseMessages.MEMBERSHIP_ACTIVATED });
     } catch (error) {
-      console.error("Verification error:", error);
+      appLogger.error("Verification error:", error);
       res
         .status(StatusCode.BAD_REQUEST)
         .json({ message: ResponseMessages.VERIFICATION_FAILED });
@@ -355,7 +356,7 @@ export class InstructorMembershipOrderController
         .status(StatusCode.OK)
         .json({ message: ResponseMessages.MEMBERSHIP_ACTIVATED });
     } catch (error: unknown) {
-      console.error("Wallet purchase error:", error);
+      appLogger.error("Wallet purchase error:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -392,7 +393,7 @@ export class InstructorMembershipOrderController
 
       res.status(StatusCode.OK).json({ data, total });
     } catch (error) {
-      console.error("Fetch order history error:", error);
+      appLogger.error("Fetch order history error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_PURCHASE_HISTORY,
       });
@@ -428,7 +429,7 @@ export class InstructorMembershipOrderController
 
       res.status(StatusCode.OK).json(order);
     } catch (err: unknown) {
-      console.error("Order detail fetch error:", err);
+      appLogger.error("Order detail fetch error:", err);
       const errorMessage =
         err instanceof Error
           ? err.message
@@ -478,7 +479,7 @@ export class InstructorMembershipOrderController
       );
       res.send(pdfBuffer);
     } catch (err: unknown) {
-      console.error("Receipt generation error:", err);
+      appLogger.error("Receipt generation error:", err);
       const errorMessage =
         err instanceof Error
           ? err.message
@@ -511,7 +512,7 @@ export class InstructorMembershipOrderController
           INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.ORDER_CANCELLED_SUCCESSFULLY,
       });
     } catch (error: any) {
-      console.error("Cancel order error:", error);
+      appLogger.error("Cancel order error:", error);
       const errorMessage = error.message || "Failed to cancel order";
       if (
         errorMessage.includes(
@@ -560,7 +561,7 @@ export class InstructorMembershipOrderController
         message: INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.MARKED_AS_FAILED,
       });
     } catch (error: any) {
-      console.error("Mark order as failed error:", error);
+      appLogger.error("Mark order as failed error:", error);
       const errorMessage =
         error.message ||
         INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_MARK_AS_FAILED;

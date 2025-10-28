@@ -132,7 +132,7 @@ export class StudentOrderRepository
     session?: mongoose.ClientSession,
   ): Promise<IOrder | null> {
     const query = this.model.findOne({ _id: orderId, userId });
-    
+
     if (session) {
       return await query
         .populate({
@@ -143,7 +143,7 @@ export class StudentOrderRepository
         .lean() // Use lean() for better performance if you don't need mongoose documents
         .exec();
     }
-    
+
     return await query
       .populate({
         path: "userId",

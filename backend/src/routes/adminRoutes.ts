@@ -12,8 +12,6 @@ import {
   adminWithdrawalController,
   adminCouponController,
   adminCourseOfferController,
-  // adminCategoryOfferController,
-  adminLearningPathController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 
@@ -327,102 +325,80 @@ router.get(
   ),
 );
 
-  //adminCouponController
+//adminCouponController
 
-  router.post(
-    "/coupons",
-    authenticateToken,
-    isAdmin,
-    adminCouponController.createCoupon.bind(adminCouponController)
-  )
+router.post(
+  "/coupons",
+  authenticateToken,
+  isAdmin,
+  adminCouponController.createCoupon.bind(adminCouponController),
+);
 
-  router.get(
-    "/coupons",
-    authenticateToken,
-    isAdmin,
-    adminCouponController.getAllCoupons.bind(adminCouponController)
-  )
+router.get(
+  "/coupons",
+  authenticateToken,
+  isAdmin,
+  adminCouponController.getAllCoupons.bind(adminCouponController),
+);
 
-  router.get(
-    "/coupons/:couponId",
-    authenticateToken,
-    isAdmin,
-    adminCouponController.getCouponById.bind(adminCouponController)
-  )
+router.get(
+  "/coupons/:couponId",
+  authenticateToken,
+  isAdmin,
+  adminCouponController.getCouponById.bind(adminCouponController),
+);
 
-  router.put(
-    "/coupons/:couponId",
-    authenticateToken,
-    isAdmin,
-    adminCouponController.updateCoupon.bind(adminCouponController)
-  )
+router.put(
+  "/coupons/:couponId",
+  authenticateToken,
+  isAdmin,
+  adminCouponController.updateCoupon.bind(adminCouponController),
+);
 
-  router.delete(
-    "/coupons/:couponId",
-    authenticateToken,
-    isAdmin,
-    adminCouponController.deleteCoupon.bind(adminCouponController)
-  )
+router.delete(
+  "/coupons/:couponId",
+  authenticateToken,
+  isAdmin,
+  adminCouponController.deleteCoupon.bind(adminCouponController),
+);
 
-  router.get(
-    "/couponCode/:code",
-    authenticateToken,
-    isAdmin,
-    adminCouponController.getCouponByCode.bind(adminCouponController)
-  )
+router.get(
+  "/couponCode/:code",
+  authenticateToken,
+  isAdmin,
+  adminCouponController.getCouponByCode.bind(adminCouponController),
+);
 
-  router.patch(
-    "/coupons/:couponId/status",
-    authenticateToken,
-    isAdmin,
-    adminCouponController.toggleCouponStatus.bind(adminCouponController)
-  )
+router.patch(
+  "/coupons/:couponId/status",
+  authenticateToken,
+  isAdmin,
+  adminCouponController.toggleCouponStatus.bind(adminCouponController),
+);
 
-  //admin courseOffer controller
+//admin courseOffer controller
 
-  router.get(
-    "/courseOffers",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.getOfferRequests.bind(adminCourseOfferController)
-  )
+router.get(
+  "/courseOffers",
+  authenticateToken,
+  isAdmin,
+  adminCourseOfferController.getOfferRequests.bind(adminCourseOfferController),
+);
 
-  router.post(
-    "/courseOffers/verify",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.verifyCourseOffer.bind(adminCourseOfferController)
-  )
+router.post(
+  "/courseOffers/verify",
+  authenticateToken,
+  isAdmin,
+  adminCourseOfferController.verifyCourseOffer.bind(adminCourseOfferController),
+);
 
-  router.get(
-    "/courseOffer/:offerId",
-    authenticateToken,
-    isAdmin,
-    adminCourseOfferController.getOfferById.bind(adminCourseOfferController)
-  )
+router.get(
+  "/courseOffer/:offerId",
+  authenticateToken,
+  isAdmin,
+  adminCourseOfferController.getOfferById.bind(adminCourseOfferController),
+);
 
-  //learnign path verification
-
-  router.get(
-    "/learningPaths",
-    authenticateToken,
-    isAdmin,
-    adminLearningPathController.getSubmittedLearningPaths.bind(adminLearningPathController)
-  )
-
-  router.get(
-    "/learningPaths/:learningPathId",
-    authenticateToken,
-    isAdmin,
-    adminLearningPathController.getLearningPathById.bind(adminLearningPathController)
-  )
-
-  router.put(
-    "/learningPaths/:learningPathId/verify",
-    authenticateToken,
-    isAdmin,
-    adminLearningPathController.verifyLearningPath.bind(adminLearningPathController)
-  )
 
 const adminRoutes = router;
 

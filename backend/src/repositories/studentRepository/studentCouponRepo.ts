@@ -3,7 +3,10 @@ import { ICoupon, CouponModel } from "../../models/couponModel";
 import { IStudentCouponRepo } from "./interface/IStudentCouponRepo";
 import { GenericRepository } from "../genericRepository";
 
-export class StudentCouponRepo extends GenericRepository<ICoupon> implements IStudentCouponRepo {
+export class StudentCouponRepo
+  extends GenericRepository<ICoupon>
+  implements IStudentCouponRepo
+{
   constructor() {
     super(CouponModel);
   }
@@ -21,7 +24,10 @@ export class StudentCouponRepo extends GenericRepository<ICoupon> implements ISt
     }
   }
 
-  async getCouponById(couponId: Types.ObjectId, session?: ClientSession): Promise<ICoupon | null> {
+  async getCouponById(
+    couponId: Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<ICoupon | null> {
     try {
       return await this.findById(couponId.toString(), session);
     } catch (error: any) {
@@ -29,13 +35,17 @@ export class StudentCouponRepo extends GenericRepository<ICoupon> implements ISt
     }
   }
 
-  async addUserToCoupon(couponId: Types.ObjectId, userId: Types.ObjectId, session?: ClientSession): Promise<void> {
+  async addUserToCoupon(
+    couponId: Types.ObjectId,
+    userId: Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<void> {
     try {
       const update = { $push: { usedBy: userId } };
       const updatedCoupon = await this.findOneAndUpdate(
         { _id: couponId },
         update,
-        { session, new: true }
+        { session, new: true },
       );
       if (!updatedCoupon) {
         throw new Error("Coupon not found");

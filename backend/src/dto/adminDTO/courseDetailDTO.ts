@@ -6,8 +6,8 @@ export interface CourseDetailsDTO {
   isPublished: boolean;
   isVerified: boolean;
   isListed: boolean;
-  isSubmitted:boolean;
-  review:string;
+  isSubmitted: boolean;
+  review: string;
   thumbnailUrl: string;
   demoVideo: string;
   price: number;

@@ -9,6 +9,7 @@ import {
   StudentErrorMessages,
 } from "../../utils/constants";
 import { IStudentWishlistController } from "./interfaces/IStudentWishlistController";
+import { appLogger } from "../../utils/logger";
 
 export class StudentWishlistController implements IStudentWishlistController {
   private _wishlistService: IStudentWishlistService;
@@ -31,7 +32,11 @@ export class StudentWishlistController implements IStudentWishlistController {
         return;
       }
 
-      const exists = await this._wishlistService.isItemInWishlist(userId, itemId, type);
+      const exists = await this._wishlistService.isItemInWishlist(
+        userId,
+        itemId,
+        type,
+      );
       if (exists) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
@@ -43,7 +48,11 @@ export class StudentWishlistController implements IStudentWishlistController {
         return;
       }
 
-      const result = await this._wishlistService.addToWishlist(userId, itemId, type);
+      const result = await this._wishlistService.addToWishlist(
+        userId,
+        itemId,
+        type,
+      );
       res.status(StatusCode.CREATED).json({
         success: true,
         message:
@@ -53,7 +62,7 @@ export class StudentWishlistController implements IStudentWishlistController {
         data: result,
       });
     } catch (error) {
-      console.error("addToWishlist error:", error);
+      appLogger.error("addToWishlist error:", error);
       res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: StudentErrorMessages.TOKEN_INVALID,
@@ -61,7 +70,10 @@ export class StudentWishlistController implements IStudentWishlistController {
     }
   }
 
-  async removeFromWishlist(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async removeFromWishlist(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     let type: "course" | "learningPath" | undefined;
     try {
       const userId = new Types.ObjectId(req.user?.id);
@@ -85,20 +97,23 @@ export class StudentWishlistController implements IStudentWishlistController {
             : WishlistSuccessMessage.LEARNING_PATH_REMOVED,
       });
     } catch (error) {
-      console.error("removeFromWishlist error:", error);
+      appLogger.error("removeFromWishlist error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message:
           type === "course"
             ? WishlistErrorMessage.FAILED_TO_REMOVE_COURSE
             : type === "learningPath"
-            ? WishlistErrorMessage.FAILED_TO_REMOVE_LEARNING_PATH
-            : WishlistErrorMessage.FAILED_TO_CHECK_EXISTENCE,
+              ? WishlistErrorMessage.FAILED_TO_REMOVE_LEARNING_PATH
+              : WishlistErrorMessage.FAILED_TO_CHECK_EXISTENCE,
       });
     }
   }
 
-  async getWishlistItems(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getWishlistItems(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
       const wishlistDTO = await this._wishlistService.getWishlistItems(userId);
@@ -109,7 +124,7 @@ export class StudentWishlistController implements IStudentWishlistController {
         data: wishlistDTO,
       });
     } catch (error) {
-      console.error("getWishlistItems error:", error);
+      appLogger.error("getWishlistItems error:", error);
       res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: StudentErrorMessages.TOKEN_INVALID,
@@ -117,7 +132,10 @@ export class StudentWishlistController implements IStudentWishlistController {
     }
   }
 
-  async isItemInWishlist(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async isItemInWishlist(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     let type: "course" | "learningPath" | undefined;
     try {
       const userId = new Types.ObjectId(req.user?.id);
@@ -132,21 +150,25 @@ export class StudentWishlistController implements IStudentWishlistController {
         return;
       }
 
-      const exists = await this._wishlistService.isItemInWishlist(userId, itemId, type);
+      const exists = await this._wishlistService.isItemInWishlist(
+        userId,
+        itemId,
+        type,
+      );
       res.status(StatusCode.OK).json({
         success: true,
         exists,
       });
     } catch (error) {
-      console.error("isItemInWishlist error:", error);
+      appLogger.error("isItemInWishlist error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message:
           type === "course"
             ? WishlistErrorMessage.FAILED_TO_CHECK_EXISTENCE
             : type === "learningPath"
-            ? WishlistErrorMessage.FAILED_TO_CHECK_EXISTENCE
-            : WishlistErrorMessage.INVALID_ITEM_TYPE,
+              ? WishlistErrorMessage.FAILED_TO_CHECK_EXISTENCE
+              : WishlistErrorMessage.INVALID_ITEM_TYPE,
       });
     }
   }

@@ -3,6 +3,7 @@ import { IStudentSlotController } from "./interfaces/IStudentSlotController";
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/enums";
 import { StudentErrorMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentSlotController implements IStudentSlotController {
   private _slotService: IStudentSlotService;
@@ -17,7 +18,7 @@ export class StudentSlotController implements IStudentSlotController {
       const slots = await this._slotService.getAvailableSlots(instructorId);
       res.status(StatusCode.OK).json({ success: true, data: slots });
     } catch (err) {
-      console.error(err);
+      appLogger.error("error in getting available slots", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_SLOTS,

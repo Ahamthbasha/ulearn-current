@@ -47,33 +47,46 @@ export interface IOrder extends Document {
   updatedAt: Date;
 }
 
-const courseOrderDetailsSchema = new Schema<ICourseOrderDetails>({
-  courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
-  courseName: { type: String, required: true },
-  coursePrice: { type: Number, required: true },
-  thumbnailUrl: { type: String, required: true },
-  courseOfferPercentage: { type: Number, required: false },
-  offerPrice: { type: Number, required: false },
-  instructorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  isAlreadyEnrolled: { type: Boolean, default: false },
-}, { _id: false });
+const courseOrderDetailsSchema = new Schema<ICourseOrderDetails>(
+  {
+    courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+    courseName: { type: String, required: true },
+    coursePrice: { type: Number, required: true },
+    thumbnailUrl: { type: String, required: true },
+    courseOfferPercentage: { type: Number, required: false },
+    offerPrice: { type: Number, required: false },
+    instructorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    isAlreadyEnrolled: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
 
-const learningPathOrderDetailsSchema = new Schema<ILearningPathOrderDetails>({
-  learningPathId: { type: Schema.Types.ObjectId, ref: "LearningPath", required: true },
-  learningPathName: { type: String, required: true },
-  totalPrice: { type: Number, required: true },
-  thumbnailUrl: { type: String, required: true },
-  offerPercentage: { type: Number, required: false },
-  offerPrice: { type: Number, required: false },
-  courses: [courseOrderDetailsSchema],
-}, { _id: false });
+const learningPathOrderDetailsSchema = new Schema<ILearningPathOrderDetails>(
+  {
+    learningPathId: {
+      type: Schema.Types.ObjectId,
+      ref: "LearningPath",
+      required: true,
+    },
+    learningPathName: { type: String, required: true },
+    totalPrice: { type: Number, required: true },
+    thumbnailUrl: { type: String, required: true },
+    offerPercentage: { type: Number, required: false },
+    offerPrice: { type: Number, required: false },
+    courses: [courseOrderDetailsSchema],
+  },
+  { _id: false },
+);
 
-const couponDetailsSchema = new Schema<ICouponDetails>({
-  couponId: { type: Schema.Types.ObjectId, ref: "Coupon", required: true },
-  couponName: { type: String, required: true },
-  discountPercentage: { type: Number, required: true },
-  discountAmount: { type: Number, required: true },
-}, { _id: false });
+const couponDetailsSchema = new Schema<ICouponDetails>(
+  {
+    couponId: { type: Schema.Types.ObjectId, ref: "Coupon", required: true },
+    couponName: { type: String, required: true },
+    discountPercentage: { type: Number, required: true },
+    discountAmount: { type: Number, required: true },
+  },
+  { _id: false },
+);
 
 const orderSchema = new Schema<IOrder>(
   {

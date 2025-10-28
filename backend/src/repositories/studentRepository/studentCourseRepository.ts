@@ -6,6 +6,7 @@ import { IQuizReadOnlyRepository } from "../interfaces/IQuizReadOnlyRepository";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { ICourseOffer } from "../../models/courseOfferModel";
 import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo";
+import { appLogger } from "../../utils/logger";
 
 export class StudentCourseRepository
   extends GenericRepository<ICourse>
@@ -34,25 +35,31 @@ export class StudentCourseRepository
       ["category", "instructorId"],
     )) as ICourse[];
 
-    const courseIds = listedCourses.map(course => course._id.toString());
-    const offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIds);
+    const courseIds = listedCourses.map((course) => course._id.toString());
+    const offers =
+      await this._courseOfferRepo.findValidOffersByCourseIds(courseIds);
     const offerMap = new Map<string, ICourseOffer>(
-      offers.map(offer => [offer.courseId.toString(), offer])
+      offers.map((offer) => [offer.courseId.toString(), offer]),
     );
 
     const result = await Promise.all(
       listedCourses.map(async (course) => {
         const courseId = course._id.toString();
-        const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
-        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
+        const chapterCount =
+          await this._chapterRepo.countChaptersByCourse(courseId);
+        const quizQuestionCount =
+          await this._quizRepo.countQuestionsByCourse(courseId);
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
         const offer = offerMap.get(courseId);
-        const discountedPrice = offer && offer.isActive && offer.status === "approved"
-          ? course.price * (1 - offer.discountPercentage / 100)
-          : undefined;
+        const discountedPrice =
+          offer && offer.isActive && offer.status === "approved"
+            ? course.price * (1 - offer.discountPercentage / 100)
+            : undefined;
 
-        console.log(`getAllListedCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`);
+        appLogger.info(
+          `getAllListedCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`,
+        );
 
         return {
           course: {
@@ -77,7 +84,11 @@ export class StudentCourseRepository
     sort: "name-asc" | "name-desc" | "price-asc" | "price-desc" = "name-asc",
     categoryId?: string,
   ): Promise<{
-    data: { course: ICourse; chapterCount: number; quizQuestionCount: number }[];
+    data: {
+      course: ICourse;
+      chapterCount: number;
+      quizQuestionCount: number;
+    }[];
     total: number;
   }> {
     const filter: any = {
@@ -120,25 +131,31 @@ export class StudentCourseRepository
       ["category", "instructorId"],
     );
 
-    const courseIds = courses.map(course => course._id.toString());
-    const offers = await this._courseOfferRepo.findValidOffersByCourseIds(courseIds);
+    const courseIds = courses.map((course) => course._id.toString());
+    const offers =
+      await this._courseOfferRepo.findValidOffersByCourseIds(courseIds);
     const offerMap = new Map<string, ICourseOffer>(
-      offers.map(offer => [offer.courseId.toString(), offer])
+      offers.map((offer) => [offer.courseId.toString(), offer]),
     );
 
     const result = await Promise.all(
       courses.map(async (course) => {
         const courseId = course._id.toString();
-        const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
-        const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
+        const chapterCount =
+          await this._chapterRepo.countChaptersByCourse(courseId);
+        const quizQuestionCount =
+          await this._quizRepo.countQuestionsByCourse(courseId);
         const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
         const offer = offerMap.get(courseId);
-        const discountedPrice = offer && offer.isActive && offer.status === "approved"
-          ? course.price * (1 - offer.discountPercentage / 100)
-          : undefined;
+        const discountedPrice =
+          offer && offer.isActive && offer.status === "approved"
+            ? course.price * (1 - offer.discountPercentage / 100)
+            : undefined;
 
-        console.log(`getFilteredCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`);
+        appLogger.info(
+          `getFilteredCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`,
+        );
 
         return {
           course: {
@@ -167,22 +184,47 @@ export class StudentCourseRepository
     ]);
     if (!course) return { course: null, chapterCount: 0, quizQuestionCount: 0 };
 
-    const chapterCount = await this._chapterRepo.countChaptersByCourse(courseId);
-    const quizQuestionCount = await this._quizRepo.countQuestionsByCourse(courseId);
+    const chapterCount =
+      await this._chapterRepo.countChaptersByCourse(courseId);
+    const quizQuestionCount =
+      await this._quizRepo.countQuestionsByCourse(courseId);
 
     const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
     const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);
 
-    const offer = await this._courseOfferRepo.findValidOfferByCourseId(courseId);
-    const discountedPrice = offer && offer.isActive && offer.status === "approved"
-      ? course.price * (1 - offer.discountPercentage / 100)
-      : undefined;
+    const offer =
+      await this._courseOfferRepo.findValidOfferByCourseId(courseId);
+    const discountedPrice =
+      offer && offer.isActive && offer.status === "approved"
+        ? course.price * (1 - offer.discountPercentage / 100)
+        : undefined;
 
     course.thumbnailUrl = signedThumbnailUrl;
     course.demoVideo.url = signedDemoVideoUrl;
     course.originalPrice = course.price;
-    course.discountedPrice = discountedPrice; 
+    course.discountedPrice = discountedPrice;
 
     return { course, chapterCount, quizQuestionCount };
+  }
+
+  async getCourses(categoryId?:string): Promise<Array<{ _id: string; courseName: string }>> {
+    
+    const filter : any = {isListed:true,isPublished:true};
+    if(categoryId){
+      filter.category = categoryId
+    }
+    
+    
+    const listedCourses = (await this.findAll(
+      filter,
+      [], 
+      { _id: 1, courseName: 1 } 
+    )) as ICourse[];
+
+    const result = listedCourses.map((course) => ({
+      _id: course._id.toString(),
+      courseName: course.courseName,
+    }));
+    return result;
   }
 }

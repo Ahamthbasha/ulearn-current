@@ -22,4 +22,6 @@ export interface IStudentCourseService {
     chapterCount: number;
     quizQuestionCount: number;
   }>;
+
+  getCourses(categoryId?:string): Promise<Array<{ _id: string; courseName: string }>>;
 }

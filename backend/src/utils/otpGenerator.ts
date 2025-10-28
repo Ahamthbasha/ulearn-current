@@ -10,8 +10,6 @@ export class OtpGenerate implements IOtpGenerate {
         const randomIndex = Math.floor(Math.random() * digits.length);
         OTP += digits[randomIndex];
       }
-
-      console.log(`OTP: ==> ${OTP}`);
       return OTP;
     } catch (error) {
       throw error;

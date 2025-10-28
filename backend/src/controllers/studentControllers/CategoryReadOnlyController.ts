@@ -3,6 +3,7 @@ import { ICategoryReadOnlyService } from "../../services/interface/ICategoryRead
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/enums";
 import { CategoryErrorMsg } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class CategoryReadOnlyController implements ICategoryReadOnlyController {
   private _categoryService: ICategoryReadOnlyService;
@@ -16,7 +17,7 @@ export class CategoryReadOnlyController implements ICategoryReadOnlyController {
       const categories = await this._categoryService.getAllCategories();
       res.status(StatusCode.OK).json({ success: true, data: categories });
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      appLogger.error("Error fetching categories:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: CategoryErrorMsg.CATEGORY_FAILED_TO_FETCH,

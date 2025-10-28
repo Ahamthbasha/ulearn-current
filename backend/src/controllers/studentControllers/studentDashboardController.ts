@@ -11,6 +11,7 @@ import {
   generateStudentSlotReportPdf,
 } from "../../utils/studentReportGenerator";
 import { StudentErrorMessages } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentDashboardController implements IStudentDashboardController {
   private _dashboardService: IStudentDashboardService;
@@ -80,7 +81,7 @@ export class StudentDashboardController implements IStudentDashboardController {
 
       res.json({ success: true, data: reports });
     } catch (error) {
-      console.error("Error getting course report:", error);
+      appLogger.error("Error getting course report:", error);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ message: StudentErrorMessages.SERVER_ERROR });
@@ -112,7 +113,7 @@ export class StudentDashboardController implements IStudentDashboardController {
 
       res.json({ success: true, data: reports });
     } catch (error) {
-      console.error("Error getting slot report:", error);
+      appLogger.error("Error getting slot report:", error);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ message: StudentErrorMessages.SERVER_ERROR });
@@ -159,7 +160,7 @@ export class StudentDashboardController implements IStudentDashboardController {
         await generateStudentCourseReportExcel(reports, res);
       }
     } catch (error) {
-      console.error("Error exporting course report:", error);
+      appLogger.error("Error exporting course report:", error);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ message: StudentErrorMessages.SERVER_ERROR });
@@ -219,7 +220,7 @@ export class StudentDashboardController implements IStudentDashboardController {
         await generateStudentSlotReportExcel(reports, res);
       }
     } catch (error) {
-      console.error("Error exporting slot report:", error);
+      appLogger.error("Error exporting slot report:", error);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ message: StudentErrorMessages.SERVER_ERROR });

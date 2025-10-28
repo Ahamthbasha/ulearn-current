@@ -76,15 +76,11 @@ export class WalletService implements IWalletService {
   ): Promise<void> {
     const admin = await this._adminRepository.getAdmin(email);
 
-    console.log("admin info", admin);
-
     if (!admin) throw new Error("Admin not found");
 
     const adminId = admin._id;
-    console.log("admin id", adminId);
     let adminWallet = await this._walletRepository.findByOwnerId(adminId);
     if (!adminWallet) {
-      console.warn("No wallet found for admin — creating new one!");
       adminWallet = await this._walletRepository.createWallet(
         adminId,
         Roles.ADMINWALLET,

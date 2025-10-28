@@ -7,7 +7,7 @@ export const mapCartToDTO = (
   cart: ICart,
   courseDetailsMap: Map<string, { price: number; thumbnailUrl: string }>,
   learningPathDetailsMap: Map<string, { price: number; thumbnailUrl: string }>,
-  enrolledCourseIds: IEnrollment[] | null = null
+  enrolledCourseIds: IEnrollment[] | null = null,
 ): CartItemDTO[] => {
   const cartItems: CartItemDTO[] = [];
 
@@ -17,14 +17,16 @@ export const mapCartToDTO = (
 
   if (Array.isArray(cart.courses)) {
     cart.courses.forEach((course) => {
-      const courseId = course instanceof Types.ObjectId ? course.toString() : "courseName" in course && course._id ? course._id.toString() : null;
-      if (!courseId) return;
+      const courseId =
+        course instanceof Types.ObjectId
+          ? course.toString()
+          : course._id.toString();
       const details = courseDetailsMap.get(courseId);
       if (details) {
         cartItems.push({
           itemId: courseId,
           type: "course",
-          title: course instanceof Types.ObjectId ? "" : course.courseName,
+          title: course instanceof Types.ObjectId ? "" : course.courseName || "Untitled Course",
           price: details.price,
           thumbnailUrl: details.thumbnailUrl,
           isAlreadyEnrolled: enrolledCourseIdSet.has(courseId),
@@ -36,19 +38,21 @@ export const mapCartToDTO = (
   // Map learning paths
   if (Array.isArray(cart.learningPaths)) {
     cart.learningPaths.forEach((lp) => {
-      const lpId = lp instanceof Types.ObjectId ? lp.toString() : "title" in lp && lp._id ? lp._id.toString() : null;
-      if (!lpId) return;
+      const lpId =
+        lp instanceof Types.ObjectId
+          ? lp.toString()
+          : lp._id.toString();
       const details = learningPathDetailsMap.get(lpId);
       if (details) {
         cartItems.push({
           itemId: lpId,
           type: "learningPath",
-          title: lp instanceof Types.ObjectId ? "" : lp.title,
+          title: lp instanceof Types.ObjectId ? "Loading..." : lp.title || "Untitled Learning Path",
           price: details.price,
           thumbnailUrl: details.thumbnailUrl,
           enrolledCourses: Array.from(enrolledCourseIdSet),
         });
-      }
+      } 
     });
   }
 

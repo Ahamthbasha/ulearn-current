@@ -45,6 +45,7 @@ export interface IRevenueReportItem {
   date: string;
   totalOrderAmount: number;
   instructorEarnings: number;
+  instructorRevenue:number;
   couponCode: string;
   couponDiscount: number;
   couponDiscountAmount: number;

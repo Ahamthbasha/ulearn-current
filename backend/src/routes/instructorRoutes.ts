@@ -16,7 +16,6 @@ import {
   instructorSlotController,
   instructorSlotBookingController,
   instructorWithdrawalController,
-  instructorLearningPathController,
   instructorCourseOfferController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
@@ -31,12 +30,12 @@ router.post("/signUp", instructorController.signUp.bind(instructorController));
 
 router.post(
   "/resendOtp",
-  instructorController.resendOtp.bind(instructorController)
+  instructorController.resendOtp.bind(instructorController),
 );
 
 router.post(
   "/createUser",
-  instructorController.createUser.bind(instructorController)
+  instructorController.createUser.bind(instructorController),
 );
 
 router.post("/login", instructorController.login.bind(instructorController));
@@ -45,27 +44,27 @@ router.post("/logout", instructorController.logout.bind(instructorController));
 
 router.post(
   "/verifyEmail",
-  instructorController.verifyEmail.bind(instructorController)
+  instructorController.verifyEmail.bind(instructorController),
 );
 
 router.post(
   "/verifyResetOtp",
-  instructorController.verifyResetOtp.bind(instructorController)
+  instructorController.verifyResetOtp.bind(instructorController),
 );
 
 router.post(
   "/forgotResendOtp",
-  instructorController.forgotResendOtp.bind(instructorController)
+  instructorController.forgotResendOtp.bind(instructorController),
 );
 
 router.post(
   "/resetPassword",
-  instructorController.resetPassword.bind(instructorController)
+  instructorController.resetPassword.bind(instructorController),
 );
 
 router.post(
   "/googleLogin",
-  instructorController.doGoogleLogin.bind(instructorController)
+  instructorController.doGoogleLogin.bind(instructorController),
 );
 
 //verification part
@@ -76,15 +75,15 @@ router.post(
     { name: "resume", maxCount: 1 },
   ]),
   instructorVerificationController.submitRequest.bind(
-    instructorVerificationController
-  )
+    instructorVerificationController,
+  ),
 );
 
 router.get(
   "/getVerificationByEmail/:email",
   instructorVerificationController.getRequestByEmail.bind(
-    instructorVerificationController
-  )
+    instructorVerificationController,
+  ),
 );
 
 //profile management part
@@ -94,7 +93,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorProfileController.getProfile.bind(instructorProfileController)
+  instructorProfileController.getProfile.bind(instructorProfileController),
 );
 
 router.put(
@@ -103,7 +102,7 @@ router.put(
   restrictBlockedUser,
   isInstructor,
   upload.single("profilePic"),
-  instructorProfileController.updateProfile.bind(instructorProfileController)
+  instructorProfileController.updateProfile.bind(instructorProfileController),
 );
 
 router.put(
@@ -111,7 +110,7 @@ router.put(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorProfileController.updatePassword.bind(instructorProfileController)
+  instructorProfileController.updatePassword.bind(instructorProfileController),
 );
 
 router.post(
@@ -120,8 +119,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorProfileController.updateBankAccount.bind(
-    instructorProfileController
-  )
+    instructorProfileController,
+  ),
 );
 
 //categoryfetch
@@ -132,8 +131,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorCategoryController.getListedCategories.bind(
-    instructorCategoryController
-  )
+    instructorCategoryController,
+  ),
 );
 
 // Create Course
@@ -146,7 +145,7 @@ router.post(
     { name: "thumbnail", maxCount: 1 },
     { name: "demoVideos", maxCount: 1 },
   ]),
-  instructorCourseController.createCourse.bind(instructorCourseController)
+  instructorCourseController.createCourse.bind(instructorCourseController),
 );
 
 // Update Course
@@ -159,7 +158,7 @@ router.put(
     { name: "thumbnail", maxCount: 1 },
     { name: "demoVideos", maxCount: 1 },
   ]),
-  instructorCourseController.updateCourse.bind(instructorCourseController)
+  instructorCourseController.updateCourse.bind(instructorCourseController),
 );
 
 // Delete Course
@@ -168,7 +167,7 @@ router.delete(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorCourseController.deleteCourse.bind(instructorCourseController)
+  instructorCourseController.deleteCourse.bind(instructorCourseController),
 );
 
 // Get Course By ID
@@ -177,7 +176,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorCourseController.getCourseById.bind(instructorCourseController)
+  instructorCourseController.getCourseById.bind(instructorCourseController),
 );
 
 //instructor created courses visit
@@ -188,8 +187,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorCourseController.getInstructorCourses.bind(
-    instructorCourseController
-  )
+    instructorCourseController,
+  ),
 );
 
 router.get(
@@ -197,8 +196,10 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorCourseController.getVerifiedInstructorCourses.bind(instructorCourseController)
-)
+  instructorCourseController.getVerifiedInstructorCourses.bind(
+    instructorCourseController,
+  ),
+);
 
 //publish course
 
@@ -207,7 +208,7 @@ router.patch(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorCourseController.publishCourse.bind(instructorCourseController)
+  instructorCourseController.publishCourse.bind(instructorCourseController),
 );
 
 router.patch(
@@ -215,8 +216,10 @@ router.patch(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorCourseController.submitCourseForVerification.bind(instructorCourseController)
-)
+  instructorCourseController.submitCourseForVerification.bind(
+    instructorCourseController,
+  ),
+);
 
 //chapter routes
 
@@ -226,8 +229,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorChapterController.getChaptersByCourse.bind(
-    instructorChapterController
-  )
+    instructorChapterController,
+  ),
 );
 
 router.post(
@@ -239,7 +242,7 @@ router.post(
     { name: "video", maxCount: 1 },
     { name: "captions", maxCount: 1 },
   ]),
-  instructorChapterController.createChapter.bind(instructorChapterController)
+  instructorChapterController.createChapter.bind(instructorChapterController),
 );
 
 router.put(
@@ -251,7 +254,7 @@ router.put(
     { name: "video", maxCount: 1 },
     { name: "captions", maxCount: 1 },
   ]),
-  instructorChapterController.updateChapter.bind(instructorChapterController)
+  instructorChapterController.updateChapter.bind(instructorChapterController),
 );
 
 router.delete(
@@ -259,7 +262,7 @@ router.delete(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorChapterController.deleteChapter.bind(instructorChapterController)
+  instructorChapterController.deleteChapter.bind(instructorChapterController),
 );
 
 router.get(
@@ -267,7 +270,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorChapterController.getChapterById.bind(instructorChapterController)
+  instructorChapterController.getChapterById.bind(instructorChapterController),
 );
 
 //quiz routes
@@ -277,7 +280,7 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.createQuiz.bind(instructorQuizController)
+  instructorQuizController.createQuiz.bind(instructorQuizController),
 );
 
 router.delete(
@@ -285,7 +288,7 @@ router.delete(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.deleteQuiz.bind(instructorQuizController)
+  instructorQuizController.deleteQuiz.bind(instructorQuizController),
 );
 
 router.get(
@@ -293,7 +296,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.getQuizById.bind(instructorQuizController)
+  instructorQuizController.getQuizById.bind(instructorQuizController),
 );
 
 router.get(
@@ -301,7 +304,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.getQuizByCourseId.bind(instructorQuizController)
+  instructorQuizController.getQuizByCourseId.bind(instructorQuizController),
 );
 
 //questions-level routes inside a quiz
@@ -311,7 +314,7 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.addQuestion.bind(instructorQuizController)
+  instructorQuizController.addQuestion.bind(instructorQuizController),
 );
 
 router.put(
@@ -319,7 +322,7 @@ router.put(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.updateQuestion.bind(instructorQuizController)
+  instructorQuizController.updateQuestion.bind(instructorQuizController),
 );
 
 router.delete(
@@ -327,7 +330,7 @@ router.delete(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.deleteQuestion.bind(instructorQuizController)
+  instructorQuizController.deleteQuestion.bind(instructorQuizController),
 );
 
 router.get(
@@ -336,8 +339,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorQuizController.getPaginatedQuestionsByCourseId.bind(
-    instructorQuizController
-  )
+    instructorQuizController,
+  ),
 );
 
 /////////////////////////instructor dashboard///////////////////////////////////
@@ -347,7 +350,9 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorDashboardController.getDashboard.bind(instructorDashboardController)
+  instructorDashboardController.getDashboard.bind(
+    instructorDashboardController,
+  ),
 );
 
 router.get(
@@ -356,8 +361,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorDashboardController.getDetailedRevenueReport.bind(
-    instructorDashboardController
-  )
+    instructorDashboardController,
+  ),
 );
 
 router.get(
@@ -366,8 +371,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorDashboardController.exportRevenueReport.bind(
-    instructorDashboardController
-  )
+    instructorDashboardController,
+  ),
 );
 
 ////////////instructor specific course dashboard///////////////////////////
@@ -378,8 +383,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   specificCourseDashboardController.getCourseDashboard.bind(
-    specificCourseDashboardController
-  )
+    specificCourseDashboardController,
+  ),
 );
 
 router.get(
@@ -388,8 +393,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   specificCourseDashboardController.getCourseRevenueReport.bind(
-    specificCourseDashboardController
-  )
+    specificCourseDashboardController,
+  ),
 );
 
 router.get(
@@ -398,8 +403,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   specificCourseDashboardController.exportCourseRevenueReport.bind(
-    specificCourseDashboardController
-  )
+    specificCourseDashboardController,
+  ),
 );
 
 //wallet related routes
@@ -409,7 +414,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorWalletController.getWallet.bind(instructorWalletController)
+  instructorWalletController.getWallet.bind(instructorWalletController),
 );
 
 router.post(
@@ -417,7 +422,7 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorWalletController.creditWallet.bind(instructorWalletController)
+  instructorWalletController.creditWallet.bind(instructorWalletController),
 );
 
 router.post(
@@ -425,7 +430,7 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorWalletController.debitWallet.bind(instructorWalletController)
+  instructorWalletController.debitWallet.bind(instructorWalletController),
 );
 
 router.get(
@@ -434,8 +439,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorWalletController.getPaginatedTransactions.bind(
-    instructorWalletController
-  )
+    instructorWalletController,
+  ),
 );
 
 //wallet payment related routes
@@ -446,8 +451,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorWalletPaymentController.createOrder.bind(
-    instructorWalletPaymentController
-  )
+    instructorWalletPaymentController,
+  ),
 );
 
 router.post(
@@ -456,8 +461,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorWalletPaymentController.verifyPayment.bind(
-    instructorWalletPaymentController
-  )
+    instructorWalletPaymentController,
+  ),
 );
 
 //////// Instructor withdrawal Request /////////////////
@@ -468,8 +473,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorWithdrawalController.createWithdrawalRequest.bind(
-    instructorWithdrawalController
-  )
+    instructorWithdrawalController,
+  ),
 );
 
 router.get(
@@ -478,8 +483,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorWithdrawalController.getWithdrawalRequestsWithPagination.bind(
-    instructorWithdrawalController
-  )
+    instructorWithdrawalController,
+  ),
 );
 
 router.patch(
@@ -488,8 +493,8 @@ router.patch(
   restrictBlockedUser,
   isInstructor,
   instructorWithdrawalController.retryWithdrawalRequest.bind(
-    instructorWithdrawalController
-  )
+    instructorWithdrawalController,
+  ),
 );
 
 ///////instructor membership////////////////////////////
@@ -499,7 +504,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorMembershipController.getPlans.bind(instructorMembershipController)
+  instructorMembershipController.getPlans.bind(instructorMembershipController),
 );
 
 router.get(
@@ -507,7 +512,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorMembershipController.getStatus.bind(instructorMembershipController)
+  instructorMembershipController.getStatus.bind(instructorMembershipController),
 );
 
 router.get(
@@ -516,8 +521,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipController.getActiveMembership.bind(
-    instructorMembershipController
-  )
+    instructorMembershipController,
+  ),
 );
 
 //purchase membership
@@ -528,8 +533,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.initiateCheckout.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.post(
@@ -538,8 +543,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.verifyOrder.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.post(
@@ -548,8 +553,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.createRazorpayOrder.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.post(
@@ -558,8 +563,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.retryFailedOrder.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.post(
@@ -568,8 +573,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.cancelOrder.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.post(
@@ -578,8 +583,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.purchaseWithWallet.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.get(
@@ -588,8 +593,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.getInstructorOrders.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.get(
@@ -598,8 +603,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.getMembershipOrderDetail.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.get(
@@ -608,8 +613,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.downloadReceipt.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 router.post(
@@ -618,8 +623,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorMembershipOrderController.markOrderAsFailed.bind(
-    instructorMembershipOrderController
-  )
+    instructorMembershipOrderController,
+  ),
 );
 
 //slot
@@ -629,7 +634,7 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorSlotController.createSlot.bind(instructorSlotController)
+  instructorSlotController.createSlot.bind(instructorSlotController),
 );
 
 router.get(
@@ -637,7 +642,7 @@ router.get(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorSlotController.listSlots.bind(instructorSlotController)
+  instructorSlotController.listSlots.bind(instructorSlotController),
 );
 
 router.put(
@@ -645,7 +650,7 @@ router.put(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorSlotController.updateSlot.bind(instructorSlotController)
+  instructorSlotController.updateSlot.bind(instructorSlotController),
 );
 
 router.delete(
@@ -653,7 +658,7 @@ router.delete(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorSlotController.deleteSlot.bind(instructorSlotController)
+  instructorSlotController.deleteSlot.bind(instructorSlotController),
 );
 
 router.delete(
@@ -661,15 +666,17 @@ router.delete(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorSlotController.deleteUnbookedSlotsForDate.bind(instructorSlotController)
-)
+  instructorSlotController.deleteUnbookedSlotsForDate.bind(
+    instructorSlotController,
+  ),
+);
 
 router.get(
   "/slotStats",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorSlotController.getSlotStatsByMonth.bind(instructorSlotController)
+  instructorSlotController.getSlotStatsByMonth.bind(instructorSlotController),
 );
 
 //slot detail
@@ -680,91 +687,8 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorSlotBookingController.getBookingDetail.bind(
-    instructorSlotBookingController
-  )
-);
-
-//learningPath
-router.get(
-  "/learningPaths",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorLearningPathController.getInstructorLearningPaths.bind(
-    instructorLearningPathController
-  )
-);
-
-router.get(
-  "/learningPath/:learningPathId",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorLearningPathController.getLearningPathById.bind(
-    instructorLearningPathController
-  )
-);
-
-router.post(
-  "/createLearningPath",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  upload.single("thumbnail"),
-  instructorLearningPathController.createLearningPath.bind(
-    instructorLearningPathController
-  )
-);
-
-router.post(
-  "/learningPath/:learningPathId/publish",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorLearningPathController.publishLearningPath.bind(
-    instructorLearningPathController
-  )
-);
-
-router.put(
-  "/learningPath/:learningPathId",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  upload.single("thumbnail"),
-  instructorLearningPathController.updateLearningPath.bind(
-    instructorLearningPathController
-  )
-);
-
-router.put(
-  "/learningPath/:learningPathId/submit",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorLearningPathController.submitLearningPathToAdmin.bind(
-    instructorLearningPathController
-  )
-);
-
-router.put(
-  "/learningPath/:learningPathId/resubmit",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorLearningPathController.resubmitLearningPathToAdmin.bind(
-    instructorLearningPathController
-  )
-);
-
-router.delete(
-  "/learningPath/:learningPathId",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorLearningPathController.deleteLearningPath.bind(
-    instructorLearningPathController
-  )
+    instructorSlotBookingController,
+  ),
 );
 
 ///instructor course offer management
@@ -775,8 +699,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorCourseOfferController.createCourseOffer.bind(
-    instructorCourseOfferController
-  )
+    instructorCourseOfferController,
+  ),
 );
 
 router.put(
@@ -785,8 +709,8 @@ router.put(
   restrictBlockedUser,
   isInstructor,
   instructorCourseOfferController.editCourseOffer.bind(
-    instructorCourseOfferController
-  )
+    instructorCourseOfferController,
+  ),
 );
 
 router.post(
@@ -795,8 +719,8 @@ router.post(
   restrictBlockedUser,
   isInstructor,
   instructorCourseOfferController.resubmitOffer.bind(
-    instructorCourseOfferController
-  )
+    instructorCourseOfferController,
+  ),
 );
 
 router.get(
@@ -805,29 +729,29 @@ router.get(
   restrictBlockedUser,
   isInstructor,
   instructorCourseOfferController.getOffersByInstructor.bind(
-    instructorCourseOfferController
-  )
-)
+    instructorCourseOfferController,
+  ),
+);
 
-  router.get(
-    "/courseOffer/:offerId",
-    authenticateToken,
-    restrictBlockedUser,
-    isInstructor,
-    instructorCourseOfferController.getOfferById.bind(
-      instructorCourseOfferController
-    )
-  )
+router.get(
+  "/courseOffer/:offerId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorCourseOfferController.getOfferById.bind(
+    instructorCourseOfferController,
+  ),
+);
 
-  router.delete(
-    "/courseOffer/:offerId",
-    authenticateToken,
-    restrictBlockedUser,
-    isInstructor,
-    instructorCourseOfferController.deleteOffer.bind(
-      instructorCourseOfferController
-    )
-  )
+router.delete(
+  "/courseOffer/:offerId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorCourseOfferController.deleteOffer.bind(
+    instructorCourseOfferController,
+  ),
+);
 
 const instructorRoutes = router;
 

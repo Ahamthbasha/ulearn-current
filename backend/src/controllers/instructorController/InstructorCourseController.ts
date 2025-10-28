@@ -280,9 +280,8 @@ export class InstructorCourseController implements IInstructorCourseController {
         return;
       }
 
-      const courses = await this._courseService.getVerifiedInstructorCourses(
-        instructorId,
-      );
+      const courses =
+        await this._courseService.getVerifiedInstructorCourses(instructorId);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -321,7 +320,10 @@ export class InstructorCourseController implements IInstructorCourseController {
         return;
       }
 
-      const updatedCourse = await this._courseService.publishCourse(courseId, parsedPublishDate);
+      const updatedCourse = await this._courseService.publishCourse(
+        courseId,
+        parsedPublishDate,
+      );
 
       if (!updatedCourse) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -360,7 +362,8 @@ export class InstructorCourseController implements IInstructorCourseController {
         return;
       }
 
-      const updatedCourse = await this._courseService.submitCourseForVerification(courseId);
+      const updatedCourse =
+        await this._courseService.submitCourseForVerification(courseId);
 
       if (!updatedCourse) {
         res.status(StatusCode.NOT_FOUND).json({

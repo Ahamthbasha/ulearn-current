@@ -1,6 +1,6 @@
 import { IInstructorSlotController } from "./interfaces/IInstructorSlotController";
 import { IInstructorSlotService } from "../../services/instructorServices/interface/IInstructorSlotService";
-import {  Response } from "express";
+import { Response } from "express";
 import mongoose from "mongoose";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
@@ -49,7 +49,7 @@ export class InstructorSlotController implements IInstructorSlotController {
       const updated = await this._slotService.updateSlot(
         instructorId,
         slotId,
-        req.body
+        req.body,
       );
 
       res.status(StatusCode.OK).json({ success: true, slot: updated });
@@ -98,7 +98,7 @@ export class InstructorSlotController implements IInstructorSlotController {
 
   async getSlotStatsByMonth(
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
   ): Promise<void> {
     try {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
@@ -134,7 +134,7 @@ export class InstructorSlotController implements IInstructorSlotController {
       const stats = await this._slotService.getSlotStats(
         instructorId,
         mode,
-        options
+        options,
       );
 
       res.status(StatusCode.OK).json({ success: true, data: stats });
@@ -148,7 +148,10 @@ export class InstructorSlotController implements IInstructorSlotController {
     }
   }
 
-  async deleteUnbookedSlotsForDate(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async deleteUnbookedSlotsForDate(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
     try {
       const instructorId = new mongoose.Types.ObjectId(req.user?.id);
       const date = req.query.date as string;

@@ -38,9 +38,9 @@ export class EnrollmentRepository
   }
 
   async createMany(
-    enrollments: Partial<IEnrollment>[]
+    enrollments: Partial<IEnrollment>[],
   ): Promise<IEnrollment[]> {
-    enrollments.forEach(enrollment => {
+    enrollments.forEach((enrollment) => {
       if (!enrollment.userId || !enrollment.courseId) {
         throw new Error("userId and courseId are required for all enrollments");
       }
@@ -51,21 +51,24 @@ export class EnrollmentRepository
 
   async createManyWithSession(
     enrollments: Partial<IEnrollment>[],
-    session: mongoose.ClientSession
+    session: mongoose.ClientSession,
   ): Promise<IEnrollment[]> {
-    enrollments.forEach(enrollment => {
+    enrollments.forEach((enrollment) => {
       if (!enrollment.userId || !enrollment.courseId) {
         throw new Error("userId and courseId are required for all enrollments");
       }
     });
-    const docs = await this.model.insertMany(enrollments, { session, ordered: true });
+    const docs = await this.model.insertMany(enrollments, {
+      session,
+      ordered: true,
+    });
     return docs as IEnrollment[];
   }
 
   async findByUserAndCoursesWithSession(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
-    session: mongoose.ClientSession
+    session: mongoose.ClientSession,
   ): Promise<IEnrollment[]> {
     return this.model
       .find({ userId, courseId: { $in: courseIds } })
@@ -76,7 +79,7 @@ export class EnrollmentRepository
   async updateEnrollmentWithSession(
     enrollmentId: Types.ObjectId,
     updates: Partial<IEnrollment>,
-    session: mongoose.ClientSession
+    session: mongoose.ClientSession,
   ): Promise<IEnrollment | null> {
     return this.model
       .findByIdAndUpdate(enrollmentId, updates, { new: true })

@@ -2,6 +2,7 @@ import { Roles, StatusCode } from "../utils/enums";
 import { JwtService } from "../utils/jwt";
 import { Request, Response, NextFunction } from "express";
 import { AuthErrorMsg } from "../utils/constants";
+import { appLogger } from "../utils/logger";
 
 export const isStudent = async (
   req: Request,
@@ -25,6 +26,7 @@ export const isStudent = async (
     }
     next();
   } catch (error) {
+    appLogger.error("error in role Auth", error);
     res.status(StatusCode.UNAUTHORIZED).send(AuthErrorMsg.INVALID_ACCESS_TOKEN);
   }
 };

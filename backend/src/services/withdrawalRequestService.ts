@@ -11,6 +11,13 @@ import { mapWithdrawalRequestDetailToDTO } from "../mappers/adminMapper/withdraw
 import { WithdrawalRequestDTO } from "../dto/instructorDTO/withdrawalRequestDTO";
 import { WithdrawalRequestDetailDTO } from "../dto/adminDTO/withdrawalDetailRequest";
 import { mapAdminWithdrawalRequestToDTO } from "../mappers/adminMapper/adminWithdrawalMapper";
+import { 
+  NotFoundError, 
+  BadRequestError, 
+  InternalServerError,
+  ConflictError 
+} from "../utils/error";
+import { appLogger } from "../utils/logger";
 
 export class WithdrawalRequestService implements IWithdrawalRequestService {
   private _withdrawalRequestRepo: IWithdrawalRequestRepository;
@@ -31,52 +38,86 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
     instructorId: Types.ObjectId,
     amount: number,
   ): Promise<IWithdrawalRequest> {
-    const instructor = await this._instructorRepo.findById(
-      instructorId.toString(),
-    );
-    if (!instructor) {
-      throw new Error("Instructor not found");
-    }
+    try {
+      // Validate amount
+      if (!amount || amount <= 0) {
+        throw new BadRequestError("Amount must be greater than zero");
+      }
 
-    const bankAccount = instructor.bankAccount;
-    if (
-      !bankAccount ||
-      !bankAccount.accountHolderName ||
-      !bankAccount.accountNumber ||
-      !bankAccount.ifscCode ||
-      !bankAccount.bankName
-    ) {
-      throw new Error("Bank account details are incomplete");
-    }
-
-    const validatedBankAccount: IWithdrawalRequest["bankAccount"] = {
-      accountHolderName: bankAccount.accountHolderName,
-      accountNumber: bankAccount.accountNumber,
-      ifscCode: bankAccount.ifscCode,
-      bankName: bankAccount.bankName,
-    };
-
-    const wallet = await this._walletService.getWallet(instructorId);
-    if (!wallet || wallet.balance < amount) {
-      throw new Error("Insufficient wallet balance");
-    }
-
-    const totalPendingAmount =
-      await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
-
-    const availableBalance = wallet.balance - totalPendingAmount;
-
-    if (availableBalance < amount) {
-      throw new Error(
-        `Insufficient available balance. Available: ${availableBalance}, Requested: ${amount}, Pending withdrawals: ${totalPendingAmount}`,
+      // Get instructor
+      const instructor = await this._instructorRepo.findById(
+        instructorId.toString(),
       );
-    }
+      
+      if (!instructor) {
+        throw new NotFoundError("Instructor not found");
+      }
 
-    return this._withdrawalRequestRepo.createWithdrawalRequest(
-      instructorId,
-      amount,
-      validatedBankAccount,
-    );
+      // Validate bank account
+      const bankAccount = instructor.bankAccount;
+      if (
+        !bankAccount ||
+        !bankAccount.accountHolderName ||
+        !bankAccount.accountNumber ||
+        !bankAccount.ifscCode ||
+        !bankAccount.bankName
+      ) {
+        throw new BadRequestError(
+          "Bank account details are incomplete. Please update your bank details."
+        );
+      }
+
+      const validatedBankAccount: IWithdrawalRequest["bankAccount"] = {
+        accountHolderName: bankAccount.accountHolderName,
+        accountNumber: bankAccount.accountNumber,
+        ifscCode: bankAccount.ifscCode,
+        bankName: bankAccount.bankName,
+      };
+
+      // Get wallet
+      const wallet = await this._walletService.getWallet(instructorId);
+      if (!wallet) {
+        throw new NotFoundError("Wallet not found");
+      }
+
+      if (wallet.balance < amount) {
+        throw new BadRequestError(
+          `Insufficient wallet balance. Available: ₹${wallet.balance}`
+        );
+      }
+
+      // Check pending withdrawals
+      const totalPendingAmount =
+        await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
+
+      const availableBalance = wallet.balance - totalPendingAmount;
+
+      if (availableBalance < amount) {
+        throw new BadRequestError(
+          `Insufficient available balance. Available: ₹${availableBalance}, Requested: ₹${amount}, Pending withdrawals: ₹${totalPendingAmount}`
+        );
+      }
+
+      return await this._withdrawalRequestRepo.createWithdrawalRequest(
+        instructorId,
+        amount,
+        validatedBankAccount,
+      );
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof BadRequestError ||
+        error instanceof InternalServerError
+      ) {
+        throw error;
+      }
+      appLogger.error("Error in createWithdrawalRequest service", { 
+        error, 
+        instructorId, 
+        amount 
+      });
+      throw new InternalServerError("Failed to create withdrawal request");
+    }
   }
 
   async approveWithdrawalRequest(
@@ -84,44 +125,78 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
     adminId: Types.ObjectId,
     remarks?: string,
   ): Promise<IWithdrawalRequest> {
-    const request = await this._withdrawalRequestRepo.findById(
-      requestId.toString(),
-    );
-    if (!request) {
-      throw new Error("Withdrawal request not found");
-    }
-    if (request.status !== "pending") {
-      throw new Error("Request is not in pending status");
-    }
+    try {
+      // Get request
+      const request = await this._withdrawalRequestRepo.findById(
+        requestId.toString(),
+      );
+      
+      if (!request) {
+        throw new NotFoundError("Withdrawal request not found");
+      }
 
-    let instructorId: Types.ObjectId;
-    if (request.instructorId instanceof Types.ObjectId) {
-      instructorId = request.instructorId;
-    } else {
-      instructorId = new Types.ObjectId(request.instructorId._id.toString());
-    }
+      if (request.status !== "pending") {
+        throw new ConflictError(
+          `Request is ${request.status}. Only pending requests can be approved.`
+        );
+      }
 
-    const wallet = await this._walletService.debitWallet(
-      instructorId,
-      request.amount,
-      `Withdrawal approved by admin: ${remarks || "No remarks"}`,
-      uuidv4(),
-    );
-    if (!wallet) {
-      throw new Error("Failed to debit wallet");
-    }
+      // Extract instructor ID
+      let instructorId: Types.ObjectId;
+      if (request.instructorId instanceof Types.ObjectId) {
+        instructorId = request.instructorId;
+      } else {
+        instructorId = new Types.ObjectId(request.instructorId._id.toString());
+      }
 
-    const updatedRequest = await this._withdrawalRequestRepo.updateStatus(
-      requestId,
-      "approved",
-      adminId,
-      remarks,
-    );
-    if (!updatedRequest) {
-      throw new Error("Failed to update withdrawal request status");
-    }
+      // Debit wallet
+      const wallet = await this._walletService.debitWallet(
+        instructorId,
+        request.amount,
+        `Withdrawal approved${remarks ? `: ${remarks}` : ""}`,
+        uuidv4(),
+      );
 
-    return updatedRequest;
+      if (!wallet) {
+        throw new InternalServerError(
+          "Failed to debit wallet. Please try again."
+        );
+      }
+
+      // Update request status
+      const updatedRequest = await this._withdrawalRequestRepo.updateStatus(
+        requestId,
+        "approved",
+        adminId,
+        remarks,
+      );
+
+      if (!updatedRequest) {
+        throw new InternalServerError("Failed to update withdrawal request");
+      }
+
+      appLogger.info("Withdrawal request approved", {
+        requestId,
+        instructorId,
+        amount: request.amount,
+        adminId,
+      });
+
+      return updatedRequest;
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof ConflictError ||
+        error instanceof InternalServerError
+      ) {
+        throw error;
+      }
+      appLogger.error("Error in approveWithdrawalRequest service", { 
+        error, 
+        requestId 
+      });
+      throw new InternalServerError("Failed to approve withdrawal request");
+    }
   }
 
   async rejectWithdrawalRequest(
@@ -129,136 +204,214 @@ export class WithdrawalRequestService implements IWithdrawalRequestService {
     adminId: Types.ObjectId,
     remarks?: string,
   ): Promise<IWithdrawalRequest> {
-    const request = await this._withdrawalRequestRepo.findById(
-      requestId.toString(),
-    );
-    if (!request) {
-      throw new Error("Withdrawal request not found");
-    }
-    if (request.status !== "pending") {
-      throw new Error("Request is not in pending status");
-    }
+    try {
+      const request = await this._withdrawalRequestRepo.findById(
+        requestId.toString(),
+      );
+      
+      if (!request) {
+        throw new NotFoundError("Withdrawal request not found");
+      }
 
-    const updatedRequest = await this._withdrawalRequestRepo.updateStatus(
-      requestId,
-      "rejected",
-      adminId,
-      remarks,
-    );
-    if (!updatedRequest) {
-      throw new Error("Failed to update withdrawal request status");
-    }
+      if (request.status !== "pending") {
+        throw new ConflictError(
+          `Request is ${request.status}. Only pending requests can be rejected.`
+        );
+      }
 
-    return updatedRequest;
+      const updatedRequest = await this._withdrawalRequestRepo.updateStatus(
+        requestId,
+        "rejected",
+        adminId,
+        remarks,
+      );
+
+      if (!updatedRequest) {
+        throw new InternalServerError("Failed to update withdrawal request");
+      }
+
+      appLogger.info("Withdrawal request rejected", {
+        requestId,
+        adminId,
+        remarks,
+      });
+
+      return updatedRequest;
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof ConflictError ||
+        error instanceof InternalServerError
+      ) {
+        throw error;
+      }
+      appLogger.error("Error in rejectWithdrawalRequest service", { 
+        error, 
+        requestId 
+      });
+      throw new InternalServerError("Failed to reject withdrawal request");
+    }
   }
 
   async retryWithdrawalRequest(
     requestId: Types.ObjectId,
     amount?: number,
   ): Promise<IWithdrawalRequest> {
-    const request = await this._withdrawalRequestRepo.findById(
-      requestId.toString(),
-    );
-    if (!request) {
-      throw new Error("Withdrawal request not found");
-    }
-
-    if (request.status !== "rejected") {
-      throw new Error("Only rejected requests can be retried");
-    }
-
-    let instructorId: Types.ObjectId;
-    if (request.instructorId instanceof Types.ObjectId) {
-      instructorId = request.instructorId;
-    } else {
-      instructorId = new Types.ObjectId(request.instructorId._id.toString());
-    }
-
-    if (amount !== undefined) {
-      const wallet = await this._walletService.getWallet(instructorId);
-      if (!wallet || wallet.balance < amount) {
-        throw new Error("Insufficient wallet balance for the new amount");
+    try {
+      const request = await this._withdrawalRequestRepo.findById(
+        requestId.toString(),
+      );
+      
+      if (!request) {
+        throw new NotFoundError("Withdrawal request not found");
       }
 
-      const totalPendingAmount =
-        await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
-      const availableBalance = wallet.balance - totalPendingAmount;
-
-      if (availableBalance < amount) {
-        throw new Error(
-          `Insufficient available balance for retry. Available: ${availableBalance}, Requested: ${amount}, Pending withdrawals: ${totalPendingAmount}`,
-        );
+      if (request.status !== "rejected") {
+        throw new ConflictError("Only rejected requests can be retried");
       }
-    } else {
-      // Even if amount is not changed, check if original amount is still valid
+
+      // Extract instructor ID
+      let instructorId: Types.ObjectId;
+      if (request.instructorId instanceof Types.ObjectId) {
+        instructorId = request.instructorId;
+      } else {
+        instructorId = new Types.ObjectId(request.instructorId._id.toString());
+      }
+
+      // Get wallet
       const wallet = await this._walletService.getWallet(instructorId);
       if (!wallet) {
-        throw new Error("Wallet not found");
+        throw new NotFoundError("Wallet not found");
       }
 
+      const retryAmount = amount !== undefined ? amount : request.amount;
+
+      if (retryAmount <= 0) {
+        throw new BadRequestError("Amount must be greater than zero");
+      }
+
+      // Check available balance
       const totalPendingAmount =
         await this._withdrawalRequestRepo.getTotalPendingAmount(instructorId);
       const availableBalance = wallet.balance - totalPendingAmount;
 
-      if (availableBalance < request.amount) {
-        throw new Error(
-          `Insufficient available balance to retry original amount. Available: ${availableBalance}, Original amount: ${request.amount}, Pending withdrawals: ${totalPendingAmount}`,
+      if (availableBalance < retryAmount) {
+        throw new BadRequestError(
+          `Insufficient available balance. Available: ₹${availableBalance}, Requested: ₹${retryAmount}, Pending withdrawals: ₹${totalPendingAmount}`
         );
       }
-    }
 
-    const updatedRequest = await this._withdrawalRequestRepo.retryRequest(
-      requestId,
-      amount,
-    );
-    if (!updatedRequest) {
-      throw new Error("Failed to retry withdrawal request");
-    }
+      const updatedRequest = await this._withdrawalRequestRepo.retryRequest(
+        requestId,
+        amount,
+      );
 
-    return updatedRequest;
+      if (!updatedRequest) {
+        throw new InternalServerError("Failed to retry withdrawal request");
+      }
+
+      appLogger.info("Withdrawal request retried", {
+        requestId,
+        instructorId,
+        newAmount: retryAmount,
+      });
+
+      return updatedRequest;
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof BadRequestError ||
+        error instanceof ConflictError ||
+        error instanceof InternalServerError
+      ) {
+        throw error;
+      }
+      appLogger.error("Error in retryWithdrawalRequest service", { 
+        error, 
+        requestId 
+      });
+      throw new InternalServerError("Failed to retry withdrawal request");
+    }
   }
 
   async getInstructorRequestsWithPagination(
     instructorId: Types.ObjectId,
     options: IPaginationOptions,
   ): Promise<{ transactions: WithdrawalRequestDTO[]; total: number }> {
-    const { transactions, total } =
-      await this._withdrawalRequestRepo.findByInstructorIdWithPagination(
-        instructorId,
-        options,
+    try {
+      const { transactions, total } =
+        await this._withdrawalRequestRepo.findByInstructorIdWithPagination(
+          instructorId,
+          options,
+        );
+      
+      const dtoTransactions = transactions.map(mapWithdrawalRequestToDTO);
+
+      return {
+        transactions: dtoTransactions,
+        total,
+      };
+    } catch (error) {
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
+      appLogger.error("Error in getInstructorRequestsWithPagination", { 
+        error, 
+        instructorId 
+      });
+      throw new InternalServerError(
+        "Failed to fetch instructor withdrawal requests"
       );
-    const dtoTransactions = transactions.map(mapWithdrawalRequestToDTO);
-
-    console.log("dto Transactions", dtoTransactions);
-
-    return {
-      transactions: dtoTransactions,
-      total,
-    };
+    }
   }
 
   async getAllRequestsWithPagination(
     options: IPaginationOptions,
   ): Promise<{ transactions: WithdrawalRequestDTO[]; total: number }> {
-    const { transactions, total } =
-      await this._withdrawalRequestRepo.getAllRequestsWithPagination(options);
-    const dtoTransactions = transactions.map(mapAdminWithdrawalRequestToDTO);
-    return {
-      transactions: dtoTransactions,
-      total,
-    };
+    try {
+      const { transactions, total } =
+        await this._withdrawalRequestRepo.getAllRequestsWithPagination(options);
+      
+      const dtoTransactions = transactions.map(mapAdminWithdrawalRequestToDTO);
+      
+      return {
+        transactions: dtoTransactions,
+        total,
+      };
+    } catch (error) {
+      if (error instanceof InternalServerError) {
+        throw error;
+      }
+      appLogger.error("Error in getAllRequestsWithPagination", { error });
+      throw new InternalServerError("Failed to fetch withdrawal requests");
+    }
   }
 
   async getWithdrawalRequestById(
     requestId: Types.ObjectId,
   ): Promise<WithdrawalRequestDetailDTO> {
-    const request = await this._withdrawalRequestRepo.findById(
-      requestId.toString(),
-    );
-    if (!request) {
-      throw new Error("Withdrawal request not found");
-    }
+    try {
+      const request = await this._withdrawalRequestRepo.findById(
+        requestId.toString(),
+      );
+      
+      if (!request) {
+        throw new NotFoundError("Withdrawal request not found");
+      }
 
-    return mapWithdrawalRequestDetailToDTO(request);
+      return mapWithdrawalRequestDetailToDTO(request);
+    } catch (error) {
+      if (
+        error instanceof NotFoundError || 
+        error instanceof InternalServerError
+      ) {
+        throw error;
+      }
+      appLogger.error("Error in getWithdrawalRequestById", { 
+        error, 
+        requestId 
+      });
+      throw new InternalServerError("Failed to fetch withdrawal request");
+    }
   }
 }

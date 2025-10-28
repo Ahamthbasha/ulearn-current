@@ -5,6 +5,7 @@ import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IInstructorWalletController } from "./interfaces/IInstructorWalletController";
 import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorWalletController implements IInstructorWalletController {
   private _walletService: IWalletService;
@@ -18,7 +19,7 @@ export class InstructorWalletController implements IInstructorWalletController {
       const wallet = await this._walletService.getWallet(ownerId);
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("get wallet error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_WALLET,
@@ -38,7 +39,7 @@ export class InstructorWalletController implements IInstructorWalletController {
       );
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in credit wallet", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_CREDIT_WALLET,
@@ -68,7 +69,7 @@ export class InstructorWalletController implements IInstructorWalletController {
 
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in debit wallet", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_DEBIT_WALLET,
@@ -102,7 +103,7 @@ export class InstructorWalletController implements IInstructorWalletController {
         },
       });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in paginated transactions", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_TRANSACTION_HISTORY,

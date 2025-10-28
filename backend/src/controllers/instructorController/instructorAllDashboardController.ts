@@ -4,14 +4,26 @@ import { IInstructorAllDashboardController } from "./interfaces/IInstructorAllDa
 import { IInstructorAllCourseDashboardService } from "../../services/instructorServices/interface/IInstructorAllDashboardService";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
-import { ITopSellingCourse, ITopSellingLearningPath } from "../../interface/instructorInterface/IInstructorInterface";
+import {
+  ITopSellingCourse,
+  ITopSellingLearningPath,
+} from "../../interface/instructorInterface/IInstructorInterface";
 import {
   generateExcelReport,
   generatePdfReport,
   ReportData,
 } from "../../utils/reportGenerator";
 import { StatusCode } from "../../utils/enums";
-import { INSTRUCTOR_ERROR_MESSAGE, SERVER_ERROR } from "../../utils/constants";
+import {
+  INSTRUCTOR_ERROR_MESSAGE,
+} from "../../utils/constants";
+import {
+  handleControllerError,
+  throwAppError,
+  BadRequestError,
+  UnauthorizedError,
+  NotFoundError,
+} from "../../utils/errorHandlerUtil";
 
 export class InstructorAllCourseDashboardController
   implements IInstructorAllDashboardController
@@ -22,110 +34,60 @@ export class InstructorAllCourseDashboardController
     this._allDashboardService = allDashboardService;
   }
 
+  /** GET /dashboard */
   async getDashboard(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id;
+      if (!instructorId) throwAppError(UnauthorizedError, INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED);
 
-      if (!instructorId) {
-        res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
-        });
-        return;
-      }
+      const data = await this._allDashboardService.getInstructorDashboard(new Types.ObjectId(instructorId));
 
-      const instructorObjectId = new Types.ObjectId(instructorId);
-      const data =
-        await this._allDashboardService.getInstructorDashboard(
-          instructorObjectId,
-        );
-
-      // Generate pre-signed URLs for thumbnails
+      // Pre-signed URLs
       const topCoursesWithUrls = await Promise.all(
-        data.topCourses.map(async (course: ITopSellingCourse) => {
-          const signedUrl = await getPresignedUrl(course.thumbnailUrl);
-          return {
-            ...course,
-            thumbnailUrl: signedUrl,
-          };
-        }),
+        data.topCourses.map(async (c: ITopSellingCourse) => ({
+          ...c,
+          thumbnailUrl: await getPresignedUrl(c.thumbnailUrl),
+        }))
       );
-
       const topLearningPathsWithUrls = await Promise.all(
-        data.topLearningPaths.map(async (learningPath: ITopSellingLearningPath) => {
-          const signedUrl = await getPresignedUrl(learningPath.thumbnailUrl);
-          return {
-            ...learningPath,
-            thumbnailUrl: signedUrl,
-          };
-        }),
+        data.topLearningPaths.map(async (lp: ITopSellingLearningPath) => ({
+          ...lp,
+          thumbnailUrl: await getPresignedUrl(lp.thumbnailUrl),
+        }))
       );
-
-      const updatedData = {
-        ...data,
-        topCourses: topCoursesWithUrls,
-        topLearningPaths: topLearningPathsWithUrls,
-      };
 
       res.status(StatusCode.OK).json({
         success: true,
-        data: updatedData,
+        data: { ...data, topCourses: topCoursesWithUrls, topLearningPaths: topLearningPathsWithUrls },
       });
-    } catch (error: unknown) {
-      console.error("Dashboard Error:", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-      });
+    } catch (error) {
+      handleControllerError(error, res);
     }
   }
 
-  async getDetailedRevenueReport(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  /** GET /detailed-revenue */
+  async getDetailedRevenueReport(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id;
-
-      if (!instructorId) {
-        res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
-        });
-        return;
-      }
+      if (!instructorId) throwAppError(UnauthorizedError, INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED);
 
       const { range, startDate, endDate, page = "1", limit = "5" } = req.query;
-      const allowedRanges = ["daily", "weekly", "monthly", "yearly", "custom"];
+      const allowed = ["daily", "weekly", "monthly", "yearly", "custom"] as const;
+      if (!range || !allowed.includes(range as any))
+        throwAppError(BadRequestError, INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE);
 
-      if (!range || !allowedRanges.includes(range as string)) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE,
-        });
-        return;
-      }
-
-      const start = startDate ? new Date(startDate as string) : undefined;
-      const end = endDate ? new Date(endDate as string) : undefined;
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
-
-      if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INVALID_PAGE_LIMIT,
-        });
-        return;
-      }
+      const pageNum = Number(page);
+      const limitNum = Number(limit);
+      if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1)
+        throwAppError(BadRequestError, INSTRUCTOR_ERROR_MESSAGE.INVALID_PAGE_LIMIT);
 
       const result = await this._allDashboardService.getDetailedRevenueReport(
         new Types.ObjectId(instructorId),
-        range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
+        range as typeof allowed[number],
         pageNum,
         limitNum,
-        start,
-        end,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined,
       );
 
       res.status(StatusCode.OK).json({
@@ -136,97 +98,62 @@ export class InstructorAllCourseDashboardController
         totalPages: Math.ceil(result.total / limitNum),
         limit: limitNum,
       });
-    } catch (error: unknown) {
-      console.error("Detailed revenue report error:", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-      });
+    } catch (error) {
+      handleControllerError(error, res);
     }
   }
 
-  async exportRevenueReport(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
-  try {
-    const instructorId = req.user?.id;
-    const { range, startDate, endDate, format } = req.query;
+  /** GET /export-revenue */
+  async exportRevenueReport(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const instructorId = req.user?.id;
+      if (!instructorId) throwAppError(UnauthorizedError, INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED);
 
-    if (!instructorId) {
-      res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED,
-      });
-      return;
+      const { range, startDate, endDate, format } = req.query;
+      const allowedRanges = ["daily", "weekly", "monthly", "yearly", "custom"] as const;
+      const allowedFormats = ["pdf", "excel"] as const;
+
+      if (!range || !allowedRanges.includes(range as any))
+        throwAppError(BadRequestError, INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE);
+      if (!format || !allowedFormats.includes(format as any))
+        throwAppError(BadRequestError, INSTRUCTOR_ERROR_MESSAGE.INVALID_FORMAT);
+
+      const result = await this._allDashboardService.getDetailedRevenueReport(
+        new Types.ObjectId(instructorId),
+        range as typeof allowedRanges[number],
+        1,
+        10_000,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined,
+      );
+
+      if (!result.data.length) throwAppError(NotFoundError, INSTRUCTOR_ERROR_MESSAGE.NO_DATA_FOUND);
+
+      const reportData: ReportData[] = result.data.map((item) => ({
+        orderId: item.orderId.toString(),
+        date: item.date,
+        instructorRevenue: item.instructorRevenue ?? 0,
+        totalOrderAmount: item.totalOrderAmount ?? 0,
+        couponCode: item.couponCode ?? "N/A",
+        couponDiscount: item.couponDiscount ?? 0,
+        couponDiscountAmount: item.couponDiscountAmount ?? 0,
+        standaloneCourse: (item.standaloneCourse ?? []).map((c: any) => ({
+          courseName: c.courseName ?? "Unknown Course",
+          standAloneCourseTotalPrice: c.standAloneCourseTotalPrice ?? 0,
+        })),
+        learningPath: (item.learningPath ?? []).map((lp: any) => ({
+          learningPathName: lp.learningPathName ?? "Unknown Learning Path",
+          learningPathTotalPrice: lp.learningPathTotalPrice ?? 0,
+        })),
+      }));
+
+      if (format === "excel") {
+        await generateExcelReport(reportData, res);
+      } else {
+        await generatePdfReport(reportData, res);
+      }
+    } catch (error) {
+      handleControllerError(error, res);
     }
-
-    const allowedRanges = ["daily", "weekly", "monthly", "yearly", "custom"];
-    const allowedFormats = ["pdf", "excel"];
-
-    if (!range || !allowedRanges.includes(range as string)) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE,
-      });
-      return;
-    }
-
-    if (!format || !allowedFormats.includes(format as string)) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: INSTRUCTOR_ERROR_MESSAGE.INVALID_FORMAT,
-      });
-      return;
-    }
-
-    const result = await this._allDashboardService.getDetailedRevenueReport(
-      new Types.ObjectId(instructorId),
-      range as "daily" | "weekly" | "monthly" | "yearly" | "custom",
-      1,
-      10000,
-      startDate ? new Date(startDate as string) : undefined,
-      endDate ? new Date(endDate as string) : undefined,
-    );
-
-    if (result.data.length === 0) {
-      res.status(StatusCode.NOT_FOUND).json({
-        success: false,
-        message: INSTRUCTOR_ERROR_MESSAGE.NO_DATA_FOUND,
-      });
-      return;
-    }
-
-    // Map API response to the ReportData interface
-    const reportData: ReportData[] = result.data.map((item: any) => ({
-      orderId: item.orderId.toString(),
-      date: item.date,
-      instructorRevenue: item.instructorRevenue || 0,
-      totalOrderAmount: item.totalOrderAmount || 0,
-      couponCode: item.couponCode || "N/A",
-      couponDiscount: item.couponDiscount || 0,
-      couponDiscountAmount: item.couponDiscountAmount || 0,
-      standaloneCourse: item.standaloneCourse.map((course: any) => ({
-        courseName: course.courseName || "Unknown Course",
-        standAloneCourseTotalPrice: course.standAloneCourseTotalPrice || 0,
-      })),
-      learningPath: item.learningPath.map((lp: any) => ({
-        learningPathName: lp.learningPathName || "Unknown Learning Path",
-        learningPathTotalPrice: lp.learningPathTotalPrice || 0,
-      })),
-    }));
-
-    if (format === "excel") {
-      return await generateExcelReport(reportData, res);
-    } else {
-      return await generatePdfReport(reportData, res);
-    }
-  } catch (error: unknown) {
-    console.error("Export Error:", error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-    });
   }
-}
 }

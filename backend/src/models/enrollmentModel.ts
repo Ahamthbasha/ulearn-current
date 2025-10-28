@@ -1,5 +1,6 @@
 import { Schema, model, Document, Types } from "mongoose";
 import { ChapterModel } from "./chapterModel";
+import { appLogger } from "../utils/logger";
 
 export interface ICompletedChapter {
   chapterId: Types.ObjectId;
@@ -16,7 +17,7 @@ export interface ICompletedQuiz {
 }
 
 export interface IEnrollment extends Document {
-  _id:Types.ObjectId
+  _id: Types.ObjectId;
   userId: Types.ObjectId;
   courseId: Types.ObjectId;
   learningPathId?: Types.ObjectId;
@@ -27,8 +28,8 @@ export interface IEnrollment extends Document {
   completedChapters: ICompletedChapter[];
   completedQuizzes: ICompletedQuiz[];
   completionPercentage: number;
-  createdAt:Date;
-  updatedAt:Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const completedChapterSchema = new Schema<ICompletedChapter>(
@@ -55,7 +56,11 @@ const enrollmentSchema = new Schema<IEnrollment>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
-    learningPathId: { type: Schema.Types.ObjectId, ref: "LearningPath", required: false },
+    learningPathId: {
+      type: Schema.Types.ObjectId,
+      ref: "LearningPath",
+      required: false,
+    },
     enrolledAt: { type: Date, default: Date.now },
     completionStatus: {
       type: String,
@@ -97,7 +102,7 @@ enrollmentSchema.pre("save", async function (next) {
         this.completionStatus = "NOT_STARTED";
       }
     } catch (error) {
-      console.error("Error calculating completion percentage:", error);
+      appLogger.error("Error calculating completion percentage:", error);
       next(error as Error);
       return;
     }
@@ -110,4 +115,7 @@ enrollmentSchema.index({ userId: 1 });
 enrollmentSchema.index({ courseId: 1 });
 enrollmentSchema.index({ completionStatus: 1 });
 
-export const EnrollmentModel = model<IEnrollment>("Enrollment", enrollmentSchema);
+export const EnrollmentModel = model<IEnrollment>(
+  "Enrollment",
+  enrollmentSchema,
+);

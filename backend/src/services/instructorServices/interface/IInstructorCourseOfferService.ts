@@ -1,5 +1,8 @@
 import { ICourseOffer } from "../../../models/courseOfferModel";
-import { CourseOfferListDTO, CourseOfferDetailDTO } from "../../../dto/instructorDTO/courseOfferDTO";
+import {
+  CourseOfferListDTO,
+  CourseOfferDetailDTO,
+} from "../../../dto/instructorDTO/courseOfferDTO";
 
 export interface IInstructorCourseOfferService {
   createCourseOffer(
@@ -7,7 +10,7 @@ export interface IInstructorCourseOfferService {
     courseId: string,
     discountPercentage: number,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ICourseOffer>;
 
   editCourseOffer(
@@ -15,7 +18,7 @@ export interface IInstructorCourseOfferService {
     offerId: string,
     discountPercentage: number,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ICourseOffer>;
 
   resubmitOffer(
@@ -23,7 +26,7 @@ export interface IInstructorCourseOfferService {
     offerId: string,
     discountPercentage: number,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ICourseOffer>;
 
   getOffersByInstructor(
@@ -31,10 +34,13 @@ export interface IInstructorCourseOfferService {
     page: number,
     limit: number,
     search?: string,
-    status?: string
+    status?: string,
   ): Promise<{ data: CourseOfferListDTO[]; total: number }>;
 
   deleteCourseOffer(instructorId: string, offerId: string): Promise<void>;
 
-  getInstructorCourseOfferById(offerId: string, instructorId: string): Promise<CourseOfferDetailDTO>;
+  getInstructorCourseOfferById(
+    offerId: string,
+    instructorId: string,
+  ): Promise<CourseOfferDetailDTO>;
 }

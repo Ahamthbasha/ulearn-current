@@ -10,6 +10,7 @@ import {
   StudentSuccessMessages,
 } from "../../utils/constants";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { appLogger } from "../../utils/logger";
 
 export class StudentEnrollmentController
   implements IStudentEnrollmentController
@@ -26,11 +27,12 @@ export class StudentEnrollmentController
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
-      const courses = await this._enrollmentService.getAllEnrolledCourses(userId);
+      const courses =
+        await this._enrollmentService.getAllEnrolledCourses(userId);
 
       res.status(StatusCode.OK).json({ success: true, courses });
     } catch (error) {
-      console.error(error);
+      appLogger.error("get enrolled courses", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: EnrolledErrorMessage.FAILED_TO_FETCH_ENROLLED_COURSES,
@@ -81,15 +83,15 @@ export class StudentEnrollmentController
         }
       }
 
-      res.status(StatusCode.OK).json({ 
-        success: true, 
+      res.status(StatusCode.OK).json({
+        success: true,
         enrollment: {
           ...enrollment.toObject(),
-          completionPercentage: enrollment.completionPercentage
-        }
+          completionPercentage: enrollment.completionPercentage,
+        },
       });
     } catch (error) {
-      console.error(error);
+      appLogger.error("enrolled course details", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: EnrolledErrorMessage.FAILED_TO_FETCH_PARTICULAR_COURSE,
@@ -117,6 +119,7 @@ export class StudentEnrollmentController
         enrollment: updatedEnrollment,
       });
     } catch (error) {
+      appLogger.error("error in complete chapter", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: EnrolledErrorMessage.FAILED_TO_MARK_CHAPTER_COMPLETED,
@@ -164,7 +167,7 @@ export class StudentEnrollmentController
         enrollment,
       });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in submit quiz result", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_SUBMIT_QUIZ_RESULT,
@@ -185,7 +188,7 @@ export class StudentEnrollmentController
 
       res.status(StatusCode.OK).json({ success: true, allCompleted });
     } catch (err) {
-      console.log(err);
+      appLogger.error("check all chapter completed", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_CHECK_CHAPTER_COMPLETION,
@@ -228,7 +231,7 @@ export class StudentEnrollmentController
         certificateUrl: presignedCertificateUrl,
       });
     } catch (error) {
-      console.error(error);
+      appLogger.error("error in get certificate", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: StudentErrorMessages.FAILED_TO_FETCH_CERTIFICATE,

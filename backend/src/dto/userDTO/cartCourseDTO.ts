@@ -4,6 +4,6 @@ export interface CartItemDTO {
   title: string;
   price: number;
   thumbnailUrl: string;
-  isAlreadyEnrolled?: boolean; 
-  enrolledCourses?: string[]; 
+  isAlreadyEnrolled?: boolean;
+  enrolledCourses?: string[];
 }

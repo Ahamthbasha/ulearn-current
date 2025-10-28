@@ -1,9 +1,10 @@
+import { appLogger } from "../utils/logger";
 import redisClient from "../config/redis";
 import IOtpServices from "./interface/IOtpService";
 
 export class RedisOtpService implements IOtpServices {
   private readonly OTP_PREFIX = "otp:";
-  private readonly DEFAULT_EXPIRATION = 1; // minutes (60 seconds)
+  private readonly DEFAULT_EXPIRATION = 1;
 
   private getOtpKey(email: string): string {
     return `${this.OTP_PREFIX}${email.toLowerCase()}`;
@@ -17,12 +18,11 @@ export class RedisOtpService implements IOtpServices {
     try {
       const key = this.getOtpKey(email);
       await redisClient.setex(key, expirationSeconds, otp);
-      console.log(
+      appLogger.info(
         `OTP created for ${email}: ${otp} (expires in ${expirationSeconds} seconds)`,
       );
       return true;
     } catch (error) {
-      console.error("Error creating OTP:", error);
       throw error;
     }
   }
@@ -33,7 +33,6 @@ export class RedisOtpService implements IOtpServices {
       const otp = await redisClient.get(key);
       return otp;
     } catch (error) {
-      console.error("Error finding OTP:", error);
       throw error;
     }
   }
@@ -44,7 +43,6 @@ export class RedisOtpService implements IOtpServices {
       const result = await redisClient.del(key);
       return result > 0;
     } catch (error) {
-      console.error("Error deleting OTP:", error);
       throw error;
     }
   }
@@ -54,7 +52,7 @@ export class RedisOtpService implements IOtpServices {
       const storedOtp = await this.findOtp(email);
 
       if (!storedOtp) {
-        console.log(`OTP not found or expired for email: ${email}`);
+        appLogger.info(`OTP not found or expired for email: ${email}`);
         return false;
       }
 
@@ -62,14 +60,13 @@ export class RedisOtpService implements IOtpServices {
 
       if (isValid) {
         await this.deleteOtp(email);
-        console.log(`OTP verified and deleted for email: ${email}`);
+        appLogger.info(`OTP verified and deleted for email: ${email}`);
       } else {
-        console.log(`Invalid OTP provided for email: ${email}`);
+        appLogger.info(`Invalid OTP provided for email: ${email}`);
       }
 
       return isValid;
     } catch (error) {
-      console.error("Error verifying OTP:", error);
       throw error;
     }
   }
@@ -78,9 +75,8 @@ export class RedisOtpService implements IOtpServices {
     try {
       const key = this.getOtpKey(email);
       const ttl = await redisClient.ttl(key);
-      return ttl; // Returns seconds until expiration, -1 if no expiration, -2 if key doesn't exist
+      return ttl;
     } catch (error) {
-      console.error("Error getting OTP TTL:", error);
       throw error;
     }
   }
@@ -91,7 +87,6 @@ export class RedisOtpService implements IOtpServices {
       const exists = await redisClient.exists(key);
       return exists === 1;
     } catch (error) {
-      console.error("Error checking OTP existence:", error);
       throw error;
     }
   }
@@ -105,7 +100,6 @@ export class RedisOtpService implements IOtpServices {
 
       return ttl.toString(); // Return remaining seconds
     } catch (error) {
-      console.error("Error getting OTP remaining time:", error);
       throw error;
     }
   }

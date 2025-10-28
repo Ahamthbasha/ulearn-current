@@ -32,10 +32,17 @@ import StudentAvailableSlotsPage from '../pages/student/slot/StudentAvailableSlo
 import SlotCheckoutPage from '../pages/student/slotCheckout/SlotCheckoutPage' 
 import SlotHistoryPage from '../pages/student/slot/SlotHistoryPage'
 import SlotBookingDetailPage from '../pages/student/slot/SlotBookingDetailpage'
-import LearningPathListPage from '../pages/student/learningPath/LearningPathListPage'
-import LearningPathDetailPage from '../pages/student/learningPath/LearningPathDetailPage'
+
+// import LearningPathListPage from '../pages/student/learningPath/LearningPathListPage'
+// import LearningPathDetailPage from '../pages/student/learningPath/LearningPathDetailPage'
+
 import EnrolledLmsPage from '../pages/student/enrolledLms/EnrolledLmsPage'
 import LmsCourseListPage from '../pages/student/enrolledLms/LmsCourseListPage'
+import LearningPathCreatePage from '../pages/student/LMSmanagement/LearningPathCreatePage'
+import LearningPathEditPage from '../pages/student/LMSmanagement/LearningPathEditPage'
+
+import LearningPathViewPage from '../pages/student/LMSmanagement/LearningPathViewPage'
+import LearningPathListTable from '../pages/student/LMSmanagement/LearningPathList'
 
 
 const StudentRouter = () => {
@@ -57,9 +64,9 @@ const StudentRouter = () => {
 
         {/*  */}
 
-        <Route path='/user/lms' element={<LearningPathListPage/>}/>
+        {/* <Route path='/user/lms' element={<LearningPathListPage/>}/>
         <Route path='/user/learningPath/:learningPathId' element={<LearningPathDetailPage/>}
-        />
+        /> */}
 
 
         {/* reset password in case of forgot password */}
@@ -87,6 +94,13 @@ const StudentRouter = () => {
             <Route path='wallet' element={<WalletPage/>}/>
             <Route path='order' element={<StudentOrderHistoryPage/>}/>
             <Route path='order/:orderId' element={<StudentOrderDetailPage/>}/>
+
+            {/* LMS MANAGEMENT */}
+
+            <Route path='learningPath/create' element={<LearningPathCreatePage/>}/>
+            <Route path='learningPath/edit/:learningPathId' element={<LearningPathEditPage/>}/>
+            <Route path='createdLms' element={<LearningPathListTable/>}/>
+            <Route path='learningPathDetails/:learningPathId' element={<LearningPathViewPage/>}/>
 
             <Route path="checkout/:slotId" element={<SlotCheckoutPage/>}/>
 

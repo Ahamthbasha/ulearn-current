@@ -121,14 +121,11 @@ const InstructorDashboard = () => {
 
   const {
     topCourses,
-    topLearningPaths,
     categorySales,
     monthlySales,
     totalRevenue,
     totalCourseSales,
-    totalLearningPathSales,
     publishedCourses,
-    publishedLearningPaths,
     categoryWiseCount,
   } = dashboardData;
 
@@ -141,7 +138,7 @@ const InstructorDashboard = () => {
   const categoryData = categorySales.map((item) => ({
     name: item.categoryName,
     value: item.totalSales,
-    percentage: Math.round((item.totalSales / (totalCourseSales + totalLearningPathSales)) * 100),
+    percentage: Math.round((item.totalSales / (totalCourseSales)) * 100),
   }));
 
   const COLORS = [
@@ -203,22 +200,6 @@ const InstructorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-gray-600">
-                  Total Learning Path Sales
-                </p>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                  {totalLearningPathSales}
-                </p>
-              </div>
-              <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-indigo-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">
                   Published Courses
                 </p>
                 <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
@@ -227,22 +208,6 @@ const InstructorDashboard = () => {
               </div>
               <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-purple-100 rounded-full flex items-center justify-center">
                 <Award className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">
-                  Published Learning Paths
-                </p>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                  {publishedLearningPaths}
-                </p>
-              </div>
-              <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-teal-100 rounded-full flex items-center justify-center">
-                <Award className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-teal-600" />
               </div>
             </div>
           </div>
@@ -534,7 +499,6 @@ const InstructorDashboard = () => {
           </div>
         </div>
 
-        {/* Top Selling Courses and Learning Paths */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100">
             <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 md:mb-4">
@@ -587,62 +551,6 @@ const InstructorDashboard = () => {
                 <div className="text-center py-4 sm:py-6">
                   <BookOpen className="h-8 w-8 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-2 sm:mb-4" />
                   <p className="text-gray-500 text-sm sm:text-base">No courses found</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100">
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-              Top Selling Learning Paths
-            </h3>
-            <div className="space-y-2 sm:space-y-3">
-              {topLearningPaths.length > 0 ? (
-                topLearningPaths.map((lp, index) => (
-                  <div
-                    key={lp._id}
-                    className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="relative">
-                      <img
-                        src={lp.thumbnailUrl}
-                        alt={lp.learningPathName}
-                        className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.style.display = "none";
-                          const fallback =
-                            target.nextElementSibling as HTMLElement | null;
-                          if (fallback) fallback.style.display = "flex";
-                        }}
-                      />
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg hidden items-center justify-center">
-                        <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 text-xs sm:text-sm leading-tight sm:leading-5">
-                        {lp.learningPathName}
-                      </h4>
-                      <div className="flex items-center space-x-1 mt-0.5 sm:mt-1">
-                        <span className="text-xs sm:text-sm text-gray-500">
-                          {lp.count} sales
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-indigo-100 rounded-full">
-                        <span className="text-xs sm:text-sm font-bold text-indigo-600">
-                          #{index + 1}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-4 sm:py-6">
-                  <BookOpen className="h-8 w-8 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-2 sm:mb-4" />
-                  <p className="text-gray-500 text-sm sm:text-base">No learning paths found</p>
                 </div>
               )}
             </div>

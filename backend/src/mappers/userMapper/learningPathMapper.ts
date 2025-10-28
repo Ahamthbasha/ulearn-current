@@ -1,30 +1,35 @@
 import { ICourse } from "../../models/courseModel";
 import { ILearningPath } from "../../models/learningPathModel";
-import { LearningPathListDTO, LearningPathDTO } from "../../dto/instructorDTO/learningPathDTO";
+import { LearningPathListDTO, LearningPathDTO } from "../../dto/userDTO/learningPathDTO";
 import { formatDate } from "../../utils/dateFormat";
 import { Types } from "mongoose";
 import { CourseOfferModel, ICourseOffer } from "../../models/courseOfferModel";
 
-export function mapLearningPathToListDTO(learningPath: ILearningPath): LearningPathListDTO {
+export function mapLearningPathToListDTO(
+  learningPath: ILearningPath,
+): LearningPathListDTO {
   return {
     learningPathId: learningPath._id.toString(),
     title: learningPath.title,
     thumbnailUrl: learningPath.thumbnailUrl,
-    status: learningPath.status,
   };
 }
 
-export function mapLearningPathsToListDTO(learningPaths: ILearningPath[]): LearningPathListDTO[] {
+export function mapLearningPathsToListDTO(
+  learningPaths: ILearningPath[],
+): LearningPathListDTO[] {
   return learningPaths.map(mapLearningPathToListDTO);
 }
 
-export async function mapLearningPathToDTO(learningPath: ILearningPath): Promise<LearningPathDTO> {
-  learningPath.courses && learningPath.courses.length > 0;
+export async function mapLearningPathToDTO(
+  learningPath: ILearningPath,
+): Promise<LearningPathDTO> {
   let totalPrice = await learningPath.totalPrice;
 
-  // Fetch offers for courses to calculate discounted prices
   const courseIds = learningPath.items.map((item) =>
-    item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()
+    item.courseId instanceof Types.ObjectId
+      ? item.courseId.toString()
+      : (item.courseId as ICourse)._id.toString(),
   );
   const offers = await CourseOfferModel.find({
     courseId: { $in: courseIds.map((id) => new Types.ObjectId(id)) },
@@ -36,11 +41,14 @@ export async function mapLearningPathToDTO(learningPath: ILearningPath): Promise
   }).lean();
 
   const offerMap = new Map<string, ICourseOffer>(
-    offers.map((offer) => [offer.courseId.toString(), offer])
+    offers.map((offer) => [offer.courseId.toString(), offer]),
   );
 
   const items = learningPath.items.map((item) => {
-    const isItemPopulated = item.courseId && item.courseId instanceof Object && "_id" in item.courseId;
+    const isItemPopulated =
+      item.courseId &&
+      item.courseId instanceof Object &&
+      "_id" in item.courseId;
     const courseId = isItemPopulated
       ? (item.courseId as ICourse)._id.toString()
       : (item.courseId as Types.ObjectId).toString();
@@ -55,7 +63,7 @@ export async function mapLearningPathToDTO(learningPath: ILearningPath): Promise
       price: isItemPopulated
         ? offer
           ? course!.price * (1 - offer.discountPercentage / 100)
-          : course!.effectivePrice ?? course!.price
+          : (course!.effectivePrice ?? course!.price)
         : undefined,
     };
   });
@@ -64,21 +72,20 @@ export async function mapLearningPathToDTO(learningPath: ILearningPath): Promise
     _id: learningPath._id.toString(),
     title: learningPath.title,
     description: learningPath.description,
-    instructorId: learningPath.instructorId.toString(),
+    studentId: learningPath.studentId.toString(), // Changed from instructorId
     items,
     totalPrice,
-    isPublished: learningPath.isPublished,
-    publishDate: learningPath.isPublished ? learningPath.updatedAt : undefined,
+    isPurchased: learningPath.isPurchased,
     createdAt: formatDate(learningPath.createdAt),
     updatedAt: formatDate(learningPath.updatedAt),
-    status: learningPath.status,
-    adminReview: learningPath.adminReview,
     thumbnailUrl: learningPath.thumbnailUrl,
     category: learningPath.category!.toString(),
     categoryName: learningPath.categoryDetails?.categoryName ?? "",
   };
 }
 
-export async function mapLearningPathsToDTO(learningPaths: ILearningPath[]): Promise<LearningPathDTO[]> {
+export async function mapLearningPathsToDTO(
+  learningPaths: ILearningPath[],
+): Promise<LearningPathDTO[]> {
   return await Promise.all(learningPaths.map(mapLearningPathToDTO));
 }

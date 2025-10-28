@@ -11,6 +11,7 @@ import { IWishlist } from "../../models/wishlistModel";
 import { ICourse } from "../../models/courseModel";
 import { ILearningPath } from "../../models/learningPathModel";
 import { ICourseOffer } from "../../models/courseOfferModel";
+import { appLogger } from "../../utils/logger";
 
 export class StudentWishlistService implements IStudentWishlistService {
   private _wishlistRepository: IStudentWishlistRepository;
@@ -22,7 +23,7 @@ export class StudentWishlistService implements IStudentWishlistService {
     wishlistRepository: IStudentWishlistRepository,
     courseRepository: IStudentCourseRepository,
     lmsRepository: IStudentLmsRepo,
-    courseOfferRepository: IStudentCourseOfferRepository
+    courseOfferRepository: IStudentCourseOfferRepository,
   ) {
     this._wishlistRepository = wishlistRepository;
     this._courseRepository = courseRepository;
@@ -30,11 +31,19 @@ export class StudentWishlistService implements IStudentWishlistService {
     this._courseOfferRepository = courseOfferRepository;
   }
 
-  async addToWishlist(userId: Types.ObjectId, itemId: Types.ObjectId, type: "course" | "learningPath"): Promise<IWishlist> {
+  async addToWishlist(
+    userId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath",
+  ): Promise<IWishlist> {
     return this._wishlistRepository.addToWishlist(userId, itemId, type);
   }
 
-  async removeFromWishlist(userId: Types.ObjectId, itemId: Types.ObjectId, type: "course" | "learningPath"): Promise<void> {
+  async removeFromWishlist(
+    userId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath",
+  ): Promise<void> {
     return this._wishlistRepository.removeFromWishlist(userId, itemId, type);
   }
 
@@ -44,10 +53,19 @@ export class StudentWishlistService implements IStudentWishlistService {
     // Fetch course details
     const courseIds = wishlist
       .filter((item) => item.courseId)
-      .map((item) => (item.courseId instanceof Types.ObjectId ? item.courseId.toString() : (item.courseId as ICourse)._id.toString()));
-    const courseDetailsPromises = courseIds.map((id) => this._courseRepository.getCourseDetails(id));
+      .map((item) =>
+        item.courseId instanceof Types.ObjectId
+          ? item.courseId.toString()
+          : (item.courseId as ICourse)._id.toString(),
+      );
+    const courseDetailsPromises = courseIds.map((id) =>
+      this._courseRepository.getCourseDetails(id),
+    );
     const courseDetailsResults = await Promise.all(courseDetailsPromises);
-    const courseDetailsMap = new Map<string, { price: number; thumbnailUrl: string }>();
+    const courseDetailsMap = new Map<
+      string,
+      { price: number; thumbnailUrl: string }
+    >();
     const allCourseIds = new Set<string>(courseIds); // Track all course IDs for offer fetching
 
     for (const details of courseDetailsResults) {
@@ -57,7 +75,10 @@ export class StudentWishlistService implements IStudentWishlistService {
           try {
             thumbnailUrl = await getPresignedUrl(thumbnailUrl);
           } catch (error) {
-            console.error(`Failed to generate presigned URL for course ${details.course._id}:`, error);
+            appLogger.error(
+              `Failed to generate presigned URL for course ${details.course._id}:`,
+              error,
+            );
           }
         }
         courseDetailsMap.set(details.course._id.toString(), {
@@ -70,30 +91,48 @@ export class StudentWishlistService implements IStudentWishlistService {
     // Fetch learning path details
     const learningPathIds = wishlist
       .filter((item) => item.learningPathId)
-      .map((item) => (item.learningPathId instanceof Types.ObjectId ? item.learningPathId.toString() : (item.learningPathId as ILearningPath)._id.toString()));
-    const learningPathDetailsMap = new Map<string, { price: number; thumbnailUrl: string }>();
+      .map((item) =>
+        item.learningPathId instanceof Types.ObjectId
+          ? item.learningPathId.toString()
+          : (item.learningPathId as ILearningPath)._id.toString(),
+      );
+    const learningPathDetailsMap = new Map<
+      string,
+      { price: number; thumbnailUrl: string }
+    >();
 
     // Fetch learning paths and their course offers
     for (const id of learningPathIds) {
-      const learningPathResult = await this._lmsRepository.getLearningPathById(new Types.ObjectId(id));
+      const learningPathResult = await this._lmsRepository.getLearningPathById(
+        new Types.ObjectId(id),
+      );
       if (learningPathResult.path) {
         let thumbnailUrl = learningPathResult.path.thumbnailUrl || "";
         if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
           try {
             thumbnailUrl = await getPresignedUrl(thumbnailUrl);
           } catch (error) {
-            console.error(`Failed to generate presigned URL for learning path ${id}:`, error);
+            appLogger.error(
+              `Failed to generate presigned URL for learning path ${id}:`,
+              error,
+            );
           }
         }
 
         // Calculate totalPrice for the learning path
-        const courseIds = learningPathResult.path.courses?.map(course => course._id.toString()) || [];
-        courseIds.forEach(courseId => allCourseIds.add(courseId)); // Add to all course IDs for offer fetching
+        const courseIds =
+          learningPathResult.path.courses?.map((course) =>
+            course._id.toString(),
+          ) || [];
+        courseIds.forEach((courseId) => allCourseIds.add(courseId)); // Add to all course IDs for offer fetching
 
         // Fetch offers for the courses in this learning path
-        const offers = await this._courseOfferRepository.findValidOffersByCourseIds(courseIds);
+        const offers =
+          await this._courseOfferRepository.findValidOffersByCourseIds(
+            courseIds,
+          );
         const offerMap = new Map<string, ICourseOffer>(
-          offers.map(offer => [offer.courseId.toString(), offer])
+          offers.map((offer) => [offer.courseId.toString(), offer]),
         );
 
         // Calculate totalPrice by summing course prices with applied offers
@@ -103,7 +142,7 @@ export class StudentWishlistService implements IStudentWishlistService {
           const offer = offerMap.get(courseId);
           const price = offer
             ? course.price * (1 - offer.discountPercentage / 100)
-            : course.effectivePrice ?? course.price;
+            : (course.effectivePrice ?? course.price);
           totalPrice += price;
         }
 
@@ -117,7 +156,11 @@ export class StudentWishlistService implements IStudentWishlistService {
     return mapWishlistToDTO(wishlist, courseDetailsMap, learningPathDetailsMap);
   }
 
-  async isItemInWishlist(userId: Types.ObjectId, itemId: Types.ObjectId, type: "course" | "learningPath"): Promise<boolean> {
+  async isItemInWishlist(
+    userId: Types.ObjectId,
+    itemId: Types.ObjectId,
+    type: "course" | "learningPath",
+  ): Promise<boolean> {
     return this._wishlistRepository.isItemInWishlist(userId, itemId, type);
   }
 }

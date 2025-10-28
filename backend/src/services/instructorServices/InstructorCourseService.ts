@@ -158,7 +158,10 @@ export class InstructorCourseService implements IInstructorCourseService {
     );
   }
 
-  async publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null> {
+  async publishCourse(
+    courseId: string,
+    publishDate?: Date,
+  ): Promise<ICourse | null> {
     return await this._courseRepository.publishCourse(courseId, publishDate);
   }
 

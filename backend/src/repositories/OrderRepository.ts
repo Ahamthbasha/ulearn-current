@@ -1,8 +1,8 @@
 import { IOrder, OrderModel } from "../models/orderModel";
-import { IOrderRepository } from "./interfaces/IOrderRepository"; 
+import { IOrderRepository } from "./interfaces/IOrderRepository";
 import { GenericRepository } from "./genericRepository";
 import { ClientSession, PipelineStage } from "mongoose";
-import {Types} from "mongoose"
+import { Types } from "mongoose";
 export class OrderRepository
   extends GenericRepository<IOrder>
   implements IOrderRepository
@@ -38,7 +38,7 @@ export class OrderRepository
   async performAggregation<T = any>(pipeline: PipelineStage[]): Promise<T[]> {
     return this.model.aggregate<T>(pipeline).exec();
   }
-  
+
   async countDocumentsMatching(query: object): Promise<number> {
     return this.model.countDocuments(query).exec();
   }
@@ -57,7 +57,9 @@ export class OrderRepository
         .lean()
         .exec();
     } catch (error) {
-      throw new Error(`Failed to find order by user and learning path: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to find order by user and learning path: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -71,8 +73,9 @@ export class OrderRepository
         .lean()
         .exec();
     } catch (error) {
-      throw new Error(`Failed to find orders by user: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to find orders by user: ${(error as Error).message}`,
+      );
     }
   }
-
 }

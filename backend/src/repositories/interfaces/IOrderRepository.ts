@@ -1,7 +1,7 @@
 import { IGenericRepository } from "../genericRepository";
 import { IOrder } from "../../models/orderModel";
 import { ClientSession, PipelineStage } from "mongoose";
-import {Types} from "mongoose"
+import { Types } from "mongoose";
 export interface IOrderRepository extends IGenericRepository<IOrder> {
   findPendingOrdersByUser(userId: string): Promise<IOrder[]>;
   findOrdersByStatus(status: string): Promise<IOrder[]>;

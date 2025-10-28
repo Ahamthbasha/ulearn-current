@@ -22,7 +22,7 @@ export class InstructorAllCourseDashboardRepository
   constructor(
     orderRepo: IGenericRepository<IOrder>,
     courseRepo: IGenericRepository<ICourse>,
-    learningPathRepo: IGenericRepository<ILearningPath>
+    learningPathRepo: IGenericRepository<ILearningPath>,
   ) {
     this._orderRepo = orderRepo;
     this._courseRepo = courseRepo;
@@ -63,7 +63,12 @@ export class InstructorAllCourseDashboardRepository
           as: "learningPathInfo",
         },
       },
-      { $unwind: { path: "$learningPathInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $unwind: {
+          path: "$learningPathInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       { $match: { "learningPathInfo.instructorId": instructorId } },
       {
         $group: {
@@ -128,7 +133,12 @@ export class InstructorAllCourseDashboardRepository
           as: "learningPathInfo",
         },
       },
-      { $unwind: { path: "$learningPathInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $unwind: {
+          path: "$learningPathInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       { $match: { "learningPathInfo.instructorId": instructorId } },
       {
         $group: {
@@ -155,7 +165,9 @@ export class InstructorAllCourseDashboardRepository
 
     const combinedSales = [...courseSales, ...learningPathSales].reduce(
       (acc: ICategorySales[], curr: ICategorySales) => {
-        const existing = acc.find((item) => item.categoryName === curr.categoryName);
+        const existing = acc.find(
+          (item) => item.categoryName === curr.categoryName,
+        );
         if (existing) {
           existing.totalSales += curr.totalSales;
         } else {
@@ -163,506 +175,567 @@ export class InstructorAllCourseDashboardRepository
         }
         return acc;
       },
-      []
+      [],
     );
 
     return combinedSales.sort((a, b) => b.totalSales - a.totalSales);
   }
 
   async getMonthlySalesGraph(
-  instructorId: Types.ObjectId,
-): Promise<IMonthlySales[]> {
-  const courseSales = await this._orderRepo.aggregate<IMonthlySales>([
-    { $match: { status: "SUCCESS" } },
-    {
-      $addFields: {
-        totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
-        totalLPCourses: {
-          $sum: {
-            $map: {
-              input: { $ifNull: ["$learningPaths", []] },
-              as: "lp",
-              in: { $size: { $ifNull: ["$$lp.courses", []] } },
-            },
-          },
-        },
-        couponDiscount: { $toDouble: { $ifNull: ["$coupon.discountAmount", 0] } },
-      },
-    },
-    {
-      $addFields: {
-        totalItems: { $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] } },
-      },
-    },
-    {
-      $addFields: {
-        perItemDiscount: {
-          $round: [
-            {
-              $cond: {
-                if: { $gt: ["$totalItems", 0] },
-                then: { $divide: ["$couponDiscount", "$totalItems"] },
-                else: 0,
+    instructorId: Types.ObjectId,
+  ): Promise<IMonthlySales[]> {
+    const courseSales = await this._orderRepo.aggregate<IMonthlySales>([
+      { $match: { status: "SUCCESS" } },
+      {
+        $addFields: {
+          totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
+          totalLPCourses: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ["$learningPaths", []] },
+                as: "lp",
+                in: { $size: { $ifNull: ["$$lp.courses", []] } },
               },
             },
-            2,
-          ],
-        },
-      },
-    },
-    { $unwind: "$courses" },
-    { $match: { "courses.instructorId": instructorId } },
-    {
-      $addFields: {
-        effectiveCoursePrice: {
-          $round: [
-            {
-              $subtract: [
-                { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
-                "$perItemDiscount",
-              ],
-            },
-            2,
-          ],
-        },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-        },
-        totalRevenue: {
-          $sum: {
-            $round: [{ $multiply: ["$effectiveCoursePrice", 0.9] }, 2],
           },
-        },
-        courseSales: { $sum: 1 },
-      },
-    },
-    {
-      $project: {
-        year: "$_id.year",
-        month: "$_id.month",
-        totalRevenue: { $round: ["$totalRevenue", 2] },
-        courseSales: 1,
-        _id: 0,
-      },
-    },
-  ]);
-
-  const learningPathSales = await this._orderRepo.aggregate<IMonthlySales>([
-    { $match: { status: "SUCCESS" } },
-    {
-      $addFields: {
-        totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
-        totalLPCourses: {
-          $sum: {
-            $map: {
-              input: { $ifNull: ["$learningPaths", []] },
-              as: "lp",
-              in: { $size: { $ifNull: ["$$lp.courses", []] } },
-            },
-          },
-        },
-        couponDiscount: { $toDouble: { $ifNull: ["$coupon.discountAmount", 0] } },
-      },
-    },
-    {
-      $addFields: {
-        totalItems: { $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] } },
-      },
-    },
-    {
-      $addFields: {
-        perItemDiscount: {
-          $round: [
-            {
-              $cond: {
-                if: { $gt: ["$totalItems", 0] },
-                then: { $divide: ["$couponDiscount", "$totalItems"] },
-                else: 0,
-              },
-            },
-            2,
-          ],
-        },
-      },
-    },
-    { $unwind: "$learningPaths" },
-    {
-      $lookup: {
-        from: "learningpaths",
-        localField: "learningPaths.learningPathId",
-        foreignField: "_id",
-        as: "learningPathInfo",
-      },
-    },
-    { $unwind: { path: "$learningPathInfo", preserveNullAndEmptyArrays: true } },
-    { $match: { "learningPathInfo.instructorId": instructorId } },
-    {
-      $addFields: {
-        coursesInLearningPath: { $size: { $ifNull: ["$learningPaths.courses", []] } },
-        instructorCourseCount: {
-          $size: {
-            $filter: {
-              input: { $ifNull: ["$learningPaths.courses", []] },
-              as: "course",
-              cond: { $eq: ["$$course.instructorId", instructorId] },
-            },
-          },
-        },
-        effectiveCoursePrices: {
-          $map: {
-            input: { $ifNull: ["$learningPaths.courses", []] },
-            as: "course",
-            in: {
-              courseId: "$$course.courseId",
-              price: { $ifNull: ["$$course.offerPrice", "$$course.coursePrice"] },
-            },
+          couponDiscount: {
+            $toDouble: { $ifNull: ["$coupon.discountAmount", 0] },
           },
         },
       },
-    },
-    {
-      $addFields: {
-        effectiveLearningPathPrice: {
-          $round: [
-            {
-              $sum: {
-                $map: {
-                  input: "$effectiveCoursePrices",
-                  as: "course",
-                  in: "$$course.price",
+      {
+        $addFields: {
+          totalItems: {
+            $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] },
+          },
+        },
+      },
+      {
+        $addFields: {
+          perItemDiscount: {
+            $round: [
+              {
+                $cond: {
+                  if: { $gt: ["$totalItems", 0] },
+                  then: { $divide: ["$couponDiscount", "$totalItems"] },
+                  else: 0,
                 },
               },
-            },
-            2,
-          ],
-        },
-        instructorContributionRatio: {
-          $cond: {
-            if: { $gt: ["$coursesInLearningPath", 0] },
-            then: { $divide: ["$instructorCourseCount", "$coursesInLearningPath"] },
-            else: 0,
-          },
-        },
-        lpDiscount: {
-          $round: [
-            { $multiply: ["$perItemDiscount", "$coursesInLearningPath"] },
-            2,
-          ],
-        },
-      },
-    },
-    {
-      $addFields: {
-        effectiveLearningPathPrice: {
-          $round: [
-            { $subtract: ["$effectiveLearningPathPrice", "$lpDiscount"] },
-            2,
-          ],
-        },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-        },
-        totalRevenue: {
-          $sum: {
-            $round: [
-              { $multiply: ["$effectiveLearningPathPrice", "$instructorContributionRatio", 0.9] },
               2,
             ],
           },
         },
-        learningPathSales: { $sum: 1 },
       },
-    },
-    {
-      $project: {
-        year: "$_id.year",
-        month: "$_id.month",
-        totalRevenue: { $round: ["$totalRevenue", 2] },
-        learningPathSales: 1,
-        _id: 0,
+      { $unwind: "$courses" },
+      { $match: { "courses.instructorId": instructorId } },
+      {
+        $addFields: {
+          effectiveCoursePrice: {
+            $round: [
+              {
+                $subtract: [
+                  { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
+                  "$perItemDiscount",
+                ],
+              },
+              2,
+            ],
+          },
+        },
       },
-    },
-  ]);
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          totalRevenue: {
+            $sum: {
+              $round: [{ $multiply: ["$effectiveCoursePrice", 0.9] }, 2],
+            },
+          },
+          courseSales: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          year: "$_id.year",
+          month: "$_id.month",
+          totalRevenue: { $round: ["$totalRevenue", 2] },
+          courseSales: 1,
+          _id: 0,
+        },
+      },
+    ]);
 
-  const combinedSales = courseSales.reduce(
-    (acc: IMonthlySales[], courseItem: IMonthlySales) => {
-      const key = `${courseItem.year}-${courseItem.month}`;
-      const learningPathItem = learningPathSales.find(
-        (lp) => `${lp.year}-${lp.month}` === key
-      );
+    const learningPathSales = await this._orderRepo.aggregate<IMonthlySales>([
+      { $match: { status: "SUCCESS" } },
+      {
+        $addFields: {
+          totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
+          totalLPCourses: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ["$learningPaths", []] },
+                as: "lp",
+                in: { $size: { $ifNull: ["$$lp.courses", []] } },
+              },
+            },
+          },
+          couponDiscount: {
+            $toDouble: { $ifNull: ["$coupon.discountAmount", 0] },
+          },
+        },
+      },
+      {
+        $addFields: {
+          totalItems: {
+            $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] },
+          },
+        },
+      },
+      {
+        $addFields: {
+          perItemDiscount: {
+            $round: [
+              {
+                $cond: {
+                  if: { $gt: ["$totalItems", 0] },
+                  then: { $divide: ["$couponDiscount", "$totalItems"] },
+                  else: 0,
+                },
+              },
+              2,
+            ],
+          },
+        },
+      },
+      { $unwind: "$learningPaths" },
+      {
+        $lookup: {
+          from: "learningpaths",
+          localField: "learningPaths.learningPathId",
+          foreignField: "_id",
+          as: "learningPathInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$learningPathInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      { $match: { "learningPathInfo.instructorId": instructorId } },
+      {
+        $addFields: {
+          coursesInLearningPath: {
+            $size: { $ifNull: ["$learningPaths.courses", []] },
+          },
+          instructorCourseCount: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ["$learningPaths.courses", []] },
+                as: "course",
+                cond: { $eq: ["$$course.instructorId", instructorId] },
+              },
+            },
+          },
+          effectiveCoursePrices: {
+            $map: {
+              input: { $ifNull: ["$learningPaths.courses", []] },
+              as: "course",
+              in: {
+                courseId: "$$course.courseId",
+                price: {
+                  $ifNull: ["$$course.offerPrice", "$$course.coursePrice"],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          effectiveLearningPathPrice: {
+            $round: [
+              {
+                $sum: {
+                  $map: {
+                    input: "$effectiveCoursePrices",
+                    as: "course",
+                    in: "$$course.price",
+                  },
+                },
+              },
+              2,
+            ],
+          },
+          instructorContributionRatio: {
+            $cond: {
+              if: { $gt: ["$coursesInLearningPath", 0] },
+              then: {
+                $divide: ["$instructorCourseCount", "$coursesInLearningPath"],
+              },
+              else: 0,
+            },
+          },
+          lpDiscount: {
+            $round: [
+              { $multiply: ["$perItemDiscount", "$coursesInLearningPath"] },
+              2,
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          effectiveLearningPathPrice: {
+            $round: [
+              { $subtract: ["$effectiveLearningPathPrice", "$lpDiscount"] },
+              2,
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          totalRevenue: {
+            $sum: {
+              $round: [
+                {
+                  $multiply: [
+                    "$effectiveLearningPathPrice",
+                    "$instructorContributionRatio",
+                    0.9,
+                  ],
+                },
+                2,
+              ],
+            },
+          },
+          learningPathSales: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          year: "$_id.year",
+          month: "$_id.month",
+          totalRevenue: { $round: ["$totalRevenue", 2] },
+          learningPathSales: 1,
+          _id: 0,
+        },
+      },
+    ]);
 
-      acc.push({
-        year: courseItem.year,
-        month: courseItem.month,
-        totalRevenue: Number(
-          (courseItem.totalRevenue + (learningPathItem?.totalRevenue || 0)).toFixed(2)
-        ),
-        totalSales: courseItem.courseSales + (learningPathItem?.learningPathSales || 0),
-        courseSales: courseItem.courseSales,
-        learningPathSales: learningPathItem?.learningPathSales || 0,
-      });
+    const combinedSales = courseSales.reduce(
+      (acc: IMonthlySales[], courseItem: IMonthlySales) => {
+        const key = `${courseItem.year}-${courseItem.month}`;
+        const learningPathItem = learningPathSales.find(
+          (lp) => `${lp.year}-${lp.month}` === key,
+        );
 
-      return acc;
-    },
-    []
-  );
+        acc.push({
+          year: courseItem.year,
+          month: courseItem.month,
+          totalRevenue: Number(
+            (
+              courseItem.totalRevenue + (learningPathItem?.totalRevenue || 0)
+            ).toFixed(2),
+          ),
+          totalSales:
+            courseItem.courseSales + (learningPathItem?.learningPathSales || 0),
+          courseSales: courseItem.courseSales,
+          learningPathSales: learningPathItem?.learningPathSales || 0,
+        });
 
-  learningPathSales.forEach((lpItem) => {
-    const key = `${lpItem.year}-${lpItem.month}`;
-    if (!combinedSales.some((item) => `${item.year}-${item.month}` === key)) {
-      combinedSales.push({
-        year: lpItem.year,
-        month: lpItem.month,
-        totalRevenue: Number(lpItem.totalRevenue.toFixed(2)),
-        totalSales: lpItem.learningPathSales,
-        courseSales: 0,
-        learningPathSales: lpItem.learningPathSales,
-      });
-    }
-  });
+        return acc;
+      },
+      [],
+    );
 
-  return combinedSales.sort((a, b) => a.year - b.year || a.month - b.month);
-}
+    learningPathSales.forEach((lpItem) => {
+      const key = `${lpItem.year}-${lpItem.month}`;
+      if (!combinedSales.some((item) => `${item.year}-${item.month}` === key)) {
+        combinedSales.push({
+          year: lpItem.year,
+          month: lpItem.month,
+          totalRevenue: Number(lpItem.totalRevenue.toFixed(2)),
+          totalSales: lpItem.learningPathSales,
+          courseSales: 0,
+          learningPathSales: lpItem.learningPathSales,
+        });
+      }
+    });
+
+    return combinedSales.sort((a, b) => a.year - b.year || a.month - b.month);
+  }
 
   async getTotalRevenue(instructorId: Types.ObjectId): Promise<number> {
-  const courseRevenue = await this._orderRepo.aggregate<{ total: number; debug: any[] }>([
-    { $match: { status: "SUCCESS" } },
-    {
-      $addFields: {
-        totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
-        totalLPCourses: {
-          $sum: {
-            $map: {
-              input: { $ifNull: ["$learningPaths", []] },
-              as: "lp",
-              in: { $size: { $ifNull: ["$$lp.courses", []] } },
-            },
-          },
-        },
-        couponDiscount: { $toDouble: { $ifNull: ["$coupon.discountAmount", 0] } },
-      },
-    },
-    {
-      $addFields: {
-        totalItems: { $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] } },
-      },
-    },
-    {
-      $addFields: {
-        perItemDiscount: {
-          $round: [
-            {
-              $cond: {
-                if: { $gt: ["$totalItems", 0] },
-                then: { $divide: ["$couponDiscount", "$totalItems"] },
-                else: 0,
+    const courseRevenue = await this._orderRepo.aggregate<{
+      total: number;
+      debug: any[];
+    }>([
+      { $match: { status: "SUCCESS" } },
+      {
+        $addFields: {
+          totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
+          totalLPCourses: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ["$learningPaths", []] },
+                as: "lp",
+                in: { $size: { $ifNull: ["$$lp.courses", []] } },
               },
             },
-            2,
-          ],
-        },
-      },
-    },
-    { $unwind: "$courses" },
-    { $match: { "courses.instructorId": instructorId } },
-    {
-      $addFields: {
-        effectiveCoursePrice: {
-          $round: [
-            {
-              $subtract: [
-                { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
-                "$perItemDiscount",
-              ],
-            },
-            2,
-          ],
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        total: {
-          $sum: {
-            $round: [{ $multiply: ["$effectiveCoursePrice", 0.9] }, 2],
           },
-        },
-        debug: {
-          $push: {
-            courseId: "$courses.courseId",
-            offerPrice: "$courses.offerPrice",
-            coursePrice: "$courses.coursePrice",
-            perItemDiscount: "$perItemDiscount",
-            effectiveCoursePrice: "$effectiveCoursePrice",
-            couponDiscount: "$couponDiscount",
-            totalStandaloneCourses: "$totalStandaloneCourses",
-            totalLPCourses: "$totalLPCourses",
-            totalItems: "$totalItems",
+          couponDiscount: {
+            $toDouble: { $ifNull: ["$coupon.discountAmount", 0] },
           },
         },
       },
-    },
-  ]);
-
-  const learningPathRevenue = await this._orderRepo.aggregate<{ total: number; debug: any[] }>([
-    { $match: { status: "SUCCESS" } },
-    {
-      $addFields: {
-        totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
-        totalLPCourses: {
-          $sum: {
-            $map: {
-              input: { $ifNull: ["$learningPaths", []] },
-              as: "lp",
-              in: { $size: { $ifNull: ["$$lp.courses", []] } },
-            },
-          },
-        },
-        couponDiscount: { $toDouble: { $ifNull: ["$coupon.discountAmount", 0] } },
-      },
-    },
-    {
-      $addFields: {
-        totalItems: { $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] } },
-      },
-    },
-    {
-      $addFields: {
-        perItemDiscount: {
-          $round: [
-            {
-              $cond: {
-                if: { $gt: ["$totalItems", 0] },
-                then: { $divide: ["$couponDiscount", "$totalItems"] },
-                else: 0,
-              },
-            },
-            2,
-          ],
-        },
-      },
-    },
-    { $unwind: "$learningPaths" },
-    {
-      $lookup: {
-        from: "learningpaths",
-        localField: "learningPaths.learningPathId",
-        foreignField: "_id",
-        as: "learningPathInfo",
-      },
-    },
-    { $unwind: { path: "$learningPathInfo", preserveNullAndEmptyArrays: true } },
-    { $match: { "learningPathInfo.instructorId": instructorId } },
-    {
-      $addFields: {
-        coursesInLearningPath: { $size: { $ifNull: ["$learningPaths.courses", []] } },
-        instructorCourseCount: {
-          $size: {
-            $filter: {
-              input: { $ifNull: ["$learningPaths.courses", []] },
-              as: "course",
-              cond: { $eq: ["$$course.instructorId", instructorId] },
-            },
-          },
-        },
-        effectiveCoursePrices: {
-          $map: {
-            input: { $ifNull: ["$learningPaths.courses", []] },
-            as: "course",
-            in: {
-              courseId: "$$course.courseId",
-              price: { $ifNull: ["$$course.offerPrice", "$$course.coursePrice"] },
-            },
+      {
+        $addFields: {
+          totalItems: {
+            $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] },
           },
         },
       },
-    },
-    {
-      $addFields: {
-        effectiveLearningPathPrice: {
-          $round: [
-            {
-              $sum: {
-                $map: {
-                  input: "$effectiveCoursePrices",
-                  as: "course",
-                  in: "$$course.price",
+      {
+        $addFields: {
+          perItemDiscount: {
+            $round: [
+              {
+                $cond: {
+                  if: { $gt: ["$totalItems", 0] },
+                  then: { $divide: ["$couponDiscount", "$totalItems"] },
+                  else: 0,
                 },
               },
-            },
-            2,
-          ],
-        },
-        instructorContributionRatio: {
-          $cond: {
-            if: { $gt: ["$coursesInLearningPath", 0] },
-            then: { $divide: ["$instructorCourseCount", "$coursesInLearningPath"] },
-            else: 0,
-          },
-        },
-        lpDiscount: {
-          $round: [
-            { $multiply: ["$perItemDiscount", "$coursesInLearningPath"] },
-            2,
-          ],
-        },
-      },
-    },
-    {
-      $addFields: {
-        effectiveLearningPathPrice: {
-          $round: [
-            { $subtract: ["$effectiveLearningPathPrice", "$lpDiscount"] },
-            2,
-          ],
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        total: {
-          $sum: {
-            $round: [
-              { $multiply: ["$effectiveLearningPathPrice", "$instructorContributionRatio", 0.9] },
               2,
             ],
           },
         },
-        debug: {
-          $push: {
-            learningPathId: "$learningPaths.learningPathId",
-            effectiveLearningPathPrice: "$effectiveLearningPathPrice",
-            instructorContributionRatio: "$instructorContributionRatio",
-            lpDiscount: "$lpDiscount",
-            coursePrices: "$effectiveCoursePrices",
-            perItemDiscount: "$perItemDiscount",
-            coursesInLearningPath: "$coursesInLearningPath",
-            couponDiscount: "$couponDiscount",
-            totalStandaloneCourses: "$totalStandaloneCourses",
-            totalLPCourses: "$totalLPCourses",
-            totalItems: "$totalItems",
+      },
+      { $unwind: "$courses" },
+      { $match: { "courses.instructorId": instructorId } },
+      {
+        $addFields: {
+          effectiveCoursePrice: {
+            $round: [
+              {
+                $subtract: [
+                  { $ifNull: ["$courses.offerPrice", "$courses.coursePrice"] },
+                  "$perItemDiscount",
+                ],
+              },
+              2,
+            ],
           },
         },
       },
-    },
-  ]);
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: {
+              $round: [{ $multiply: ["$effectiveCoursePrice", 0.9] }, 2],
+            },
+          },
+          debug: {
+            $push: {
+              courseId: "$courses.courseId",
+              offerPrice: "$courses.offerPrice",
+              coursePrice: "$courses.coursePrice",
+              perItemDiscount: "$perItemDiscount",
+              effectiveCoursePrice: "$effectiveCoursePrice",
+              couponDiscount: "$couponDiscount",
+              totalStandaloneCourses: "$totalStandaloneCourses",
+              totalLPCourses: "$totalLPCourses",
+              totalItems: "$totalItems",
+            },
+          },
+        },
+      },
+    ]);
 
-  return Number(
-    ((courseRevenue[0]?.total || 0) + (learningPathRevenue[0]?.total || 0)).toFixed(2)
-  );
-}
+    const learningPathRevenue = await this._orderRepo.aggregate<{
+      total: number;
+      debug: any[];
+    }>([
+      { $match: { status: "SUCCESS" } },
+      {
+        $addFields: {
+          totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
+          totalLPCourses: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ["$learningPaths", []] },
+                as: "lp",
+                in: { $size: { $ifNull: ["$$lp.courses", []] } },
+              },
+            },
+          },
+          couponDiscount: {
+            $toDouble: { $ifNull: ["$coupon.discountAmount", 0] },
+          },
+        },
+      },
+      {
+        $addFields: {
+          totalItems: {
+            $toDouble: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] },
+          },
+        },
+      },
+      {
+        $addFields: {
+          perItemDiscount: {
+            $round: [
+              {
+                $cond: {
+                  if: { $gt: ["$totalItems", 0] },
+                  then: { $divide: ["$couponDiscount", "$totalItems"] },
+                  else: 0,
+                },
+              },
+              2,
+            ],
+          },
+        },
+      },
+      { $unwind: "$learningPaths" },
+      {
+        $lookup: {
+          from: "learningpaths",
+          localField: "learningPaths.learningPathId",
+          foreignField: "_id",
+          as: "learningPathInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$learningPathInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      { $match: { "learningPathInfo.instructorId": instructorId } },
+      {
+        $addFields: {
+          coursesInLearningPath: {
+            $size: { $ifNull: ["$learningPaths.courses", []] },
+          },
+          instructorCourseCount: {
+            $size: {
+              $filter: {
+                input: { $ifNull: ["$learningPaths.courses", []] },
+                as: "course",
+                cond: { $eq: ["$$course.instructorId", instructorId] },
+              },
+            },
+          },
+          effectiveCoursePrices: {
+            $map: {
+              input: { $ifNull: ["$learningPaths.courses", []] },
+              as: "course",
+              in: {
+                courseId: "$$course.courseId",
+                price: {
+                  $ifNull: ["$$course.offerPrice", "$$course.coursePrice"],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          effectiveLearningPathPrice: {
+            $round: [
+              {
+                $sum: {
+                  $map: {
+                    input: "$effectiveCoursePrices",
+                    as: "course",
+                    in: "$$course.price",
+                  },
+                },
+              },
+              2,
+            ],
+          },
+          instructorContributionRatio: {
+            $cond: {
+              if: { $gt: ["$coursesInLearningPath", 0] },
+              then: {
+                $divide: ["$instructorCourseCount", "$coursesInLearningPath"],
+              },
+              else: 0,
+            },
+          },
+          lpDiscount: {
+            $round: [
+              { $multiply: ["$perItemDiscount", "$coursesInLearningPath"] },
+              2,
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          effectiveLearningPathPrice: {
+            $round: [
+              { $subtract: ["$effectiveLearningPathPrice", "$lpDiscount"] },
+              2,
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: {
+              $round: [
+                {
+                  $multiply: [
+                    "$effectiveLearningPathPrice",
+                    "$instructorContributionRatio",
+                    0.9,
+                  ],
+                },
+                2,
+              ],
+            },
+          },
+          debug: {
+            $push: {
+              learningPathId: "$learningPaths.learningPathId",
+              effectiveLearningPathPrice: "$effectiveLearningPathPrice",
+              instructorContributionRatio: "$instructorContributionRatio",
+              lpDiscount: "$lpDiscount",
+              coursePrices: "$effectiveCoursePrices",
+              perItemDiscount: "$perItemDiscount",
+              coursesInLearningPath: "$coursesInLearningPath",
+              couponDiscount: "$couponDiscount",
+              totalStandaloneCourses: "$totalStandaloneCourses",
+              totalLPCourses: "$totalLPCourses",
+              totalItems: "$totalItems",
+            },
+          },
+        },
+      },
+    ]);
+
+    return Number(
+      (
+        (courseRevenue[0]?.total || 0) + (learningPathRevenue[0]?.total || 0)
+      ).toFixed(2),
+    );
+  }
 
   async getTotalCourseSales(instructorId: Types.ObjectId): Promise<number> {
     const result = await this._orderRepo.aggregate<{ totalSales: number }>([
@@ -674,7 +747,9 @@ export class InstructorAllCourseDashboardRepository
     return result[0]?.totalSales || 0;
   }
 
-  async getTotalLearningPathSales(instructorId: Types.ObjectId): Promise<number> {
+  async getTotalLearningPathSales(
+    instructorId: Types.ObjectId,
+  ): Promise<number> {
     const result = await this._orderRepo.aggregate<{ totalSales: number }>([
       { $match: { status: "SUCCESS" } },
       { $unwind: "$learningPaths" },
@@ -686,14 +761,21 @@ export class InstructorAllCourseDashboardRepository
           as: "learningPathInfo",
         },
       },
-      { $unwind: { path: "$learningPathInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $unwind: {
+          path: "$learningPathInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       { $match: { "learningPathInfo.instructorId": instructorId } },
       { $count: "totalSales" },
     ]);
     return result[0]?.totalSales || 0;
   }
 
-  async getPublishedCoursesCount(instructorId: Types.ObjectId): Promise<number> {
+  async getPublishedCoursesCount(
+    instructorId: Types.ObjectId,
+  ): Promise<number> {
     const result = await this._courseRepo.aggregate<{ total: number }>([
       {
         $match: {
@@ -706,7 +788,9 @@ export class InstructorAllCourseDashboardRepository
     return result[0]?.total || 0;
   }
 
-  async getPublishedLearningPathsCount(instructorId: Types.ObjectId): Promise<number> {
+  async getPublishedLearningPathsCount(
+    instructorId: Types.ObjectId,
+  ): Promise<number> {
     const result = await this._learningPathRepo.aggregate<{ total: number }>([
       {
         $match: {
@@ -722,7 +806,9 @@ export class InstructorAllCourseDashboardRepository
   async getCategoryWiseCreatedCourses(
     instructorId: Types.ObjectId,
   ): Promise<number> {
-    const courseCategories = await this._courseRepo.aggregate<{ uniqueCategories: Types.ObjectId[] }>([
+    const courseCategories = await this._courseRepo.aggregate<{
+      uniqueCategories: Types.ObjectId[];
+    }>([
       {
         $match: {
           instructorId: instructorId,
@@ -737,7 +823,9 @@ export class InstructorAllCourseDashboardRepository
       },
     ]);
 
-    const learningPathCategories = await this._learningPathRepo.aggregate<{ uniqueCategories: Types.ObjectId[] }>([
+    const learningPathCategories = await this._learningPathRepo.aggregate<{
+      uniqueCategories: Types.ObjectId[];
+    }>([
       {
         $match: {
           instructorId: instructorId,
@@ -760,285 +848,316 @@ export class InstructorAllCourseDashboardRepository
     return uniqueCategories.size;
   }
 
-async getDetailedRevenueReport(
-  instructorId: Types.ObjectId,
-  range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
-  page: number,
-  limit: number,
-  startDate?: Date,
-  endDate?: Date,
-): Promise<{ data: IRevenueReportItem[]; total: number }> {
-  const now = new Date();
-  let start: Date;
-  let end: Date = now;
+  async getDetailedRevenueReport(
+    instructorId: Types.ObjectId,
+    range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+    page: number,
+    limit: number,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{ data: IRevenueReportItem[]; total: number }> {
+    const now = new Date();
+    let start: Date;
+    let end: Date = now;
 
-  switch (range) {
-    case "daily":
-      start = new Date();
-      start.setHours(0, 0, 0, 0);
-      end = new Date();
-      end.setHours(23, 59, 59, 999);
-      break;
-    case "weekly":
-      start = new Date(now);
-      start.setDate(now.getDate() - now.getDay());
-      start.setHours(0, 0, 0, 0);
-      break;
-    case "monthly":
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    case "yearly":
-      start = new Date(now.getFullYear(), 0, 1);
-      break;
-    case "custom":
-      if (!startDate || !endDate) {
-        throw new Error("Start and end date required for custom range");
-      }
-      start = new Date(startDate);
-      end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      break;
-    default:
-      throw new Error("Invalid range");
-  }
+    switch (range) {
+      case "daily":
+        start = new Date();
+        start.setHours(0, 0, 0, 0);
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+        break;
+      case "weekly":
+        start = new Date(now);
+        start.setDate(now.getDate() - now.getDay());
+        start.setHours(0, 0, 0, 0);
+        break;
+      case "monthly":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case "yearly":
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+      case "custom":
+        if (!startDate || !endDate) {
+          throw new Error("Start and end date required for custom range");
+        }
+        start = new Date(startDate);
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        break;
+      default:
+        throw new Error("Invalid range");
+    }
 
-  const matchStage = {
-    status: "SUCCESS",
-    createdAt: { $gte: start, $lte: end },
-    $or: [
-      { "courses.instructorId": instructorId },
-      { "learningPaths.courses.instructorId": instructorId },
-    ],
-  };
+    const matchStage = {
+      status: "SUCCESS",
+      createdAt: { $gte: start, $lte: end },
+      $or: [
+        { "courses.instructorId": instructorId },
+        { "learningPaths.courses.instructorId": instructorId },
+      ],
+    };
 
-  const dataAggregation = await this._orderRepo.aggregate<IRevenueReportItem>([
-    { $match: matchStage },
-    {
-      $addFields: {
-        totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
-        totalLPCourses: {
-          $sum: {
-            $map: {
-              input: { $ifNull: ["$learningPaths", []] },
-              as: "lp",
-              in: { $size: { $ifNull: ["$$lp.courses", []] } },
-            },
-          },
-        },
-        couponDiscountAmount: { $toDouble: { $ifNull: ["$coupon.discountAmount", 0] } },
-      },
-    },
-    {
-      $addFields: {
-        totalItems: { $add: ["$totalStandaloneCourses", "$totalLPCourses"] },
-      },
-    },
-    {
-      $addFields: {
-        perItemDiscount: {
-          $round: [
-            {
-              $cond: {
-                if: { $gt: ["$totalItems", 0] },
-                then: { $divide: ["$couponDiscountAmount", "$totalItems"] },
-                else: 0,
+    const dataAggregation = await this._orderRepo.aggregate<IRevenueReportItem>(
+      [
+        { $match: matchStage },
+        {
+          $addFields: {
+            totalStandaloneCourses: { $size: { $ifNull: ["$courses", []] } },
+            totalLPCourses: {
+              $sum: {
+                $map: {
+                  input: { $ifNull: ["$learningPaths", []] },
+                  as: "lp",
+                  in: { $size: { $ifNull: ["$$lp.courses", []] } },
+                },
               },
             },
-            2,
-          ],
-        },
-      },
-    },
-    {
-      $project: {
-        orderId: "$_id",
-        date: {
-          $dateToString: {
-            format: "%d-%m-%Y",
-            date: "$createdAt",
+            couponDiscountAmount: {
+              $toDouble: { $ifNull: ["$coupon.discountAmount", 0] },
+            },
           },
         },
-        totalOrderAmount: "$amount",
-        couponCode: { $ifNull: ["$coupon.couponName", "N/A"] },
-        couponDiscount: { $ifNull: ["$coupon.discountPercentage", 0] },
-        couponDiscountAmount: 1,
-        standaloneCourse: {
-          $map: {
-            input: {
-              $filter: {
-                input: "$courses",
+        {
+          $addFields: {
+            totalItems: {
+              $add: ["$totalStandaloneCourses", "$totalLPCourses"],
+            },
+          },
+        },
+        {
+          $addFields: {
+            perItemDiscount: {
+              $round: [
+                {
+                  $cond: {
+                    if: { $gt: ["$totalItems", 0] },
+                    then: { $divide: ["$couponDiscountAmount", "$totalItems"] },
+                    else: 0,
+                  },
+                },
+                2,
+              ],
+            },
+          },
+        },
+        {
+          $project: {
+            orderId: "$_id",
+            date: {
+              $dateToString: {
+                format: "%d-%m-%Y",
+                date: "$createdAt",
+              },
+            },
+            totalOrderAmount: "$amount",
+            couponCode: { $ifNull: ["$coupon.couponName", "N/A"] },
+            couponDiscount: { $ifNull: ["$coupon.discountPercentage", 0] },
+            couponDiscountAmount: 1,
+            standaloneCourse: {
+              $map: {
+                input: {
+                  $filter: {
+                    input: "$courses",
+                    as: "course",
+                    cond: { $eq: ["$$course.instructorId", instructorId] },
+                  },
+                },
                 as: "course",
-                cond: { $eq: ["$$course.instructorId", instructorId] },
-              },
-            },
-            as: "course",
-            in: {
-              courseName: "$$course.courseName",
-              standAloneCourseTotalPrice: {
-                $round: [
-                  {
-                    $subtract: [
-                      { $ifNull: ["$$course.offerPrice", "$$course.coursePrice"] },
-                      "$perItemDiscount",
-                    ],
-                  },
-                  2,
-                ],
-              },
-            },
-          },
-        },
-        learningPath: {
-          $map: {
-            input: {
-              $filter: {
-                input: "$learningPaths",
-                as: "lp",
-                cond: {
-                  $gt: [
-                    {
-                      $size: {
-                        $filter: {
-                          input: "$$lp.courses",
-                          as: "course",
-                          cond: { $eq: ["$$course.instructorId", instructorId] },
-                        },
-                      },
-                    },
-                    0,
-                  ],
-                },
-              },
-            },
-            as: "lp",
-            in: {
-              learningPathName: "$$lp.learningPathName",
-              learningPathTotalPrice: {
-                $round: [
-                  {
-                    $subtract: [
-                      "$$lp.totalPrice",
+                in: {
+                  courseName: "$$course.courseName",
+                  standAloneCourseTotalPrice: {
+                    $round: [
                       {
-                        $multiply: [
-                          "$perItemDiscount",
-                          { $size: "$$lp.courses" },
-                        ],
-                      },
-                    ],
-                  },
-                  2,
-                ],
-              },
-            },
-          },
-        },
-        instructorRevenue: {
-          $round: [
-            {
-              $add: [
-                {
-                  $sum: {
-                    $map: {
-                      input: {
-                        $filter: {
-                          input: "$courses",
-                          as: "course",
-                          cond: { $eq: ["$$course.instructorId", instructorId] },
-                        },
-                      },
-                      as: "course",
-                      in: {
-                        $multiply: [
+                        $subtract: [
                           {
-                            $subtract: [
-                              { $ifNull: ["$$course.offerPrice", "$$course.coursePrice"] },
-                              "$perItemDiscount",
+                            $ifNull: [
+                              "$$course.offerPrice",
+                              "$$course.coursePrice",
                             ],
                           },
-                          0.9,
+                          "$perItemDiscount",
                         ],
                       },
+                      2,
+                    ],
+                  },
+                },
+              },
+            },
+            learningPath: {
+              $map: {
+                input: {
+                  $filter: {
+                    input: "$learningPaths",
+                    as: "lp",
+                    cond: {
+                      $gt: [
+                        {
+                          $size: {
+                            $filter: {
+                              input: "$$lp.courses",
+                              as: "course",
+                              cond: {
+                                $eq: ["$$course.instructorId", instructorId],
+                              },
+                            },
+                          },
+                        },
+                        0,
+                      ],
                     },
                   },
                 },
-                {
-                  $sum: {
-                    $map: {
-                      input: {
-                        $filter: {
-                          input: "$learningPaths",
-                          as: "lp",
-                          cond: {
-                            $gt: [
-                              {
-                                $size: {
-                                  $filter: {
-                                    input: "$$lp.courses",
-                                    as: "course",
-                                    cond: { $eq: ["$$course.instructorId", instructorId] },
-                                  },
-                                },
-                              },
-                              0,
-                            ],
-                          },
-                        },
-                      },
-                      as: "lp",
-                      in: {
-                        $multiply: [
+                as: "lp",
+                in: {
+                  learningPathName: "$$lp.learningPathName",
+                  learningPathTotalPrice: {
+                    $round: [
+                      {
+                        $subtract: [
+                          "$$lp.totalPrice",
                           {
-                            $subtract: [
-                              "$$lp.totalPrice",
-                              {
-                                $multiply: [
-                                  "$perItemDiscount",
-                                  { $size: "$$lp.courses" },
-                                ],
-                              },
-                            ],
-                          },
-                          {
-                            $divide: [
-                              {
-                                $size: {
-                                  $filter: {
-                                    input: "$$lp.courses",
-                                    as: "course",
-                                    cond: { $eq: ["$$course.instructorId", instructorId] },
-                                  },
-                                },
-                              },
+                            $multiply: [
+                              "$perItemDiscount",
                               { $size: "$$lp.courses" },
                             ],
                           },
-                          0.9,
                         ],
                       },
-                    },
+                      2,
+                    ],
                   },
                 },
+              },
+            },
+            instructorRevenue: {
+              $round: [
+                {
+                  $add: [
+                    {
+                      $sum: {
+                        $map: {
+                          input: {
+                            $filter: {
+                              input: "$courses",
+                              as: "course",
+                              cond: {
+                                $eq: ["$$course.instructorId", instructorId],
+                              },
+                            },
+                          },
+                          as: "course",
+                          in: {
+                            $multiply: [
+                              {
+                                $subtract: [
+                                  {
+                                    $ifNull: [
+                                      "$$course.offerPrice",
+                                      "$$course.coursePrice",
+                                    ],
+                                  },
+                                  "$perItemDiscount",
+                                ],
+                              },
+                              0.9,
+                            ],
+                          },
+                        },
+                      },
+                    },
+                    {
+                      $sum: {
+                        $map: {
+                          input: {
+                            $filter: {
+                              input: "$learningPaths",
+                              as: "lp",
+                              cond: {
+                                $gt: [
+                                  {
+                                    $size: {
+                                      $filter: {
+                                        input: "$$lp.courses",
+                                        as: "course",
+                                        cond: {
+                                          $eq: [
+                                            "$$course.instructorId",
+                                            instructorId,
+                                          ],
+                                        },
+                                      },
+                                    },
+                                  },
+                                  0,
+                                ],
+                              },
+                            },
+                          },
+                          as: "lp",
+                          in: {
+                            $multiply: [
+                              {
+                                $subtract: [
+                                  "$$lp.totalPrice",
+                                  {
+                                    $multiply: [
+                                      "$perItemDiscount",
+                                      { $size: "$$lp.courses" },
+                                    ],
+                                  },
+                                ],
+                              },
+                              {
+                                $divide: [
+                                  {
+                                    $size: {
+                                      $filter: {
+                                        input: "$$lp.courses",
+                                        as: "course",
+                                        cond: {
+                                          $eq: [
+                                            "$$course.instructorId",
+                                            instructorId,
+                                          ],
+                                        },
+                                      },
+                                    },
+                                  },
+                                  { $size: "$$lp.courses" },
+                                ],
+                              },
+                              0.9,
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+                2,
               ],
             },
-            2,
-          ],
+          },
         },
-      },
-    },
-    { $sort: { date: -1 } },
-    { $skip: (page - 1) * limit },
-    { $limit: limit },
-  ]);
+        { $sort: { date: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+      ],
+    );
 
-  const countAggregation = await this._orderRepo.aggregate<{ total: number }>([
-    { $match: matchStage },
-    { $group: { _id: null, total: { $sum: 1 } } },
-    { $project: { total: 1, _id: 0 } },
-  ]);
+    const countAggregation = await this._orderRepo.aggregate<{ total: number }>(
+      [
+        { $match: matchStage },
+        { $group: { _id: null, total: { $sum: 1 } } },
+        { $project: { total: 1, _id: 0 } },
+      ],
+    );
 
-  const total = countAggregation[0]?.total || 0;
+    const total = countAggregation[0]?.total || 0;
 
-  return { data: dataAggregation, total };
-}
-
+    return { data: dataAggregation, total };
+  }
 }

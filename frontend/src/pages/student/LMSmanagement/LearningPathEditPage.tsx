@@ -5,9 +5,9 @@ import * as Yup from "yup";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InputField from "../../../components/common/InputField";
-import CourseSelector from "../../../components/InstructorComponents/CourseSelector";
-import { getLearningPathById, updateLearningPath, getInstructorCategories } from "../../../api/action/InstructorActionApi";
-import type { UpdateLearningPathRequest } from "../../../types/interfaces/IInstructorInterface";
+import CourseSelector from "../../../components/StudentComponents/CourseSelector";
+import { getLearningPathById, updateLearningPath, getAllCategories } from "../../../api/action/StudentAction";
+import type { UpdateLearningPathRequest } from "../../../types/interfaces/IStudentInterface";
 
 const isValidObjectId = (id: string): boolean => {
   return /^[0-9a-fA-F]{24}$/.test(id);
@@ -115,16 +115,14 @@ const LearningPathEditPage: React.FC = () => {
           position: "top-right",
           autoClose: 5000,
         });
-        navigate("/instructor/learningPath");
+        navigate("/user/createdLms");
         return;
       }
       try {
-        // Fetch categories
-        const categoriesData = await getInstructorCategories();
+        const categoriesData = await getAllCategories();
         console.log("Fetched categories:", categoriesData);
         setCategories(categoriesData);
 
-        // Fetch learning path
         const learningPath = await getLearningPathById(learningPathId);
         setInitialValues({
           title: learningPath.title || "",
@@ -140,7 +138,7 @@ const LearningPathEditPage: React.FC = () => {
           position: "top-right",
           autoClose: 5000,
         });
-        navigate("/instructor/learningPath");
+        navigate("/user/createdLms");
       }
     };
     fetchData();
@@ -167,7 +165,6 @@ const LearningPathEditPage: React.FC = () => {
       return;
     }
     try {
-      // Validate items
       if (!values.items || values.items.length === 0 || values.items.some(item => !item.courseId || !isValidObjectId(item.courseId))) {
         setFieldError("items", "At least one valid course is required");
         toast.error("Please select at least one valid course", {
@@ -209,7 +206,7 @@ const LearningPathEditPage: React.FC = () => {
         position: "top-right",
         autoClose: 3000,
       });
-      navigate("/instructor/learningPath");
+      navigate("/user/createdLms");
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || "Failed to update learning path";
       toast.error(errorMessage, {
@@ -276,7 +273,7 @@ const LearningPathEditPage: React.FC = () => {
               </Field>
               <ErrorMessage name="category" component="p" className="text-red-500 text-sm mt-1" />
             </div>
-            <CourseSelector name="items" label="Courses" />
+            <CourseSelector name="items" label="Courses" categoryId={values.category} /> {/* Pass the selected category */}
             {errors.items && touched.items && (
               <div className="text-red-500 text-sm mt-1">
                 {typeof errors.items === "string" ? (
@@ -373,7 +370,7 @@ const LearningPathEditPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/instructor/learningPath")}
+                onClick={() => navigate("/user/createdLms")}
                 className="bg-gray-200 px-4 py-2 rounded-lg"
               >
                 Cancel

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { IStudentCouponService } from "../../services/studentServices/interface/IStudentCouponService";
-import { IStudentCouponController } from "./interfaces/IStudentCouponController"; 
+import { IStudentCouponController } from "./interfaces/IStudentCouponController";
 
 export class StudentCouponController implements IStudentCouponController {
   private _couponService: IStudentCouponService;

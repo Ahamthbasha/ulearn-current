@@ -1,13 +1,15 @@
 import { ISlot } from "../../models/slotModel";
-import { StudentSlotDTO } from "../../dto/userDTO/studentSlotDTO"; 
+import { StudentSlotDTO } from "../../dto/userDTO/studentSlotDTO";
 
 export const mapToSlotDTO = (slot: ISlot): StudentSlotDTO => {
   const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }).toLowerCase();
+    return date
+      .toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .toLowerCase();
   };
 
   return {
@@ -20,7 +22,9 @@ export const mapToSlotDTO = (slot: ISlot): StudentSlotDTO => {
   };
 };
 
-export const groupSlotsByDate = (slots: ISlot[]): Record<string, StudentSlotDTO[]> => {
+export const groupSlotsByDate = (
+  slots: ISlot[],
+): Record<string, StudentSlotDTO[]> => {
   const grouped: Record<string, StudentSlotDTO[]> = {};
   slots.forEach((slot) => {
     const dateKey = new Date(slot.startTime).toLocaleDateString("en-US", {

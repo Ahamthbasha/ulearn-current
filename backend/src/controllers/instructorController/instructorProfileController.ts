@@ -8,6 +8,7 @@ import {
   InstructorSuccessMessages,
 } from "../../utils/constants";
 import { IJwtService } from "../../services/interface/IJwtService";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorProfileController
   implements IInstructorProfileController
@@ -46,6 +47,7 @@ export class InstructorProfileController
         data: instructorProfile,
       });
     } catch (err) {
+      appLogger.error("profile error", err);
       res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: InstructorErrorMessages.TOKEN_INVALID,
@@ -92,6 +94,7 @@ export class InstructorProfileController
         data: updatedProfile,
       });
     } catch (err) {
+      appLogger.error("error in updating profile", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: InstructorErrorMessages.INTERNAL_SERVER_ERROR,
@@ -125,6 +128,7 @@ export class InstructorProfileController
         message: InstructorSuccessMessages.PASSWORD_UPDATED,
       });
     } catch (err) {
+      appLogger.error("error in updating password", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: InstructorErrorMessages.INTERNAL_SERVER_ERROR,
@@ -159,6 +163,7 @@ export class InstructorProfileController
         data: updatedProfile,
       });
     } catch (err) {
+      appLogger.error("error in update bank account", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: InstructorErrorMessages.INTERNAL_SERVER_ERROR,

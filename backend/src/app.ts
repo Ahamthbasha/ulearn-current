@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.development" });
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import connectDB from "./config/db";
 import cors, { CorsOptions } from "cors";
 import cookieParser from "cookie-parser";
@@ -14,8 +14,9 @@ import adminRoutes from "./routes/adminRoutes";
 import { startMembershipExpiryJob } from "./cron/membershipExpiryJob";
 import { initializeSocketIO } from "./sockets/socketServer";
 import { appLogger, accessLogStream } from "./utils/logger";
+import { StatusCode } from "./utils/enums";
+import { errorHandler } from "./middlewares/errorHandler";
 
-// Validate critical environment variables
 const requiredEnv = [
   "MONGO_URI",
   "JWT_SECRET",
@@ -26,7 +27,7 @@ const requiredEnv = [
 ];
 requiredEnv.forEach((key) => {
   if (!process.env[key]) {
-    console.error(`❌ Missing environment variable: ${key}`);
+    appLogger.error(`Missing required environment variable: ${key}`);
     process.exit(1);
   }
 });
@@ -65,36 +66,22 @@ app.use("/api/admin", adminRoutes);
 
 // 404 handler
 app.use("/api", (_req, res) => {
-  res.status(404).json({
+  res.status(StatusCode.NOT_FOUND).json({
     success: false,
     message: "API route not found",
   });
 });
 
-// Global error handler
-app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-
-  appLogger.error("Request error", {
-    statusCode,
-    message,
-    method: req.method,
-    url: req.originalUrl,
-    ip: req.ip,
-    stack: err.stack,
-  });
-
-  res.status(statusCode).json({
-    success: false,
-    message,
-  });
-});
+app.use(errorHandler)
 
 // Process-level error logging
-process.on("unhandledRejection", (reason: any) => {
-  appLogger.error("Unhandled Promise Rejection", { reason });
+process.on("unhandledRejection", (reason: unknown) => {
+  const errorDetails = reason instanceof Error
+    ? { message: reason.message, stack: reason.stack }
+    : { reason: String(reason) };
+  appLogger.error("Unhandled Promise Rejection", errorDetails);
 });
+
 process.on("uncaughtException", (error: Error) => {
   appLogger.error("Uncaught Exception", {
     message: error.message,
@@ -111,10 +98,11 @@ const start = async () => {
     try {
       await redisClient.ping();
       appLogger.info("Redis connected successfully");
-    } catch (redisError) {
+    } catch (redisError: unknown) {
+      const errorMessage = redisError instanceof Error ? redisError.message : "Unknown Redis error";
       appLogger.warn(
         "Redis connection failed, OTP functionality may be limited",
-        { redisError },
+        { error: errorMessage },
       );
     }
 
@@ -144,8 +132,9 @@ const start = async () => {
         `HTTP request logging enabled (${process.env.NODE_ENV || "development"} mode)`,
       );
     });
-  } catch (error) {
-    appLogger.error("Failed to start server", { error });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error starting server";
+    appLogger.error("Failed to start server", { error: errorMessage });
     process.exit(1);
   }
 };

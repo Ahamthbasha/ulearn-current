@@ -1,7 +1,7 @@
 import { ICourseOffer, CourseOfferModel } from "../../models/courseOfferModel";
 import { GenericRepository } from "../genericRepository";
-import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo"; 
-import {Types} from "mongoose"
+import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo";
+import { Types } from "mongoose";
 export class StudentCourseOfferRepository
   extends GenericRepository<ICourseOffer>
   implements IStudentCourseOfferRepository
@@ -10,8 +10,10 @@ export class StudentCourseOfferRepository
     super(CourseOfferModel);
   }
 
-  async findValidOfferByCourseId(courseId: string): Promise<ICourseOffer | null> {
-    const now = new Date(); 
+  async findValidOfferByCourseId(
+    courseId: string,
+  ): Promise<ICourseOffer | null> {
+    const now = new Date();
     return this.findOne({
       courseId,
       isActive: true,
@@ -20,10 +22,12 @@ export class StudentCourseOfferRepository
     });
   }
 
-  async findValidOffersByCourseIds(courseIds: string[]): Promise<ICourseOffer[]> {
+  async findValidOffersByCourseIds(
+    courseIds: string[],
+  ): Promise<ICourseOffer[]> {
     const now = new Date();
     return await this.find({
-      courseId: { $in: courseIds.map(id => new Types.ObjectId(id)) },
+      courseId: { $in: courseIds.map((id) => new Types.ObjectId(id)) },
       isActive: true,
       status: "approved",
       startDate: { $lte: now },

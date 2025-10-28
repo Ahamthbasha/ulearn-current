@@ -43,10 +43,11 @@ export async function generateCourseSalesExcelReport(
     item.courses.forEach((course, index) => {
       const row = sheet.addRow({
         orderId: index === 0 ? item.orderId : "",
-        date: index === 0 ? item.date: "",
+        date: index === 0 ? item.date : "",
         courseName: course.courseName,
         instructorName: course.instructorName,
-        coursePrice: course.offerPrice != null ? course.offerPrice : course.coursePrice, // Use offerPrice if available
+        coursePrice:
+          course.offerPrice != null ? course.offerPrice : course.coursePrice, // Use offerPrice if available
         couponUsed: index === 0 ? (item.couponCode ? "Yes" : "No") : "",
         discountedPrice: course.discountedPrice,
         adminShare: course.adminShare,
@@ -138,10 +139,8 @@ export async function generateCourseSalesPdfReport(
 
   // Title with background
   const pageWidth = doc.page.width - 60;
-  doc
-    .rect(30, 30, pageWidth, 40)
-    .fillAndStroke("#4472C4", "#4472C4");
-  
+  doc.rect(30, 30, pageWidth, 40).fillAndStroke("#4472C4", "#4472C4");
+
   doc
     .fontSize(18)
     .fillColor("#FFFFFF")
@@ -165,7 +164,7 @@ export async function generateCourseSalesPdfReport(
     "Total Price",
     "Total Admin",
   ];
-  
+
   const colWidths = [100, 55, 150, 85, 60, 45, 60, 65, 60, 70];
 
   const startX = 30;
@@ -179,12 +178,16 @@ export async function generateCourseSalesPdfReport(
     options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
-    
+
     if (isHeader) {
-      doc.rect(startX, yOffset, pageWidth, height).fillAndStroke("#4472C4", "#4472C4");
+      doc
+        .rect(startX, yOffset, pageWidth, height)
+        .fillAndStroke("#4472C4", "#4472C4");
       doc.fontSize(9).fillColor("#FFFFFF").font("Helvetica-Bold");
     } else if (isTotal) {
-      doc.rect(startX, yOffset, pageWidth, height).fillAndStroke("#D9E1F2", "#4472C4");
+      doc
+        .rect(startX, yOffset, pageWidth, height)
+        .fillAndStroke("#D9E1F2", "#4472C4");
       doc.fontSize(10).fillColor("#000000").font("Helvetica-Bold");
     } else {
       doc.fontSize(8).fillColor("#000000").font("Helvetica");
@@ -194,7 +197,7 @@ export async function generateCourseSalesPdfReport(
     row.forEach((text, i) => {
       const cellWidth = colWidths[i];
       const padding = 3;
-      
+
       doc.text(text, x + padding, yOffset + (height - 8) / 2, {
         width: cellWidth - padding * 2,
         align: i === 2 || i === 3 ? "left" : "center", // Left align for Course Name and Instructor
@@ -204,7 +207,7 @@ export async function generateCourseSalesPdfReport(
       if (!isHeader && !isTotal) {
         doc.rect(x, yOffset, cellWidth, height).stroke("#CCCCCC");
       }
-      
+
       x += cellWidth;
     });
   };
@@ -219,19 +222,29 @@ export async function generateCourseSalesPdfReport(
   data.forEach((item) => {
     item.courses.forEach((course, index) => {
       const orderIdStr = String(item.orderId);
-      const truncatedCourseName = course.courseName.length > 30 ? course.courseName.substring(0, 30) + ".." : course.courseName;
-      
+      const truncatedCourseName =
+        course.courseName.length > 30
+          ? course.courseName.substring(0, 30) + ".."
+          : course.courseName;
+
       const row = [
         index === 0 ? orderIdStr : "",
         index === 0 ? item.date : "",
         truncatedCourseName,
-        course.instructorName.length > 16 ? course.instructorName.substring(0, 16) + ".." : course.instructorName,
-        (course.offerPrice != null ? course.offerPrice : course.coursePrice).toFixed(2), // Use offerPrice if available
+        course.instructorName.length > 16
+          ? course.instructorName.substring(0, 16) + ".."
+          : course.instructorName,
+        (course.offerPrice != null
+          ? course.offerPrice
+          : course.coursePrice
+        ).toFixed(2), // Use offerPrice if available
         index === 0 ? (item.couponCode ? "Yes" : "No") : "",
         course.discountedPrice.toFixed(2),
         course.adminShare.toFixed(2),
         index === item.courses.length - 1 ? item.totalPrice.toFixed(2) : "",
-        index === item.courses.length - 1 ? item.totalAdminShare.toFixed(2) : "",
+        index === item.courses.length - 1
+          ? item.totalAdminShare.toFixed(2)
+          : "",
       ];
 
       const rowHeight = lineHeight + 6;
@@ -254,7 +267,7 @@ export async function generateCourseSalesPdfReport(
       y += rowHeight;
       rowIndex++;
     });
-    
+
     y += 4; // Small gap between orders
   });
 
@@ -277,7 +290,7 @@ export async function generateCourseSalesPdfReport(
     "Overall Total:",
     totalAdminShare.toFixed(2),
   ];
-  
+
   drawRow(totalRow, y, 32, { isTotal: true });
 
   // Footer
@@ -292,7 +305,7 @@ export async function generateCourseSalesPdfReport(
         `Page ${i + 1} of ${pageCount} | Generated on ${new Date().toLocaleDateString()}`,
         30,
         doc.page.height - 40,
-        { align: "center", width: pageWidth }
+        { align: "center", width: pageWidth },
       );
   }
 

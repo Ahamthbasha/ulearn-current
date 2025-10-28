@@ -1,7 +1,9 @@
 import PDFDocument from "pdfkit";
 import { OrderDetailsDTO } from "../dto/userDTO/orderDetailsDTO";
 
-export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer> {
+export async function generateInvoicePdf(
+  order: OrderDetailsDTO,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       margin: 50,
@@ -27,7 +29,13 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
     };
 
     // Helper function to add colored rectangle
-    const addColoredRect = (x: number, y: number, width: number, height: number, color: string) => {
+    const addColoredRect = (
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      color: string,
+    ) => {
       doc.rect(x, y, width, height).fill(color);
     };
 
@@ -57,10 +65,18 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
 
     // Company logo area (placeholder circle)
     doc.circle(70, 40, 20).fill(colors.white);
-    doc.fontSize(16).fillColor(colors.primary).font("Helvetica-Bold").text("uL", 63, 33);
+    doc
+      .fontSize(16)
+      .fillColor(colors.primary)
+      .font("Helvetica-Bold")
+      .text("uL", 63, 33);
 
     // Company details
-    doc.fontSize(28).fillColor(colors.white).font("Helvetica-Bold").text("uLearn", 110, 30);
+    doc
+      .fontSize(28)
+      .fillColor(colors.white)
+      .font("Helvetica-Bold")
+      .text("uLearn", 110, 30);
     doc
       .fontSize(12)
       .font("Helvetica")
@@ -69,7 +85,10 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       .text("contact@ulearn.com | +91 98765 43210", 110, 90);
 
     // Invoice title
-    doc.fontSize(32).font("Helvetica-Bold").text("INVOICE", 420, 35, { align: "right" });
+    doc
+      .fontSize(32)
+      .font("Helvetica-Bold")
+      .text("INVOICE", 420, 35, { align: "right" });
 
     // Invoice number with background
     addColoredRect(420, 70, 125, 25, colors.accent);
@@ -77,7 +96,9 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       .fontSize(12)
       .fillColor(colors.white)
       .font("Helvetica-Bold")
-      .text(`INV-${order.orderId.toString().slice(-8)}`, 425, 78, { align: "left" });
+      .text(`INV-${order.orderId.toString().slice(-8)}`, 425, 78, {
+        align: "left",
+      });
 
     // Reset position and color
     doc.y = 140;
@@ -121,14 +142,27 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
 
     let detailY = clientSectionY + 35;
     detailsData.forEach((detail) => {
-      doc.fontSize(11).font("Helvetica-Bold").fillColor(colors.dark).text(detail.label, detailsX, detailY);
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .fillColor(colors.dark)
+        .text(detail.label, detailsX, detailY);
       if (detail.label === "Status:") {
         const statusColor = getStatusColor(detail.value);
         const statusWidth = doc.widthOfString(detail.value) + 10;
-        addColoredRect(detailsX + 85, detailY - 2, statusWidth, 16, statusColor);
+        addColoredRect(
+          detailsX + 85,
+          detailY - 2,
+          statusWidth,
+          16,
+          statusColor,
+        );
         doc.fillColor(colors.white).text(detail.value, detailsX + 90, detailY);
       } else {
-        doc.fillColor(colors.secondary).font("Helvetica").text(detail.value, detailsX + 90, detailY);
+        doc
+          .fillColor(colors.secondary)
+          .font("Helvetica")
+          .text(detail.value, detailsX + 90, detailY);
       }
       detailY += 20;
     });
@@ -150,10 +184,23 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
     };
 
     doc.fontSize(12).font("Helvetica-Bold").fillColor(colors.dark);
-    doc.text("COURSE / LEARNING PATH DETAILS", colPositions.course, tableStartY + 12);
-    doc.text("ORIGINAL PRICE", colPositions.originalPrice, tableStartY + 12, { width: 70, align: "center" });
-    doc.text("OFFER (%)", colPositions.offer, tableStartY + 12, { width: 70, align: "center" });
-    doc.text("OFFER PRICE", colPositions.offerPrice, tableStartY + 12, { width: 75, align: "center" });
+    doc.text(
+      "COURSE / LEARNING PATH DETAILS",
+      colPositions.course,
+      tableStartY + 12,
+    );
+    doc.text("ORIGINAL PRICE", colPositions.originalPrice, tableStartY + 12, {
+      width: 70,
+      align: "center",
+    });
+    doc.text("OFFER (%)", colPositions.offer, tableStartY + 12, {
+      width: 70,
+      align: "center",
+    });
+    doc.text("OFFER PRICE", colPositions.offerPrice, tableStartY + 12, {
+      width: 75,
+      align: "center",
+    });
 
     // Table rows
     let currentRowY = tableStartY + 35;
@@ -191,8 +238,12 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
           });
 
         // Original price, offer percentage, and offer price
-        const originalPrice = course.isAlreadyEnrolled ? 0 : course.courseOriginalPrice;
-        const offerPrice = course.isAlreadyEnrolled ? 0 : course.courseOfferPrice;
+        const originalPrice = course.isAlreadyEnrolled
+          ? 0
+          : course.courseOriginalPrice;
+        const offerPrice = course.isAlreadyEnrolled
+          ? 0
+          : course.courseOfferPrice;
         doc.fontSize(11).font("Helvetica").fillColor(colors.secondary);
         doc.text(
           formatCurrency(originalPrice),
@@ -201,7 +252,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
           {
             width: 70,
             align: "center",
-          }
+          },
         );
         doc.text(
           course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%",
@@ -210,7 +261,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
           {
             width: 70,
             align: "center",
-          }
+          },
         );
         doc.text(
           formatCurrency(offerPrice),
@@ -219,7 +270,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
           {
             width: 75,
             align: "center",
-          }
+          },
         );
 
         currentRowY += rowHeight;
@@ -239,11 +290,16 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
           .fontSize(12)
           .font("Helvetica-Bold")
           .fillColor(colors.primary)
-          .text(`Learning Path: ${learningPath.learningPathName}`, colPositions.course, currentRowY + 8, {
-            width: 220,
-            height: rowHeight - 16,
-            ellipsis: true,
-          });
+          .text(
+            `Learning Path: ${learningPath.learningPathName}`,
+            colPositions.course,
+            currentRowY + 8,
+            {
+              width: 220,
+              height: rowHeight - 16,
+              ellipsis: true,
+            },
+          );
         currentRowY += rowHeight;
         rowIndex++;
 
@@ -262,15 +318,24 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
             .fontSize(11)
             .font("Helvetica")
             .fillColor(colors.dark)
-            .text(`  ${course.courseName}`, colPositions.course, currentRowY + 8, {
-              width: 220,
-              height: rowHeight - 16,
-              ellipsis: true,
-            });
+            .text(
+              `  ${course.courseName}`,
+              colPositions.course,
+              currentRowY + 8,
+              {
+                width: 220,
+                height: rowHeight - 16,
+                ellipsis: true,
+              },
+            );
 
           // Original price, offer percentage, and offer price
-          const originalPrice = course.isAlreadyEnrolled ? 0 : course.courseOriginalPrice;
-          const offerPrice = course.isAlreadyEnrolled ? 0 : course.courseOfferPrice;
+          const originalPrice = course.isAlreadyEnrolled
+            ? 0
+            : course.courseOriginalPrice;
+          const offerPrice = course.isAlreadyEnrolled
+            ? 0
+            : course.courseOfferPrice;
           doc.fontSize(11).font("Helvetica").fillColor(colors.secondary);
           doc.text(
             formatCurrency(originalPrice),
@@ -279,16 +344,18 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
             {
               width: 70,
               align: "center",
-            }
+            },
           );
           doc.text(
-            course.courseOfferDiscount ? `${course.courseOfferDiscount}%` : "0%",
+            course.courseOfferDiscount
+              ? `${course.courseOfferDiscount}%`
+              : "0%",
             colPositions.offer,
             currentRowY + 15,
             {
               width: 70,
               align: "center",
-            }
+            },
           );
           doc.text(
             formatCurrency(offerPrice),
@@ -297,7 +364,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
             {
               width: 75,
               align: "center",
-            }
+            },
           );
 
           currentRowY += rowHeight;
@@ -319,7 +386,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       {
         width: 75,
         align: "center",
-      }
+      },
     );
 
     currentRowY += 25;
@@ -327,7 +394,11 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       .fontSize(12)
       .font("Helvetica-Bold")
       .fillColor(colors.dark)
-      .text("Final Price (Including Offers):", colPositions.course, currentRowY + 10);
+      .text(
+        "Final Price (Including Offers):",
+        colPositions.course,
+        currentRowY + 10,
+      );
     doc.text(
       formatCurrency(order.sumOfAllCourseIncludingOfferPrice),
       colPositions.offerPrice,
@@ -335,7 +406,7 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       {
         width: 75,
         align: "center",
-      }
+      },
     );
 
     // ========== COUPON SECTION ==========
@@ -354,8 +425,14 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       summaryStartY += 35;
       const couponData = [
         { label: "Coupon Code:", value: order.couponInfo.couponCode },
-        { label: "Discount Percentage:", value: `${order.couponInfo.couponDiscountPercentage}%` },
-        { label: "Discount Amount:", value: `-${formatCurrency(order.couponInfo.discountAmount)}` },
+        {
+          label: "Discount Percentage:",
+          value: `${order.couponInfo.couponDiscountPercentage}%`,
+        },
+        {
+          label: "Discount Amount:",
+          value: `-${formatCurrency(order.couponInfo.discountAmount)}`,
+        },
       ];
 
       couponData.forEach((item) => {
@@ -364,10 +441,13 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
           .font("Helvetica-Bold")
           .fillColor(colors.dark)
           .text(item.label, summaryX, summaryStartY);
-        doc.font("Helvetica").fillColor(colors.secondary).text(item.value, summaryX + 120, summaryStartY, {
-          width: 95,
-          align: "right",
-        });
+        doc
+          .font("Helvetica")
+          .fillColor(colors.secondary)
+          .text(item.value, summaryX + 120, summaryStartY, {
+            width: 95,
+            align: "right",
+          });
         summaryStartY += 20;
       });
     }
@@ -379,10 +459,15 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       .font("Helvetica-Bold")
       .fillColor(colors.white)
       .text("FINAL TOTAL:", summaryX + 10, summaryStartY + 10);
-    doc.text(formatCurrency(order.finalPrice), summaryX + 120, summaryStartY + 10, {
-      width: 95,
-      align: "right",
-    });
+    doc.text(
+      formatCurrency(order.finalPrice),
+      summaryX + 120,
+      summaryStartY + 10,
+      {
+        width: 95,
+        align: "right",
+      },
+    );
 
     // ========== FOOTER SECTION ==========
     const footerY = 720;
@@ -401,8 +486,16 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       .fontSize(10)
       .font("Helvetica")
       .fillColor(colors.secondary)
-      .text("This is a computer-generated invoice. No signature is required.", 50, footerY + 35)
-      .text("For any queries, please contact us at support@ulearn.com", 50, footerY + 50);
+      .text(
+        "This is a computer-generated invoice. No signature is required.",
+        50,
+        footerY + 35,
+      )
+      .text(
+        "For any queries, please contact us at support@ulearn.com",
+        50,
+        footerY + 50,
+      );
 
     // Page numbers and watermark
     doc
@@ -411,11 +504,15 @@ export async function generateInvoicePdf(order: OrderDetailsDTO): Promise<Buffer
       .text(
         `Invoice Generated: ${new Date().toLocaleDateString("en-GB")} ${new Date().toLocaleTimeString("en-GB")}`,
         400,
-        footerY + 50
+        footerY + 50,
       );
 
     // Add a subtle watermark
-    doc.fontSize(60).fillColor("#f0f0f0").opacity(0.1).text("uLearn", 200, 400, { align: "center" });
+    doc
+      .fontSize(60)
+      .fillColor("#f0f0f0")
+      .opacity(0.1)
+      .text("uLearn", 200, 400, { align: "center" });
 
     // Reset opacity
     doc.opacity(1);

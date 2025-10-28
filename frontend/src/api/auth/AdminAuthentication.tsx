@@ -2,28 +2,21 @@ import type { userData } from "../../types/userData";
 import { API } from "../../service/axios";
 import authenticationRoutes from "../../types/endPoints/authEndpoints";
 
-export const adminLogin = async (userData: userData): Promise<any> => {
+export const adminLogin = async (userData: userData) => {
   try {
-    const response = await API.post(authenticationRoutes.adminLogin, userData, {
-      withCredentials: true,
-    });
-
-    console.log("admin login response", response.data);
-
+    const response = await API.post(authenticationRoutes.adminLogin, userData);
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const adminLogout = async (): Promise<any> => {
+export const adminLogout = async ()=> {
   try {
     const response = await API.post(
       authenticationRoutes.adminLogout,
-      {},
-      { withCredentials: true }
+      {}
     );
-    console.log("admin logout response", response.data);
     return response.data;
   } catch (error) {
     throw error;

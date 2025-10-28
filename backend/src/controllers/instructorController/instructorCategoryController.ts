@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { IInstructorCategoryController } from "./interfaces/IInstructorCategoryController";
 import { IInstructorCategoryService } from "../../services/instructorServices/interface/IInstructorCategoryService";
 import { StatusCode } from "../../utils/enums";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorCategoryController
   implements IInstructorCategoryController
@@ -20,7 +21,7 @@ export class InstructorCategoryController
       const categories = await this._categoryService.fetchActiveCategories();
       res.status(StatusCode.OK).json({ success: true, data: categories });
     } catch (error) {
-      console.error("Error in getListedCategories:", error);
+      appLogger.error("Error in getListedCategories:", error);
       next(error);
     }
   }

@@ -53,7 +53,7 @@ export class AdminMembershipOrderRepository
     const matchConditions: any = {};
 
     // Status filter
-    if (status && ["paid", "failed"].includes(status)) {
+    if (status && ["paid", "failed","cancelled"].includes(status)) {
       matchConditions.paymentStatus = status;
     }
 
@@ -121,8 +121,6 @@ export class AdminMembershipOrderRepository
         membershipPlanId: MembershipPlanPopulated;
       }>("membershipPlanId", "name durationInDays description benefits")
       .lean();
-
-    console.log(order);
 
     if (!order) return null;
 

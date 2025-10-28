@@ -8,6 +8,7 @@ import {
   VerificationErrorMessages,
   VerificationSuccessMessages,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorVerificationController {
   private _verificationService: IInstructorVerificationService;
@@ -94,7 +95,7 @@ export class InstructorVerificationController {
         data: newRequest,
       });
     } catch (error: any) {
-      console.log("verificationerror", error);
+      appLogger.error("verificationerror", error);
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
         .json({ success: false, message: error.message });
@@ -112,7 +113,7 @@ export class InstructorVerificationController {
         data: result,
       });
     } catch (error: any) {
-      console.log(error);
+      appLogger.error("get request by email error", error);
       res.status(StatusCode.NOT_FOUND).json({
         success: false,
         message: error.message,

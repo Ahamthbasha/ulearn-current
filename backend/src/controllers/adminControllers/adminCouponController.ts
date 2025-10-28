@@ -5,6 +5,8 @@ import { StatusCode } from "../../utils/enums";
 import { COUPONMESSAGE } from "../../utils/constants";
 import { adminCouponDto } from "../../dto/adminDTO/adminCouponDTO";
 import { ICoupon } from "../../models/couponModel";
+import { appLogger } from "../../utils/logger";
+import { ICouponResponse,ICouponsResponse,IDeleteCouponResponse } from "../../interface/adminInterface/IadminInterface";
 
 export class AdminCouponController implements IAdminCouponController {
   private _couponService: IAdminCouponService;
@@ -17,9 +19,17 @@ export class AdminCouponController implements IAdminCouponController {
     try {
       const couponData: Partial<ICoupon> = req.body;
       const coupon: adminCouponDto = await this._couponService.createCoupon(couponData);
-      res.status(StatusCode.CREATED).json({ success: true, data: coupon });
-    } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      res.status(StatusCode.CREATED).json({
+        success: true,
+        data: coupon,
+      } as ICouponResponse);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : COUPONMESSAGE.COUPON_CREATION_FAILED;
+      appLogger.error("Create coupon error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      } as ICouponResponse);
     }
   }
 
@@ -27,7 +37,7 @@ export class AdminCouponController implements IAdminCouponController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      const searchCode = req.query.search as string;
+      const searchCode = req.query.search as string || "";
       const result = await this._couponService.getAllCoupons(page, limit, searchCode);
       res.status(StatusCode.OK).json({
         success: true,
@@ -38,9 +48,14 @@ export class AdminCouponController implements IAdminCouponController {
           totalPages: Math.ceil(result.total / limit),
           totalItems: result.total,
         },
-      });
-    } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      } as ICouponsResponse);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : COUPONMESSAGE.COUPON_FETCH_FAILED;
+      appLogger.error("Get all coupons error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      } as ICouponResponse); 
     }
   }
 
@@ -48,12 +63,23 @@ export class AdminCouponController implements IAdminCouponController {
     try {
       const coupon: adminCouponDto | null = await this._couponService.getCouponById(req.params.couponId);
       if (!coupon) {
-        res.status(StatusCode.NOT_FOUND).json({ success: false, message: COUPONMESSAGE.COUPON_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: COUPONMESSAGE.COUPON_NOT_FOUND,
+        } as ICouponResponse);
         return;
       }
-      res.status(StatusCode.OK).json({ success: true, data: coupon });
-    } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: coupon,
+      } as ICouponResponse);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : COUPONMESSAGE.COUPON_NOT_FOUND;
+      appLogger.error("Get coupon by ID error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      } as ICouponResponse);
     }
   }
 
@@ -61,12 +87,23 @@ export class AdminCouponController implements IAdminCouponController {
     try {
       const coupon: adminCouponDto | null = await this._couponService.getCouponByCode(req.params.code);
       if (!coupon) {
-        res.status(StatusCode.NOT_FOUND).json({ success: false, message: COUPONMESSAGE.COUPON_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: COUPONMESSAGE.COUPON_NOT_FOUND,
+        } as ICouponResponse);
         return;
       }
-      res.status(StatusCode.OK).json({ success: true, data: coupon });
-    } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: coupon,
+      } as ICouponResponse);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : COUPONMESSAGE.COUPON_NOT_FOUND;
+      appLogger.error("Get coupon by code error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      } as ICouponResponse);
     }
   }
 
@@ -74,12 +111,23 @@ export class AdminCouponController implements IAdminCouponController {
     try {
       const coupon: adminCouponDto | null = await this._couponService.updateCoupon(req.params.couponId, req.body);
       if (!coupon) {
-        res.status(StatusCode.NOT_FOUND).json({ success: false, message: COUPONMESSAGE.COUPON_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: COUPONMESSAGE.COUPON_NOT_FOUND,
+        } as ICouponResponse);
         return;
       }
-      res.status(StatusCode.OK).json({ success: true, data: coupon });
-    } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: coupon,
+      } as ICouponResponse);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : COUPONMESSAGE.COUPON_UPDATE_FAILED;
+      appLogger.error("Update coupon error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      } as ICouponResponse);
     }
   }
 
@@ -87,12 +135,23 @@ export class AdminCouponController implements IAdminCouponController {
     try {
       const success = await this._couponService.deleteCoupon(req.params.couponId);
       if (!success) {
-        res.status(StatusCode.NOT_FOUND).json({ success: false, message: COUPONMESSAGE.COUPON_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: COUPONMESSAGE.COUPON_NOT_FOUND,
+        } as IDeleteCouponResponse);
         return;
       }
-      res.status(StatusCode.OK).json({ success: true, message: COUPONMESSAGE.COUPON_DELETED_SUCCESSFULLY });
-    } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: COUPONMESSAGE.COUPON_DELETED_SUCCESSFULLY,
+      } as IDeleteCouponResponse);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : COUPONMESSAGE.COUPON_DELETION_FAILED;
+      appLogger.error("Delete coupon error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      } as IDeleteCouponResponse);
     }
   }
 
@@ -101,12 +160,23 @@ export class AdminCouponController implements IAdminCouponController {
       const { status } = req.body;
       const coupon: adminCouponDto | null = await this._couponService.toggleCouponStatus(req.params.couponId, status);
       if (!coupon) {
-        res.status(StatusCode.NOT_FOUND).json({ success: false, message: COUPONMESSAGE.COUPON_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: COUPONMESSAGE.COUPON_NOT_FOUND,
+        } as ICouponResponse);
         return;
       }
-      res.status(StatusCode.OK).json({ success: true, data: coupon });
-    } catch (error: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: coupon,
+      } as ICouponResponse);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : COUPONMESSAGE.COUPON_STATUS_TOGGLE_FAILED;
+      appLogger.error("Toggle coupon status error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: errorMessage,
+      } as ICouponResponse);
     }
   }
 }

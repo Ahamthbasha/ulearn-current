@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import InstructorModel from "../models/instructorModel";
 import { SendEmail } from "../utils/sendOtpEmail";
+import { appLogger } from "../utils/logger";
 
 const emailService = new SendEmail();
 
@@ -25,9 +26,9 @@ export const startMembershipExpiryJob = () => {
             instructor.email,
             instructor.membershipExpiryDate,
           );
-          console.log(`📧 Reminder sent to: ${instructor.email}`);
+          appLogger.info(`📧 Reminder sent to: ${instructor.email}`);
         } else {
-          console.warn(
+          appLogger.warn(
             `⚠️ Skipped reminder: No expiry date for ${instructor.email}`,
           );
         }
@@ -43,12 +44,14 @@ export const startMembershipExpiryJob = () => {
         instructor.isMentor = false;
         instructor.membershipPlanId = undefined;
         await instructor.save();
-        console.log(`🛑 Membership expired for: ${instructor.email}`);
+        appLogger.info(`🛑 Membership expired for: ${instructor.email}`);
       }
 
-      console.log(`✅ Membership expiry job completed at ${now.toISOString()}`);
+      appLogger.info(
+        `✅ Membership expiry job completed at ${now.toISOString()}`,
+      );
     } catch (error) {
-      console.error("❌ Error running membership expiry job:", error);
+      appLogger.error("❌ Error running membership expiry job:", error);
     }
   });
 };

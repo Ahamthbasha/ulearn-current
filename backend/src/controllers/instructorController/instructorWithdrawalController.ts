@@ -8,6 +8,7 @@ import {
   INSTRUCTOR_ERROR_MESSAGE,
   INSTRUCTOR_SUCCESS_MESSAGE,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorWithdrawalController
   implements IInstructorWithdrawalController
@@ -37,7 +38,7 @@ export class InstructorWithdrawalController
         data: request,
       });
     } catch (error: any) {
-      console.error(error);
+      appLogger.error("error in withdrawal creation", error);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
@@ -74,7 +75,7 @@ export class InstructorWithdrawalController
         },
       });
     } catch (error: any) {
-      console.error(error);
+      appLogger.error("error in withdrawalrequests", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_WITHDRAWAL_REQUEST,
@@ -103,7 +104,7 @@ export class InstructorWithdrawalController
         data: request,
       });
     } catch (error: any) {
-      console.error(error);
+      appLogger.error("error in retry withdrawal request", error);
       const statusCode = error.message.includes(
         INSTRUCTOR_ERROR_MESSAGE.NOT_FOUND,
       )

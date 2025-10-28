@@ -22,7 +22,6 @@ export class StudentCourseService implements IStudentCourseService {
         courseData.chapterCount,
         courseData.quizQuestionCount,
       );
-      console.log(`getAllCoursesWithDetails ${dto.courseId}: price=${dto.price}, originalPrice=${dto.originalPrice}, discountedPrice=${dto.discountedPrice}`);
       courseDTOs.push(dto);
     }
 
@@ -55,7 +54,6 @@ export class StudentCourseService implements IStudentCourseService {
         courseData.chapterCount,
         courseData.quizQuestionCount,
       );
-      console.log(`getFilteredCoursesWithDetails ${dto.courseId}: price=${dto.price}, originalPrice=${dto.originalPrice}, discountedPrice=${dto.discountedPrice}`);
       courseDTOs.push(dto);
     }
 
@@ -79,7 +77,6 @@ export class StudentCourseService implements IStudentCourseService {
       courseData.chapterCount,
       courseData.quizQuestionCount,
     );
-    console.log(`getCourseDetailsById ${dto.courseId}: price=${dto.price}, originalPrice=${dto.originalPrice}, discountedPrice=${dto.discountedPrice}`);
 
     return dto;
   }
@@ -90,5 +87,10 @@ export class StudentCourseService implements IStudentCourseService {
     quizQuestionCount: number;
   }> {
     return await this._studentCourseRepo.getCourseDetails(courseId);
+  }
+
+  async getCourses(categoryId?:string): Promise<Array<{ _id: string; courseName: string }>> {
+    const courses = await this._studentCourseRepo.getCourses(categoryId);
+    return courses;
   }
 }

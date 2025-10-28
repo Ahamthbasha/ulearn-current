@@ -9,6 +9,7 @@ import {
   StudentErrorMessages,
   StudentSuccessMessages,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class StudentSlotBookingController
   implements IStudentSlotBookingController
@@ -34,7 +35,7 @@ export class StudentSlotBookingController
       );
       res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (err: any) {
-      console.error("initiateCheckout error:", err);
+      appLogger.error("initiateCheckout error:", err);
 
       if (
         err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
@@ -95,7 +96,7 @@ export class StudentSlotBookingController
         ...availability,
       });
     } catch (err: any) {
-      console.error("checkSlotAvailability error:", err);
+      appLogger.error("checkSlotAvailability error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
@@ -130,7 +131,7 @@ export class StudentSlotBookingController
         });
       }
     } catch (err: any) {
-      console.error("cancelPendingBooking error:", err);
+      appLogger.error("cancelPendingBooking error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
@@ -154,7 +155,7 @@ export class StudentSlotBookingController
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
-      console.error("verifyPayment error:", err);
+      appLogger.error("verifyPayment error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message: err.message || StudentErrorMessages.PAYMENT_FAILED,
@@ -180,7 +181,7 @@ export class StudentSlotBookingController
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
-      console.error("verifyRetryPayment error:", err);
+      appLogger.error("verifyRetryPayment error:", err);
 
       if (err.message === StudentErrorMessages.SLOT_BOOKED_BY_OTHERS) {
         res.status(StatusCode.CONFLICT).json({
@@ -211,7 +212,7 @@ export class StudentSlotBookingController
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
     } catch (err: any) {
-      console.error("bookViaWallet error:", err);
+      appLogger.error("bookViaWallet error:", err);
 
       if (
         err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
@@ -279,7 +280,7 @@ export class StudentSlotBookingController
         total: result.total,
       });
     } catch (err: any) {
-      console.error("getBookingHistory error:", err);
+      appLogger.error("getBookingHistory error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message: err.message || StudentErrorMessages.FAILED_TO_FETCH_BOOKINGS,
@@ -308,7 +309,7 @@ export class StudentSlotBookingController
 
       res.status(StatusCode.OK).json({ success: true, data: bookingDetail });
     } catch (err: any) {
-      console.error("getBookingDetail error:", err);
+      appLogger.error("getBookingDetail error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message: err.message || StudentErrorMessages.FAILED_TO_FETCH_BOOKING,
@@ -344,7 +345,7 @@ export class StudentSlotBookingController
       );
       generateSlotReceiptPdf(res, populatedBooking);
     } catch (err: any) {
-      console.error("downloadReceipt error:", err);
+      appLogger.error("downloadReceipt error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message: err.message || StudentErrorMessages.FAILED_TO_GENERATE_RECEIPT,
@@ -362,15 +363,13 @@ export class StudentSlotBookingController
       if (!studentId) throw new Error("Unauthorized");
       if (!bookingId) throw new Error("Booking ID is required");
 
-      console.log("handle paymet failure", bookingId);
-
       await this._bookingService.handlePaymentFailure(bookingId, studentId);
       res.status(StatusCode.OK).json({
         success: true,
         message: StudentSuccessMessages.BOOKING_MARKED_AS_FAILED,
       });
     } catch (err: any) {
-      console.error("handlePaymentFailure error:", err);
+      appLogger.error("handlePaymentFailure error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
@@ -392,7 +391,7 @@ export class StudentSlotBookingController
       );
       res.status(StatusCode.OK).json({ success: true, ...result });
     } catch (err: any) {
-      console.error("retryPayment error:", err);
+      appLogger.error("retryPayment error:", err);
 
       if (err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS) {
         res.status(StatusCode.CONFLICT).json({

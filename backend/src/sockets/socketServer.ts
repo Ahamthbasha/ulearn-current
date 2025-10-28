@@ -84,7 +84,6 @@ class SocketManager {
 //initialize the socket.io server
 
 async function initializeSocketIO(io: Server) {
-  console.log("Initializing Socket.IO");
   const socketManager = SocketManager.getInstance();
 
   // Authentication middleware
@@ -124,17 +123,12 @@ async function initializeSocketIO(io: Server) {
       socket.data.role = decodedToken.role;
       next();
     } catch (error: any) {
-      console.error("Authentication error:", error.message);
       next(new Error(error.message || "Authentication failed"));
     }
   });
 
   // Main connection handler
   io.on("connection", (socket) => {
-    console.log(
-      `${socket.data.role} connected: ${socket.id}, Email: ${socket.data.email}`,
-    );
-
     // Add user to online users
     socketManager.addUser(
       String(socket.data.entity._id),
@@ -162,11 +156,6 @@ async function initializeSocketIO(io: Server) {
         return;
       }
 
-      // Log the call initiation
-      console.log(
-        `${socket.data.role} (${socket.data.email}) initiating call to ${to}`,
-      );
-
       // Send incoming call to recipient
       io.to(recipientSocketId.socketId).emit("incoming:call", {
         from: socket.data.email, // Send caller's email
@@ -182,8 +171,6 @@ async function initializeSocketIO(io: Server) {
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
 
       if (recipientSocketId) {
-        console.log(`Call accepted between ${socket.data.email} and ${to}`);
-
         io.to(recipientSocketId.socketId).emit("incoming:answer", {
           from: socket.data.email, // Send caller's email
           fromRole: socket.data.role, // Send caller's role
@@ -211,8 +198,6 @@ async function initializeSocketIO(io: Server) {
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
 
       if (recipientSocketId) {
-        console.log(`Call ended between ${socket.data.email} and ${to}`);
-
         io.to(recipientSocketId.socketId).emit("call:ended", {
           from: socket.data.email, // Send terminator's email
           fromRole: socket.data.role, // Send terminator's role
@@ -226,8 +211,6 @@ async function initializeSocketIO(io: Server) {
       const recipientSocketId = socketManager.getUserSocketIdByUserId(to);
 
       if (recipientSocketId) {
-        console.log(`Call rejected by ${socket.data.email} from ${to}`);
-
         io.to(recipientSocketId.socketId).emit("call:rejected", {
           from: socket.data.email,
           fromRole: socket.data.role,
@@ -237,9 +220,6 @@ async function initializeSocketIO(io: Server) {
 
     // Handle disconnection
     socket.on("disconnect", () => {
-      console.log(
-        `${socket.data.role} disconnected: ${socket.id}, Email: ${socket.data.email}`,
-      );
       socketManager.removeUser(socket.data.entity.email);
 
       // Emit user offline status

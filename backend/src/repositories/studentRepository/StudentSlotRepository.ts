@@ -13,28 +13,36 @@ export class StudentSlotRepository
   }
 
   async getAvailableSlotsByInstructorId(
-  instructorId: string,
-  session?: ClientSession,
-): Promise<ISlot[]> {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    instructorId: string,
+    session?: ClientSession,
+  ): Promise<ISlot[]> {
+    const now = new Date();
+    // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
 
-  let query = this.model
-    .find({
-      instructorId,
-      isBooked: false,
-      startTime: {
-        $gte: startOfMonth, // Greater than or equal to the start of the month
-        $lte: endOfMonth,   // Less than or equal to the end of the month
-      },
-    })
-    .sort({ startTime: 1 });
+    let query = this.model
+      .find({
+        instructorId,
+        isBooked: false,
+        startTime: {
+          $gte: now, 
+          $lte: endOfMonth, 
+        },
+      })
+      .sort({ startTime: 1 });
 
-  if (session) query = query.session(session);
+    if (session) query = query.session(session);
 
-  return await query.exec();
-}
+    return await query.exec();
+  }
 
   async findById(
     slotId: string,

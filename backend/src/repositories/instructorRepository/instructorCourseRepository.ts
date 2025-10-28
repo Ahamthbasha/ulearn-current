@@ -85,7 +85,10 @@ export class InstructorCourseRepository
     });
   }
 
-  async publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null> {
+  async publishCourse(
+    courseId: string,
+    publishDate?: Date,
+  ): Promise<ICourse | null> {
     const updateData: Partial<ICourse> = publishDate
       ? { publishDate }
       : { isPublished: true, publishDate: undefined };
@@ -99,7 +102,10 @@ export class InstructorCourseRepository
     });
   }
 
-  async validateCoursesForInstructor(courseIds: string[], instructorId: string): Promise<boolean> {
+  async validateCoursesForInstructor(
+    courseIds: string[],
+    instructorId: string,
+  ): Promise<boolean> {
     const count = await this.countDocuments({
       _id: { $in: courseIds },
       instructorId,
@@ -117,7 +123,10 @@ export class InstructorCourseRepository
   ): Promise<{ courseId: string; courseName: string }[]> {
     const filter: FilterQuery<ICourse> = { instructorId, isVerified: true };
 
-    const courses = await this.findWithProjection(filter, { _id: 1, courseName: 1 });
+    const courses = await this.findWithProjection(filter, {
+      _id: 1,
+      courseName: 1,
+    });
 
     return courses.map((course) => ({
       courseId: course._id.toString(),

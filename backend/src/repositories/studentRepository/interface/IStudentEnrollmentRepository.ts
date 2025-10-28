@@ -3,7 +3,9 @@ import { IEnrollment } from "../../../models/enrollmentModel";
 import { IOrder } from "../../../models/orderModel";
 
 export interface IStudentEnrollmentRepository {
-  getAllEnrolledCourses(userId: Types.ObjectId): Promise<{ enrollment: IEnrollment; order?: IOrder }[]>
+  getAllEnrolledCourses(
+    userId: Types.ObjectId,
+  ): Promise<{ enrollment: IEnrollment; order?: IOrder }[]>;
   getEnrollmentByCourseDetails(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
@@ -36,8 +38,5 @@ export interface IStudentEnrollmentRepository {
     courseId: string,
     populateOptions: any[],
   ): Promise<IEnrollment | null>;
-  findOne(
-    query: any,
-    populateOptions?: any[]
-  ): Promise<IEnrollment | null>;
+  findOne(query: any, populateOptions?: any[]): Promise<IEnrollment | null>;
 }

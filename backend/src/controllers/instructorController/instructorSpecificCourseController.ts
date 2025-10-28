@@ -11,6 +11,7 @@ import {
   INSTRUCTOR_ERROR_MESSAGE,
   INSTRUCTOR_SPECIFIC_COURSE_CONTROLLER,
 } from "../../utils/constants";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorSpecificCourseDashboardController
   implements IInstructorCourseSpecificDashboardController
@@ -38,7 +39,7 @@ export class InstructorSpecificCourseDashboardController
 
       res.status(StatusCode.OK).json({ success: true, data });
     } catch (error) {
-      console.error(
+      appLogger.error(
         "[InstructorSpecificCourseDashboardController] Error:",
         error,
       );
@@ -98,6 +99,7 @@ export class InstructorSpecificCourseDashboardController
 
       res.status(StatusCode.OK).json({ success: true, data, total });
     } catch (error) {
+      appLogger.error("get course revenue report error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_COURSE_REVENUE_REPORT,
@@ -148,17 +150,17 @@ export class InstructorSpecificCourseDashboardController
       );
 
       const reportData = rawData.data.map((item) => ({
-      orderId: item.orderId,
-      purchaseDate: item.purchaseDate,
-      courseName: item.courseName,
-      originalCoursePrice: item.originalCoursePrice,
-      courseOfferPrice:item.courseOfferPrice,
-      couponUsed: item.couponUsed,
-      couponDeductionAmount: item.couponDeductionAmount,
-      finalCoursePrice: item.finalCoursePrice,
-      instructorRevenue: item.instructorRevenue,
-      totalEnrollments: item.totalEnrollments,
-    }));
+        orderId: item.orderId,
+        purchaseDate: item.purchaseDate,
+        courseName: item.courseName,
+        originalCoursePrice: item.originalCoursePrice,
+        courseOfferPrice: item.courseOfferPrice,
+        couponUsed: item.couponUsed,
+        couponDeductionAmount: item.couponDeductionAmount,
+        finalCoursePrice: item.finalCoursePrice,
+        instructorRevenue: item.instructorRevenue,
+        totalEnrollments: item.totalEnrollments,
+      }));
 
       if (format === "pdf") {
         await generatePdfReport(reportData, res);
@@ -166,6 +168,7 @@ export class InstructorSpecificCourseDashboardController
         await generateExcelReport(reportData, res);
       }
     } catch (error) {
+      appLogger.error("export course revenue report error", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_EXPORT_REVENUE_REPORT,

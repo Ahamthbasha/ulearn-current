@@ -11,7 +11,7 @@ export function formatTo12Hour(time: string | Date): string {
   const strTime =
     typeof time === "string"
       ? time
-      : new Date(time).toISOString().substring(11, 16); 
+      : new Date(time).toISOString().substring(11, 16);
 
   const [hours, minutes] = strTime.split(":");
   let hourNum = parseInt(hours, 10);
@@ -41,18 +41,17 @@ export const generateStudentCourseReportExcel = async (
   ];
 
   report.forEach((item) => {
-    const itemsWithPrices = item.items.map(
-      (i) =>
-        `${i.type === "course" ? "Course" : "Learning Path"}: ${i.name} (Rs. ${(
-          i.finalPrice || i.originalPrice
-        ).toLocaleString("en-IN", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })})` +
-        (i.offerPercentage
-          ? ` [${i.offerPercentage}% off]`
-          : ""),
-    ).join(", ");
+    const itemsWithPrices = item.items
+      .map(
+        (i) =>
+          `${i.type === "course" ? "Course" : "Learning Path"}: ${i.name} (Rs. ${(
+            i.finalPrice || i.originalPrice
+          ).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })})` + (i.offerPercentage ? ` [${i.offerPercentage}% off]` : ""),
+      )
+      .join(", ");
 
     worksheet.addRow({
       orderId: item.orderId,
@@ -70,7 +69,7 @@ export const generateStudentCourseReportExcel = async (
 
   worksheet.addRow([]);
   worksheet.addRow(["", "", "", "", "", "Total Orders:", report.length, ""]);
-  
+
   const totalRevenue = report.reduce(
     (sum, item) => sum + (item.finalTotalPrice || 0),
     0,
@@ -79,7 +78,7 @@ export const generateStudentCourseReportExcel = async (
     (sum, item) => sum + (item.couponDiscountAmount || 0),
     0,
   );
-  
+
   worksheet.addRow(["", "", "", "", "", "Total Discount:", totalDiscount, ""]);
   worksheet.addRow(["", "", "", "", "", "Total Revenue:", "", totalRevenue]);
 
@@ -115,8 +114,7 @@ export const generateStudentSlotReportExcel = async (
   report.forEach((item) => {
     const slotTime =
       item.slotTime?.startTime && item.slotTime?.endTime
-        ? `${item.slotTime.startTime} - ${
-            item.slotTime.endTime}`
+        ? `${item.slotTime.startTime} - ${item.slotTime.endTime}`
         : "N/A";
 
     worksheet.addRow({
@@ -212,12 +210,12 @@ export async function generateStudentCourseReportPdf(
   const totalWidth = doc.page.width - 80;
   const colWidths = [
     totalWidth * 0.12, // Order ID
-    totalWidth * 0.10, // Date
+    totalWidth * 0.1, // Date
     totalWidth * 0.28, // Courses & Learning Paths
-    totalWidth * 0.10, // Coupon
+    totalWidth * 0.1, // Coupon
     totalWidth * 0.08, // Discount %
     totalWidth * 0.11, // Original
-    totalWidth * 0.10, // Saved
+    totalWidth * 0.1, // Saved
     totalWidth * 0.11, // Final
   ];
 
@@ -228,16 +226,21 @@ export async function generateStudentCourseReportPdf(
     row: string[],
     itemsArray: string[],
     yOffset: number,
-    options: { isHeader?: boolean; isTotal?: boolean; isSummary?: boolean } = {},
+    options: {
+      isHeader?: boolean;
+      isTotal?: boolean;
+      isSummary?: boolean;
+    } = {},
   ) => {
     const { isHeader = false, isTotal = false, isSummary = false } = options;
 
     // Calculate dynamic row height based on items
     const baseHeight = isHeader ? 30 : isSummary ? 25 : 18;
     const itemsCount = itemsArray.length || 1;
-    const rowHeight = isHeader || isTotal || isSummary
-      ? baseHeight
-      : Math.max(baseHeight, itemsCount * 12 + 12);
+    const rowHeight =
+      isHeader || isTotal || isSummary
+        ? baseHeight
+        : Math.max(baseHeight, itemsCount * 12 + 12);
 
     // Draw background for header
     if (isHeader) {
@@ -328,10 +331,7 @@ export async function generateStudentCourseReportPdf(
         ).toLocaleString("en-IN", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        })})` +
-        (i.offerPercentage
-          ? ` [${i.offerPercentage}% off]`
-          : ""),
+        })})` + (i.offerPercentage ? ` [${i.offerPercentage}% off]` : ""),
     );
 
     const finalPrice = item.finalTotalPrice || 0;
@@ -461,12 +461,10 @@ export async function generateStudentCourseReportPdf(
       .fontSize(8)
       .fillColor("#94a3b8")
       .font("Helvetica")
-      .text(
-        `Page ${i + 1} of ${pageCount}`,
-        40,
-        doc.page.height - 30,
-        { align: "center", width: pageWidth },
-      );
+      .text(`Page ${i + 1} of ${pageCount}`, 40, doc.page.height - 30, {
+        align: "center",
+        width: pageWidth,
+      });
   }
 
   doc.end();
@@ -505,9 +503,7 @@ export const generateStudentSlotReportPdf = (
     options: { isHeader?: boolean; isTotal?: boolean } = {},
   ) => {
     const { isHeader = false, isTotal = false } = options;
-    doc
-      .fontSize(isHeader ? 10 : 9)
-      .fillColor(isTotal ? "green" : "black");
+    doc.fontSize(isHeader ? 10 : 9).fillColor(isTotal ? "green" : "black");
 
     let x = startX;
     row.forEach((text, i) => {

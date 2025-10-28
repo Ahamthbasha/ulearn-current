@@ -7,7 +7,7 @@ import { type SlotModalProps } from "./interface/instructorComponentInterface";
 
 const convertTo24Hour = (time12h: string) => {
   const [time, modifier] = time12h.split(" ");
-  let [hours, minutes] = time.split(":");
+  const [hours, minutes] = time.split(":");
   let hoursNum = parseInt(hours, 10);
 
   if (modifier === "PM" && hoursNum !== 12) hoursNum += 12;
