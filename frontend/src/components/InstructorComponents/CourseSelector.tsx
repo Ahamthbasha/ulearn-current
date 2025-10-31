@@ -3,6 +3,7 @@ import { FieldArray, useField } from "formik";
 import InputField from "../common/InputField";
 import { getVerifiedCourses } from "../../api/action/InstructorActionApi";
 import type { CourseDTO } from "../../types/interfaces/IInstructorInterface";
+import { AxiosError } from "axios";
 
 interface CourseSelectorProps {
   name: string;
@@ -23,8 +24,11 @@ const CourseSelector: React.FC<CourseSelectorProps> = ({ name, label }) => {
         } else {
           setError("Failed to fetch courses");
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch courses");
+      } catch (err) {
+        const errorMessage = err instanceof AxiosError 
+          ? err.message 
+          : "Failed to fetch courses";
+        setError(errorMessage);
       }
     };
     fetchCourses();

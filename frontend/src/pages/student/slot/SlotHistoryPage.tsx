@@ -4,7 +4,9 @@ import EntityTable from "../../../components/common/EntityTable";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type SlotOrderHistory } from "../interface/studentInterface";
+import { type SlotOrderHistory,type ExtendedSlotOrderHistory, type ApiResponse } from "../interface/studentInterface";
+import { type EntityTableProps } from "../../../components/common/interface/commonComponent";
+import { type ApiError } from "../../../types/interfaces/ICommon";
 
 const PAGE_SIZE = 5;
 
@@ -32,11 +34,11 @@ const SlotHistoryPage = () => {
         combinedQuery = search;
       }
 
-      const res = await bookingHistory(page, PAGE_SIZE, combinedQuery);
+      const res = await bookingHistory(page, PAGE_SIZE, combinedQuery) as ApiResponse;
       console.log("API Response:", res);
 
       // Transform the data to match the expected structure
-      const transformedOrders = res.data.map((order: any) => ({
+      const transformedOrders: SlotOrderHistory[] = res.data.map((order) => ({
         orderId: order.orderId,
         date: `${order.date} ${order.startTime} - ${order.endTime}`,
         amount: order.price,
@@ -46,9 +48,10 @@ const SlotHistoryPage = () => {
 
       setOrders(transformedOrders);
       setTotalOrders(res.total || 0);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Fetch orders error:", error);
-      toast.error(error.response?.data?.message || "Failed to load order history");
+      const apiError = error as ApiError;
+      toast.error(apiError.response?.data?.message || "Failed to load order history");
     } finally {
       setLoading(false);
       setIsSearching(false);
@@ -100,40 +103,43 @@ const SlotHistoryPage = () => {
     setCurrentPage(page);
   };
 
-  const columns = [
+  const tableColumns: EntityTableProps<ExtendedSlotOrderHistory>['columns'] = [
     {
-      key: "orderId" as keyof SlotOrderHistory,
+      key: "orderId",
       label: "Order ID",
-      render: (value: string) => (
+      render: (value: ExtendedSlotOrderHistory[keyof ExtendedSlotOrderHistory]) => (
         <span className="font-mono text-xs sm:text-sm bg-gray-100 px-2 py-1 rounded break-all">
-          {value.slice(-8).toUpperCase()}
+          {String(value).slice(-8).toUpperCase()}
         </span>
       ),
     },
     {
-      key: "date" as keyof SlotOrderHistory,
+      key: "date",
       label: "Date & Time",
-      render: (value: string) => (
-        <div className="text-xs sm:text-sm">
-          <div className="font-medium text-gray-900">{value.split(' ')[0]}</div>
-          <div className="text-gray-500">{value.split(' ').slice(1).join(' ')}</div>
-        </div>
-      ),
+      render: (value: ExtendedSlotOrderHistory[keyof ExtendedSlotOrderHistory]) => {
+        const dateStr = String(value);
+        return (
+          <div className="text-xs sm:text-sm">
+            <div className="font-medium text-gray-900">{dateStr.split(' ')[0]}</div>
+            <div className="text-gray-500">{dateStr.split(' ').slice(1).join(' ')}</div>
+          </div>
+        );
+      },
     },
     {
-      key: "amount" as keyof SlotOrderHistory,
+      key: "amount",
       label: "Amount",
-      render: (value: number) => (
+      render: (value: ExtendedSlotOrderHistory[keyof ExtendedSlotOrderHistory]) => (
         <span className="font-semibold text-green-600 text-sm sm:text-base">
-          ₹{value || 0}
+          ₹{Number(value) || 0}
         </span>
       ),
     },
     {
-      key: "status" as keyof SlotOrderHistory,
+      key: "status",
       label: "Status",
-      render: (value: string) => {
-        const status = value || "confirmed";
+      render: (value: ExtendedSlotOrderHistory[keyof ExtendedSlotOrderHistory]) => {
+        const status = String(value) || "confirmed";
         const statusConfig = {
           confirmed: "bg-green-100 text-green-800 border-green-200",
           failed: "bg-red-100 text-red-800 border-red-200",
@@ -155,8 +161,9 @@ const SlotHistoryPage = () => {
     },
   ];
 
-  const handleViewDetails = (order: SlotOrderHistory) => {
-    navigate(`/user/slotHistory/${order.orderId}`);
+  const handleViewDetails = (order: ExtendedSlotOrderHistory) => {
+    const slotOrder = order as SlotOrderHistory;
+    navigate(`/user/slotHistory/${slotOrder.orderId}`);
   };
 
   const getFilterStatusText = () => {
@@ -168,6 +175,9 @@ const SlotHistoryPage = () => {
     }
     return "";
   };
+
+  // Cast orders to satisfy the type constraint
+  const tableData = orders as ExtendedSlotOrderHistory[];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -326,7 +336,7 @@ const SlotHistoryPage = () => {
           </div>
         ) : (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-            <EntityTable
+            <EntityTable<ExtendedSlotOrderHistory>
               title={
                 statusFilter
                   ? `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Orders`
@@ -334,8 +344,8 @@ const SlotHistoryPage = () => {
                   ? `Search Results`
                   : "Your Orders"
               }
-              data={orders}
-              columns={columns}
+              data={tableData}
+              columns={tableColumns}
               onAction={handleViewDetails}
               actionLabel="View Details"
               emptyText={

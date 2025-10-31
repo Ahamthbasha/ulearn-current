@@ -17,6 +17,7 @@ import { IEnrollmentRepository } from "../../repositories/interfaces/IEnrollment
 import { ICourseRepository } from "../../repositories/interfaces/ICourseRepository";
 import { ILearningPathRepository } from "../../repositories/interfaces/ILearningPathRepository";
 import { appLogger } from "../../utils/logger";
+import { BadRequestError, ConflictError, NotFoundError } from "../../utils/error";
 
 export class StudentCheckoutService implements IStudentCheckoutService {
   private _checkoutRepo: IStudentCheckoutRepository;
@@ -39,7 +40,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
     this._enrollmentRepo = enrollmentRepo;
   }
 
-  async initiateCheckout(
+async initiateCheckout(
     userId: Types.ObjectId,
     courseIds: Types.ObjectId[],
     learningPathIds: Types.ObjectId[] = [],
@@ -68,7 +69,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
               alreadyEnrolledPaths,
               session,
             );
-          throw new Error(
+          throw new BadRequestError(
             `Already enrolled in ${pathDetails.map((p) => p.name).join(", ")}.`,
           );
         }
@@ -90,7 +91,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
             overlappingCourseIds,
             session,
           );
-          throw new Error(
+          throw new BadRequestError(
             `Remove ${courseNames.join(", ")}, they are included in the learning path(s).`,
           );
         }
@@ -104,7 +105,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
             alreadyEnrolledIndividual,
             session,
           );
-          throw new Error(
+          throw new BadRequestError(
             `Remove ${names.join(", ")} from cart, already enrolled.`,
           );
         }
@@ -129,10 +130,10 @@ export class StudentCheckoutService implements IStudentCheckoutService {
         if (existingOrder) {
           const staleThreshold = new Date(Date.now() - 15 * 60 * 1000);
           if (existingOrder.createdAt > staleThreshold) {
-            const error = new Error(
+            const error = new ConflictError(
               "A pending order already exists for these items. Please complete or cancel it first.",
-            );
-            (error as any).orderId = existingOrder._id.toString();
+            ) as ConflictError & { orderId?: string };
+            error.orderId = existingOrder._id.toString();
             throw error;
           }
           await this._checkoutRepo.updateOrderStatus(
@@ -158,9 +159,9 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           individualCourses = await Promise.all(
             courseIds.map(async (courseId) => {
               const course = await courseRepo.findById(courseId.toString());
-              if (!course) throw new Error(`Course ${courseId} not found`);
+              if (!course) throw new NotFoundError(`Course ${courseId} not found`);
               if (!course.instructorId)
-                throw new Error(
+                throw new BadRequestError(
                   `Course ${courseId} has no instructor assigned`,
                 );
 
@@ -193,10 +194,11 @@ export class StudentCheckoutService implements IStudentCheckoutService {
           learningPathDetails = await Promise.all(
             learningPathIds.map(async (pathId) => {
               const path = await learningPathRepo.findById(pathId.toString());
-              if (!path) throw new Error(`Learning path ${pathId} not found`);
+
+              if (!path) throw new NotFoundError(`Learning path ${pathId} not found`);
               if (path.isPurchased) {
-                throw new Error(
-                  `Learning path ${pathId} not available for purchase`,
+                throw new BadRequestError(
+                  `Learning path ${path.title} already purchased`
                 );
               }
 
@@ -208,9 +210,9 @@ export class StudentCheckoutService implements IStudentCheckoutService {
                       item.courseId.toString(),
                     );
                     if (!course)
-                      throw new Error(`Course ${item.courseId} not found`);
+                      throw new NotFoundError(`Course ${item.courseId} not found`);
                     if (!course.instructorId)
-                      throw new Error(
+                      throw new BadRequestError(
                         `Course ${item.courseId} has no instructor assigned`,
                       );
 
@@ -255,7 +257,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
                 ) / 100;
 
               if (totalPrice === 0) {
-                throw new Error(
+                throw new BadRequestError(
                   `All courses in ${path.title} already enrolled, remove from cart.`,
                 );
               }
@@ -295,17 +297,17 @@ export class StudentCheckoutService implements IStudentCheckoutService {
             couponId,
             session,
           );
-          if (!appliedCoupon) throw new Error("Invalid coupon");
+          if (!appliedCoupon) throw new NotFoundError("Invalid coupon");
           if (!appliedCoupon.status || appliedCoupon.expiryDate < new Date()) {
-            throw new Error("Coupon is expired or inactive");
+            throw new BadRequestError("Coupon is expired or inactive");
           }
           if (originalTotalAmount < appliedCoupon.minPurchase) {
-            throw new Error(
+            throw new BadRequestError(
               `Minimum purchase amount of ₹${appliedCoupon.minPurchase} required for this coupon`,
             );
           }
           if (appliedCoupon.usedBy.includes(userId)) {
-            throw new Error("Coupon already used by this user");
+            throw new BadRequestError("Coupon already used by this user");
           }
           const discountAmount =
             Math.floor(
@@ -370,6 +372,7 @@ export class StudentCheckoutService implements IStudentCheckoutService {
       await session.endSession();
     }
   }
+
 
   private async processWalletPayment(
     userId: Types.ObjectId,
@@ -725,9 +728,10 @@ export class StudentCheckoutService implements IStudentCheckoutService {
 
       await this._cartRepo.clear(updatedOrder.userId);
       return { order: updatedOrder, enrollments: allEnrollments };
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
       appLogger.error(
-        `Verification failed for order ${orderId}: ${error.message}`,
+        `Verification failed for order ${orderId}: ${errorMessage}`,
         error,
       );
       throw error;

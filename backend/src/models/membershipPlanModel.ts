@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import { Types, Schema, model, Document } from "mongoose";
 
 export interface IMembershipPlan extends Document {
   _id: string;
@@ -48,3 +48,8 @@ export const MembershipPlanModel = model<IMembershipPlan>(
   "MembershipPlan",
   MembershipPlanSchema,
 );
+
+
+export function isMembershipPlan(obj: Types.ObjectId | IMembershipPlan): obj is IMembershipPlan {
+  return (obj as IMembershipPlan)?.name !== undefined;
+}

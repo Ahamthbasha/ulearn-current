@@ -14,6 +14,7 @@ import {
   ILearningPathOrderDetails,
   IOrder,
 } from "../../interface/adminInterface/IadminInterface";
+import { MembershipRevenueResult } from "../../types/adminTypes/adminTypes";
 
 export class AdminDashboardRepository implements IAdminDashboardRepository {
   private _instructorRepo: IInstructorRepository;
@@ -50,7 +51,7 @@ export class AdminDashboardRepository implements IAdminDashboardRepository {
       { $match: { paymentStatus: "paid" } },
       { $group: { _id: null, total: { $sum: "$price" } } },
     ];
-    const result = await this._membershipOrderRepo.aggregate(pipeline);
+    const result = await this._membershipOrderRepo.aggregate<MembershipRevenueResult>(pipeline);
     return result[0]?.total || 0;
   }
 

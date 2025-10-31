@@ -9,9 +9,13 @@ import {
   VerificationSuccessMessages,
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
-
+import {
+  BadRequestError,
+} from "../../utils/error";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 export class InstructorVerificationController {
   private _verificationService: IInstructorVerificationService;
+  
   constructor(verificationService: IInstructorVerificationService) {
     this._verificationService = verificationService;
   }
@@ -21,7 +25,7 @@ export class InstructorVerificationController {
       const { name, email } = req.body;
 
       if (!req.files || typeof req.files !== "object") {
-        throw new Error(VerificationErrorMessages.DOCUMENTS_MISSING);
+        throw new BadRequestError(VerificationErrorMessages.DOCUMENTS_MISSING);
       }
 
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -29,11 +33,9 @@ export class InstructorVerificationController {
       const resume = files.resume?.[0] || null;
 
       if (!degreeCertificate || !resume) {
-        res.status(StatusCode.BAD_REQUEST).send({
-          success: false,
-          message: VerificationErrorMessages.NO_DOCUMENTS_RECEIVED,
-        });
-        return;
+        throw new BadRequestError(
+          VerificationErrorMessages.NO_DOCUMENTS_RECEIVED
+        );
       }
 
       const existingRequest =
@@ -49,19 +51,15 @@ export class InstructorVerificationController {
         const currentStatus = existingRequest.status;
 
         if (currentStatus === "pending") {
-          res.status(StatusCode.BAD_REQUEST).send({
-            success: false,
-            message: INSTRUCTOR_ERROR_MESSAGE.VERIFICATION_ALREADY_SUBMITTED,
-          });
-          return;
+          throw new BadRequestError(
+            INSTRUCTOR_ERROR_MESSAGE.VERIFICATION_ALREADY_SUBMITTED
+          );
         }
 
         if (currentStatus === "approved") {
-          res.status(StatusCode.BAD_REQUEST).send({
-            success: false,
-            message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ALREADY_VERIFIED,
-          });
-          return;
+          throw new BadRequestError(
+            INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ALREADY_VERIFIED
+          );
         }
 
         // ✅ If rejected → allow re-verification (update the request)
@@ -94,11 +92,9 @@ export class InstructorVerificationController {
         message: VerificationSuccessMessages.VERIFICATION_REQUEST_SENT,
         data: newRequest,
       });
-    } catch (error: any) {
-      appLogger.error("verificationerror", error);
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
+    } catch (error) {
+      appLogger.error("Verification error", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -112,12 +108,9 @@ export class InstructorVerificationController {
         message: VerificationSuccessMessages.REQUEST_DATA_FETCHED,
         data: result,
       });
-    } catch (error: any) {
-      appLogger.error("get request by email error", error);
-      res.status(StatusCode.NOT_FOUND).json({
-        success: false,
-        message: error.message,
-      });
+    } catch (error) {
+      appLogger.error("Get request by email error", { error });
+      handleControllerError(error, res);
     }
   }
 }

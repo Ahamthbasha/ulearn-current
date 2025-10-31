@@ -1,7 +1,7 @@
 import { IStudentInstructorListingRepository } from "./interface/IStudentInstructorListingRepository";
 import InstructorModel, { IInstructor } from "../../models/instructorModel";
 import { GenericRepository } from "../genericRepository";
-import { PipelineStage } from "mongoose";
+import { FilterQuery, PipelineStage } from "mongoose";
 
 export class StudentInstructorListingRepository
   extends GenericRepository<IInstructor>
@@ -19,7 +19,7 @@ export class StudentInstructorListingRepository
     skill?: string,
     expertise?: string,
   ): Promise<{ data: IInstructor[]; total: number }> {
-    const match: any = {
+    const match: FilterQuery<IInstructor> = {
       isMentor: true,
       isBlocked: false,
     };

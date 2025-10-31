@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import fileDownload from "js-file-download";
 import VideoCallModal from "../../../components/common/videocall/CreateCall";
 import useVideoCall from "../../../components/common/videocall/UseVideoCall";
-import { type BookingDetailDTO } from "../interface/studentInterface";
+import { type ApiError, type BookingDetailDTO, type IRazorpayOrder, type IRazorpayPaymentResponse } from "../interface/studentInterface";
 
 export default function SlotBookingDetailPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -88,7 +88,7 @@ export default function SlotBookingDetailPage() {
     }
   };
 
-  const handleRazorpayPayment = (razorpayOrder: any, bookingId: string) => {
+  const handleRazorpayPayment = (razorpayOrder: IRazorpayOrder, bookingId: string) => {
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: razorpayOrder.amount,
@@ -96,7 +96,7 @@ export default function SlotBookingDetailPage() {
       name: "Slot Booking",
       description: "Retry Payment for Slot Booking",
       order_id: razorpayOrder.id,
-      handler: async (response: any) => {
+      handler: async (response:IRazorpayPaymentResponse) => {
         try {
           const verificationResponse = await verifyRetrySlotPayment(
             bookingId,
@@ -111,10 +111,11 @@ export default function SlotBookingDetailPage() {
             toast.error("Payment verification failed");
             await handlePaymentFailureApi(bookingId!);
           }
-        } catch (error: any) {
+        } catch (error) {
+          const err = error as ApiError
           console.error("Payment verification error:", error);
 
-          if (error.response?.data?.error === "SLOT_ALREADY_BOOKED") {
+          if (err.response?.data?.error === "SLOT_ALREADY_BOOKED") {
             toast.error("This slot has already been booked by another user.");
           } else {
             toast.error("Payment verification failed");
@@ -155,14 +156,15 @@ export default function SlotBookingDetailPage() {
         const { razorpayOrder, booking: retryBooking } = response;
         handleRazorpayPayment(razorpayOrder, retryBooking.bookingId);
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as ApiError
       console.error("Retry payment error:", error);
-      if (error.response?.data?.error === "PENDING_BOOKING_BY_OTHERS") {
+      if (err.response?.data?.error === "PENDING_BOOKING_BY_OTHERS") {
         toast.error("This slot is currently being processed by another user. Please try again later.");
-      } else if (error.response?.data?.error === "SLOT_ALREADY_BOOKED") {
+      } else if (err.response?.data?.error === "SLOT_ALREADY_BOOKED") {
         toast.error("This slot has already been booked.");
       } else {
-        toast.error(error.response?.data?.message || "Failed to retry payment");
+        toast.error(err.response?.data?.message || "Failed to retry payment");
       }
     } finally {
       setRetryingPayment(false);
@@ -181,9 +183,10 @@ export default function SlotBookingDetailPage() {
       } else {
         toast.error("Failed to mark booking as failed");
       }
-    } catch (error: any) {
-      console.error("Mark failed error:", error);
-      toast.error(error.response?.data?.message || "Failed to mark booking as failed");
+    } catch (error) {
+      const err = error as ApiError
+      console.error("Mark failed error:", err);
+      toast.error(err.response?.data?.message || "Failed to mark booking as failed");
     } finally {
       setMarkingFailed(false);
     }

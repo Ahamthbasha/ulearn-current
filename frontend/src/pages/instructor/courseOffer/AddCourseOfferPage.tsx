@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
 import { getVerifiedCourses, createInstructorCourseOffer } from "../../../api/action/InstructorActionApi";
 import { toast } from "react-toastify";
 import type { ICourses } from "../interface/instructorInterface";
+import { AxiosError } from "axios";
 
 const getTodayDate = () => {
   const today = new Date();
@@ -54,10 +55,12 @@ const AddInstructorCourseOfferPage: React.FC = () => {
         } else {
           throw new Error("Invalid response format for courses");
         }
-      } catch (e: any) {
-        console.error("Error fetching courses:", e);
-        setError(e.message || "Failed to load courses");
-        toast.error(e.message || "Failed to load courses");
+      } catch (e: unknown) {
+        if(e instanceof AxiosError){
+          console.error("Error fetching courses:", e);
+          setError(e.message || "Failed to load courses");
+          toast.error(e.message || "Failed to load courses");
+        }
       } finally {
         setLoading(false);
       }
@@ -65,25 +68,37 @@ const AddInstructorCourseOfferPage: React.FC = () => {
     fetchCourses();
   }, []);
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
-    try {
-      console.log("Submitting offer with values:", values);
-      await createInstructorCourseOffer(
-        values.courseId,
-        values.discountPercentage,
-        new Date(values.startDate),
-        new Date(values.endDate)
-      );
-      toast.success("Course offer created and submitted for approval");
-      navigate("/instructor/courseOffers");
-    } catch (err: any) {
-      console.error("Error creating offer:", err);
-      const errorMessage = err.response?.data?.message || err.message || "Failed to create offer";
-      toast.error(errorMessage);
-    } finally {
-      setSubmitting(false);
+const handleSubmit = async (
+  values: {
+    courseId: string;
+    discountPercentage: number;
+    startDate: string;
+    endDate: string;
+  },
+  { setSubmitting }: FormikHelpers<{ courseId: string; discountPercentage: number; startDate: string; endDate: string }>
+) => {
+  try {
+    console.log("Submitting offer with values:", values);
+    await createInstructorCourseOffer(
+      values.courseId,
+      values.discountPercentage,
+      new Date(values.startDate),
+      new Date(values.endDate)
+    );
+    toast.success("Course offer created and submitted for approval");
+    navigate("/instructor/courseOffers");
+  } catch (err) {
+    if (err instanceof AxiosError && err.response?.data?.message) {
+      toast.error(err.response.data.message);
+    } else if (err instanceof Error) {
+      toast.error(err.message);
+    } else {
+      toast.error("Failed to create offer");
     }
-  };
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) return <div className="p-6 text-center">Loading courses...</div>;
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;

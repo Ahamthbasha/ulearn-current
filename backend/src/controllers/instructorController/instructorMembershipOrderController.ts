@@ -27,34 +27,23 @@ export class InstructorMembershipOrderController
     this._instructorMembershipService = instructorMembershipService;
   }
 
-  async initiateCheckout(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async initiateCheckout(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { planId } = req.params;
       const instructorId = req.user?.id;
 
       if (!planId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: ResponseMessages.MISSING_DATA });
+        res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.MISSING_DATA });
         return;
       }
 
-      const instructor =
-        await this._instructorMembershipService.getInstructorById(instructorId);
+      const instructor = await this._instructorMembershipService.getInstructorById(instructorId);
       if (!instructor) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
         return;
       }
 
-      if (
-        instructor.membershipExpiryDate &&
-        new Date(instructor.membershipExpiryDate) > new Date()
-      ) {
+      if (instructor.membershipExpiryDate && new Date(instructor.membershipExpiryDate) > new Date()) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
           message: ResponseMessages.ALREADY_ACTIVE_MEMBERSHIP,
@@ -63,67 +52,38 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const result =
-        await this._instructorMembershipOrderService.initiateCheckout(
-          instructorId,
-          planId,
-        );
+      const result = await this._instructorMembershipOrderService.initiateCheckout(instructorId, planId);
       res.status(StatusCode.OK).json(result);
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Checkout error:", error);
-
-      if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP,
-        )
-      ) {
-        res.status(StatusCode.FORBIDDEN).json({
-          message: error.message,
-        });
-      } else if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INVALID_PLAN,
-        )
-      ) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          message: error.message,
-        });
+      const msg = (error as Error).message ?? "";
+      if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP)) {
+        res.status(StatusCode.FORBIDDEN).json({ message: msg });
+      } else if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INVALID_PLAN)) {
+        res.status(StatusCode.BAD_REQUEST).json({ message: msg });
       } else {
-        res
-          .status(StatusCode.INTERNAL_SERVER_ERROR)
-          .json({ message: ResponseMessages.CHECKOUT_FAILED });
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: ResponseMessages.CHECKOUT_FAILED });
       }
     }
   }
 
-  async createRazorpayOrder(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async createRazorpayOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { planId } = req.body;
       const instructorId = req.user?.id;
 
       if (!planId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: ResponseMessages.MISSING_DATA });
+        res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.MISSING_DATA });
         return;
       }
 
-      const instructor =
-        await this._instructorMembershipService.getInstructorById(instructorId);
+      const instructor = await this._instructorMembershipService.getInstructorById(instructorId);
       if (!instructor) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
         return;
       }
 
-      if (
-        instructor.membershipExpiryDate &&
-        new Date(instructor.membershipExpiryDate) > new Date()
-      ) {
+      if (instructor.membershipExpiryDate && new Date(instructor.membershipExpiryDate) > new Date()) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
           message: ResponseMessages.ALREADY_ACTIVE_MEMBERSHIP,
@@ -132,89 +92,50 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const result =
-        await this._instructorMembershipOrderService.createRazorpayOrder(
-          instructorId,
-          planId,
-        );
+      const result = await this._instructorMembershipOrderService.createRazorpayOrder(instructorId, planId);
       res.status(StatusCode.OK).json(result);
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Razorpay order creation error:", error);
-
-      if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP,
-        )
-      ) {
-        res.status(StatusCode.FORBIDDEN).json({
-          message: error.message,
-        });
-      } else if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INVALID_PLAN,
-        )
-      ) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          message: error.message,
-        });
-      } else if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PENDING_ORDER_EXIST,
-        )
-      ) {
-        const match = error.message.match(/Order ID: (\w+)/);
+      const msg = (error as Error).message ?? "";
+      if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP)) {
+        res.status(StatusCode.FORBIDDEN).json({ message: msg });
+      } else if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INVALID_PLAN)) {
+        res.status(StatusCode.BAD_REQUEST).json({ message: msg });
+      } else if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PENDING_ORDER_EXIST)) {
+        const match = msg.match(/Order ID: (\w+)/);
         const orderId = match ? match[1] : undefined;
         res.status(StatusCode.CONFLICT).json({
-          message: error.message,
+          message: msg,
           orderId,
-          suggestion:
-            "Please cancel the pending order or wait 15 minutes to try again.",
+          suggestion: "Please cancel the pending order or wait 15 minutes to try again.",
         });
-      } else if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_PAID,
-        )
-      ) {
-        res.status(StatusCode.CONFLICT).json({
-          message: error.message,
-        });
+      } else if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_PAID)) {
+        res.status(StatusCode.CONFLICT).json({ message: msg });
       } else {
         res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-          message:
-            INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_CREATE_RAZORPAY_ORDER,
+          message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_CREATE_RAZORPAY_ORDER,
         });
       }
     }
   }
 
-  async retryFailedOrder(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async retryFailedOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { orderId } = req.params;
       const instructorId = req.user?.id;
 
       if (!orderId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: ResponseMessages.MISSING_DATA });
+        res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.MISSING_DATA });
         return;
       }
 
-      const instructor =
-        await this._instructorMembershipService.getInstructorById(instructorId);
+      const instructor = await this._instructorMembershipService.getInstructorById(instructorId);
       if (!instructor) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
         return;
       }
 
-      if (
-        instructor.membershipExpiryDate &&
-        new Date(instructor.membershipExpiryDate) > new Date()
-      ) {
+      if (instructor.membershipExpiryDate && new Date(instructor.membershipExpiryDate) > new Date()) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
           message: ResponseMessages.ALREADY_ACTIVE_MEMBERSHIP,
@@ -223,52 +144,22 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      const result =
-        await this._instructorMembershipOrderService.retryFailedOrder(
-          orderId,
-          instructorId,
-        );
-
+      const result = await this._instructorMembershipOrderService.retryFailedOrder(orderId, instructorId);
       res.status(StatusCode.OK).json(result);
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Retry order error:", error);
-
-      if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ORDER_NOT_FOUND,
-        )
-      ) {
-        res.status(StatusCode.NOT_FOUND).json({
-          message: error.message,
-        });
-      } else if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_ORDERS_ONLY_RETRY,
-        )
-      ) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          message: error.message,
-        });
-      } else if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.UNAUTHORIZED_ACCESS,
-        )
-      ) {
-        res.status(StatusCode.FORBIDDEN).json({
-          message: error.message,
-        });
-      } else if (
-        error.message?.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP,
-        )
-      ) {
-        res.status(StatusCode.FORBIDDEN).json({
-          message: error.message,
-        });
+      const msg = (error as Error).message ?? "";
+      if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ORDER_NOT_FOUND)) {
+        res.status(StatusCode.NOT_FOUND).json({ message: msg });
+      } else if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_ORDERS_ONLY_RETRY)) {
+        res.status(StatusCode.BAD_REQUEST).json({ message: msg });
+      } else if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.UNAUTHORIZED_ACCESS)) {
+        res.status(StatusCode.FORBIDDEN).json({ message: msg });
+      } else if (msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ALREADY_HAVE_AN_ACTIVE_MEMBERSHIP)) {
+        res.status(StatusCode.FORBIDDEN).json({ message: msg });
       } else {
         res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-          message:
-            INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_RETRY_ORDER,
+          message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_RETRY_ORDER,
         });
       }
     }
@@ -279,16 +170,8 @@ export class InstructorMembershipOrderController
       const { razorpayOrderId, paymentId, signature, planId } = req.body;
       const instructorId = req.user?.id;
 
-      if (
-        !razorpayOrderId ||
-        !paymentId ||
-        !signature ||
-        !planId ||
-        !instructorId
-      ) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: ResponseMessages.MISSING_DATA });
+      if (!razorpayOrderId || !paymentId || !signature || !planId || !instructorId) {
+        res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.MISSING_DATA });
         return;
       }
 
@@ -300,45 +183,30 @@ export class InstructorMembershipOrderController
         instructorId,
       });
 
-      res
-        .status(StatusCode.OK)
-        .json({ message: ResponseMessages.MEMBERSHIP_ACTIVATED });
+      res.status(StatusCode.OK).json({ message: ResponseMessages.MEMBERSHIP_ACTIVATED });
     } catch (error) {
       appLogger.error("Verification error:", error);
-      res
-        .status(StatusCode.BAD_REQUEST)
-        .json({ message: ResponseMessages.VERIFICATION_FAILED });
+      res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.VERIFICATION_FAILED });
     }
   }
 
-  async purchaseWithWallet(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async purchaseWithWallet(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { planId } = req.params;
       const instructorId = req.user?.id;
 
       if (!planId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: ResponseMessages.MISSING_DATA });
+        res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.MISSING_DATA });
         return;
       }
 
-      const instructor =
-        await this._instructorMembershipService.getInstructorById(instructorId);
+      const instructor = await this._instructorMembershipService.getInstructorById(instructorId);
       if (!instructor) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: ResponseMessages.INSTRUCTOR_NOT_FOUND });
         return;
       }
 
-      if (
-        instructor.membershipExpiryDate &&
-        new Date(instructor.membershipExpiryDate) > new Date()
-      ) {
+      if (instructor.membershipExpiryDate && new Date(instructor.membershipExpiryDate) > new Date()) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
           message: ResponseMessages.ALREADY_ACTIVE_MEMBERSHIP,
@@ -347,49 +215,35 @@ export class InstructorMembershipOrderController
         return;
       }
 
-      await this._instructorMembershipOrderService.purchaseWithWallet(
-        instructorId,
-        planId,
-      );
-
-      res
-        .status(StatusCode.OK)
-        .json({ message: ResponseMessages.MEMBERSHIP_ACTIVATED });
-    } catch (error: unknown) {
+      await this._instructorMembershipOrderService.purchaseWithWallet(instructorId, planId);
+      res.status(StatusCode.OK).json({ message: ResponseMessages.MEMBERSHIP_ACTIVATED });
+    } catch (error) {
       appLogger.error("Wallet purchase error:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : ResponseMessages.WALLET_PURCHASE_FAILED;
-      res.status(StatusCode.BAD_REQUEST).json({ message: errorMessage });
+      const msg = error instanceof Error ? error.message : ResponseMessages.WALLET_PURCHASE_FAILED;
+      res.status(StatusCode.BAD_REQUEST).json({ message: msg });
     }
   }
 
-  async getInstructorOrders(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async getInstructorOrders(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id;
       if (!instructorId) {
         res.status(StatusCode.UNAUTHORIZED).json({
-          message:
-            INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INSTRUCTOR_NOT_FOUND,
+          message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.INSTRUCTOR_NOT_FOUND,
         });
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
       const search = req.query.search as string | undefined;
 
-      const { data, total } =
-        await this._instructorMembershipOrderService.getInstructorOrders(
-          instructorId,
-          page,
-          limit,
-          search,
-        );
+      const { data, total } = await this._instructorMembershipOrderService.getInstructorOrders(
+        instructorId,
+        page,
+        limit,
+        search,
+      );
 
       res.status(StatusCode.OK).json({ data, total });
     } catch (error) {
@@ -400,70 +254,43 @@ export class InstructorMembershipOrderController
     }
   }
 
-  async getMembershipOrderDetail(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async getMembershipOrderDetail(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { orderId } = req.params;
       const instructorId = req.user?.id;
 
       if (!orderId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: INSTRUCTOR_ERROR_MESSAGE.DATA_MISSING });
+        res.status(StatusCode.BAD_REQUEST).json({ message: INSTRUCTOR_ERROR_MESSAGE.DATA_MISSING });
         return;
       }
 
-      const order =
-        await this._instructorMembershipOrderService.getOrderByOrderId(
-          orderId,
-          instructorId,
-        );
+      const order = await this._instructorMembershipOrderService.getOrderByOrderId(orderId, instructorId);
       if (!order) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
         return;
       }
 
       res.status(StatusCode.OK).json(order);
-    } catch (err: unknown) {
-      appLogger.error("Order detail fetch error:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_ORDER;
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: errorMessage });
+    } catch (error) {
+      appLogger.error("Order detail fetch error:", error);
+      const msg = error instanceof Error ? error.message : INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_ORDER;
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: msg });
     }
   }
 
-  async downloadReceipt(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async downloadReceipt(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { orderId } = req.params;
       const instructorId = req.user?.id;
 
       if (!orderId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
+        res.status(StatusCode.BAD_REQUEST).json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
         return;
       }
 
-      const order =
-        await this._instructorMembershipOrderService.getOrderByOrderId(
-          orderId,
-          instructorId,
-        );
+      const order = await this._instructorMembershipOrderService.getOrderByOrderId(orderId, instructorId);
       if (!order) {
-        res
-          .status(StatusCode.NOT_FOUND)
-          .json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
+        res.status(StatusCode.NOT_FOUND).json({ message: INSTRUCTOR_ERROR_MESSAGE.ORDER_NOT_FOUND });
         return;
       }
 
@@ -473,20 +300,12 @@ export class InstructorMembershipOrderController
       }
 
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename=Receipt_${orderId}.pdf`,
-      );
+      res.setHeader("Content-Disposition", `attachment; filename=Receipt_${orderId}.pdf`);
       res.send(pdfBuffer);
-    } catch (err: unknown) {
-      appLogger.error("Receipt generation error:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_GENERATE_RECEIPT;
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ message: errorMessage });
+    } catch (error) {
+      appLogger.error("Receipt generation error:", error);
+      const msg = error instanceof Error ? error.message : INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_GENERATE_RECEIPT;
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: msg });
     }
   }
 
@@ -496,39 +315,24 @@ export class InstructorMembershipOrderController
       const instructorId = req.user?.id;
 
       if (!orderId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: ResponseMessages.MISSING_DATA });
+        res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.MISSING_DATA });
         return;
       }
 
-      await this._instructorMembershipOrderService.cancelOrder(
-        orderId,
-        instructorId,
-      );
-
+      await this._instructorMembershipOrderService.cancelOrder(orderId, instructorId);
       res.status(StatusCode.OK).json({
-        message:
-          INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.ORDER_CANCELLED_SUCCESSFULLY,
+        message: INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.ORDER_CANCELLED_SUCCESSFULLY,
       });
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Cancel order error:", error);
-      const errorMessage = error.message || "Failed to cancel order";
+      const msg = (error as Error).message ?? "Failed to cancel order";
       if (
-        errorMessage.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ORDER_NOT_FOUND,
-        ) ||
-        errorMessage.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PENDING_ORDERS_ONLY_ABLE_TO_CANCEL,
-        ) ||
-        errorMessage.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.UNAUTHORIZED_ACCESS,
-        ) ||
-        errorMessage.includes(
-          INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PAID_BY_RAZORPAY,
-        )
+        msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.ORDER_NOT_FOUND) ||
+        msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PENDING_ORDERS_ONLY_ABLE_TO_CANCEL) ||
+        msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.UNAUTHORIZED_ACCESS) ||
+        msg.includes(INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.PAID_BY_RAZORPAY)
       ) {
-        res.status(StatusCode.BAD_REQUEST).json({ message: errorMessage });
+        res.status(StatusCode.BAD_REQUEST).json({ message: msg });
       } else {
         res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
           message: INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_CANCEL,
@@ -537,35 +341,24 @@ export class InstructorMembershipOrderController
     }
   }
 
-  async markOrderAsFailed(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
+  async markOrderAsFailed(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { orderId } = req.body;
       const instructorId = req.user?.id;
 
       if (!orderId || !instructorId) {
-        res
-          .status(StatusCode.BAD_REQUEST)
-          .json({ message: ResponseMessages.MISSING_DATA });
+        res.status(StatusCode.BAD_REQUEST).json({ message: ResponseMessages.MISSING_DATA });
         return;
       }
 
-      await this._instructorMembershipOrderService.markOrderAsFailed(
-        orderId,
-        instructorId,
-      );
-
+      await this._instructorMembershipOrderService.markOrderAsFailed(orderId, instructorId);
       res.status(StatusCode.OK).json({
         message: INSTRUCTOR_MEMBERSHIP_ORDER_SUCCESS_MESSAGE.MARKED_AS_FAILED,
       });
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Mark order as failed error:", error);
-      const errorMessage =
-        error.message ||
-        INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_MARK_AS_FAILED;
-      res.status(StatusCode.BAD_REQUEST).json({ message: errorMessage });
+      const msg = (error as Error).message ?? INSTRUCTOR_MEMBERSHIP_ORDER_ERROR_MESSAGE.FAILED_TO_MARK_AS_FAILED;
+      res.status(StatusCode.BAD_REQUEST).json({ message: msg });
     }
   }
 }

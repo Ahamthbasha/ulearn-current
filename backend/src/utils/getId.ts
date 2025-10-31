@@ -12,12 +12,30 @@ export interface CustomRequest extends Request {
   };
 }
 
+// Define an interface for decoded token payload
+interface TokenPayload {
+  id?: string;
+  [key: string]: unknown; // Allow additional properties
+}
+
 const getId = (req: CustomRequest): string | null => {
   try {
     const accessToken = req.cookies["accessToken"];
-    const decodedData: any = jwt.decode(accessToken);
-    const { id } = decodedData;
-    return id;
+    if (!accessToken) return null;
+
+    const decodedData = jwt.decode(accessToken);
+
+    if (
+      decodedData &&
+      typeof decodedData === "object" &&
+      !Array.isArray(decodedData) &&
+      "id" in decodedData &&
+      typeof (decodedData as TokenPayload).id === "string"
+    ) {
+      return (decodedData as TokenPayload).id!;
+    }
+
+    return null;
   } catch (error) {
     appLogger.error(AuthErrorMsg.TOKEN_VERIFICATION_ERROR, error);
     return null;

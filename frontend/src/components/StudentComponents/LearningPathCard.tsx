@@ -41,9 +41,14 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
 
         const wishRes = await isItemInWishlist(learningPathId,"learningPath");
         setIsInWishlist(wishRes?.exists || false);
-      } catch (error: any) {
-        toast.error(error.message || "Failed to fetch cart/wishlist status");
-      }
+      } catch (error: unknown) {
+  let message = "Failed to fetch cart/wishlist status";
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  toast.error(message);
+}
+
     };
 
     fetchStatuses();
@@ -60,9 +65,14 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
       await addToCart(learningPathId, "learningPath");
       setIsInCart(true);
       toast.success("Learning path added to cart" );
-    } catch (error: any) {
-      toast.error(error.message || "Failed to add learning path to cart");
-    } finally {
+    } catch (error: unknown) {
+  let message = "Failed to add learning path to cart";
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  toast.error(message);
+}
+finally {
       setIsLoading(false);
     }
   };
@@ -78,9 +88,14 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
       const res = await addToWishlist(learningPathId,"learningPath");
       toast.success(res.message || "Added to wishlist");
       setIsInWishlist(true);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to add to wishlist");
-    } finally {
+    } catch (error: unknown) {
+  let message = "Failed to add to wishlist";
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  toast.error(message);
+}
+finally {
       setIsLoading(false);
     }
   };
@@ -91,9 +106,14 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({
       const res = await removeFromWishlist(learningPathId,"learningPath");
       toast.success(res.message || "Removed from wishlist");
       setIsInWishlist(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to remove from wishlist");
-    } finally {
+    } catch (error: unknown) {
+  let message = "Failed to remove from wishlist";
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  toast.error(message);
+}
+finally {
       setIsLoading(false);
     }
   };

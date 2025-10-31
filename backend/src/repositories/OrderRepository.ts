@@ -35,7 +35,7 @@ export class OrderRepository
     return this.model.find({ status: "SUCCESS" }).lean().exec();
   }
 
-  async performAggregation<T = any>(pipeline: PipelineStage[]): Promise<T[]> {
+  async performAggregation<T>(pipeline: PipelineStage[]): Promise<T[]> {
     return this.model.aggregate<T>(pipeline).exec();
   }
 

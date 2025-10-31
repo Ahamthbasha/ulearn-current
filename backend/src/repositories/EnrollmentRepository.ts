@@ -1,6 +1,6 @@
 import { IEnrollment, EnrollmentModel } from "../models/enrollmentModel";
 import { GenericRepository } from "./genericRepository";
-import mongoose, { Types } from "mongoose";
+import mongoose, { PopulateOptions, Types } from "mongoose";
 import { IEnrollmentRepository } from "./interfaces/IEnrollmentRepository";
 export class EnrollmentRepository
   extends GenericRepository<IEnrollment>
@@ -28,7 +28,7 @@ export class EnrollmentRepository
   async findByUserAndCourseWithPopulate(
     userId: string,
     courseId: string,
-    populateOptions: any[],
+    populateOptions: PopulateOptions[],
   ): Promise<IEnrollment | null> {
     let query = this.model.findOne({ userId, courseId });
     populateOptions.forEach((option) => {

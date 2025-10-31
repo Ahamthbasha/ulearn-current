@@ -46,10 +46,10 @@ export class StudentDashboardController implements IStudentDashboardController {
           slotPerformance: monthlyPerformance.slotPerformance,
         },
       });
-    } catch (err: any) {
+    } catch (err) {
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: err.message });
+        .json({ success: false, message: err instanceof Error ? err.message : StudentErrorMessages.INTERNAL_SERVER_ERROR});
     }
   }
 

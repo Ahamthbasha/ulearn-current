@@ -10,6 +10,7 @@ import {
   StudentSuccessMessages,
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 
 export class StudentOrderController implements IStudentOrderController {
   private _orderService: IStudentOrderService;
@@ -178,20 +179,9 @@ export class StudentOrderController implements IStudentOrderController {
       );
 
       res.status(StatusCode.OK).json(result);
-    } catch (err: any) {
+    } catch (err: unknown) {
       appLogger.error("Error initiating payment retry:", err);
-      res
-        .status(
-          err.message.includes(StudentErrorMessages.ALREADY_IN_PROGRESS)
-            ? StatusCode.CONFLICT
-            : StatusCode.INTERNAL_SERVER_ERROR,
-        )
-        .json({
-          success: false,
-          message:
-            err.message ||
-            StudentErrorMessages.FAILED_TO_INITIATE_PAYMENT_RETRY,
-        });
+      handleControllerError(err,res)
     }
   }
 
@@ -239,13 +229,9 @@ export class StudentOrderController implements IStudentOrderController {
         message: StudentSuccessMessages.ORDER_MARKED_AS_FAILED,
         order: result.order,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       appLogger.error("Error marking order as failed:", err);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message:
-          err.message || StudentErrorMessages.FAILED_TO_MARK_ORDER_AS_FAILED,
-      });
+      handleControllerError(err,res)
     }
   }
 }

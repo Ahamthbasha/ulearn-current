@@ -11,6 +11,15 @@ import DataTable, {
 } from "../../../components/AdminComponents/DataTable";
 import { type MembershipOrderDTO } from "../interface/adminInterface";
 
+// Extended interface to satisfy Record<string, unknown> constraint
+interface MembershipOrderRecord extends Record<string, unknown> {
+  orderId: string;
+  instructorName: string;
+  membershipName: string;
+  price: number;
+  status: string;
+}
+
 const Orders: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<MembershipOrderDTO[]>([]);
@@ -33,7 +42,7 @@ const Orders: React.FC = () => {
     { value: "cancelled", label: "Cancelled" },
   ];
 
-  const fetchOrders = async (pageNum = 1, search = "", status: string = "") => {
+  const fetchOrders = async (pageNum = 1, search = "", status = "") => {
     setLoading(true);
     setError(null);
     try {
@@ -48,9 +57,10 @@ const Orders: React.FC = () => {
       setTotal(res.total || 0);
       setTotalPages(Math.ceil((res.total || 0) / limit));
       setPage(pageNum);
-    } catch (err: any) {
+    } catch (err) {
       const errorMessage =
-        err.response?.data?.message || "Failed to fetch orders";
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message || 
+        "Failed to fetch orders";
       setError(errorMessage);
       toast.error(errorMessage);
       setOrders([]);
@@ -75,7 +85,7 @@ const Orders: React.FC = () => {
     setPage(pageNum);
   };
 
-  const handleViewDetails = (record: MembershipOrderDTO) => {
+  const handleViewDetails = (record: MembershipOrderRecord) => {
     navigate(`/admin/membershipPurchase/${record.orderId}`);
   };
 
@@ -120,15 +130,25 @@ const Orders: React.FC = () => {
     return description;
   };
 
-  const columns: Column<MembershipOrderDTO>[] = [
+  // Convert to string for title attribute
+  const stringifyValue = (value: unknown): string => {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return value.toString();
+    return String(value);
+  };
+
+  const columns: Column<MembershipOrderRecord>[] = [
     { 
       key: "orderId", 
       title: "Order ID", 
       minWidth: "140px",
       hideOnMobile: false,
       render: (value) => (
-        <span className="text-xs sm:text-sm font-mono text-gray-900 break-all max-w-[100px] sm:max-w-none truncate" title={value}>
-          {value}
+        <span 
+          className="text-xs sm:text-sm font-mono text-gray-900 break-all max-w-[100px] sm:max-w-none truncate" 
+          title={stringifyValue(value)}
+        >
+          {stringifyValue(value)}
         </span>
       )
     },
@@ -138,8 +158,11 @@ const Orders: React.FC = () => {
       minWidth: "120px",
       hideOnMobile: false,
       render: (value) => (
-        <span className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-none" title={value}>
-          {value}
+        <span 
+          className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-none" 
+          title={stringifyValue(value)}
+        >
+          {stringifyValue(value)}
         </span>
       )
     },
@@ -149,8 +172,11 @@ const Orders: React.FC = () => {
       minWidth: "120px",
       hideOnMobile: true,
       render: (value) => (
-        <span className="text-sm text-gray-900 truncate" title={value}>
-          {value}
+        <span 
+          className="text-sm text-gray-900 truncate" 
+          title={stringifyValue(value)}
+        >
+          {stringifyValue(value)}
         </span>
       )
     },
@@ -173,12 +199,14 @@ const Orders: React.FC = () => {
       minWidth: "80px",
       hideOnMobile: false,
       render: (value) => (
-        <span className={getStatusColor(value)}>{value}</span>
+        <span className={getStatusColor(stringifyValue(value))}>
+          {stringifyValue(value)}
+        </span>
       ),
     },
   ];
 
-  const actions: ActionButton<MembershipOrderDTO>[] = [
+  const actions: ActionButton<MembershipOrderRecord>[] = [
     {
       key: "view",
       label: "View Details",
@@ -193,6 +221,9 @@ const Orders: React.FC = () => {
     totalPages: totalPages,
     onPageChange: handlePageChange,
   };
+
+  // Cast orders to MembershipOrderRecord[] for DataTable
+  const orderRecords = orders as unknown as MembershipOrderRecord[];
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 bg-gray-50 min-h-screen">
@@ -306,7 +337,7 @@ const Orders: React.FC = () => {
 
         {/* DataTable */}
         <DataTable
-          data={orders}
+          data={orderRecords}
           columns={columns}
           loading={loading}
           error={error}

@@ -8,11 +8,11 @@ import { jwtDecode } from "jwt-decode";
 import PasswordField from "../../../components/common/PasswordField";
 import { setUser } from "../../../redux/slices/userSlice";
 import { login, googleLogin } from "../../../api/auth/UserAuthentication";
-import type { Login } from "../../../types/LoginTypes";
+import type { DecodedGoogleCredential, Login } from "../../../types/LoginTypes";
 
-import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { GoogleOAuthProvider, GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
-// ✅ Improved validation
 const loginSchema = Yup.object().shape({
   email: Yup.string()
     .email("Enter a valid email address")
@@ -65,55 +65,57 @@ const LoginPage = () => {
       } else {
         toast.error(response?.message || "Login failed");
       }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      const errorMessage =
-        error?.response?.data?.message || "Login failed. Please try again";
-      toast.error(errorMessage);
-    }
+    } 
+    catch (error) {
+  console.error("Login error:", error);
+  const apiError = error as ApiError;
+  const errorMessage =
+    apiError.response?.data?.message || "Login failed. Please try again";
+  toast.error(errorMessage);
+}
   };
 
-  const handleGoogleLogin = async (credentialResponse: any) => {
-    try {
-      if (!credentialResponse.credential) {
-        toast.error("Invalid Google Credential");
-        return;
-      }
-
-      const decoded: any = jwtDecode(credentialResponse.credential);
-
-      const response = await googleLogin({
-        name: decoded.name,
-        email: decoded.email,
-        password: decoded.sub,
-        profilePicture: decoded.picture,
-        role: "student",
-      });
-
-      const user = response?.user;
-
-      if (user) {
-        dispatch(
-          setUser({
-            _id: user._id,
-            username: user.name,
-            email: user.email,
-            role: user.role,
-            isBlocked: user.isBlocked,
-            profilePicUrl: user.profilePicture,
-          })
-        );
-        localStorage.setItem("user", JSON.stringify(user));
-        toast.success(response.message || "Logged in with Google!");
-        navigate("/");
-      } else {
-        toast.error(response.message || "Google login failed");
-      }
-    } catch (error: any) {
-      console.error("Google Login Error:", error);
-      toast.error(error.message || "Google login failed");
+const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
+  try {
+    if (!credentialResponse.credential) {
+      toast.error("Invalid Google Credential");
+      return;
     }
-  };
+
+    const decoded = jwtDecode<DecodedGoogleCredential>(credentialResponse.credential);
+
+    const response = await googleLogin({
+      name: decoded.name,
+      email: decoded.email,
+      profilePicture: decoded.picture,
+      role: "student",
+    });
+
+    const user = response?.user;
+
+    if (user) {
+      dispatch(
+        setUser({
+          _id: user._id,
+          username: user.name,
+          email: user.email,
+          role: user.role,
+          isBlocked: user.isBlocked,
+          profilePicUrl: user.profilePicture,
+        })
+      );
+      localStorage.setItem("user", JSON.stringify(user));
+      toast.success(response.message || "Logged in with Google!");
+      navigate("/");
+    } else {
+      toast.error(response.message || "Google login failed");
+    }
+  } catch (error) {
+    console.error("Google Login Error:", error);
+    const apiError = error as ApiError;
+    toast.error(apiError.message || "Google login failed");
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100">

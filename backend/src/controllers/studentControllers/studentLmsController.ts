@@ -3,6 +3,7 @@ import { IStudentLmsService } from "../../services/studentServices/interface/ISt
 import { IStudentLmsController } from "./interfaces/IStudentLmsController";
 import { StatusCode } from "../../utils/enums";
 import { LMS_ERROR_MESSAGE } from "../../utils/constants";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 
 export class StudentLmsController implements IStudentLmsController {
   private _lmsService: IStudentLmsService;
@@ -43,10 +44,8 @@ export class StudentLmsController implements IStudentLmsController {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
       });
-    } catch (error: any) {
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
+    } catch (error: unknown) {
+      handleControllerError(error,res)
     }
   }
 
@@ -62,10 +61,8 @@ export class StudentLmsController implements IStudentLmsController {
         return;
       }
       res.status(StatusCode.OK).json({ success: true, data: path });
-    } catch (error: any) {
-      res
-        .status(StatusCode.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: error.message });
+    } catch (error: unknown) {
+      handleControllerError(error,res)
     }
   }
 }

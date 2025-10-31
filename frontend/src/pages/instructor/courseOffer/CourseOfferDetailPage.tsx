@@ -5,6 +5,7 @@ import Card from "../../../components/common/Card";
 import ConfirmationModal from "../../../components/common/ConfirmationModal"; 
 import { toast } from "react-toastify";
 import type { ICourseOfferDetails } from "../interface/instructorInterface";
+import { AxiosError } from "axios";
 
 const OfferDetailsPage: React.FC = () => {
   const { offerId } = useParams<{ offerId: string }>();
@@ -38,11 +39,27 @@ const OfferDetailsPage: React.FC = () => {
         } else {
           throw new Error("Invalid response format");
         }
-      } catch (e: any) {
-        console.error("Error fetching offer:", e);
-        setError(e.message || "Failed to load offer");
-        toast.error(e.message || "Failed to load offer");
-      } finally {
+      }
+       catch (e: unknown) {
+  if (e instanceof AxiosError) {
+    const message = e.response?.data?.message || e.message || "Failed to load offer";
+    console.error("Error fetching offer:", e);
+    setError(message);
+    toast.error(message);
+  } else if (e instanceof Error) {
+    // Handle generic JS error
+    console.error("Error fetching offer:", e);
+    setError(e.message);
+    toast.error(e.message);
+  } else {
+    // Fallback for unknown error shapes
+    const fallback = "Failed to load offer";
+    console.error("Unexpected error fetching offer:", e);
+    setError(fallback);
+    toast.error(fallback);
+  }
+}
+      finally {
         setLoading(false);
       }
     };
@@ -64,9 +81,15 @@ const OfferDetailsPage: React.FC = () => {
       toast.success("Offer deleted");
       setIsModalOpen(false);
       navigate("/instructor/courseOffers");
-    } catch (e: any) {
-      toast.error(e.message || "Failed to delete offer");
-    }
+    } catch (e: unknown) {
+  if (e instanceof AxiosError) {
+    toast.error(e.response?.data?.message || e.message || "Failed to delete offer");
+  } else if (e instanceof Error) {
+    toast.error(e.message || "Failed to delete offer");
+  } else {
+    toast.error("Failed to delete offer");
+  }
+}
   };
 
   const handleModalCancel = () => {

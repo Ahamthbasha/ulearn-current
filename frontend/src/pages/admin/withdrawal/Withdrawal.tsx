@@ -4,8 +4,9 @@ import { toast } from "react-toastify";
 import { Eye, Search, Filter, ChevronDown, X } from "lucide-react";
 import { adminGetAllWithdrawalRequests } from "../../../api/action/AdminActionApi";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type WithdrawalRequestDto, type StatusFilter } from "../interface/adminInterface";
+import { type WithdrawalRequestDto, type StatusFilter, type WithdrawalRequestRecord } from "../interface/adminInterface";
 import DataTable,{type Column,type ActionButton,type PaginationProps} from "../../../components/AdminComponents/DataTable";
+
 
 export default function AdminWithdrawalPage() {
   const navigate = useNavigate();
@@ -23,6 +24,14 @@ export default function AdminWithdrawalPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const limit = 10;
 
+  // Helper function to stringify values
+  const stringifyValue = (value: unknown): string => {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return value.toString();
+    if (typeof value === 'boolean') return value.toString();
+    return String(value);
+  };
+
   const fetchWithdrawalRequests = async (pageNum = 1, search = "", status: StatusFilter = "") => {
     setLoading(true);
     setError(null);
@@ -32,8 +41,10 @@ export default function AdminWithdrawalPage() {
       setPage(res.currentPage || 1);
       setTotalPages(res.totalPages || 1);
       setTotal(res.total || 0);
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to load withdrawal requests";
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to load withdrawal requests";
       setError(errorMessage);
       toast.error(errorMessage);
       setWithdrawalRequests([]);
@@ -57,7 +68,7 @@ export default function AdminWithdrawalPage() {
     setPage(pageNum);
   };
 
-  const handleViewDetails = (record: WithdrawalRequestDto) => {
+  const handleViewDetails = (record: WithdrawalRequestRecord) => {
     navigate(`/admin/withdrawals/${record.requestId}`);
   };
 
@@ -158,19 +169,25 @@ export default function AdminWithdrawalPage() {
   };
 
   // Ultra-responsive columns optimized for all screen sizes
-  const columns: Column<WithdrawalRequestDto>[] = [
+  const columns: Column<WithdrawalRequestRecord>[] = [
     {
-      key: "instructorDetails",
+      key: "instructorName", // Changed from "instructorDetails" to valid key
       title: "Instructor",
       minWidth: "120px",
       priority: 1,
       render: (_, record) => (
         <div className="flex flex-col space-y-0.5">
-          <span className="font-semibold text-gray-900 text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px]" title={record.instructorName}>
-            {record.instructorName}
+          <span 
+            className="font-semibold text-gray-900 text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px]" 
+            title={stringifyValue(record.instructorName)}
+          >
+            {stringifyValue(record.instructorName)}
           </span>
-          <span className="text-xs text-gray-500 truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px]" title={record.instructorEmail}>
-            {record.instructorEmail}
+          <span 
+            className="text-xs text-gray-500 truncate max-w-[100px] sm:max-w-[150px] lg:max-w-[200px]" 
+            title={stringifyValue(record.instructorEmail)}
+          >
+            {stringifyValue(record.instructorEmail)}
           </span>
         </div>
       ),
@@ -181,13 +198,16 @@ export default function AdminWithdrawalPage() {
       width: "70px",
       minWidth: "60px",
       priority: 2,
-      render: (value) => (
-        <div className="text-right">
-          <span className="font-bold text-green-600 text-xs sm:text-sm whitespace-nowrap block">
-            ₹{value?.toLocaleString('en-IN') || '0'}
-          </span>
-        </div>
-      ),
+      render: (value) => {
+        const amount = typeof value === 'number' ? value : 0;
+        return (
+          <div className="text-right">
+            <span className="font-bold text-green-600 text-xs sm:text-sm whitespace-nowrap block">
+              ₹{amount.toLocaleString('en-IN')}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "status",
@@ -195,18 +215,21 @@ export default function AdminWithdrawalPage() {
       width: "80px",
       minWidth: "70px",
       priority: 2,
-      render: (value) => (
-        <div className="flex justify-center">
-          <span className={getStatusColor(value)}>
-            <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 flex-shrink-0 ${
-              value?.toLowerCase() === 'approved' ? 'bg-green-500' : 
-              value?.toLowerCase() === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
-            }`} />
-            <span className="hidden xs:hidden sm:inline truncate">{value}</span>
-            <span className="xs:inline sm:hidden font-bold">{value?.charAt(0)}</span>
-          </span>
-        </div>
-      ),
+      render: (value) => {
+        const statusStr = stringifyValue(value);
+        return (
+          <div className="flex justify-center">
+            <span className={getStatusColor(statusStr)}>
+              <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 flex-shrink-0 ${
+                statusStr.toLowerCase() === 'approved' ? 'bg-green-500' : 
+                statusStr.toLowerCase() === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
+              }`} />
+              <span className="hidden xs:hidden sm:inline truncate">{statusStr}</span>
+              <span className="xs:inline sm:hidden font-bold">{statusStr.charAt(0)}</span>
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "bankAccount",
@@ -214,15 +237,20 @@ export default function AdminWithdrawalPage() {
       width: "70px",
       minWidth: "60px",
       priority: 3,
-      render: (value) => (
-        <div className="flex justify-center">
-          <span className={getBankAccountColor(value)}>
-            <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 flex-shrink-0 ${value?.toLowerCase() === 'linked' ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="hidden xs:hidden sm:inline">{value}</span>
-            <span className="xs:inline sm:hidden font-bold">{value === 'Linked' ? 'L' : 'N'}</span>
-          </span>
-        </div>
-      ),
+      render: (value) => {
+        const bankStr = stringifyValue(value);
+        return (
+          <div className="flex justify-center">
+            <span className={getBankAccountColor(bankStr)}>
+              <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 flex-shrink-0 ${
+                bankStr.toLowerCase() === 'linked' ? 'bg-green-500' : 'bg-red-500'
+              }`} />
+              <span className="hidden xs:hidden sm:inline">{bankStr}</span>
+              <span className="xs:inline sm:hidden font-bold">{bankStr === 'Linked' ? 'L' : 'N'}</span>
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "createdAt",
@@ -230,36 +258,39 @@ export default function AdminWithdrawalPage() {
       width: "90px",
       minWidth: "80px",
       priority: 4,
-      render: (value) => (
-        <div className="text-center">
-          <span className="text-xs text-gray-600 whitespace-nowrap block">
-            {/* Parse and format date for better mobile display */}
-            {(() => {
-              try {
-                // Handle the format "18/08/2025 04:40 PM"
-                const [datePart, timePart, period] = value.split(' ');
-                const [day, month, year] = datePart.split('/');
-                return (
-                  <div className="flex flex-col">
-                    <span className="text-xs">{`${day}/${month}/${year.slice(-2)}`}</span>
-                    <span className="text-xs text-gray-400 hidden sm:block">{`${timePart} ${period}`}</span>
-                  </div>
-                );
-              } catch {
-                return <span className="text-xs">{value}</span>;
-              }
-            })()}
-          </span>
-        </div>
-      ),
+      render: (value) => {
+        const dateStr = stringifyValue(value);
+        return (
+          <div className="text-center">
+            <span className="text-xs text-gray-600 whitespace-nowrap block">
+              {/* Parse and format date for better mobile display */}
+              {(() => {
+                try {
+                  // Handle the format "18/08/2025 04:40 PM"
+                  const [datePart, timePart, period] = dateStr.split(' ');
+                  const [day, month, year] = datePart.split('/');
+                  return (
+                    <div className="flex flex-col">
+                      <span className="text-xs">{`${day}/${month}/${year.slice(-2)}`}</span>
+                      <span className="text-xs text-gray-400 hidden sm:block">{`${timePart} ${period}`}</span>
+                    </div>
+                  );
+                } catch {
+                  return <span className="text-xs">{dateStr}</span>;
+                }
+              })()}
+            </span>
+          </div>
+        );
+      },
     },
   ];
 
   // Compact responsive actions
-  const actions: ActionButton<WithdrawalRequestDto>[] = [
+  const actions: ActionButton<WithdrawalRequestRecord>[] = [
     {
       key: "view",
-      label: (record) => `View details for ${record.instructorName}`,
+      label: (record) => `View details for ${stringifyValue(record.instructorName)}`,
       icon: <Eye size={12} className="sm:w-4 sm:h-4" />,
       onClick: handleViewDetails,
       className: "bg-blue-500 hover:bg-blue-600 text-white shadow-sm hover:shadow-md transition-all duration-200 min-w-[28px] min-h-[28px] sm:min-w-[32px] sm:min-h-[32px]",
@@ -391,12 +422,15 @@ export default function AdminWithdrawalPage() {
     </div>
   );
 
+  // Cast withdrawalRequests to WithdrawalRequestRecord[] for DataTable
+  const withdrawalRecords = withdrawalRequests as unknown as WithdrawalRequestRecord[];
+
   return (
     <div className="min-h-screen bg-gray-50 p-1 sm:p-2 lg:p-4">
       <div className="max-w-full mx-auto">
         <ActiveFilters />
         <DataTable
-          data={withdrawalRequests}
+          data={withdrawalRecords}
           columns={columns}
           loading={loading}
           error={error}

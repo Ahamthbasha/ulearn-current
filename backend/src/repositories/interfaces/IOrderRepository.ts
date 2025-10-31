@@ -12,7 +12,7 @@ export interface IOrderRepository extends IGenericRepository<IOrder> {
     session: ClientSession,
   ): Promise<void>;
   findSuccessfulOrdersLean(): Promise<IOrder[]>;
-  performAggregation<T = any>(pipeline: PipelineStage[]): Promise<T[]>;
+  performAggregation<T>(pipeline: PipelineStage[]): Promise<T[]>;
   countDocumentsMatching(query: object): Promise<number>;
 
   findByUserAndLearningPath(

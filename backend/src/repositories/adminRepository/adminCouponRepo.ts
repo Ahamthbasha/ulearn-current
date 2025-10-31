@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { FilterQuery, Types } from "mongoose";
 import { CouponModel, ICoupon } from "../../models/couponModel";
 import { IAdminCouponRepo } from "./interface/IAdminCouponRepo";
 import { GenericRepository } from "../genericRepository";
@@ -14,8 +14,9 @@ export class AdminCouponRepo
   async createCoupon(couponData: Partial<ICoupon>): Promise<ICoupon> {
     try {
       return await this.create(couponData);
-    } catch (error: any) {
-      throw new Error(`Failed to create coupon: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to create coupon: ${errorMessage}`);
     }
   }
 
@@ -25,7 +26,7 @@ export class AdminCouponRepo
     searchCode?: string,
   ): Promise<{ coupons: ICoupon[]; total: number }> {
     try {
-      let query: any = {};
+      let query: FilterQuery<ICoupon> = {};
       if (searchCode && searchCode.trim()) {
         query.code = {
           $regex: searchCode.trim(),
@@ -37,24 +38,27 @@ export class AdminCouponRepo
         createdAt: -1,
       });
       return { coupons: data, total };
-    } catch (error: any) {
-      throw new Error(`Failed to fetch coupons: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to fetch coupons: ${errorMessage}`);
     }
   }
 
   async getCouponById(id: Types.ObjectId): Promise<ICoupon | null> {
     try {
       return await this.findById(id.toString());
-    } catch (error: any) {
-      throw new Error(`Failed to fetch coupon: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to fetch coupon: ${errorMessage}`);
     }
   }
 
   async getCouponByCode(code: string): Promise<ICoupon | null> {
     try {
       return await this.findOne({ code });
-    } catch (error: any) {
-      throw new Error(`Failed to fetch coupon by code: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to fetch coupon by code: ${errorMessage}`);
     }
   }
 
@@ -64,8 +68,9 @@ export class AdminCouponRepo
   ): Promise<ICoupon | null> {
     try {
       return await this.update(id.toString(), couponData);
-    } catch (error: any) {
-      throw new Error(`Failed to update coupon: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to update coupon: ${errorMessage}`);
     }
   }
 
@@ -73,8 +78,9 @@ export class AdminCouponRepo
     try {
       const result = await this.delete(id.toString());
       return !!result;
-    } catch (error: any) {
-      throw new Error(`Failed to delete coupon: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to delete coupon: ${errorMessage}`);
     }
   }
 
@@ -84,8 +90,9 @@ export class AdminCouponRepo
   ): Promise<ICoupon | null> {
     try {
       return await this.update(id.toString(), { status });
-    } catch (error: any) {
-      throw new Error(`Failed to toggle coupon status: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to toggle coupon status: ${errorMessage}`);
     }
   }
 }

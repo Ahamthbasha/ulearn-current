@@ -9,6 +9,7 @@ import { signup } from "../../../api/auth/InstructorAuthentication";
 import InstructorSignUp from "../../../assets/Mentorship.jpg";
 
 import type { signUp } from "../../../types/signUpType";
+import type { AxiosError } from "axios";
 
 const signupSchema = Yup.object().shape({
   username: Yup.string()
@@ -45,9 +46,22 @@ const SignUp = () => {
       } else {
         toast.error(response.message);
       }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Unknown error occurred");
-    }
+    } catch (error: unknown) {
+let message = "Unknown error occurred";
+
+if (
+error &&
+typeof error === "object" &&
+"response" in error
+) {
+const axiosError = error as AxiosError<{ message?: string }>;
+if (axiosError.response?.data?.message) {
+message = axiosError.response.data.message;
+}
+}
+
+toast.error(message);
+}
   };
 
   return (

@@ -2,20 +2,29 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EntityTable from '../../../components/common/EntityTable';
 import type { LearningPathListDTO } from '../../../types/interfaces/IStudentInterface';
-import { getStudentLearningPaths, deleteLearningPath, addToCart, addToWishlist, removeFromWishlist, isItemInWishlist, getCart } from '../../../api/action/StudentAction';
-import { Search } from 'lucide-react';
+import {
+  getStudentLearningPaths,
+  deleteLearningPath,
+  addToCart,
+  addToWishlist,
+  removeFromWishlist,
+  isItemInWishlist,
+  getCart,
+} from '../../../api/action/StudentAction';
+import { Search, Heart, ShoppingCart } from 'lucide-react';
 import { useDebounce } from '../../../hooks/UseDebounce';
 import ConfirmationModal from '../../../components/common/ConfirmationModal';
 import type { EntityTableProps } from '../../../components/common/interface/commonComponent';
 import { toast } from 'react-toastify';
 import { isStudentLoggedIn } from '../../../utils/auth';
-import { Heart, ShoppingCart } from 'lucide-react';
 import { type CartItemDTO } from '../../../types/interfaces/IStudentInterface';
+
+// Extend DTO to satisfy EntityTable typing
+type ExtendedLearningPathListDTO = LearningPathListDTO & Record<string, unknown>;
 
 const LearningPathListTable: React.FC = () => {
   const navigate = useNavigate();
   const [learningPaths, setLearningPaths] = useState<LearningPathListDTO[]>([]);
-  const [totalItems, setTotalItems] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [limit] = useState<number>(10);
   const [search, setSearch] = useState<string>('');
@@ -26,57 +35,63 @@ const LearningPathListTable: React.FC = () => {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
   const [wishlistStates, setWishlistStates] = useState<Record<string, boolean>>({});
   const [cartStates, setCartStates] = useState<Record<string, boolean>>({});
+  const [totalItems, setTotalItems] = useState<number>(0);
 
   const debouncedSearch = useDebounce(search, 500);
 
-  const fetchLearningPaths = useCallback(async (page: number, searchQuery?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await getStudentLearningPaths(page, limit, searchQuery);
-      const pathsData = Array.isArray(response.data) ? response.data : [];
-      setLearningPaths(pathsData);
-      setTotalItems(response.total || 0);
+  const fetchLearningPaths = useCallback(
+    async (page: number, searchQuery?: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getStudentLearningPaths(page, limit, searchQuery);
+        const pathsData = Array.isArray(response.data) ? response.data : [];
+        setLearningPaths(pathsData);
+        setTotalItems(response.total || 0);
 
-      if (isStudentLoggedIn()) {
-        // Fetch wishlist and cart status
-        const wishlistChecks = await Promise.all(
-          pathsData.map((path) => isItemInWishlist(path.learningPathId, 'learningPath'))
-        );
-        const cart = await getCart();
-        const newWishlistStates = pathsData.reduce((acc, path, index) => {
-          acc[path.learningPathId] = wishlistChecks[index].exists || false;
-          return acc;
-        }, {} as Record<string, boolean>);
-        const newCartStates = pathsData.reduce((acc, path) => {
-          acc[path.learningPathId] = cart.some((item: CartItemDTO) => item.itemId === path.learningPathId && item.type === 'learningPath');
-          return acc;
-        }, {} as Record<string, boolean>);
-        setWishlistStates(newWishlistStates);
-        setCartStates(newCartStates);
+        if (isStudentLoggedIn()) {
+          // Fetch wishlist and cart status
+          const wishlistChecks = await Promise.all(
+            pathsData.map((path) => isItemInWishlist(path.learningPathId, 'learningPath'))
+          );
+          const cart = await getCart();
+          const newWishlistStates = pathsData.reduce((acc, path, index) => {
+            acc[path.learningPathId] = wishlistChecks[index].exists || false;
+            return acc;
+          }, {} as Record<string, boolean>);
+          const newCartStates = pathsData.reduce((acc, path) => {
+            acc[path.learningPathId] = cart.some(
+              (item: CartItemDTO) => item.itemId === path.learningPathId && item.type === 'learningPath'
+            );
+            return acc;
+          }, {} as Record<string, boolean>);
+          setWishlistStates(newWishlistStates);
+          setCartStates(newCartStates);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch learning paths';
+        setError(errorMessage);
+        setLearningPaths([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch learning paths');
-      setLearningPaths([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [limit]);
+    },
+    [limit]
+  );
 
   useEffect(() => {
     fetchLearningPaths(currentPage, debouncedSearch);
   }, [currentPage, debouncedSearch, fetchLearningPaths]);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setCurrentPage(1);
   };
 
-  const handleAction = (action: 'delete' | 'view' | 'addToCart' | 'addToWishlist' | 'removeFromWishlist', id: string) => {
+  const handleAction = (
+    action: 'delete' | 'view' | 'addToCart' | 'addToWishlist' | 'removeFromWishlist',
+    id: string
+  ) => {
     if (action === 'delete') {
       setModalAction(action);
       setSelectedPathId(id);
@@ -102,8 +117,9 @@ const LearningPathListTable: React.FC = () => {
       await addToCart(itemId, 'learningPath');
       setCartStates((prev) => ({ ...prev, [itemId]: true }));
       toast.success('Learning path added to cart!', { position: 'top-right', autoClose: 3000 });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add learning path to cart', { position: 'top-right', autoClose: 5000 });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add learning path to cart';
+      toast.error(errorMessage, { position: 'top-right', autoClose: 5000 });
     }
   };
 
@@ -117,8 +133,9 @@ const LearningPathListTable: React.FC = () => {
       const res = await addToWishlist(itemId, 'learningPath');
       setWishlistStates((prev) => ({ ...prev, [itemId]: true }));
       toast.success(res.message || 'Added to wishlist', { position: 'top-right', autoClose: 3000 });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add to wishlist', { position: 'top-right', autoClose: 5000 });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add to wishlist';
+      toast.error(errorMessage, { position: 'top-right', autoClose: 5000 });
     }
   };
 
@@ -127,8 +144,9 @@ const LearningPathListTable: React.FC = () => {
       const res = await removeFromWishlist(itemId, 'learningPath');
       setWishlistStates((prev) => ({ ...prev, [itemId]: false }));
       toast.success(res.message || 'Removed from wishlist', { position: 'top-right', autoClose: 3000 });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to remove from wishlist', { position: 'top-right', autoClose: 5000 });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to remove from wishlist';
+      toast.error(errorMessage, { position: 'top-right', autoClose: 5000 });
     }
   };
 
@@ -143,8 +161,9 @@ const LearningPathListTable: React.FC = () => {
         }
       }
       fetchLearningPaths(currentPage, debouncedSearch);
-    } catch (err: any) {
-      setError(err.message || `Failed to ${modalAction} learning path`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : `Failed to ${modalAction} learning path`;
+      setError(errorMessage);
     } finally {
       setIsModalOpen(false);
       setModalAction(null);
@@ -162,96 +181,136 @@ const LearningPathListTable: React.FC = () => {
     fetchLearningPaths(currentPage, debouncedSearch);
   };
 
-  const columns: EntityTableProps<LearningPathListDTO>['columns'] = [
+  const handleEdit = (path: LearningPathListDTO) => {
+    navigate(`/user/learningPath/edit/${path.learningPathId}`);
+  };
+
+  // Table Columns
+  const tableColumns: EntityTableProps<ExtendedLearningPathListDTO>['columns'] = [
     {
-      key: 'learningPathId' as keyof LearningPathListDTO,
+      key: 'learningPathId',
       label: 'S.No.',
-      render: (_value: any, record: LearningPathListDTO) => (
-        <span>{(currentPage - 1) * limit + learningPaths.indexOf(record) + 1}</span>
-      ),
+      render: (_value, record) => {
+        const path = record as LearningPathListDTO;
+        return <span>{(currentPage - 1) * limit + learningPaths.indexOf(path) + 1}</span>;
+      },
     },
     {
-      key: 'title' as keyof LearningPathListDTO,
+      key: 'title',
       label: 'Title',
-      render: (value: string) => (
-        <span className="font-medium text-blue-600">{value}</span>
+      render: (value) => (
+        <span className="font-medium text-blue-600">{String(value)}</span>
       ),
     },
     {
-      key: 'thumbnailUrl' as keyof LearningPathListDTO,
+      key: 'thumbnailUrl',
       label: 'Thumbnail',
-      render: (value: string | undefined) => (
+      render: (value) => (
         value ? (
-          <img src={value} alt="Thumbnail" className="w-16 h-16 object-cover rounded" />
+          <img src={String(value)} alt="Thumbnail" className="w-16 h-16 object-cover rounded" />
         ) : (
           <span className="text-gray-600">N/A</span>
         )
       ),
     },
     {
-      key: 'learningPathId' as keyof LearningPathListDTO,
+      key: 'learningPathId',
       label: 'Actions',
-      render: (_value: any, record: LearningPathListDTO) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handleAction('view', record.learningPathId)}
-            className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium py-1 px-2 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            View Details
-          </button>
-          {cartStates[record.learningPathId] ? (
+      render: (_value, record) => {
+        const path = record as LearningPathListDTO;
+        const isPurchased = path.isPurchased;
+
+        return (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* Always show View */}
             <button
-              onClick={() => navigate('/user/cart')}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium px-2 py-1 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50"
-              disabled={false} // No loading state here, adjust if needed
+              onClick={() => handleAction('view', path.learningPathId)}
+              className="text-blue-600 hover:text-blue-700 font-medium py-1 px-2 rounded transition-colors"
             >
-              <ShoppingCart size={16} />
-              Go to Cart
+              View Details
             </button>
-          ) : (
-            <button
-              onClick={() => handleAction('addToCart', record.learningPathId)}
-              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium px-2 py-1 rounded-md flex items-center gap-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-              disabled={false} // No loading state here, adjust if needed
-            >
-              <ShoppingCart size={16} />
-              Add to Cart
-            </button>
-          )}
-          <button
-            onClick={() => handleAction(wishlistStates[record.learningPathId] ? 'removeFromWishlist' : 'addToWishlist', record.learningPathId)}
-            className={`text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200 ${wishlistStates[record.learningPathId] ? 'text-red-500 hover:text-red-600' : ''}`}
-            title={wishlistStates[record.learningPathId] ? 'Remove from Wishlist' : 'Add to Wishlist'}
-            disabled={false} // No loading state here, adjust if needed
-          >
-            <Heart size={20} fill={wishlistStates[record.learningPathId] ? 'currentColor' : 'none'} />
-          </button>
-          <button
-            onClick={() => handleAction('delete', record.learningPathId)}
-            className="text-red-500 hover:text-red-700 text-sm"
-          >
-            Delete
-          </button>
-          <button
-            onClick={() => handleEdit(record)}
-            className="text-yellow-500 hover:text-yellow-700 text-sm"
-          >
-            Edit
-          </button>
-        </div>
-      ),
+
+            {/* Purchased State */}
+            {isPurchased ? (
+              <span
+                className="bg-green-100 text-green-800 font-semibold px-2.5 py-1 rounded-full text-xs"
+                title="This learning path has been purchased"
+              >
+                Already Purchased
+              </span>
+            ) : (
+              <>
+                {/* Add to Cart */}
+                {cartStates[path.learningPathId] ? (
+                  <button
+                    onClick={() => navigate('/user/cart')}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-2 py-1 rounded flex items-center gap-1 transition-colors"
+                  >
+                    <ShoppingCart size={14} />
+                    Go to Cart
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleAction('addToCart', path.learningPathId)}
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium px-2 py-1 rounded flex items-center gap-1 transition-colors"
+                  >
+                    <ShoppingCart size={14} />
+                    Add to Cart
+                  </button>
+                )}
+
+                {/* Wishlist */}
+                <button
+                  onClick={() =>
+                    handleAction(
+                      wishlistStates[path.learningPathId] ? 'removeFromWishlist' : 'addToWishlist',
+                      path.learningPathId
+                    )
+                  }
+                  className={`p-1.5 rounded-full transition-colors ${
+                    wishlistStates[path.learningPathId]
+                      ? 'text-red-500 hover:text-red-600'
+                      : 'text-gray-400 hover:text-red-500'
+                  }`}
+                  title={
+                    wishlistStates[path.learningPathId]
+                      ? 'Remove from Wishlist'
+                      : 'Add to Wishlist'
+                  }
+                >
+                  <Heart size={18} fill={wishlistStates[path.learningPathId] ? 'currentColor' : 'none'} />
+                </button>
+
+                {/* Edit */}
+                <button
+                  onClick={() => handleEdit(path)}
+                  className="text-yellow-600 hover:text-yellow-700 font-medium"
+                >
+                  Edit
+                </button>
+
+                {/* Delete */}
+                <button
+                  onClick={() => handleAction('delete', path.learningPathId)}
+                  className="text-red-600 hover:text-red-700 font-medium"
+                >
+                  Delete
+                </button>
+              </>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
-  const handleEdit = (path: LearningPathListDTO) => {
-    navigate(`/user/learningPath/edit/${path.learningPathId}`);
-  };
+  const tableData = learningPaths as ExtendedLearningPathListDTO[];
 
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
         <h3 className="text-xl font-bold mb-4 text-gray-800">Learning Paths</h3>
-        <div className="flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4 items-center w-full">
           <div className="flex items-center gap-2 w-full sm:w-64">
             <div className="relative flex-1">
               <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -278,11 +337,11 @@ const LearningPathListTable: React.FC = () => {
           <span className="text-gray-500 text-sm">Loading...</span>
         </div>
       )}
-      <EntityTable<LearningPathListDTO>
+
+      <EntityTable<ExtendedLearningPathListDTO>
         title=""
-        data={learningPaths}
-        columns={columns}
-        
+        data={tableData}
+        columns={tableColumns}
         emptyText={
           search
             ? `No learning paths found matching "${search}". Try adjusting your search term or create a new learning path.`
@@ -292,9 +351,10 @@ const LearningPathListTable: React.FC = () => {
           currentPage,
           totalItems,
           pageSize: limit,
-          onPageChange: handlePageChange,
+          onPageChange: setCurrentPage,
         }}
       />
+
       <ConfirmationModal
         isOpen={isModalOpen}
         message="Are you sure you want to delete this learning path? This action cannot be undone."
@@ -304,13 +364,11 @@ const LearningPathListTable: React.FC = () => {
         onConfirm={confirmAction}
         onCancel={cancelAction}
       />
+
       {error && (
         <div className="mt-4 text-red-500 text-sm text-center">
           {error}
-          <button
-            onClick={handleRetry}
-            className="ml-2 text-blue-500 hover:underline"
-          >
+          <button onClick={handleRetry} className="ml-2 text-blue-500 hover:underline">
             Retry
           </button>
         </div>

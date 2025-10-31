@@ -36,7 +36,16 @@ export interface IStudentEnrollmentRepository {
   findByUserAndCourseWithPopulate(
     userId: string,
     courseId: string,
-    populateOptions: any[],
+    populateOptions: {
+      path: string;
+      populate?: { path: string }[];
+    }[],
   ): Promise<IEnrollment | null>;
-  findOne(query: any, populateOptions?: any[]): Promise<IEnrollment | null>;
+  findOne(
+    query: Partial<Record<keyof IEnrollment, unknown>>,
+    populateOptions?: {
+      path: string;
+      populate?: { path: string }[];
+    }[],
+  ): Promise<IEnrollment | null>;
 }

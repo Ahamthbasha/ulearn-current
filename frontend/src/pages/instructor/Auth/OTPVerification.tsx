@@ -87,9 +87,16 @@ const OTPVerification = () => {
         } else {
           toast.error(response.message);
         }
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message);
       }
+       catch (error) {
+  const errorMessage = 
+    error instanceof Error 
+      ? error.message 
+      : (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 
+        "An unexpected error occurred";
+  
+  toast.error(errorMessage);
+}
     } else {
       toast.error("Please enter the complete OTP");
     }

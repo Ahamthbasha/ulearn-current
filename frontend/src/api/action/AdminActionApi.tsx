@@ -3,15 +3,16 @@ import { API } from "../../service/axios";
 import AdminRoutersEndPoints from "../../types/endPoints/adminEndPoint";
 import { type IMembershipPayload } from "../../types/interfaces/IMembershipPayload";
 import { type ReportFilter } from "../../types/interfaces/IdashboardTypes";
-import { type WithdrawalRequestDto } from "../../types/interfaces/IWithdrawalRequest";
+import { type WithdrawalRequestDto, type WithdrawalRequestParams } from "../../types/interfaces/IWithdrawalRequest";
 import fileDownload from "js-file-download";
 import type { CouponData } from "../../types/interfaces/IAdminInterface";
+import {  AxiosError } from "axios";
 
 export const getAllUser = async (
   page = 1,
   limit = 1,
   search = ""
-): Promise<any> => {
+) => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetUsers}?page=${page}&limit=${limit}&search=${search}`,
@@ -65,7 +66,7 @@ export const getAllVerificationRequests = async (
   page = 1,
   limit = 1,
   search = ""
-): Promise<any> => {
+) => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetVerifcationsRequest}?page=${page}&limit=${limit}&search=${search}`,
@@ -116,7 +117,7 @@ export const getAllCategories = async (
   page = 1,
   limit = 1,
   search = ""
-): Promise<any> => {
+) => {
   try {
     const response = await API.get(
       AdminRoutersEndPoints.adminGetAllCategories,
@@ -130,7 +131,7 @@ export const getAllCategories = async (
   }
 };
 
-export const getCategoryById = async (categoryId: string): Promise<any> => {
+export const getCategoryById = async (categoryId: string) => {
   try {
     const response = await API.get(
       `${AdminRoutersEndPoints.adminGetCategoryById}/${categoryId}`,
@@ -141,7 +142,7 @@ export const getCategoryById = async (categoryId: string): Promise<any> => {
   }
 };
 
-export const addCategory = async (categoryName: string): Promise<any> => {
+export const addCategory = async (categoryName: string) => {
   try {
     const response = await API.post(
       AdminRoutersEndPoints.adminCreateCategory,
@@ -156,7 +157,7 @@ export const addCategory = async (categoryName: string): Promise<any> => {
 export const editCategory = async (
   id: string,
   categoryName: string
-): Promise<any> => {
+)=> {
   try {
     const response = await API.put(
       AdminRoutersEndPoints.adminEditCategory,
@@ -168,7 +169,7 @@ export const editCategory = async (
   }
 };
 
-export const toggleCategoryStatus = async (id: string): Promise<any> => {
+export const toggleCategoryStatus = async (id: string) => {
   try {
     const response = await API.put(
       `${AdminRoutersEndPoints.adminListOrUnListCategory}/${id}`,
@@ -233,8 +234,10 @@ export const verifyCourse = async ({
       { status, review }
     );
     return response.data;
-  } catch (error: any) {
-    throw error?.response?.data || error;
+  } catch (error: unknown) {
+    if(error instanceof Error){
+      throw error
+    }
   }
 };
 
@@ -346,7 +349,7 @@ export const adminGetAllWithdrawalRequests = async (
   status?: string;
 }> => {
   try {
-    const params: any = { page, limit };
+    const params: WithdrawalRequestParams = { page, limit };
 
     // Add search parameter if provided
     if (search && search.trim()) {
@@ -365,10 +368,13 @@ export const adminGetAllWithdrawalRequests = async (
     );
 
     return response.data.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch withdrawal requests"
-    );
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch withdrawal requests"
+      );
+    }
+    throw error
   }
 };
 
@@ -517,7 +523,7 @@ export const getMembershipPurchaseHistory = async (
   status?: string
 ) => {
   try {
-    const params: Record<string, any> = { page, limit };
+    const params: Record<string, unknown> = { page, limit };
     if (search && search.trim() !== "") {
       params.search = search.trim();
     }
@@ -655,8 +661,10 @@ export const createCoupon = async (couponData: CouponData)=> {
   try {
     const response = await API.post(AdminRoutersEndPoints.adminCreateCoupon, couponData);
     return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to create coupon");
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(error.response?.data?.message || "Failed to create coupon");
+    }
   }
 };
 
@@ -669,8 +677,10 @@ export const getCoupon = async (page: number = 1, limit: number = 10,searchCode?
 
     const response = await API.get(url)
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch coupons");
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(error.response?.data?.message || "Failed to fetch coupons");
+    }
   }
 };
 
@@ -678,8 +688,12 @@ export const getCouponById = async (couponId: string) => {
   try {
     const response = await API.get(`${AdminRoutersEndPoints.adminGetSpecificCoupon}/${couponId}`);
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch coupon");
+  } catch (error) {
+    
+    if(error instanceof AxiosError)
+      {
+        throw new Error(error.response?.data?.message || "Failed to fetch coupon");
+      }
   }
 };
 
@@ -687,8 +701,10 @@ export const editCoupon = async (couponId: string, couponData: Partial<CouponDat
   try {
     const response = await API.put(`${AdminRoutersEndPoints.adminEditCoupon}/${couponId}`, couponData);
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to update coupon");
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(error.response?.data?.message || "Failed to update coupon");
+    }
   }
 };
 
@@ -696,8 +712,10 @@ export const deleteCoupon = async (couponId: string): Promise<void> => {
   try {
     const response = await API.delete(`${AdminRoutersEndPoints.adminDeleteCoupon}/${couponId}`);
     return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to delete coupon");
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(error.response?.data?.message || "Failed to delete coupon");
+    }
   }
 };
 
@@ -705,8 +723,10 @@ export const getCouponByCode = async (code: string)=> {
   try {
     const response = await API.get(`${AdminRoutersEndPoints.adminGetCouponByCode}/${code}`);
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch coupon by code");
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(error.response?.data?.message || "Failed to fetch coupon by code");
+    }
   }
 };
 
@@ -714,8 +734,11 @@ export const toggleStatus = async (couponId: string, status: boolean) => {
   try {
     const response = await API.patch(`${AdminRoutersEndPoints.adminModifyStatus}/${couponId}/status`, { status });
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to toggle coupon status");
+  } catch (error) {
+    if(error instanceof AxiosError){
+
+      throw new Error(error.response?.data?.message || "Failed to toggle coupon status");
+    }
   }
 };
 

@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { IInstructor } from "../../../models/instructorModel";
 
 export default interface IInstructorService {
@@ -5,6 +6,6 @@ export default interface IInstructorService {
   createUser(userData: IInstructor): Promise<IInstructor | null>;
   resetPassword(email: string, password: string): Promise<IInstructor | null>;
   googleLogin(name: string, email: string): Promise<IInstructor | null>;
-
+  findById(userId: string | Types.ObjectId): Promise<IInstructor | null>;
   setInstructorVerified(email: string): Promise<IInstructor | null>;
 }

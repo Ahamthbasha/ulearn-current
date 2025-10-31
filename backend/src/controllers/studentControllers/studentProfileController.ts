@@ -10,6 +10,7 @@ import {
 import bcrypt from "bcrypt";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { appLogger } from "../../utils/logger";
+import { IUser } from "../../models/userModel";
 
 export class StudentProfileController implements IStudentProfileController {
   private _studentProfileService: IStudentProfileService;
@@ -80,7 +81,7 @@ export class StudentProfileController implements IStudentProfileController {
       const parsedSkills = skills ? JSON.parse(skills) : [];
       const parsedExpertise = expertise ? JSON.parse(expertise) : [];
 
-      const updateData: any = {
+      const updateData: Partial<IUser> = {
         ...(username && { username }),
         ...(parsedSkills && { skills: parsedSkills }),
         ...(parsedExpertise && { expertise: parsedExpertise }),

@@ -1,3 +1,26 @@
+export interface VerificationFormValues {
+  name: string;
+  email: string;
+  degreeCertificate: File | null;
+  resume: File | null;
+}
+
+export type TableCourse = Course & Record<string, unknown>;
+
+export interface SlotStatWithIndex extends SlotStat {
+  [key: string]: unknown;
+}
+export interface FormValues {
+  discount: number;
+  startDate: string | Date;
+  endDate: string | Date;
+}
+export interface ChapterFormValues {
+  chapterTitle: string;
+  description: string;
+  chapterNumber: number;
+}
+
 export interface InstructorProfile {
   _id?: string;
   instructorName: string;
@@ -85,32 +108,8 @@ export interface DisplayOrder extends MembershipOrder {
   formattedAmount: string;
   formattedDate: string;
   statusDisplay: string;
+  [key: string]: unknown;
 }
-
-// export interface MembershipPlanOrderDetail {
-//   name: string;
-//   durationInDays: number;
-//   description?: string;
-//   benefits?: string[];
-// }
-
-// export interface InstructorInfoMembershipPlanOrderDetail {
-//   name: string;
-//   email: string;
-// }
-
-// export interface IMembershipOrderDetail {
-//   instructor: InstructorInfoMembershipPlanOrderDetail; 
-//   membershipPlan: MembershipPlanOrderDetail; 
-//   price: number;
-//   paymentStatus: "pending" | "paid" | "failed"; 
-//   txnId: string;
-//   startDate: string;
-//   endDate: string;
-//   createdAt: string;
-// }
-
-
 export interface SlotDetail {
   _id: string;
   startTime: string;
@@ -226,14 +225,14 @@ export interface InstructorData {
 
 
 
-export interface ICourseOffer {
+export interface ICourseOffer extends Record<string, unknown> {
   courseOfferId: string;
   courseId: string;
   courseName: string;
   discount: number;
   status: "pending" | "approved" | "rejected";
   startDate: string;
-  endDate: string; 
+  endDate: string;
 }
 
 export interface ICourseOfferDetails {

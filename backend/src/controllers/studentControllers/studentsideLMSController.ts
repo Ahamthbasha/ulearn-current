@@ -10,7 +10,7 @@ import { Types } from "mongoose";
 import { IMulterFile } from "../../utils/s3Bucket";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { appLogger } from "../../utils/logger";
-import { CreateLearningPathDTO, ILearningPath } from "../../models/learningPathModel";
+import { CreateLearningPathDTO, ILearningPath, LearningPathItemInput } from "../../models/learningPathModel";
 
 export class StudentLearningPathController
   implements IStudentLearningPathController
@@ -145,7 +145,7 @@ export class StudentLearningPathController
         title: trimmedTitle,
         description: sanitizedDescription,
         studentId: new Types.ObjectId(studentId),
-        items: parsedItems.map((item: any) => ({
+        items: parsedItems.map((item: LearningPathItemInput) => ({
           courseId: new Types.ObjectId(item.courseId),
           order: Number(item.order),
         })),
@@ -299,7 +299,7 @@ export class StudentLearningPathController
           }
         }
 
-        updateData.items = parsedItems.map((item: any) => ({
+        updateData.items = parsedItems.map((item: LearningPathItemInput) => ({
           courseId: new Types.ObjectId(item.courseId),
           order: Number(item.order),
         }));

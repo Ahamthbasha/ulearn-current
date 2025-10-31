@@ -9,6 +9,7 @@ import {
 } from "../../../api/action/StudentAction";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import type { WishlistItem,CartItemDTO } from "../interface/studentInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const WishlistPage = () => {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -28,9 +29,11 @@ const WishlistPage = () => {
       } else {
         toast.error(response.message || "Failed to fetch wishlist");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch wishlist");
-    }
+    } 
+    catch (error: unknown) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Failed to fetch wishlist");
+}
   };
 
   const fetchCartItems = async () => {
@@ -42,9 +45,11 @@ const WishlistPage = () => {
       } else {
         toast.error("Failed to fetch cart");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch cart");
-    }
+    } 
+    catch (error: unknown) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Failed to fetch cart");
+}
   };
 
   const handleAddToCart = async (itemId: string, type: "course" | "learningPath") => {
@@ -52,9 +57,15 @@ const WishlistPage = () => {
       await addToCart(itemId, type);
       toast.success(`${type === "course" ? "Course" : "Learning Path"} added to cart`);
       await fetchCartItems(); 
-    } catch (error: any) {
-      toast.error(error.message || `Failed to add ${type === "course" ? "course" : "learning path"} to cart`);
-    }
+    } 
+    catch (error: unknown) {
+  const apiError = error as ApiError;
+  toast.error(
+    apiError.response?.data?.message || 
+    apiError.message || 
+    `Failed to add ${type === "course" ? "course" : "learning path"} to cart`
+  );
+}
   };
 
   const handleRemoveFromWishlist = async (itemId: string, type: "course" | "learningPath") => {
@@ -62,9 +73,15 @@ const WishlistPage = () => {
       const response = await removeFromWishlist(itemId, type);
       toast.success(response.message || `Removed from wishlist`);
       await fetchWishlist(); // Refresh wishlist to update the UI
-    } catch (error: any) {
-      toast.error(error.message || `Failed to remove ${type === "course" ? "course" : "learning path"} from wishlist`);
     }
+    catch (error: unknown) {
+  const apiError = error as ApiError;
+  toast.error(
+    apiError.response?.data?.message || 
+    apiError.message || 
+    `Failed to remove ${type === "course" ? "course" : "learning path"} from wishlist`
+  );
+}
   };
 
   return (

@@ -7,11 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 import InputField from "../../../components/common/InputField";
 import CourseSelector from "../../../components/StudentComponents/CourseSelector";
 import { getLearningPathById, updateLearningPath, getAllCategories } from "../../../api/action/StudentAction";
-import type { UpdateLearningPathRequest } from "../../../types/interfaces/IStudentInterface";
+import type { UpdateLearningPathRequest,FormValues,CourseItem  } from "../../../types/interfaces/IStudentInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
+
 
 const isValidObjectId = (id: string): boolean => {
   return /^[0-9a-fA-F]{24}$/.test(id);
 };
+
 
 const validationSchema = Yup.object({
   title: Yup.string()
@@ -65,7 +68,7 @@ const validationSchema = Yup.object({
       "Duplicate courses are not allowed",
       (items) => {
         if (!items) return true;
-        const courseIds = items.map((item: any) => item.courseId);
+        const courseIds = items.map((item: CourseItem) => item.courseId);
         const uniqueCourseIds = new Set(courseIds);
         return uniqueCourseIds.size === courseIds.length;
       }
@@ -75,7 +78,7 @@ const validationSchema = Yup.object({
       "Duplicate order numbers are not allowed",
       (items) => {
         if (!items) return true;
-        const orders = items.map((item: any) => item.order);
+        const orders = items.map((item: CourseItem) => item.order);
         const uniqueOrders = new Set(orders);
         return uniqueOrders.size === orders.length;
       }
@@ -103,7 +106,7 @@ const validationSchema = Yup.object({
 const LearningPathEditPage: React.FC = () => {
   const { learningPathId } = useParams<{ learningPathId: string }>();
   const navigate = useNavigate();
-  const [initialValues, setInitialValues] = useState<UpdateLearningPathRequest & { thumbnail?: File } | null>(null);
+  const [initialValues, setInitialValues] = useState<FormValues | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
   const [categories, setCategories] = useState<Array<{ _id: string; categoryName: string }>>([]);
@@ -132,8 +135,9 @@ const LearningPathEditPage: React.FC = () => {
           thumbnail: undefined,
         });
         setExistingThumbnail(learningPath.thumbnailUrl || null);
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to load learning path or categories";
+      } catch (err: unknown) {
+        const apiError = err as ApiError;
+        const errorMessage = apiError.response?.data?.message || apiError.message || "Failed to load learning path or categories";
         toast.error(errorMessage, {
           position: "top-right",
           autoClose: 5000,
@@ -153,8 +157,8 @@ const LearningPathEditPage: React.FC = () => {
   }, [thumbnailPreview]);
 
   const handleSubmit = async (
-    values: UpdateLearningPathRequest & { thumbnail?: File },
-    { setSubmitting, setFieldError }: FormikHelpers<UpdateLearningPathRequest & { thumbnail?: File }>
+    values: FormValues,
+    { setSubmitting, setFieldError }: FormikHelpers<FormValues>
   ) => {
     if (!learningPathId || !isValidObjectId(learningPathId)) {
       toast.error("Invalid learning path ID", {
@@ -207,13 +211,14 @@ const LearningPathEditPage: React.FC = () => {
         autoClose: 3000,
       });
       navigate("/user/createdLms");
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Failed to update learning path";
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      const errorMessage = apiError.response?.data?.message || apiError.message || "Failed to update learning path";
       toast.error(errorMessage, {
         position: "top-right",
         autoClose: 5000,
       });
-      console.error("Update learning path error:", err.response?.data || err);
+      console.error("Update learning path error:", apiError.response?.data || apiError);
     } finally {
       setSubmitting(false);
     }
@@ -278,14 +283,16 @@ const LearningPathEditPage: React.FC = () => {
               <div className="text-red-500 text-sm mt-1">
                 {typeof errors.items === "string" ? (
                   <p>{errors.items}</p>
-                ) : (
-                  (errors.items as Array<{ courseId?: string; order?: string }>).map((itemError, index: number) => (
-                    <p key={index}>
-                      Course {index + 1}:{" "}
-                      {itemError.courseId || itemError.order || "Invalid course or order"}
-                    </p>
+                ) : Array.isArray(errors.items) ? (
+                  (errors.items as Array<{ courseId?: string; order?: string } | undefined>).map((itemError, index: number) => (
+                    itemError ? (
+                      <p key={index}>
+                        Course {index + 1}:{" "}
+                        {itemError.courseId || itemError.order || "Invalid course or order"}
+                      </p>
+                    ) : null
                   ))
-                )}
+                ) : null}
               </div>
             )}
             <div>

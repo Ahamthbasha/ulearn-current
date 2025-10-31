@@ -27,7 +27,7 @@ export async function uploadToS3Bucket(
 
     const normalizedFolder = folderName.replace(/\/$/, ""); // ✅ Remove trailing slash
 
-    const params: any = {
+    const params: AWS.S3.PutObjectRequest = {
       Bucket: process.env.BUCKET_NAME,
       Key: `${normalizedFolder}/${Date.now()}_${file.originalname}`, // ✅ Correct Key
       Body: file.buffer,
@@ -49,7 +49,7 @@ export async function uploadToS3Bucket(
     }
 
     return uploadedResult.Key;
-  } catch (error: any) {
+  } catch (error) {
     throw error;
   }
 }

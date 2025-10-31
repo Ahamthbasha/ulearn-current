@@ -1,3 +1,150 @@
+
+
+export interface WithdrawalRequestRecord extends Record<string, unknown> {
+  requestId: string;
+  instructorName: string;
+  instructorEmail: string;
+  amount: number;
+  status: string;
+  bankAccount: string;
+  createdAt: string;
+}
+
+export interface UserListingRecord extends Record<string, unknown> {
+  id: string;
+  username: string;
+  email: string;
+  status: string;
+  created: string;
+  isBlocked: boolean;
+  serialNo?: number; // Optional field for serial number
+}
+
+// Type for backend user response
+export interface BackendUser {
+  _id?: string;
+  name?: string;
+  email?: string;
+  status?: boolean;
+  createdAt?: string;
+}
+
+// Type for API response
+export interface GetAllUserResponse {
+  success: boolean;
+  message?: string;
+  users: BackendUser[];
+  total?: number;
+}
+
+export interface IMembershipPlan extends Record<string, unknown> {
+  _id: string;
+  name: string;
+  durationInDays: number;
+  price: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// API response type for membership plans
+export interface GetMembershipPlansResult {
+  plans: IMembershipPlan[];
+  total: number;
+  success?: boolean;
+}
+
+// API request parameters
+export interface GetMembershipPlansParams {
+  page: number;
+  limit: number;
+  search: string;
+}
+
+export interface FormHelpers {
+  setSubmitting: (isSubmitting: boolean) => void;
+  setFieldError: (field: string, message: string) => void;
+}
+
+export interface InstructorApiResponse {
+  id: string;
+  name: string;
+  email: string;
+  status: boolean;
+  createdAt: string;
+}
+export interface GetInstructorsResult {
+  instructors: InstructorApiResponse[];
+  total: number;
+  success?: boolean;
+}
+export interface BlockInstructorResponse {
+  success: boolean;
+  message: string;
+}
+export interface Instructors extends Record<string, unknown> {
+  id: string;
+  username: string;
+  email: string;
+  status: string;
+  created: string;
+  isBlocked: boolean;
+}
+
+export interface IAdminCourseOffer extends Record<string, unknown> {
+  offerId: string;
+  courseId: string;
+  courseName: string;
+  instructorId: string;
+  instructorName: string;
+  discount: number;
+  status: string;
+}
+
+export interface CourseOfferApiResponse {
+  offerId: string;
+  courseId: string;
+  courseName: string;
+  instructorId: string;
+  instructorName: string;
+  discount: number;
+  status: string;
+}
+
+export interface GetCourseOffersResult {
+  data: CourseOfferApiResponse[];
+  total: number;
+}
+
+export interface Category extends Record<string, unknown> {
+  _id: string;
+  categoryName: string;
+  isListed: boolean;
+  serialNo?: number;
+}
+
+export interface GetCategoriesResponse {
+  data: Category[];
+  total: number;
+}
+
+export interface ApiError {
+  message?:string;
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+export const isApiError = (error: unknown): error is ApiError => {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error
+  );
+};
+
+
 interface Question {
   questionId: string;
   questionText: string;
@@ -104,14 +251,6 @@ export interface MembershipReportRow {
   date: string;
 }
 
-export interface Instructors {
-  id: string;
-  username: string;
-  email: string;
-  status: "Blocked" | "Active";
-  created: string;
-  isBlocked: boolean;
-}
 
 export interface FormValues {
   name: string;

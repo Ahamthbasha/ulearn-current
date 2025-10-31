@@ -1,12 +1,13 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import SingleQuestionForm from "../../../components/InstructorComponents/QuizForm";
-import { type SingleQuestionFormValues } from "../../../types/interfaces/IQuiz";
+import { type SingleQuestionFormValues, type IQuizPayload } from "../../../types/interfaces/IQuiz";
 import {
   createQuiz,
   addQuestionToQuiz,
   getQuizByCourseId,
 } from "../../../api/action/InstructorActionApi";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const AddQuizPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -25,17 +26,18 @@ const AddQuizPage = () => {
     }
 
     try {
-      let existingQuiz: any = null;
+      let existingQuiz: IQuizPayload | null = null;
 
       try {
         existingQuiz = await getQuizByCourseId(courseId);
-      } catch (err: any) {
-        if (err?.response?.status !== 404) {
+      } catch (err) {
+        const apiError = err as ApiError;
+        if (apiError?.response?.status !== 404) {
           throw err; // Only rethrow if it's not 404
         }
       }
 
-      if (existingQuiz?.questions?.length > 0) {
+      if (existingQuiz?.questions?.length && existingQuiz.questions.length > 0) {
         // ✅ Quiz exists → add question
         const res = await addQuestionToQuiz(courseId, data);
         toast.success(res.message ?? "Question added to existing quiz");
@@ -50,9 +52,10 @@ const AddQuizPage = () => {
       }
 
       navigate(`/instructor/course/${courseId}/quiz`);
-    } catch (err: any) {
+    } catch (err) {
+      const apiError = err as ApiError;
       const errorMessage =
-        err?.response?.data?.message ?? "Failed to create or add question";
+        apiError?.response?.data?.message ?? "Failed to create or add question";
       toast.error(errorMessage);
     }
   };

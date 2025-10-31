@@ -13,7 +13,23 @@ import {
 } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type IMembershipPlan } from "../interface/adminInterface";
+import type { IMembershipPlan } from "../interface/adminInterface";
+
+// API response type for membership plans
+interface GetMembershipPlansResult {
+  plans: IMembershipPlan[];
+  total: number;
+  success?: boolean;
+}
+
+// API error response type
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
 
 const MembershipPlanPage = () => {
   const [plans, setPlans] = useState<IMembershipPlan[]>([]);
@@ -39,13 +55,15 @@ const MembershipPlanPage = () => {
         page: currentPage,
         limit,
         search: debouncedSearchTerm,
-      });
+      }) as GetMembershipPlansResult;
+      
       console.log(response);
       setPlans(response.plans || []);
       setTotal(response.total || 0);
       setError(null);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Failed to load membership plans";
+    } catch (err) {
+      const apiError = err as ApiError;
+      const msg = apiError?.response?.data?.message || "Failed to load membership plans";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -94,9 +112,10 @@ const MembershipPlanPage = () => {
 
       await deleteMembership(selectedPlan._id);
       toast.success("Membership plan deleted");
-    } catch (err: any) {
+    } catch (err) {
+      const apiError = err as ApiError;
       fetchPlans();
-      toast.error(err?.response?.data?.message || "Failed to delete membership plan");
+      toast.error(apiError?.response?.data?.message || "Failed to delete membership plan");
     } finally {
       setDeleteModalOpen(false);
       setSelectedPlan(null);
@@ -119,7 +138,8 @@ const MembershipPlanPage = () => {
       toast.success(
         `Plan ${selectedPlan.isActive ? "deactivated" : "activated"} successfully`
       );
-    } catch (err: any) {
+    } catch (err) {
+      const apiError = err as ApiError;
       setPlans(prev =>
         prev.map(plan =>
           plan._id === selectedPlan._id
@@ -127,7 +147,7 @@ const MembershipPlanPage = () => {
             : plan
         )
       );
-      toast.error(err?.response?.data?.message || "Failed to update plan status");
+      toast.error(apiError?.response?.data?.message || "Failed to update plan status");
     } finally {
       setToggleModalOpen(false);
       setSelectedPlan(null);
@@ -159,11 +179,11 @@ const MembershipPlanPage = () => {
   // Responsive columns configuration
   const columns: Column<IMembershipPlan>[] = [
     {
-      key: "serialNo",
+      key: "_id",
       title: "S.NO",
       width: "60px",
       minWidth: "50px",
-      render: (_val, _record, index) => (
+      render: (_value, _record, index) => (
         <div className="text-center">
           <span className="text-xs sm:text-sm text-gray-900 font-medium">
             {(currentPage - 1) * limit + index + 1}
@@ -175,41 +195,50 @@ const MembershipPlanPage = () => {
       key: "name",
       title: "Plan Details",
       minWidth: "200px",
-      render: (value, record) => (
-        <div className="space-y-2">
-          {/* Plan Name - Always visible */}
-          <div className="font-semibold text-gray-900 text-sm sm:text-base">
-            {value}
-          </div>
-          
-          {/* Mobile-only compact info */}
-          <div className="block sm:hidden space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1 text-gray-600">
-                <Calendar size={12} />
-                <span>{record.durationInDays} {record.durationInDays === 1 ? 'Day' : 'Days'}</span>
-              </div>
-              <div className="flex items-center gap-1 text-gray-500">
-                <Clock size={12} />
-                <span>{formatDate(record.createdAt)}</span>
+      render: (value, record) => {
+        const name = String(value);
+        const duration = typeof record.durationInDays === 'number' ? record.durationInDays : 0;
+        const createdAt = String(record.createdAt);
+        
+        return (
+          <div className="space-y-2">
+            {/* Plan Name - Always visible */}
+            <div className="font-semibold text-gray-900 text-sm sm:text-base">
+              {name}
+            </div>
+            
+            {/* Mobile-only compact info */}
+            <div className="block sm:hidden space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1 text-gray-600">
+                  <Calendar size={12} />
+                  <span>{duration} {duration === 1 ? 'Day' : 'Days'}</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-500">
+                  <Clock size={12} />
+                  <span>{formatDate(createdAt)}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: "price",
       title: "Price",
       width: "120px",
       minWidth: "100px",
-      render: (value) => (
-        <div className="text-right sm:text-left">
-          <span className="text-sm sm:text-base font-bold text-green-600">
-            ₹{value?.toLocaleString('en-IN') || '0'}
-          </span>
-        </div>
-      ),
+      render: (value) => {
+        const price = typeof value === 'number' ? value : 0;
+        return (
+          <div className="text-right sm:text-left">
+            <span className="text-sm sm:text-base font-bold text-green-600">
+              ₹{price.toLocaleString('en-IN')}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "durationInDays",
@@ -217,34 +246,40 @@ const MembershipPlanPage = () => {
       width: "120px",
       minWidth: "100px",
       priority: 3,
-      render: (value) => (
-        <div className="hidden sm:flex items-center gap-2">
-          <Calendar size={16} className="text-blue-500" />
-          <span className="text-sm text-gray-700 font-medium">
-            {value} {value === 1 ? 'Day' : 'Days'}
-          </span>
-        </div>
-      ),
+      render: (value) => {
+        const duration = typeof value === 'number' ? value : 0;
+        return (
+          <div className="hidden sm:flex items-center gap-2">
+            <Calendar size={16} className="text-blue-500" />
+            <span className="text-sm text-gray-700 font-medium">
+              {duration} {duration === 1 ? 'Day' : 'Days'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "isActive",
       title: "Status",
       width: "120px",
       minWidth: "100px",
-      render: (val) => (
-        <div className="flex justify-center sm:justify-start">
-          <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm ${
-              val 
-                ? "bg-green-100 text-green-800 border border-green-200" 
-                : "bg-red-100 text-red-800 border border-red-200"
-            }`}
-          >
-            <div className={`w-2 h-2 rounded-full mr-2 ${val ? 'bg-green-500' : 'bg-red-500'}`} />
-            {val ? "Active" : "Inactive"}
-          </span>
-        </div>
-      ),
+      render: (value) => {
+        const isActive = Boolean(value);
+        return (
+          <div className="flex justify-center sm:justify-start">
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm ${
+                isActive 
+                  ? "bg-green-100 text-green-800 border border-green-200" 
+                  : "bg-red-100 text-red-800 border border-red-200"
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+              {isActive ? "Active" : "Inactive"}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "createdAt",
@@ -252,23 +287,28 @@ const MembershipPlanPage = () => {
       width: "140px",
       minWidth: "120px",
       priority: 4,
-      render: (value) => (
-        <div className="hidden sm:block space-y-1">
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <Clock size={12} />
-            <span className="font-medium">
-              {formatDate(value)}
-            </span>
+      render: (value) => {
+        const dateString = String(value);
+        const date = new Date(dateString);
+        
+        return (
+          <div className="hidden sm:block space-y-1">
+            <div className="flex items-center gap-1 text-xs text-gray-600">
+              <Clock size={12} />
+              <span className="font-medium">
+                {formatDate(dateString)}
+              </span>
+            </div>
+            <div className="text-xs text-gray-500 ml-4">
+              {date.toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </div>
           </div>
-          <div className="text-xs text-gray-500 ml-4">
-            {new Date(value).toLocaleTimeString('en-IN', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            })}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
   ];
 
@@ -276,14 +316,14 @@ const MembershipPlanPage = () => {
   const actions: ActionButton<IMembershipPlan>[] = [
     {
       key: "edit",
-      label: (record) => `Edit ${record.name}`,
+      label: (record) => `Edit ${String(record.name)}`,
       icon: <Pencil size={14} />,
       onClick: handleEdit,
       className: "bg-amber-500 hover:bg-amber-600 text-white shadow-sm hover:shadow-md transition-all duration-200 px-2 py-1 sm:px-3 sm:py-2",
     },
     {
       key: "toggle",
-      label: (record) => `${record.isActive ? 'Deactivate' : 'Activate'} ${record.name}`,
+      label: (record) => `${record.isActive ? 'Deactivate' : 'Activate'} ${String(record.name)}`,
       icon: (record) => (
         <CheckCircle 
           size={14} 
@@ -297,7 +337,7 @@ const MembershipPlanPage = () => {
     },
     {
       key: "delete",
-      label: (record) => `Delete ${record.name}`,
+      label: (record) => `Delete ${String(record.name)}`,
       icon: <Trash2 size={14} />,
       onClick: handleDeletePrompt,
       className: "bg-red-500 hover:bg-red-600 text-white shadow-sm hover:shadow-md transition-all duration-200 px-2 py-1 sm:px-3 sm:py-2",
@@ -363,7 +403,7 @@ const MembershipPlanPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <DataTable
+        <DataTable<IMembershipPlan>
           title="Membership Plans"
           description="Manage instructor membership plans and pricing"
           data={plans}
@@ -414,7 +454,7 @@ const MembershipPlanPage = () => {
                   <div className="mt-2 flex items-center gap-2">
                     <Clock size={14} className="text-gray-400" />
                     <span className="text-sm text-gray-500">
-                      Created: {selectedPlan?.createdAt ? formatDate(selectedPlan.createdAt) : 'N/A'}
+                      Created: {selectedPlan?.createdAt ? formatDate(String(selectedPlan.createdAt)) : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -468,7 +508,7 @@ const MembershipPlanPage = () => {
                   <div className="mt-2 flex items-center gap-2">
                     <Clock size={14} className="text-gray-400" />
                     <span className="text-sm text-gray-500">
-                      Created: {selectedPlan?.createdAt ? formatDate(selectedPlan.createdAt) : 'N/A'}
+                      Created: {selectedPlan?.createdAt ? formatDate(String(selectedPlan.createdAt)) : 'N/A'}
                     </span>
                   </div>
                 </div>

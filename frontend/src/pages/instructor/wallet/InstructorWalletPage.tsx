@@ -13,6 +13,7 @@ import Card from "../../../components/common/Card";
 import { Button } from "../../../components/common/Button";
 import InputField from "../../../components/common/InputField";
 import { type TransactionResponse, type WalletResponse , type Transaction, type IWithdrawalRequest  } from "../interface/instructorInterface";
+import type { ApiError, RazorpayResponse } from "../../../types/interfaces/ICommon";
 
 export default function InstructorWalletPage() {
   const [wallet, setWallet] = useState<{ ownerId: string; balance: number } | null>(null);
@@ -38,9 +39,11 @@ export default function InstructorWalletPage() {
     try {
       const res: WalletResponse = await instructorGetWallet();
       setWallet(res.wallet);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load wallet");
-    }
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Failed to load wallet");
+}
   };
 
   const fetchTransactions = async (page = 1) => {
@@ -49,9 +52,11 @@ export default function InstructorWalletPage() {
       setTransactions(res.data.transactions || []);
       setTxnPage(res.data.currentPage || 1);
       setTxnTotalPages(res.data.totalPages || 1);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load transactions");
-    }
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Failed to load transactions");
+}
   };
 
   const fetchWithdrawalRequests = async (page = 1) => {
@@ -60,60 +65,64 @@ export default function InstructorWalletPage() {
       setWithdrawalRequests(res.transactions || []);
       setWithdrawalPage(res.currentPage || 1);
       setWithdrawalTotalPages(res.totalPages || 1);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load withdrawal requests");
-    }
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Failed to load withdrawal requests");
+}
   };
 
   const handleAddMoney = async () => {
-    try {
-      if (!rechargeAmount || rechargeAmount < 1) {
-        toast.warning("Enter a valid recharge amount");
-        return;
-      }
-
-      if(rechargeAmount > 50000){
-        toast.warning("Enter an amount which is less than or equal to 50000")
-        return;
-      }
-      setLoading(true);
-
-      const orderData = await instructorCreateWalletRechargeOrder({ amount: Math.round(rechargeAmount) });
-
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: orderData.order.amount,
-        currency: "INR",
-        name: "uLearn Instructor Wallet",
-        description: "Wallet Recharge",
-        order_id: orderData.order.id,
-        handler: async (response: any) => {
-          try {
-            await instructorVerifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              amount: Math.round(rechargeAmount),
-            });
-            toast.success("Wallet recharged successfully");
-            setRechargeAmount(0);
-            fetchWallet();
-            fetchTransactions(1);
-          } catch (error: any) {
-            toast.error(error.message || "Payment verification failed");
-          }
-        },
-        theme: { color: "#6366f1" },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to initiate payment");
-    } finally {
-      setLoading(false);
+  try {
+    if (!rechargeAmount || rechargeAmount < 1) {
+      toast.warning("Enter a valid recharge amount");
+      return;
     }
-  };
+
+    if (rechargeAmount > 50000) {
+      toast.warning("Enter an amount which is less than or equal to 50000");
+      return;
+    }
+    setLoading(true);
+
+    const orderData = await instructorCreateWalletRechargeOrder({ amount: Math.round(rechargeAmount) });
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: orderData.order.amount,
+      currency: "INR",
+      name: "uLearn Instructor Wallet",
+      description: "Wallet Recharge",
+      order_id: orderData.order.id,
+      handler: async (response: RazorpayResponse) => {
+        try {
+          await instructorVerifyPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            amount: Math.round(rechargeAmount),
+          });
+          toast.success("Wallet recharged successfully");
+          setRechargeAmount(0);
+          fetchWallet();
+          fetchTransactions(1);
+        } catch (error) {
+          const apiError = error as ApiError;
+          toast.error(apiError.response?.data?.message || apiError.message || "Payment verification failed");
+        }
+      },
+      theme: { color: "#6366f1" },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch (error) {
+    const apiError = error as ApiError;
+    toast.error(apiError.response?.data?.message || apiError.message || "Failed to initiate payment");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCreateWithdrawal = async () => {
     try {
@@ -137,11 +146,12 @@ export default function InstructorWalletPage() {
       setWithdrawalAmount(0);
       fetchWallet();
       fetchWithdrawalRequests(1);
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to create withdrawal request";
-      toast.error(errorMessage);
-    } finally {
+    } catch (error) {
+  const apiError = error as ApiError;
+  const errorMessage =
+    apiError.response?.data?.message || "Failed to create withdrawal request";
+  toast.error(errorMessage);
+}finally {
       setWithdrawalLoading(false);
     }
   };
@@ -158,9 +168,11 @@ export default function InstructorWalletPage() {
       fetchWithdrawalRequests(withdrawalPage);
       setShowRetryModal({ show: false, requestId: "", currentAmount: 0 });
       setRetryAmount(0);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to retry withdrawal request");
-    }
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || "Failed to retry withdrawal request");
+}
   };
 
   const openRetryModal = (requestId: string, currentAmount: number) => {

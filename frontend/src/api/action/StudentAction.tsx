@@ -1,8 +1,9 @@
+import { AxiosError } from "axios";
 import type { LearningPathFilterResponse } from "../../pages/student/interface/studentInterface";
 import { API } from "../../service/axios";
 import UserRouterEndpoints from "../../types/endPoints/userEndPoint";
 import type QuizPayload from "../../types/interfaces/IQuizPayload";
-import type { GetLMSCoursesParams, CartItemDTO, WishlistItem, LearningPathListDTO, LearningPathDTO, CreateLearningPathRequest, UpdateLearningPathRequest } from "../../types/interfaces/IStudentInterface";
+import type { GetLMSCoursesParams, CartItemDTO, WishlistItem, LearningPathListDTO, LearningPathDTO, CreateLearningPathRequest, UpdateLearningPathRequest, ExportCourseReportFilter, ExportCourseReportParams, ExportSlotReportFilter, ExportSlotReportParams } from "../../types/interfaces/IStudentInterface";
 import type { ListInstructorParams, RetryPaymentResponse } from "../../types/interfaces/ListInstructorParams";
 import fileDownload from "js-file-download";
 
@@ -15,7 +16,7 @@ export const getProfile = async () => {
   }
 };
 
-export const updateProfile = async (formData: FormData): Promise<any> => {
+export const updateProfile = async (formData: FormData) => {
   try {
     const response = await API.put(
       UserRouterEndpoints.userProfilePage,
@@ -28,7 +29,7 @@ export const updateProfile = async (formData: FormData): Promise<any> => {
   }
 };
 
-export const updatePassword = async (data: any): Promise<any> => {
+export const updatePassword = async (data: FormData)=> {
   try {
     const response = await API.put(
       UserRouterEndpoints.userUpdatePassWord,
@@ -160,11 +161,7 @@ export const getWishlist = async (): Promise<{
 export const addToWishlist = async (
   itemId: string,
   type: "course" | "learningPath"
-): Promise<{
-  success: boolean;
-  message: string;
-  data: any; // Adjust type based on backend response (e.g., IWishlist)
-}> => {
+) => {
   try {
     const response = await API.post(UserRouterEndpoints.userAddToWishlist, {
       itemId,
@@ -762,27 +759,26 @@ export const slotReport = async (filter: {
   }
 };
 
+
 export const exportCourseReport = async (
   format: "pdf" | "excel",
-  filter?: {
-    type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-  },
+  filter?: ExportCourseReportFilter,
   customStartDate?: string,
   customEndDate?: string
 ) => {
   try {
-    const params: any = {
+    const params: ExportCourseReportParams = {
       format,
       filter: filter?.type || "custom",
       page: filter?.page,
       limit: 5,
     };
 
-    // Include startDate and endDate for custom filter
-    if (filter?.type === "custom" && customStartDate && customEndDate) {
+    if (
+      filter?.type === "custom" &&
+      customStartDate !== undefined &&
+      customEndDate !== undefined
+    ) {
       params.startDate = new Date(customStartDate).toISOString().split("T")[0];
       params.endDate = new Date(customEndDate).toISOString().split("T")[0];
     }
@@ -792,8 +788,7 @@ export const exportCourseReport = async (
       responseType: "blob",
     });
 
-    const filename =
-      format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
+    const filename = format === "pdf" ? "course-report.pdf" : "course-report.xlsx";
     const blob = new Blob([response.data], {
       type:
         format === "pdf"
@@ -807,26 +802,26 @@ export const exportCourseReport = async (
   }
 };
 
+
 export const exportSlotReport = async (
   format: "pdf" | "excel",
-  filter?: {
-    type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-  },
+  filter?: ExportSlotReportFilter,
   customStartDate?: string,
   customEndDate?: string
 ) => {
   try {
-    const params: any = {
+    const params: ExportSlotReportParams = {
       format,
       filter: filter?.type || "custom",
       page: filter?.page,
       limit: 5,
     };
 
-    if (filter?.type === "custom" && customStartDate && customEndDate) {
+    if (
+      filter?.type === "custom" &&
+      customStartDate !== undefined &&
+      customEndDate !== undefined
+    ) {
       params.startDate = new Date(customStartDate).toISOString().split("T")[0];
       params.endDate = new Date(customEndDate).toISOString().split("T")[0];
     }
@@ -866,7 +861,7 @@ export const GetLMSCourses = async (params: GetLMSCoursesParams = {}): Promise<L
 
     const response = await API.get(`${UserRouterEndpoints.userGetLMSCourse}?${queryParams}`);
     return response.data as LearningPathFilterResponse;
-  } catch (error: any) {
+  } catch (error) {
     throw error;
   }
 };
@@ -971,10 +966,13 @@ export const getStudentLearningPaths = async (
       data: response.data.data || [],
       total: response.data.total || 0,
     };
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch learning paths"
-    );
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch learning paths"
+      );
+    }
+    throw error
   }
 };
 
@@ -986,10 +984,13 @@ export const getLearningPathById = async (
       `${UserRouterEndpoints.userGetLearningPathById}/${learningPathId}`
     );
     return response.data.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch learning path"
-    );
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch learning path"
+      );
+    }
+    throw error
   }
 };
 
@@ -1014,10 +1015,13 @@ export const createLearningPath = async (
       }
     );
     return response.data.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to create learning path"
-    );
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(
+        error.response?.data?.message || "Failed to create learning path"
+      );
+    }
+    throw error
   }
 };
 
@@ -1041,10 +1045,13 @@ export const updateLearningPath = async (
       }
     );
     return response.data.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to update learning path"
-    );
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(
+        error.response?.data?.message || "Failed to update learning path"
+      );
+    }
+    throw error
   }
 };
 
@@ -1055,10 +1062,12 @@ export const deleteLearningPath = async (
     await API.delete(
       `${UserRouterEndpoints.userDeleteLearningPath}/${learningPathId}`
     );
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to delete learning path"
-    );
+  } catch (error) {
+    if(error instanceof AxiosError){
+      throw new Error(
+        error.response?.data?.message || "Failed to delete learning path"
+      );
+    }
   }
 };
 

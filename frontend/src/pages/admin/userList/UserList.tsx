@@ -8,14 +8,14 @@ import { getAllUser, blockUser } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type UserListing } from "../interface/adminInterface";
+import { type BackendUser, type GetAllUserResponse, type UserListing, type UserListingRecord } from "../interface/adminInterface";
 
 const UserList: React.FC = () => {
   const [users, setUsers] = useState<UserListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10); // Adjusted limit for better UX
+  const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
@@ -24,11 +24,19 @@ const UserList: React.FC = () => {
 
   const debouncedSearch = useDebounce(search, 500);
 
+  // Helper function to stringify values for title attribute
+  const stringifyValue = (value: unknown): string => {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return value.toString();
+    if (typeof value === 'boolean') return value.toString();
+    return String(value);
+  };
+
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllUser(page, limit, debouncedSearch);
+      const data = await getAllUser(page, limit, debouncedSearch) as GetAllUserResponse;
 
       // Validate response structure
       if (!data || !data.success) {
@@ -40,7 +48,7 @@ const UserList: React.FC = () => {
       }
 
       const formattedUsers: UserListing[] = data.users.map(
-        (user: any, index: number) => ({
+        (user: BackendUser, index: number) => ({
           id: user._id || `user-${index}`,
           username: user.name || "Unknown User",
           email: user.email || "No email provided",
@@ -52,8 +60,10 @@ const UserList: React.FC = () => {
 
       setUsers(formattedUsers);
       setTotal(data.total || data.users.length);
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to fetch users";
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to fetch users";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -110,7 +120,7 @@ const UserList: React.FC = () => {
         );
         toast.error(response.message);
       }
-    } catch (error: any) {
+    } catch (error) {
       // Revert on error
       setUsers((prev) =>
         prev.map((u) =>
@@ -123,14 +133,17 @@ const UserList: React.FC = () => {
             : u
         )
       );
-      toast.error(error.message || "Error occurred while blocking user");
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Error occurred while blocking user";
+      toast.error(errorMessage);
     } finally {
       setConfirmModalOpen(false);
       setSelectedUser(null);
     }
   };
 
-  const actions: ActionButton<UserListing>[] = [
+  const actions: ActionButton<UserListingRecord>[] = [
     {
       key: "block-toggle",
       label: (user) =>
@@ -142,7 +155,7 @@ const UserList: React.FC = () => {
           <UserX size={16} />
         ),
       onClick: (user) => {
-        setSelectedUser(user);
+        setSelectedUser(user as UserListing);
         setConfirmModalOpen(true);
       },
       className: (user) =>
@@ -154,13 +167,12 @@ const UserList: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     if (dateString === "N/A") return dateString;
-    // Assuming backend returns DD-MM-YYYY format, display as-is
     return dateString;
   };
 
-  const columns: Column<UserListing>[] = [
+  const columns: Column<UserListingRecord>[] = [
     {
-      key: "serialNo",
+      key: "id", // Using existing key instead of non-existent "serialNo"
       title: "S.NO",
       minWidth: "60px",
       priority: 1,
@@ -173,62 +185,64 @@ const UserList: React.FC = () => {
     {
       key: "username",
       title: "Name",
-      minWidth: "100px", // Reduced minWidth for better fit on smaller screens
+      minWidth: "100px",
       priority: 2,
       render: (value) => (
         <div
           className="text-sm font-semibold text-gray-900 truncate max-w-[120px] sm:max-w-[150px]"
-          title={value}
+          title={stringifyValue(value)}
         >
-          {value}
+          {stringifyValue(value)}
         </div>
       ),
     },
     {
       key: "email",
       title: "Email",
-      minWidth: "150px", // Reduced minWidth for better responsiveness
+      minWidth: "150px",
       priority: 3,
       render: (value) => (
         <div
           className="text-sm text-gray-700 truncate max-w-[150px] sm:max-w-[200px]"
-          title={value}
+          title={stringifyValue(value)}
         >
-          {value}
+          {stringifyValue(value)}
         </div>
       ),
     },
     {
       key: "status",
       title: "Status",
-      minWidth: "80px", // Reduced minWidth
+      minWidth: "80px",
       priority: 4,
-      render: (value) => (
-        <span
-          className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-            value === "Blocked"
-              ? "bg-red-100 text-red-800 border border-red-200"
-              : "bg-green-100 text-green-800 border border-green-200"
-          }`}
-        >
+      render: (value) => {
+        const statusStr = stringifyValue(value);
+        return (
           <span
-            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-              value === "Blocked" ? "bg-red-500" : "bg-green-500"
+            className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+              statusStr === "Blocked"
+                ? "bg-red-100 text-red-800 border border-red-200"
+                : "bg-green-100 text-green-800 border border-green-200"
             }`}
-          ></span>
-          {value}
-        </span>
-      ),
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                statusStr === "Blocked" ? "bg-red-500" : "bg-green-500"
+              }`}
+            ></span>
+            {statusStr}
+          </span>
+        );
+      },
     },
     {
       key: "created",
       title: "Created",
-      minWidth: "80px", // Reduced minWidth for better fit
+      minWidth: "80px",
       priority: 5,
-      // Removed hideOnMobile to ensure visibility on all devices
       render: (value) => (
         <span className="text-sm text-gray-600 whitespace-nowrap">
-          {formatDate(value)}
+          {formatDate(stringifyValue(value))}
         </span>
       ),
     },
@@ -236,10 +250,13 @@ const UserList: React.FC = () => {
 
   const totalPages = Math.ceil(total / limit);
 
+  // Cast users to UserListingRecord[] for DataTable
+  const userRecords = users as unknown as UserListingRecord[];
+
   return (
     <div className="w-full overflow-x-auto">
       <DataTable
-        data={users}
+        data={userRecords}
         columns={columns}
         actions={actions}
         loading={loading}

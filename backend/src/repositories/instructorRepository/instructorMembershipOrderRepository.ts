@@ -4,7 +4,7 @@ import {
 } from "../../models/instructorMembershipOrderModel";
 import { GenericRepository } from "../genericRepository";
 import { IInstructorMembershipOrderRepository } from "./interface/IInstructorMembershipOrderRepository";
-import { Types, PipelineStage } from "mongoose";
+import { Types, PipelineStage, FilterQuery } from "mongoose";
 
 export class InstructorMembershipOrderRepository
   extends GenericRepository<IInstructorMembershipOrder>
@@ -36,7 +36,7 @@ export class InstructorMembershipOrderRepository
         startDate: data.startDate || new Date(),
         endDate: data.endDate || new Date(),
       },
-      session,
+      session ? {session} : undefined,
     );
   }
 
@@ -58,7 +58,7 @@ export class InstructorMembershipOrderRepository
     limit: number = 10,
     search?: string,
   ): Promise<{ data: IInstructorMembershipOrder[]; total: number }> {
-    const baseFilter: any = {
+    const baseFilter: FilterQuery<IInstructorMembershipOrder> = {
       instructorId: new Types.ObjectId(instructorId),
     };
 

@@ -9,6 +9,7 @@ import InputField from "../../../components/common/InputField";
 import { createChapter } from "../../../api/action/InstructorActionApi";
 import { Button } from "../../../components/common/Button";
 import { Loader2 } from "lucide-react";
+import type { ChapterFormValues } from "../interface/instructorInterface";
 
 const textOnlyRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
@@ -78,7 +79,32 @@ const AddChapterPage = () => {
     setVideoPreview(URL.createObjectURL(file));
   };
 
-  const handleSubmit = async (values: any) => {
+  const getErrorMessage = (error: unknown): string => {
+    // Check for API error with response.data.message
+    if (
+      error &&
+      typeof error === 'object' &&
+      'response' in error &&
+      error.response &&
+      typeof error.response === 'object' &&
+      'data' in error.response &&
+      error.response.data &&
+      typeof error.response.data === 'object' &&
+      'message' in error.response.data
+    ) {
+      return String((error.response.data as { message?: string }).message);
+    }
+
+    // Check for standard Error with message
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    // Fallback
+    return "Chapter creation failed";
+  };
+
+  const handleSubmit = async (values: ChapterFormValues) => {
     if (!courseId) return toast.error("Invalid course ID");
 
     if (!videoFile) {
@@ -99,9 +125,8 @@ const AddChapterPage = () => {
       const res = await createChapter(courseId, formData);
       toast.success(res?.data?.message);
       navigate(`/instructor/course/${courseId}/chapters`);
-    } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message;
-      toast.error(message || "Chapter creation failed");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -114,7 +139,7 @@ const AddChapterPage = () => {
           initialValues={{
             chapterTitle: "",
             description: "",
-            chapterNumber: "",
+            chapterNumber: 0, // Changed from "" to 0 to match the number type
           }}
           validationSchema={chapterSchema}
           onSubmit={handleSubmit}

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Formik, Form } from 'formik';
+import { Formik, Form, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import InputField from '../../../components/common/InputField';
 import { createCoupon } from '../../../api/action/AdminActionApi';
 import { type CouponData } from '../../../types/interfaces/IAdminInterface';
+import { isApiError } from '../interface/adminInterface';
+
+
 
 const validationSchema = Yup.object({
   code: Yup.string()
@@ -37,13 +40,24 @@ const AddCouponPage: React.FC = () => {
     maxDiscount: 0,
   };
 
-  const handleSubmit = async (values: CouponData, { setSubmitting }: any) => {
+  const handleSubmit = async (
+    values: CouponData,
+    { setSubmitting }: FormikHelpers<CouponData>
+  ): Promise<void> => {
     setServerError(null);
     try {
       await createCoupon(values);
       navigate('/admin/coupons');
-    } catch (err: any) {
-      setServerError(err.message || 'Failed to create coupon');
+    } catch (err: unknown) {
+      let errorMessage = 'Failed to create coupon';
+      
+      if (isApiError(err)) {
+        errorMessage = err.response?.data?.message || err.message || errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setServerError(errorMessage);
       setSubmitting(false);
     }
   };

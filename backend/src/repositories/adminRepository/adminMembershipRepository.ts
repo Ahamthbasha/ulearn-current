@@ -4,6 +4,7 @@ import {
   IMembershipPlan,
 } from "../../models/membershipPlanModel";
 import { GenericRepository } from "../genericRepository";
+import { SortOrder } from "mongoose";
 
 export class AdminMembershipRepository
   extends GenericRepository<IMembershipPlan>
@@ -44,7 +45,7 @@ export class AdminMembershipRepository
     filter: object,
     page: number,
     limit: number,
-    sort: Record<string, any> = { createdAt: -1 },
+    sort: Record<string,SortOrder> = { createdAt: -1 },
   ): Promise<{ data: IMembershipPlan[]; total: number }> {
     return this.paginate(filter, page, limit, sort);
   }

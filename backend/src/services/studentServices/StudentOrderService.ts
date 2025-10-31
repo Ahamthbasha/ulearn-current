@@ -16,6 +16,7 @@ import { razorpay } from "../../utils/razorpay";
 import { StudentErrorMessages } from "../../utils/constants";
 import { formatDate } from "../../utils/dateFormat";
 import { appLogger } from "../../utils/logger";
+import { UserDTO } from "../../dto/userDTO/courseInfoDTO";
 
 export class StudentOrderService implements IStudentOrderService {
   private _orderRepo: IStudentOrderRepository;
@@ -112,7 +113,7 @@ export class StudentOrderService implements IStudentOrderService {
 
     return {
       orderId: order._id,
-      userInfo: mapUserInfo(order.userId),
+      userInfo: mapUserInfo(order.userId as unknown as UserDTO),
       coursesInfo,
       learningPathsInfo,
       couponInfo,
@@ -207,7 +208,6 @@ export class StudentOrderService implements IStudentOrderService {
           }),
         );
 
-        // If any courses or learning paths are enrolled, block the retry
         if (enrolledCourses.length > 0 || enrolledLearningPaths.length > 0) {
           const enrolledItems = [
             ...enrolledCourseNames.map((name) => `Course: ${name}`),
@@ -239,7 +239,8 @@ export class StudentOrderService implements IStudentOrderService {
               message: "Payment retry successful",
               order: result.order,
             };
-          } catch (verifyError: any) {
+          } catch (verifyError) {
+            const verifyErrorMessage = verifyError instanceof Error && verifyError.message
             await this._checkoutService.updateOrderStatus(
               orderId,
               "FAILED",
@@ -247,7 +248,7 @@ export class StudentOrderService implements IStudentOrderService {
               localSession,
             );
             throw new Error(
-              verifyError.message || "Payment verification failed",
+              verifyErrorMessage || "Payment verification failed",
             );
           }
         }
@@ -295,7 +296,7 @@ export class StudentOrderService implements IStudentOrderService {
               key: process.env.RAZORPAY_KEY_ID || "",
             },
           };
-        } catch (razorpayError: any) {
+        } catch (razorpayError) {
           appLogger.error("Razorpay order creation failed:", razorpayError);
           throw new Error("Failed to create payment order. Please try again.");
         }

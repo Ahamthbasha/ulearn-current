@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { IInstructor } from "../../models/instructorModel";
 import IInstructorRepository from "../../repositories/instructorRepository/interface/IInstructorRepository";
 import IInstructorService from "./interface/IInstructorService";
@@ -12,6 +13,12 @@ export default class InstructorService implements IInstructorService {
   async findByEmail(email: string): Promise<IInstructor | null> {
     return this._instructorRepository.findByEmail(email);
   }
+
+  async findById(userId: string | Types.ObjectId): Promise<IInstructor | null> {
+  const id = typeof userId === "string" ? userId : userId.toString();
+  return await this._instructorRepository.findById(id);
+}
+
 
   async createUser(userData: IInstructor): Promise<IInstructor | null> {
     return this._instructorRepository.createUser(userData);

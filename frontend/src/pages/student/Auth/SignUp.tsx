@@ -8,6 +8,7 @@ import { signup } from "../../../api/auth/UserAuthentication";
 import studentLogin from "../../../assets/studentLogin.jpeg";
 
 import type { signUp } from "../../../types/signUpType";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const signupSchema = Yup.object().shape({
   username: Yup.string()
@@ -44,9 +45,11 @@ const SignUp = () => {
       } else {
         toast.error(response.message);
       }
-    } catch (error: any) {
-      toast.error(error.message || "Unknown error occurred");
     }
+     catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Unknown error occurred");
+}
   };
 
   return (

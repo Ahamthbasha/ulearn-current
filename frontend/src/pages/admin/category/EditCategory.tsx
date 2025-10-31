@@ -8,6 +8,7 @@ import {
   editCategory,
 } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
+import type { AxiosError } from "axios";
 
 const EditCategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -75,10 +76,16 @@ const EditCategoryPage = () => {
               } else {
                 toast.error(response.message || "Failed to update category");
               }
-            } catch (err: any) {
-              const message = err?.response?.data?.message;
-              toast.error(message);
-            } finally {
+            }catch (err: unknown) {
+  let message = "Something went wrong";
+
+  if (err && typeof err === "object" && "response" in err) {
+    const axiosErr = err as AxiosError<{ message?: string }>;
+    message = axiosErr.response?.data?.message || message;
+  }
+
+  toast.error(message);
+}finally {
               setSubmitting(false);
             }
           }}

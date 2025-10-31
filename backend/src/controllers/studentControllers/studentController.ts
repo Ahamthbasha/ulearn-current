@@ -13,6 +13,7 @@ import { IOtpGenerate } from "../../types/types";
 import { IJwtService } from "../../services/interface/IJwtService";
 import { IEmail } from "../../types/Email";
 import { appLogger } from "../../utils/logger";
+import { TokenPayload } from "src/types/dashboardTypes";
 
 export class StudentController implements IStudentController {
   private _studentService: IStudentService;
@@ -35,15 +36,16 @@ export class StudentController implements IStudentController {
     this._emailSender = emailService;
   }
 
-  async studentSignUp(req: Request, res: Response): Promise<any> {
+  async studentSignUp(req: Request, res: Response): Promise<void> {
     try {
       let { email, password, username } = req.body;
 
       if (!email || !password || !username) {
-        return res.status(StatusCode.BAD_REQUEST).json({
+        res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: `${MESSAGES.EMAIL_REQUIRED}, ${MESSAGES.PASSWORD_REQUIRED}, and ${MESSAGES.USERNAME_REQUIRED}`,
         });
+        return
       }
 
       const saltRound = 10;
@@ -53,10 +55,11 @@ export class StudentController implements IStudentController {
       const existingStudent = await this._studentService.findByEmail(email);
 
       if (existingStudent) {
-        return res.status(StatusCode.CONFLICT).json({
+        res.status(StatusCode.CONFLICT).json({
           success: false,
           message: MESSAGES.USER_ALREADY_EXISTS,
         });
+        return
       } else {
         const otp = await this._otpGenerator.createOtpDigit();
 
@@ -64,10 +67,11 @@ export class StudentController implements IStudentController {
         const otpCreated = await this._otpService.createOtp(email, otp, 60);
 
         if (!otpCreated) {
-          return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: MESSAGES.FAILED_TO_CREATE_OTP,
           });
+          return
         }
 
         await this._emailSender.sentEmailVerification("Student", email, otp);
@@ -79,31 +83,34 @@ export class StudentController implements IStudentController {
           role: Roles.STUDENT,
         });
 
-        return res.status(StatusCode.CREATED).json({
+        res.status(StatusCode.CREATED).json({
           success: true,
           message: MESSAGES.SIGNUP_SUCCESS,
           token,
         });
+        return
       }
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Student SignUp Error:", error);
-      return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error: error instanceof Error? error.message : SERVER_ERROR.UNKNOWN_ERROR
       });
+      return
     }
   }
 
-  async resendOtp(req: Request, res: Response): Promise<any> {
+  async resendOtp(req: Request, res: Response): Promise<void> {
     try {
       let { email } = req.body;
 
       if (!email) {
-        return res.status(StatusCode.BAD_REQUEST).json({
+        res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: MESSAGES.EMAIL_REQUIRED,
         });
+        return
       }
 
       // Check if there's an existing OTP
@@ -119,10 +126,11 @@ export class StudentController implements IStudentController {
       const otpCreated = await this._otpService.createOtp(email, otp, 60);
 
       if (!otpCreated) {
-        return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: MESSAGES.FAILED_TO_CREATE_OTP,
         });
+        return
       }
 
       await this._emailSender.sentEmailVerification("Student", email, otp);
@@ -131,112 +139,145 @@ export class StudentController implements IStudentController {
         success: true,
         message: MESSAGES.OTP_SENT,
       });
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Resend OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error: error instanceof Error ?error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
 
-  async createUser(req: Request, res: Response): Promise<any> {
-    try {
-      const { otp } = req.body;
+async createUser(req: Request, res: Response): Promise<void> {
+  try {
+    const { otp } = req.body;
 
-      if (!otp) {
-        return res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: MESSAGES.OTP_REQUIRED,
-        });
-      }
+    if (!otp) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: MESSAGES.OTP_REQUIRED,
+      });
+      return;
+    }
 
-      const token = req.headers["the-verify-token"] || "";
-      if (typeof token != "string") {
-        return res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: StudentErrorMessages.TOKEN_INVALID,
-        });
-      }
+    const token = req.headers["the-verify-token"] || "";
+    if (typeof token !== "string") {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: StudentErrorMessages.TOKEN_INVALID,
+      });
+      return;
+    }
 
-      const decode = await this._JWT.verifyToken(token);
-      if (!decode || !decode.email) {
-        return res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: StudentErrorMessages.TOKEN_INVALID,
-        });
-      }
+    const decodeRaw = await this._JWT.verifyToken(token);
 
-      // Use the Redis OTP verification
-      const isOtpValid = await this._otpService.verifyOtp(decode.email, otp);
+    if (typeof decodeRaw === "string") {
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: StudentErrorMessages.TOKEN_INVALID,
+      });
+      return;
+    }
 
-      if (isOtpValid) {
-        const user = await this._studentService.createUser(decode);
+    const decode = decodeRaw as TokenPayload;
 
-        if (user) {
-          return res.status(StatusCode.CREATED).json({
-            success: true,
-            message: MESSAGES.USER_CREATED,
-            user,
-          });
-        } else {
-          return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: MESSAGES.FAILED_TO_RESET_PASSWORD,
-          });
-        }
-      } else {
-        return res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: MESSAGES.INCORRECT_OTP,
-        });
-      }
-    } catch (error: any) {
-      appLogger.error("Create User Error:", error);
+    if (!decode || !decode.email) {
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: StudentErrorMessages.TOKEN_INVALID,
+      });
+      return;
+    }
+
+    // Verify OTP
+    const isOtpValid = await this._otpService.verifyOtp(decode.email, otp);
+
+    if (!isOtpValid) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: MESSAGES.INCORRECT_OTP,
+      });
+      return;
+    }
+
+    // Fetch full user from database by decoded ID or email
+    const userFromDb = await this._studentService.findById(decode.id);
+    if (!userFromDb) {
+      res.status(StatusCode.NOT_FOUND).json({
+        success: false,
+        message: MESSAGES.USER_NOT_FOUND,
+      });
+      return;
+    }
+
+    // Now call createUser with full IUser object fetched from DB
+    const user = await this._studentService.createUser(userFromDb);
+
+    if (user) {
+      res.status(StatusCode.CREATED).json({
+        success: true,
+        message: MESSAGES.USER_CREATED,
+        user,
+      });
+      return;
+    } else {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        message: MESSAGES.FAILED_TO_RESET_PASSWORD,
       });
+      return;
     }
+  } catch (error) {
+    appLogger.error("Create User Error:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+    });
   }
+}
 
-  async login(req: Request, res: Response): Promise<any> {
+
+  async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(StatusCode.BAD_REQUEST).json({
+        res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.PASSWORD_REQUIRED}`,
         });
+        return
       }
 
       const student = await this._studentService.findByEmail(email);
 
       if (!student) {
-        return res.status(StatusCode.NOT_FOUND).json({
+        res.status(StatusCode.NOT_FOUND).json({
           success: false,
           message: MESSAGES.INVALID_CREDENTIALS,
         });
+        return
       }
 
       // Block check
       if (student.isBlocked) {
-        return res.status(StatusCode.FORBIDDEN).json({
+        res.status(StatusCode.FORBIDDEN).json({
           success: false,
           message: MESSAGES.ACCOUNT_BLOCKED,
         });
+        return
       }
 
       const passwordMatch = await bcrypt.compare(password, student.password);
 
       if (!passwordMatch) {
-        return res.status(StatusCode.UNAUTHORIZED).json({
+        res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
           message: MESSAGES.INVALID_CREDENTIALS,
         });
+        return
       }
 
       const role = student.role;
@@ -245,7 +286,7 @@ export class StudentController implements IStudentController {
       const accessToken = await this._JWT.accessToken({ id, role, email });
       const refreshToken = await this._JWT.refreshToken({ id, role, email });
 
-      return res
+      res
         .status(StatusCode.OK)
         .cookie("accessToken", accessToken, {
           httpOnly: true,
@@ -264,17 +305,18 @@ export class StudentController implements IStudentController {
             isBlocked: student.isBlocked,
           },
         });
-    } catch (error: any) {
+        return
+    } catch (error) {
       appLogger.error("Login Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error: error instanceof Error ? error.message :SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
 
-  async logout(_req: Request, res: Response): Promise<any> {
+  async logout(_req: Request, res: Response): Promise<void> {
     try {
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");
@@ -283,12 +325,12 @@ export class StudentController implements IStudentController {
         success: true,
         message: MESSAGES.LOGOUT_SUCCESS,
       });
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Logout Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error:error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
@@ -336,12 +378,12 @@ export class StudentController implements IStudentController {
           message: MESSAGES.USER_NOT_FOUND,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Verify Email Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
@@ -378,12 +420,12 @@ export class StudentController implements IStudentController {
           message: MESSAGES.INCORRECT_OTP,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Verify Reset OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error:error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
@@ -417,12 +459,12 @@ export class StudentController implements IStudentController {
         success: true,
         message: MESSAGES.OTP_SENT,
       });
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Forgot Resend OTP Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
@@ -449,13 +491,22 @@ export class StudentController implements IStudentController {
       }
 
       let data = await this._JWT.verifyToken(token);
-      if (!data || !data.email) {
-        res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: StudentErrorMessages.TOKEN_INVALID,
-        });
-        return;
-      }
+if (typeof data === "string") {
+  // handle string case, e.g., invalid format or token string
+  res.status(StatusCode.UNAUTHORIZED).json({
+    success: false,
+    message: StudentErrorMessages.TOKEN_INVALID,
+  });
+  return;
+}
+// Else decode is JwtPayload
+if (!data.email) {
+  res.status(StatusCode.UNAUTHORIZED).json({
+    success: false,
+    message: StudentErrorMessages.TOKEN_INVALID,
+  });
+  return;
+}
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const passwordReset = await this._studentService.resetPassword(
@@ -475,12 +526,12 @@ export class StudentController implements IStudentController {
           message: MESSAGES.FAILED_TO_RESET_PASSWORD,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Reset Password Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
@@ -570,12 +621,12 @@ export class StudentController implements IStudentController {
           });
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       appLogger.error("Google Login Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error.message,
+        error:error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }

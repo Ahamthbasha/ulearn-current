@@ -18,35 +18,12 @@ export interface IMonthlySales {
 }
 
 export interface IDashboardData {
-  topCourses: {
-    _id: string;
-    courseName: string;
-    thumbnailUrl: string;
-    count: number;
-  }[];
-  topLearningPaths: {
-    _id: string;
-    learningPathName: string;
-    thumbnailUrl: string;
-    count: number;
-  }[];
-  categorySales: {
-    categoryName: string;
-    totalSales: number;
-  }[];
-  monthlySales: {
-    year: number;
-    month: number;
-    totalRevenue: number;
-    totalSales: number;
-    courseSales: number;
-    learningPathSales: number;
-  }[];
+  topCourses: ITopSellingCourse[];
+  categorySales: ICategorySales[];
+  monthlySales: IMonthlySales[];
   totalRevenue: number;
   totalCourseSales: number;
-  totalLearningPathSales: number;
   publishedCourses: number;
-  publishedLearningPaths: number;
   categoryWiseCount: number;
 }
 
@@ -64,18 +41,14 @@ export interface IRevenueReportItem {
   orderId: string;
   date: string;
   totalOrderAmount: number;
-  instructorRevenue: number;
   couponCode: string;
   couponDiscount: number;
-  couponDiscountAmount: number;
-  standaloneCourse: {
+  couponDiscountAmount: number | null;
+  instructorRevenue: number;
+  courses: Array<{
     courseName: string;
-    standAloneCourseTotalPrice: number;
-  }[];
-  learningPath: {
-    learningPathName: string;
-    learningPathTotalPrice: number;
-  }[];
+    price: number;
+  }>;
 }
 
 export interface ReportFilter {

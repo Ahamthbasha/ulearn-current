@@ -11,21 +11,24 @@ import {
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import type { RazorpayInstance, RazorpayErrorResponse, ApiError } from "../../../types/interfaces/ICommon";
+import type { AvailabilityResponse, CheckoutResponse, Instructor, Slot, WalletResponse } from "../interface/slotCheckoutInterface";
+
 
 const SlotCheckoutPage = () => {
-  const { slotId } = useParams();
+  const { slotId } = useParams<{ slotId: string }>();
   const navigate = useNavigate();
 
-  const [availability, setAvailability] = useState<any>(null);
+  const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isRazorpayProcessing, setIsRazorpayProcessing] = useState(false);
   const [isWalletProcessing, setIsWalletProcessing] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [pendingBookingId, setPendingBookingId] = useState<string | undefined>(undefined);
-  const razorpayInstanceRef = useRef<any>(null);
+  const razorpayInstanceRef = useRef<RazorpayInstance | null>(null);
   const hasNavigatedRef = useRef<boolean>(false);
-  const currentBookingIdRef = useRef<string | undefined>(undefined); // Store current booking ID
+  const currentBookingIdRef = useRef<string | undefined>(undefined);
 
   const isProcessing = isRazorpayProcessing || isWalletProcessing;
 
@@ -34,14 +37,15 @@ const SlotCheckoutPage = () => {
     try {
       setLoading(true);
       const res = await checkSlotAvailabilityApi(slotId);
-      setAvailability(res);
+      setAvailability(res as AvailabilityResponse);
       if (res.reason === "PENDING_BOOKING_EXISTS") {
         setPendingBookingId(res.bookingId);
         setShowCancelDialog(true);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Availability check error:", err);
-      toast.error(err.response?.data?.message || "Failed to load slot details.");
+      const apiError = err as ApiError;
+      toast.error(apiError.response?.data?.message || "Failed to load slot details.");
       if (!hasNavigatedRef.current) {
         hasNavigatedRef.current = true;
         navigate("/user/slotsHistory");
@@ -56,11 +60,11 @@ const SlotCheckoutPage = () => {
 
     const init = async () => {
       try {
-        const walletRes = await getWallet();
+        const walletRes = await getWallet() as WalletResponse;
         setWalletBalance(walletRes.wallet?.balance || 0);
 
         await loadAvailability();
-      } catch (err: any) {
+      } catch (err) {
         console.error("Init error:", err);
         toast.error("Failed to initialize checkout.");
         if (!hasNavigatedRef.current) {
@@ -73,13 +77,15 @@ const SlotCheckoutPage = () => {
     init();
 
     return () => {
-      if (razorpayInstanceRef.current) {
+      if (razorpayInstanceRef.current && razorpayInstanceRef.current.close) {
         try {
           razorpayInstanceRef.current.close();
-        } catch (e) {}
+        } catch (e) {
+          console.error("Error closing Razorpay instance:", e);
+        }
       }
     };
-  }, [slotId]);
+  }, [slotId, navigate]);
 
   const handleCancelPending = async () => {
     if (!pendingBookingId) return;
@@ -90,8 +96,9 @@ const SlotCheckoutPage = () => {
       setPendingBookingId(undefined);
       currentBookingIdRef.current = undefined;
       await loadAvailability();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to cancel pending booking.");
+    } catch (err) {
+      const apiError = err as ApiError;
+      toast.error(apiError.response?.data?.message || "Failed to cancel pending booking.");
     }
   };
 
@@ -100,7 +107,7 @@ const SlotCheckoutPage = () => {
       console.log("Handling payment failure for booking:", bookingId);
       await handlePaymentFailureApi(bookingId);
       toast.error("Payment failed. Booking has been cancelled.");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error handling payment failure:", err);
       toast.error("Payment failed but couldn't update booking status.");
     } finally {
@@ -124,7 +131,7 @@ const SlotCheckoutPage = () => {
     setIsRazorpayProcessing(true);
 
     try {
-      const res = await slotCheckout(slotId!);
+      const res = await slotCheckout(slotId!) as CheckoutResponse;
       const { razorpayOrder, booking } = res;
 
       if (!razorpayOrder || !booking?.bookingId) {
@@ -133,7 +140,7 @@ const SlotCheckoutPage = () => {
 
       const bookingId = booking.bookingId;
       setPendingBookingId(bookingId);
-      currentBookingIdRef.current = bookingId; // Store in ref for event handlers
+      currentBookingIdRef.current = bookingId;
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || "",
@@ -151,12 +158,12 @@ const SlotCheckoutPage = () => {
               hasNavigatedRef.current = true;
               navigate("/user/slotsHistory");
             }
-          } catch (err: any) {
+          } catch (err) {
             console.error("Payment verification failed:", err);
-            const errorMessage = err?.response?.data?.message || "❌ Payment verification failed";
+            const apiError = err as ApiError;
+            const errorMessage = apiError?.response?.data?.message || "❌ Payment verification failed";
             toast.error(errorMessage);
             
-            // Handle payment verification failure
             if (currentBookingIdRef.current) {
               await handlePaymentFailure(currentBookingIdRef.current);
             } else if (!hasNavigatedRef.current) {
@@ -172,7 +179,6 @@ const SlotCheckoutPage = () => {
         modal: {
           ondismiss: async () => {
             console.log("Payment modal dismissed");
-            // Handle modal dismissal as payment failure
             if (currentBookingIdRef.current && !hasNavigatedRef.current) {
               await handlePaymentFailure(currentBookingIdRef.current);
             } else {
@@ -194,8 +200,7 @@ const SlotCheckoutPage = () => {
       const rzp = new window.Razorpay(options);
       razorpayInstanceRef.current = rzp;
       
-      // Handle payment failure event
-      rzp.on('payment.failed', async (response: any) => {
+      rzp.on('payment.failed', async (response: RazorpayErrorResponse) => {
         console.log("Payment failed event triggered:", response);
         
         if (currentBookingIdRef.current) {
@@ -212,15 +217,16 @@ const SlotCheckoutPage = () => {
       });
 
       rzp.open();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Razorpay initiation error:", err);
-      const error = err.response?.data;
+      const apiError = err as ApiError;
+      const error = apiError.response?.data;
       if (error?.error === "PENDING_BOOKING_EXISTS") {
-        setPendingBookingId(error.bookingId);
-        currentBookingIdRef.current = error.bookingId;
+        setPendingBookingId(error.orderId);
+        currentBookingIdRef.current = error.orderId;
         setShowCancelDialog(true);
       } else if (error?.error === "PENDING_BOOKING_BY_OTHERS") {
-        toast.error(error.message);
+        toast.error(error.message || "Slot is being processed by another user");
       } else {
         toast.error(error?.message || "Failed to initiate payment.");
       }
@@ -250,14 +256,15 @@ const SlotCheckoutPage = () => {
         hasNavigatedRef.current = true;
         navigate("/user/slotsHistory");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Wallet payment error:", err);
-      const error = err.response?.data;
+      const apiError = err as ApiError;
+      const error = apiError.response?.data;
       if (error?.error === "PENDING_BOOKING_EXISTS") {
-        setPendingBookingId(error.bookingId);
+        setPendingBookingId(error.orderId);
         setShowCancelDialog(true);
       } else if (error?.error === "PENDING_BOOKING_BY_OTHERS") {
-        toast.error(error.message);
+        toast.error(error.message || "Slot is being processed by another user");
       } else {
         toast.error(error?.message || "❌ Wallet booking failed");
       }
@@ -279,11 +286,11 @@ const SlotCheckoutPage = () => {
 
   if (!availability?.available) {
     let message = availability?.message || "Slot not available.";
-    if (availability.reason === "PENDING_BOOKING_BY_OTHERS") {
+    if (availability?.reason === "PENDING_BOOKING_BY_OTHERS") {
       message = "This slot is being processed by another user. Please try again later.";
-    } else if (availability.reason === "SLOT_ALREADY_BOOKED") {
+    } else if (availability?.reason === "SLOT_ALREADY_BOOKED") {
       message = "This slot has already been booked.";
-    } else if (availability.reason === "SLOT_NOT_FOUND") {
+    } else if (availability?.reason === "SLOT_NOT_FOUND") {
       message = "Slot not found.";
     }
 
@@ -292,7 +299,7 @@ const SlotCheckoutPage = () => {
         <div className="max-w-2xl mx-auto shadow-lg border rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold mb-6">Slot Unavailable</h2>
           <p className="text-red-500 mb-4">{message}</p>
-          {availability.reason === "PENDING_BOOKING_EXISTS" && pendingBookingId && (
+          {availability?.reason === "PENDING_BOOKING_EXISTS" && pendingBookingId && (
             <button
               onClick={handleCancelPending}
               className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors mb-4"
@@ -316,8 +323,8 @@ const SlotCheckoutPage = () => {
     );
   }
 
-  const slot = availability?.slot || {};
-  const instructor = slot.instructorId || {};
+  const slot = availability?.slot || {} as Slot;
+  const instructor = slot.instructorId || {} as Instructor;
   const slotPrice = slot?.price || 0;
 
   return (
@@ -342,11 +349,11 @@ const SlotCheckoutPage = () => {
         <div className="space-y-4">
           <p>
             <strong>Date:</strong>{" "}
-            {format(new Date(slot.startTime), "dd-MM-yyyy")}
+            {slot.startTime && format(new Date(slot.startTime), "dd-MM-yyyy")}
           </p>
           <p>
             <strong>Time:</strong>{" "}
-            {`${format(new Date(slot.startTime), "h:mm a")} - ${format(
+            {slot.startTime && slot.endTime && `${format(new Date(slot.startTime), "h:mm a")} - ${format(
               new Date(slot.endTime),
               "h:mm a"
             )}`}

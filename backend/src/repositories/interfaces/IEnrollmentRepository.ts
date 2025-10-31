@@ -1,6 +1,6 @@
 import { IGenericRepository } from "../genericRepository";
 import { IEnrollment } from "../../models/enrollmentModel";
-import mongoose, { Types } from "mongoose";
+import mongoose, { PopulateOptions, Types } from "mongoose";
 
 export interface IEnrollmentRepository extends IGenericRepository<IEnrollment> {
   findByUserId(userId: string): Promise<IEnrollment[]>;
@@ -12,7 +12,7 @@ export interface IEnrollmentRepository extends IGenericRepository<IEnrollment> {
   findByUserAndCourseWithPopulate(
     userId: string,
     courseId: string,
-    populateOptions: any[],
+    populateOptions: PopulateOptions[],
   ): Promise<IEnrollment | null>;
   createMany(enrollments: Partial<IEnrollment>[]): Promise<IEnrollment[]>;
   createManyWithSession(

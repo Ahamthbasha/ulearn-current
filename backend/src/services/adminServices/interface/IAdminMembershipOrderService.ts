@@ -6,7 +6,7 @@ export interface IAdminMembershipOrderService {
     page: number,
     limit: number,
     search?: string,
-    status?: string,
+    status?: "paid" | "failed" | "cancelled",
   ): Promise<{ data: AdminMembershipOrderListDTO[]; total: number }>;
 
   getOrderDetail(

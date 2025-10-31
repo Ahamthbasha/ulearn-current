@@ -1,7 +1,7 @@
 import { IStudentSlotBookingRepository } from "./interface/IStudentSlotBookingRepository";
 import { BookingModel, IBooking } from "../../models/bookingModel";
 import { GenericRepository } from "../genericRepository";
-import { PopulateOptions, Types, ClientSession } from "mongoose";
+import { PopulateOptions, Types, ClientSession, PipelineStage, FilterQuery } from "mongoose";
 
 export class StudentSlotBookingRepository
   extends GenericRepository<IBooking>
@@ -93,14 +93,14 @@ export class StudentSlotBookingRepository
     const isValidObjectId =
       Types.ObjectId.isValid(trimmedQuery) && trimmedQuery.length === 24;
 
-    let matchCondition: any = { ...baseFilter };
+    let matchCondition: FilterQuery<IBooking> = { ...baseFilter };
 
     if (isStatusSearch) {
       matchCondition.status = trimmedQuery;
     } else if (isValidObjectId) {
       matchCondition._id = new Types.ObjectId(trimmedQuery);
     } else {
-      const pipeline: any[] = [
+      const pipeline: PipelineStage[] = [
         { $match: baseFilter },
         {
           $match: {
@@ -117,7 +117,8 @@ export class StudentSlotBookingRepository
       ];
 
       const countPipeline = [...pipeline, { $count: "total" }];
-      const totalResult = await this.aggregate(countPipeline);
+      // Use a generic type for the count result
+      const totalResult = await this.aggregate<{ total: number }>(countPipeline);
       const total = totalResult.length > 0 ? totalResult[0].total : 0;
 
       pipeline.push({ $skip: (page - 1) * limit }, { $limit: limit });

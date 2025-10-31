@@ -3,11 +3,12 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import SingleQuestionForm from "../../../components/InstructorComponents/QuizForm";
-import { type SingleQuestionFormValues } from "../../../types/interfaces/IQuiz";
+import { type SingleQuestionFormValues, type IQuizPayload, type IQuestion } from "../../../types/interfaces/IQuiz";
 import {
   getQuizById,
   updateQuestionInQuiz,
 } from "../../../api/action/InstructorActionApi";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const EditQuizPage = () => {
   const { courseId, quizId } = useParams<{
@@ -31,9 +32,9 @@ const EditQuizPage = () => {
       if (!quizId || !questionId) return;
 
       try {
-        const quiz = await getQuizById(quizId);
-        const question = quiz?.questions?.find(
-          (q: any) => q._id === questionId
+        const quiz: IQuizPayload = await getQuizById(quizId);
+        const question: IQuestion | undefined = quiz?.questions?.find(
+          (q: IQuestion) => q._id === questionId
         );
 
         if (question) {
@@ -60,9 +61,10 @@ const EditQuizPage = () => {
       await updateQuestionInQuiz(quizId, questionId, data);
       toast.success("Question updated successfully");
       navigate(`/instructor/course/${courseId}/quiz`);
-    } catch (err: any) {
+    } catch (err) {
+      const apiError = err as ApiError;
       const errorMessage =
-        err?.response?.data?.message ?? "Failed to update question";
+        apiError?.response?.data?.message ?? "Failed to update question";
       toast.error(errorMessage);
     }
   };

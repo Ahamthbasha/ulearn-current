@@ -24,15 +24,16 @@ const authenticateToken = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
-): Promise<any> => {
+): Promise<void> => {
   const accessToken = req.cookies["accessToken"];
   const refreshToken = req.cookies["refreshToken"];
 
   if (!accessToken) {
     appLogger.info("❌ No accessToken found in cookies");
-    return res
+    res
       .status(StatusCode.UNAUTHORIZED)
       .json({ failToken: true, message: AuthErrorMsg.NO_ACCESS_TOKEN });
+    return;
   }
 
   try {
@@ -43,13 +44,15 @@ const authenticateToken = async (
     ) as AuthenticatedRequest["user"];
 
     req.user = accessPayload;
-    return next();
-  } catch (err: any) {
-    if (err.name === AuthErrorMsg.TOKEN_EXPIRED_NAME) {
+    next();
+    return;
+  } catch (err) {
+    if (err instanceof jwt.TokenExpiredError) {
       if (!refreshToken) {
-        return res
+        res
           .status(StatusCode.UNAUTHORIZED)
           .json({ failToken: true, message: AuthErrorMsg.NO_REFRESH_TOKEN });
+        return;
       }
 
       try {
@@ -60,16 +63,18 @@ const authenticateToken = async (
         ) as AuthenticatedRequest["user"];
 
         if (!refreshPayload) {
-          return res
+          res
             .status(StatusCode.UNAUTHORIZED)
             .json({ message: AuthErrorMsg.INVALID_REFRESH_TOKEN });
+          return;
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
         if (refreshPayload.exp && refreshPayload.exp < currentTime) {
-          return res
+          res
             .status(StatusCode.UNAUTHORIZED)
             .json({ message: AuthErrorMsg.REFRESH_TOKEN_EXPIRED });
+          return;
         }
 
         // Generate a new Access Token
@@ -90,23 +95,27 @@ const authenticateToken = async (
         req.cookies["accessToken"] = newAccessToken;
         req.user = refreshPayload;
 
-        return next();
-      } catch (refreshErr: any) {
-        if (refreshErr.name === AuthErrorMsg.TOKEN_EXPIRED_NAME) {
-          return res
+        next();
+        return;
+      } catch (refreshErr) {
+        if (refreshErr instanceof jwt.TokenExpiredError) {
+          res
             .status(StatusCode.UNAUTHORIZED)
             .json({ message: AuthErrorMsg.REFRESH_TOKEN_EXPIRED });
+          return;
         }
 
-        return res
+        res
           .status(StatusCode.UNAUTHORIZED)
           .json({ message: AuthErrorMsg.INVALID_ACCESS_TOKEN });
+        return;
       }
     }
 
-    return res
+    res
       .status(StatusCode.BAD_REQUEST)
       .json({ message: AuthErrorMsg.INVALID_ACCESS_TOKEN });
+    return;
   }
 };
 

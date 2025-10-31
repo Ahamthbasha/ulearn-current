@@ -4,6 +4,7 @@ import { Model, Roles, StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StudentErrorMessages } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 
 export class StudentWalletPaymentController {
   private _walletPaymentService: IWalletPaymentService;
@@ -54,13 +55,9 @@ export class StudentWalletPaymentController {
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
-    } catch (error: any) {
+    } catch (error: unknown) {
       appLogger.error("error in verify payment", error);
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message:
-          error.message || StudentErrorMessages.PAYMENT_VERIFICATION_FAILED,
-      });
+      handleControllerError(error,res)
     }
   }
 }

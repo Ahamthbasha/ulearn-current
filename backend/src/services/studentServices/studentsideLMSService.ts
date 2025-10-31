@@ -40,13 +40,13 @@ export class StudentLearningPathService implements IStudentLearningPathService {
         await this._learningPathRepository.createLearningPath(data);
       await learningPath.totalPrice; // Ensure totalPrice is computed
       return await mapLearningPathToDTO(learningPath);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
       appLogger.error(
         "Error in createLearningPath:",
-        error.message,
-        error.stack,
+        errorMessage
       );
-      throw new Error(`Failed to create learning path: ${error.message}`);
+      throw new Error(`Failed to create learning path: ${errorMessage}`);
     }
   }
 
@@ -82,13 +82,13 @@ export class StudentLearningPathService implements IStudentLearningPathService {
       }
       await updated.totalPrice; // Ensure totalPrice is computed
       return await mapLearningPathToDTO(updated);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
       appLogger.error(
         "Error in updateLearningPath:",
-        error.message,
-        error.stack,
+        errorMessage,
       );
-      throw new Error(`Failed to update learning path: ${error.message}`);
+      throw new Error(`Failed to update learning path: ${errorMessage}`);
     }
   }
 

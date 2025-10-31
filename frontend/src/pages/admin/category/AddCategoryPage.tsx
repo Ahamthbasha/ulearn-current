@@ -44,15 +44,9 @@ const AddCategoryPage = () => {
             } else {
               toast.error(response.message || "Failed to add category");
             }
-          } catch (err: any) {
-            if (err?.response?.status === 409) {
-              toast.error(
-                err.response.data.message || "Category already exists"
-              );
-            } else {
-              toast.error("Something went wrong");
-            }
-          } finally {
+          } 
+          
+          finally {
             setSubmitting(false);
           }
         }}

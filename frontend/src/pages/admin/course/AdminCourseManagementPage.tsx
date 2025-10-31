@@ -12,7 +12,26 @@ import { Eye, EyeOff, Info } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type AdminCourse } from "../interface/adminInterface";
+
+// Define the interface with index signature for DataTable compatibility
+export interface AdminCourse extends Record<string, unknown> {
+  _id: string;
+  courseId: string;
+  courseName: string;
+  isListed: boolean;
+}
+
+// API response type
+interface CourseApiResponse {
+  courseId: string;
+  courseName: string;
+  isListed: boolean;
+}
+
+interface GetCoursesResult {
+  data: CourseApiResponse[];
+  total: number;
+}
 
 const AdminCourseManagementPage = () => {
   const [courses, setCourses] = useState<AdminCourse[]>([]);
@@ -29,19 +48,17 @@ const AdminCourseManagementPage = () => {
 
   const navigate = useNavigate();
 
-  // ✅ Add debounced search term
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchCourses = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await getAllCourses(debouncedSearch, page, limit);
+      const result = await getAllCourses(debouncedSearch, page, limit) as GetCoursesResult;
       
-      // ✅ Updated mapping to match new backend response structure
-      const formattedCourses: AdminCourse[] = (result.data || []).map((course: any) => ({
-        _id: course.courseId, // Map courseId to _id for internal usage
-        courseId: course.courseId, // Keep original courseId
+      const formattedCourses: AdminCourse[] = (result.data || []).map((course: CourseApiResponse) => ({
+        _id: course.courseId,
+        courseId: course.courseId,
         courseName: course.courseName,
         isListed: course.isListed,
       }));
@@ -61,29 +78,11 @@ const AdminCourseManagementPage = () => {
     setIsModalOpen(true);
   };
 
-  // ✅ Optimized toggle handler with optimistic updates
   const confirmToggleListing = async () => {
     if (!selectedCourse) return;
 
     try {
-      // ✅ Optimistic update - Update UI immediately
-      setCourses(prev =>
-        prev.map(course =>
-          course.courseId === selectedCourse.courseId // Use courseId for comparison
-            ? { ...course, isListed: !course.isListed }
-            : course
-        )
-      );
-
-      // Use courseId for the API call
-      const updated = await listUnListCourse(selectedCourse.courseId);
-      
-      toast.success(
-        `Course ${updated.data.isListed ? "listed" : "unlisted"} successfully`
-      );
-      
-    } catch (err: any) {
-      // ✅ Revert optimistic update on error
+      // Optimistic update
       setCourses(prev =>
         prev.map(course =>
           course.courseId === selectedCourse.courseId
@@ -92,8 +91,28 @@ const AdminCourseManagementPage = () => {
         )
       );
 
-      if (err.response?.data?.message) {
-        toast.error(err.response.data.message);
+      const updated = await listUnListCourse(selectedCourse.courseId);
+      
+      toast.success(
+        `Course ${updated.data.isListed ? "listed" : "unlisted"} successfully`
+      );
+      
+    } catch (err) {
+      // Revert optimistic update on error
+      setCourses(prev =>
+        prev.map(course =>
+          course.courseId === selectedCourse.courseId
+            ? { ...course, isListed: !course.isListed }
+            : course
+        )
+      );
+
+      const errorMessage = err instanceof Error && 'response' in err 
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message 
+        : undefined;
+
+      if (errorMessage) {
+        toast.error(errorMessage);
       } else {
         toast.error("Failed to toggle listing");
       }
@@ -105,7 +124,7 @@ const AdminCourseManagementPage = () => {
 
   const columns: Column<AdminCourse>[] = [
     {
-      key: "serial",
+      key: "_id",
       title: "S.No",
       render: (_value, _record, index) => (page - 1) * limit + index + 1,
       width: "60px",
@@ -113,50 +132,52 @@ const AdminCourseManagementPage = () => {
     {
       key: "courseName",
       title: "Course Name",
-      render: (value) => <span className="font-medium">{value}</span>,
+      render: (value) => <span className="font-medium">{String(value)}</span>,
     },
     {
       key: "isListed",
       title: "Status",
-      render: (value: boolean) => (
-        <span
-          className={`px-2 py-1 text-sm rounded-full font-semibold ${
-            value
-              ? "bg-green-100 text-green-700"
-              : "bg-yellow-100 text-yellow-700"
-          }`}
-        >
-          {value ? "Listed" : "Not Listed"}
-        </span>
-      ),
+      render: (value) => {
+        const isListed = Boolean(value);
+        return (
+          <span
+            className={`px-2 py-1 text-sm rounded-full font-semibold ${
+              isListed
+                ? "bg-green-100 text-green-700"
+                : "bg-yellow-100 text-yellow-700"
+            }`}
+          >
+            {isListed ? "Listed" : "Not Listed"}
+          </span>
+        );
+      },
     },
   ];
 
-const actions: ActionButton<AdminCourse>[] = [
-  {
-    key: "toggleListing",
-    label: (record) => (record.isListed ? "Unlist" : "List"),
-    icon: (record) =>
-      record.isListed ? <EyeOff size={18} /> : <Eye size={18} />,
-    onClick: (record) => requestToggleListing(record),
-    className: (record) =>
-      record.isListed
-        ? "bg-green-500 hover:bg-green-600 text-white" // ✅ Green when listed
-        : "bg-red-500 hover:bg-red-600 text-white",    // ✅ Red when unlisted
-  },
-  {
-    key: "viewDetails",
-    label: "View",
-    icon: () => <Info size={18} />,
-    onClick: (record) => navigate(`/admin/courses/${record.courseId}`),
-    className: "bg-blue-500 hover:bg-blue-600 text-white",
-  },
-];
-
+  const actions: ActionButton<AdminCourse>[] = [
+    {
+      key: "toggleListing",
+      label: (record) => (record.isListed ? "Unlist" : "List"),
+      icon: (record) =>
+        record.isListed ? <EyeOff size={18} /> : <Eye size={18} />,
+      onClick: (record) => requestToggleListing(record),
+      className: (record) =>
+        record.isListed
+          ? "bg-green-500 hover:bg-green-600 text-white"
+          : "bg-red-500 hover:bg-red-600 text-white",
+    },
+    {
+      key: "viewDetails",
+      label: "View",
+      icon: () => <Info size={18} />,
+      onClick: (record) => navigate(`/admin/courses/${record.courseId}`),
+      className: "bg-blue-500 hover:bg-blue-600 text-white",
+    },
+  ];
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(1); // Reset to first page when searching
+    setPage(1);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -169,7 +190,7 @@ const actions: ActionButton<AdminCourse>[] = [
 
   return (
     <>
-      <DataTable
+      <DataTable<AdminCourse>
         data={courses}
         columns={columns}
         actions={actions}

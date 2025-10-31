@@ -2,6 +2,7 @@ export interface LearningPathListDTO {
   learningPathId: string;
   title: string;
   thumbnailUrl?: string;
+  isPurchased:boolean
 }
 
 export interface LearningPathDTO {

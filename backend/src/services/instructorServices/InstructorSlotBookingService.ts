@@ -3,6 +3,7 @@ import { IInstructorSlotBookingRepository } from "../../repositories/instructorR
 import { Types } from "mongoose";
 import createHttpError from "http-errors";
 import { IBooking } from "../../models/bookingModel";
+import { IInstructor } from "src/models/instructorModel";
 
 export class InstructorSlotBookingService
   implements IInstructorSlotBookingService
@@ -13,18 +14,24 @@ export class InstructorSlotBookingService
   }
 
   async getBookingDetail(
-    instructorId: Types.ObjectId,
-    slotId: Types.ObjectId,
-  ): Promise<IBooking> {
-    const booking = await this._bookingRepo.getBookingDetail(slotId);
-    if (!booking) throw createHttpError.NotFound("Booking not found");
-    if (
-      !booking.instructorId ||
-      !(booking.instructorId as any)._id.equals(instructorId)
-    ) {
-      throw createHttpError.Forbidden("Access denied to booking detail");
-    }
+  instructorId: Types.ObjectId,
+  slotId: Types.ObjectId,
+): Promise<IBooking> {
+  const booking = await this._bookingRepo.getBookingDetail(slotId);
+  if (!booking) throw createHttpError.NotFound("Booking not found");
 
-    return booking;
+  const bookingInstructorId = booking.instructorId instanceof Types.ObjectId
+    ? booking.instructorId
+    : (booking.instructorId as IInstructor)._id;
+
+  if (!bookingInstructorId) {
+    throw createHttpError.Forbidden("Access denied to booking detail");
   }
+
+  if (bookingInstructorId.toString() !== instructorId.toString()) {
+    throw createHttpError.Forbidden("Access denied to booking detail");
+  }
+
+  return booking;
+}
 }

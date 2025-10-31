@@ -5,6 +5,11 @@ import { ICategoryModel } from "./categoryModel";
 import { CourseOfferModel, ICourseOffer } from "./courseOfferModel";
 import { appLogger } from "../utils/logger";
 
+export type LearningPathItemInput = {
+  courseId : string;
+  order:number
+}
+
 export interface ILearningPathItem {
   courseId: Types.ObjectId | ICourse;
   order: number;

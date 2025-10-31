@@ -5,15 +5,16 @@ import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IInstructorWithdrawalController } from "./interfaces/IInstructorWithdrawalController";
 import {
-  INSTRUCTOR_ERROR_MESSAGE,
   INSTRUCTOR_SUCCESS_MESSAGE,
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 
 export class InstructorWithdrawalController
   implements IInstructorWithdrawalController
 {
   private _withdrawalRequestService: IWithdrawalRequestService;
+  
   constructor(withdrawalRequestService: IWithdrawalRequestService) {
     this._withdrawalRequestService = withdrawalRequestService;
   }
@@ -37,14 +38,9 @@ export class InstructorWithdrawalController
         message: INSTRUCTOR_SUCCESS_MESSAGE.WITHDRAWAL_REQUEST_CREATED,
         data: request,
       });
-    } catch (error: any) {
-      appLogger.error("error in withdrawal creation", error);
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message:
-          error.message ||
-          INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_CREATE_WITHDRAWAL_REQUEST,
-      });
+    } catch (error) {
+      appLogger.error("Error in withdrawal creation", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -63,23 +59,18 @@ export class InstructorWithdrawalController
           { page, limit },
         );
 
-      // const mappedTransactions = transactions.map(toWithdrawalRequestListDTO);
-
       res.status(StatusCode.OK).json({
         success: true,
         data: {
-          transactions: transactions,
+          transactions,
           currentPage: page,
           totalPages: Math.ceil(total / limit),
           total,
         },
       });
-    } catch (error: any) {
-      appLogger.error("error in withdrawalrequests", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_FETCH_WITHDRAWAL_REQUEST,
-      });
+    } catch (error) {
+      appLogger.error("Error in withdrawal requests", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -103,22 +94,9 @@ export class InstructorWithdrawalController
           INSTRUCTOR_SUCCESS_MESSAGE.WITHDRAWAL_REQUEST_RETRIED_SUCCESSFULLY,
         data: request,
       });
-    } catch (error: any) {
-      appLogger.error("error in retry withdrawal request", error);
-      const statusCode = error.message.includes(
-        INSTRUCTOR_ERROR_MESSAGE.NOT_FOUND,
-      )
-        ? StatusCode.NOT_FOUND
-        : error.message.includes(INSTRUCTOR_ERROR_MESSAGE.ONLY_REJECTED)
-          ? StatusCode.BAD_REQUEST
-          : StatusCode.INTERNAL_SERVER_ERROR;
-
-      res.status(statusCode).json({
-        success: false,
-        message:
-          error.message ||
-          INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_RETRY_WITHDRAWAL_REQUEST,
-      });
+    } catch (error) {
+      appLogger.error("Error in retry withdrawal request", { error });
+      handleControllerError(error, res);
     }
   }
 }

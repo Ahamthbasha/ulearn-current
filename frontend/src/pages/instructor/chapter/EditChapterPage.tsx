@@ -12,6 +12,7 @@ import {
   getChapterById,
   updateChapter,
 } from "../../../api/action/InstructorActionApi";
+import { AxiosError } from "axios";
 
 
 const chapterSchema = Yup.object().shape({
@@ -126,11 +127,15 @@ const EditChapterPage = () => {
       await updateChapter(courseId, chapterId, formData);
       toast.success("Chapter updated successfully");
       navigate(`/instructor/course/${courseId}/chapters`);
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to update chapter";
-      toast.error(message);
-    } finally {
+    } 
+    catch (error: unknown) {
+      if(error instanceof AxiosError){
+        const message =
+          error?.response?.data?.message || "Failed to update chapter";
+        toast.error(message);
+      }
+    } 
+    finally {
       setLoading(false);
     }
   };

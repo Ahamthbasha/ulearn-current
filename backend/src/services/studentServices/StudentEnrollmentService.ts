@@ -8,8 +8,8 @@ import { ICourseRepository } from "../../repositories/interfaces/ICourseReposito
 import { ICourse } from "../../models/courseModel";
 
 export class StudentEnrollmentService implements IStudentEnrollmentService {
-  private _enrollmentRepo: IStudentEnrollmentRepository;
-  private _courseRepo: ICourseRepository;
+  private readonly _enrollmentRepo: IStudentEnrollmentRepository;
+  private readonly _courseRepo: ICourseRepository;
 
   constructor(
     enrollmentRepo: IStudentEnrollmentRepository,
@@ -22,17 +22,10 @@ export class StudentEnrollmentService implements IStudentEnrollmentService {
   async getAllEnrolledCourses(
     userId: Types.ObjectId,
   ): Promise<EnrolledCourseDTO[]> {
-    const enrollmentData =
-      await this._enrollmentRepo.getAllEnrolledCourses(userId);
-
-    // Batch fetch course data
-    const courseIds = enrollmentData.map(
-      ({ enrollment }) => enrollment.courseId,
-    );
+    const enrollmentData = await this._enrollmentRepo.getAllEnrolledCourses(userId);
+    const courseIds = enrollmentData.map(({ enrollment }) => enrollment.courseId);
     const courses = await this._courseRepo.find(
-      {
-        _id: { $in: courseIds },
-      },
+      { _id: { $in: courseIds } },
       [],
       { courseName: 1 },
     );
@@ -47,7 +40,6 @@ export class StudentEnrollmentService implements IStudentEnrollmentService {
       }),
     );
 
-    // Filter out null DTOs (e.g., missing courses)
     return dtos.filter((dto): dto is EnrolledCourseDTO => dto !== null);
   }
 
@@ -63,11 +55,7 @@ export class StudentEnrollmentService implements IStudentEnrollmentService {
     courseId: Types.ObjectId,
     chapterId: Types.ObjectId,
   ): Promise<IEnrollment | null> {
-    return this._enrollmentRepo.markChapterCompleted(
-      userId,
-      courseId,
-      chapterId,
-    );
+    return this._enrollmentRepo.markChapterCompleted(userId, courseId, chapterId);
   }
 
   async submitQuizResult(

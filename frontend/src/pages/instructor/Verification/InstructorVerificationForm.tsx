@@ -5,7 +5,7 @@ import InputField from "../../../components/common/InputField";
 import { sendVerification } from "../../../api/action/InstructorActionApi";
 import { toast } from "react-toastify";
 import { useNavigate, useLocation } from "react-router-dom";
-import {type  InstructorData } from "../interface/instructorInterface";
+import { type InstructorData, type VerificationFormValues } from "../interface/instructorInterface";
 
 const InstructorVerificationForm: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const InstructorVerificationForm: React.FC = () => {
     if (storedInstructor) {
       try {
         const parsedInstructor: InstructorData = JSON.parse(storedInstructor);
-        console.log(parsedInstructor)
+        console.log(parsedInstructor);
         setInstructorData(parsedInstructor);
       } catch (error) {
         console.error("Error parsing instructor data from localStorage:", error);
@@ -50,7 +50,7 @@ const InstructorVerificationForm: React.FC = () => {
     resume: Yup.mixed().required("Resume is required"),
   });
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: VerificationFormValues) => {
     try {
       const formData = new FormData();
       formData.append("name", values.name);
@@ -74,7 +74,6 @@ const InstructorVerificationForm: React.FC = () => {
     }
   };
 
-  
   if (!instructorData) {
     return (
       <div className="max-w-lg mx-auto p-4 sm:p-8 mt-8 bg-white rounded shadow text-center">
@@ -95,10 +94,8 @@ const InstructorVerificationForm: React.FC = () => {
           ? "Re-Verify Instructor Profile"
           : "Instructor Verification"}
       </h2>
-      
-      
 
-      <Formik
+      <Formik<VerificationFormValues>
         initialValues={{
           name: instructorData.name,
           email: emailFromQuery || instructorData.email,

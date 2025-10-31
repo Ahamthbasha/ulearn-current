@@ -9,6 +9,7 @@ import {
   MdCall,
   MdSignalCellularAlt,
 } from "react-icons/md";
+import type { CallAnswerPayload, IceCandidatePayload, IncomingCallPayload } from "../../../types/interfaces/ICommon";
 
 interface VideoCallModalProps {
   to: string | undefined;
@@ -222,7 +223,7 @@ const VideoCallModal: React.FC<VideoCallModalProps> = ({
     if (!socket || !isOpen) return;
 
     // Incoming call handler
-    const handleIncomingCall = (payload: any) => {
+    const handleIncomingCall = (payload: IncomingCallPayload) => {
       console.log("Incoming call payload:", payload);
       setCallState((prev) => ({
         ...prev,
@@ -234,7 +235,7 @@ const VideoCallModal: React.FC<VideoCallModalProps> = ({
     };
 
     // ICE candidate handler
-    const handleIceCandidate = (payload: any) => {
+    const handleIceCandidate = (payload: IceCandidatePayload) => {
       if (peerConnectionRef.current && payload.candidate) {
         peerConnectionRef.current
           .addIceCandidate(new RTCIceCandidate(payload.candidate))
@@ -243,7 +244,7 @@ const VideoCallModal: React.FC<VideoCallModalProps> = ({
     };
 
     // Call answer handler
-    const handleCallAnswer = (payload: any) => {
+    const handleCallAnswer = (payload: CallAnswerPayload) => {
       if (peerConnectionRef.current) {
         peerConnectionRef.current
           .setRemoteDescription(new RTCSessionDescription(payload.answer))

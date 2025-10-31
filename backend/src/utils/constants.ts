@@ -146,6 +146,7 @@ export const InstructorSuccessMessages = {
 };
 
 export const InstructorErrorMessages = {
+  NO_VALID_FIELDS_PROVIDED:"No valid fields provided for update",
   // Auth & Signup
   USER_ALREADY_EXISTS: "User already exists. Please log in instead.",
   USER_NOT_FOUND: "No user found with this email.",
@@ -622,6 +623,7 @@ export const MembershipMessages = {
 };
 
 export const ResponseMessages = {
+  INSTRUCTOR_ID:"instructor id is required",
   MISSING_DATA: "Missing data",
   INSTRUCTOR_NOT_FOUND: "Instructor not found",
   ALREADY_ACTIVE_MEMBERSHIP: "You already have an active membership plan.",
@@ -738,6 +740,7 @@ export const INSTRUCTOR_SUCCESS_MESSAGE = {
 };
 
 export const SERVER_ERROR = {
+  UNKNOWN_ERROR : "unknown error",
   INTERNAL_SERVER_ERROR: "internal server error",
 };
 
@@ -883,4 +886,25 @@ export const MEMBERSHIP_ORDER_ERROR_MESSAGE = {
 export const MEMBERSHIP_ORDER_SUCCESS_MESSAGE = {
   FETCH_ORDERS_SUCCESS: "Orders fetched successfully",
   FETCH_ORDER_DETAIL_SUCCESS: "Order details fetched successfully",
+};
+
+export const StudentLearningPathErrorMessages = {
+  UNAUTHORIZED_STUDENT_ID_NOT_FOUND: "Unauthorized: Student ID not found",
+  TITLE_LENGTH_INVALID: "Title must be a string between 3 and 100 characters",
+  DESCRIPTION_LENGTH_INVALID: "Description must be a string between 10 and 1000 characters",
+  INVALID_CATEGORY_ID: "Invalid category ID",
+  INVALID_ITEMS_FORMAT: "Invalid items format",
+  ITEMS_MUST_BE_NON_EMPTY_ARRAY: "Items must be a non-empty array",
+  ITEM_INVALID_STRUCTURE: "Each item must have a valid courseId and a positive order number",
+  THUMBNAIL_REQUIRED: "Thumbnail is required",
+  THUMBNAIL_INVALID_FORMAT: "Thumbnail must be an image (JPEG, PNG, or GIF)",
+  ALREADY_CREATED: "Learning path with this title is already created",
+  NOT_FOUND: "Learning path not found",
+  UNAUTHORIZED_OWNERSHIP: "Unauthorized: You do not own this learning path",
+};
+
+export const StudentLearningPathSuccessMessages = {
+  CREATED: "Learning path created successfully",
+  UPDATED: "Learning path updated successfully",
+  DELETED: "Learning path deleted successfully",
 };

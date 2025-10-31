@@ -6,6 +6,7 @@ import {
   IBlockingResult,
 } from "./interface/IAdminBookingRepository";
 import { IAdminUserRepository } from "./interface/IAdminUserRepository";
+import { isSlot } from "../../models/slotModel";
 
 export class AdminBookingRepository
   extends GenericRepository<IBooking>
@@ -21,8 +22,9 @@ export class AdminBookingRepository
     try {
       const user = await this._adminUserRepository.getUserData(email);
       return user ? user._id.toString() : null;
-    } catch (error: any) {
-      throw new Error(`Error finding user by email: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Error finding user by email: ${errorMessage}`);
     }
   }
 
@@ -39,7 +41,6 @@ export class AdminBookingRepository
         };
       }
 
-      // Check if user is already blocked
       if (user.isBlocked) {
         return {
           canBlockNow: false,
@@ -59,7 +60,12 @@ export class AdminBookingRepository
         };
       }
 
-      const slot = activeSession.slotId as any;
+      const slot = activeSession.slotId;
+
+      if(!isSlot(slot)){
+        throw new Error("slot is not populated")
+      }
+      
       const sessionEndTime = slot.endTime;
 
       return {
@@ -68,8 +74,9 @@ export class AdminBookingRepository
         sessionEndTime,
         message: `User is currently in a video call (${slot.startTime.toLocaleTimeString()} - ${sessionEndTime.toLocaleTimeString()}). Will be blocked after session ends.`,
       };
-    } catch (error: any) {
-      throw new Error(`Error checking user blocking status: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Error checking user blocking status: ${errorMessage}`);
     }
   }
 
@@ -112,9 +119,10 @@ export class AdminBookingRepository
 
       // Return first active session (there should typically be only one)
       return ongoingSessions.length > 0 ? ongoingSessions[0] : null;
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
       throw new Error(
-        `Error fetching current active session: ${error.message}`,
+        `Error fetching current active session: ${errorMessage}`,
       );
     }
   }

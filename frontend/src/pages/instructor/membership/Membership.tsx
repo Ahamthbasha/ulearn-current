@@ -35,7 +35,7 @@ const Membership: React.FC = () => {
         setPlans(plansData);
         setActivePlanId(activeData?.planId ?? null);
         setActivePlanExpiryDate(activeData?.expiryDate ?? null);
-      } catch (error: any) {
+      } catch (error) {
         toast.error("Failed to load membership data.");
       } finally {
         setLoading(false);

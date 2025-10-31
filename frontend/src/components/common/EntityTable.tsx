@@ -2,7 +2,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { type ReactNode } from "react";
 import { type EntityTableProps } from "./interface/commonComponent";
 
-const EntityTable = <T,>({
+const EntityTable = <T extends Record<string,unknown>>({
   title,
   data,
   columns,

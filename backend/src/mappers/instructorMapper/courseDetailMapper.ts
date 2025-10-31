@@ -1,4 +1,4 @@
-import { CourseResponseDto } from "../../dto/instructorDTO/courseDetailsDTO";
+import { CourseResponseDto, ICourseWithSignedUrls } from "../../dto/instructorDTO/courseDetailsDTO";
 
 function formatDateTo12Hour(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
@@ -11,7 +11,7 @@ function formatDateTo12Hour(date: Date): string {
   return `${day}-${month}-${year} ${hours12}:${minutes} ${ampm}`;
 }
 
-export function mapToCourseResponseDto(course: any): CourseResponseDto {
+export function mapToCourseResponseDto(course: ICourseWithSignedUrls): CourseResponseDto {
   return {
     courseId: course._id.toString(),
     courseName: course.courseName,
@@ -19,7 +19,10 @@ export function mapToCourseResponseDto(course: any): CourseResponseDto {
     duration: course.duration,
     price: course.price,
     level: course.level,
-    categoryName: course.category?.categoryName || course.categoryName,
+   categoryName:
+      typeof course.category === "string"
+        ? course.category
+        : course.category?.categoryName || course.categoryName || "",
     thumbnailSignedUrl: course.thumbnailSignedUrl || null,
     demoVideoUrlSigned: course.demoVideo?.urlSigned || null,
     isPublished: course.isPublished,

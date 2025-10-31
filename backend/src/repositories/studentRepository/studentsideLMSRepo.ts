@@ -1,3 +1,4 @@
+import { FilterQuery } from "mongoose";
 import {
   LearningPathModel,
   ILearningPath,
@@ -55,7 +56,7 @@ export class StudentLearningPathRepository
     limit: number,
     search: string = "",
   ): Promise<{ data: ILearningPath[]; total: number }> {
-    const filter: any = { studentId };
+    const filter: FilterQuery<ILearningPath> = { studentId };
 
     if (search) {
       filter.title = { $regex: new RegExp(search, "i") };

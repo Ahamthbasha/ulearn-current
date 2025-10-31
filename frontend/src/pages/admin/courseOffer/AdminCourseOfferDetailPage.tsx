@@ -44,9 +44,15 @@ const AdminCourseOfferDetailPage: React.FC = () => {
       });
       toast.success(`Offer ${approve ? "approved" : "rejected"} successfully`);
       navigate("/admin/courseOffers");
-    } catch (e: any) {
-      toast.error(e.message || "Verification failed");
-    } finally {
+    }
+    catch (e: unknown) {
+  let message = "Verification failed";
+  if (e instanceof Error) {
+    message = e.message;
+  }
+  toast.error(message);
+}
+    finally {
       setVerifying(false);
       setIsModalOpen(false);
     }

@@ -3,21 +3,26 @@ import { Edit, Trash, Eye, Filter } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import InstructorDataTable from "../../../components/InstructorComponents/InstructorDataTable";
-import { type InstructorColumn, type InstructorActionButton } from "../../../components/InstructorComponents/interface/instructorComponentInterface";
+import {
+  type InstructorColumn,
+  type InstructorActionButton,
+} from "../../../components/InstructorComponents/interface/instructorComponentInterface";
 import {
   fetchInstructorCourses,
   instructorDeleteCourse,
 } from "../../../api/action/InstructorActionApi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type Course } from "../interface/instructorInterface";
+import { type TableCourse } from "../interface/instructorInterface";
+import { AxiosError } from "axios";
+
 
 const CourseListPage = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<TableCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+  const [courseToDelete, setCourseToDelete] = useState<TableCourse | null>(null);
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -37,11 +42,14 @@ const CourseListPage = () => {
         search: debouncedSearch,
         status: statusFilter,
       });
-      setCourses(response?.data || []);
+      const data = (response?.data || []) as TableCourse[];
+      setCourses(data);
       setTotal(response?.total || 0);
-    } catch (err: any) {
-      toast.error("Failed to fetch courses");
-      setError(err.message || "Failed to fetch data");
+    } catch (err: unknown) {
+      if(err instanceof AxiosError){
+        toast.error("Failed to fetch courses");
+        setError(err.message || "Failed to fetch data");
+      }
     } finally {
       setLoading(false);
     }
@@ -51,7 +59,7 @@ const CourseListPage = () => {
     fetchCourses();
   }, [page, debouncedSearch, statusFilter]);
 
-  const confirmDelete = (course: Course) => {
+  const confirmDelete = (course: TableCourse) => {
     setCourseToDelete(course);
     setIsModalOpen(true);
   };
@@ -62,8 +70,8 @@ const CourseListPage = () => {
       await instructorDeleteCourse(courseToDelete.courseId);
       toast.success("Course deleted");
       setCourses((prev) => prev.filter((c) => c.courseId !== courseToDelete.courseId));
-      setTotal(prev => prev - 1);
-    } catch (err: any) {
+      setTotal((prev) => prev - 1);
+    } catch (err) {
       toast.error("Failed to delete course");
     } finally {
       setIsModalOpen(false);
@@ -81,33 +89,36 @@ const CourseListPage = () => {
     setPage(1);
   };
 
-  const columns: InstructorColumn<Course>[] = [
+  const columns: InstructorColumn<TableCourse>[] = [
     {
       key: "thumbnailUrl",
       title: "Thumbnail",
       width: "100px",
-      render: (value) => (
-        <div className="w-16 h-12 sm:w-20 sm:h-14 md:w-24 md:h-16 lg:w-28 lg:h-20 rounded-md overflow-hidden shadow-sm border border-gray-200 hover:scale-105 transform transition-transform duration-200 flex-shrink-0">
-          <img
-            src={value || "/default-thumbnail.jpg"}
-            alt="Course Thumbnail"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/default-thumbnail.jpg";
-            }}
-          />
-        </div>
-      ),
+      render: (value: unknown) => {
+        const src = typeof value === "string" ? value : "/default-thumbnail.jpg";
+        return (
+          <div className="w-16 h-12 sm:w-20 sm:h-14 md:w-24 md:h-16 lg:w-28 lg:h-20 rounded-md overflow-hidden shadow-sm border border-gray-200 hover:scale-105 transform transition-transform duration-200 flex-shrink-0">
+            <img
+              src={src}
+              alt="Course Thumbnail"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/default-thumbnail.jpg";
+              }}
+            />
+          </div>
+        );
+      },
     },
     {
       key: "courseName",
       title: "Course Name",
       width: "200px",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="min-w-0 flex-1">
           <span className="block truncate text-sm sm:text-base font-medium text-gray-900 max-w-[120px] sm:max-w-[160px] md:max-w-[200px]">
-            {value}
+            {String(value)}
           </span>
         </div>
       ),
@@ -116,10 +127,10 @@ const CourseListPage = () => {
       key: "category",
       title: "Category",
       width: "150px",
-      render: (value) => (
+      render: (value: unknown) => (
         <div className="hidden md:block min-w-0">
           <span className="block truncate text-sm text-gray-700 max-w-[120px] lg:max-w-[180px]">
-            {value}
+            {String(value)}
           </span>
         </div>
       ),
@@ -128,24 +139,29 @@ const CourseListPage = () => {
       key: "status",
       title: "Status",
       width: "120px",
-      render: (value) => (
-        <div className="flex justify-center sm:justify-start">
-          <span
-            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-              value
-                ? "bg-green-100 text-green-800 border border-green-200"
-                : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-            }`}
-          >
-            <span className="hidden sm:inline">{value ? "Published" : "Unpublished"}</span>
-            <span className="sm:hidden">{value ? "✅" : "⏳"}</span>
-          </span>
-        </div>
-      ),
-    }
+      render: (value: unknown) => {
+        const isPublished = value === true || value === "published";
+        return (
+          <div className="flex justify-center sm:justify-start">
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                isPublished
+                  ? "bg-green-100 text-green-800 border border-green-200"
+                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+              }`}
+            >
+              <span className="hidden sm:inline">
+                {isPublished ? "Published" : "Unpublished"}
+              </span>
+              <span className="sm:hidden">{isPublished ? "Published" : "Unpublished"}</span>
+            </span>
+          </div>
+        );
+      },
+    },
   ];
 
-  const actions: InstructorActionButton<Course>[] = [
+  const actions: InstructorActionButton<TableCourse>[] = [
     {
       key: "view",
       label: "View",
@@ -169,7 +185,7 @@ const CourseListPage = () => {
     },
   ];
 
-  // Enhanced responsive filter component
+  // Responsive filter component
   const StatusFilter = () => (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 p-4 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg sm:rounded-none">
       <div className="flex items-center gap-2 mb-2 sm:mb-0">
@@ -183,8 +199,8 @@ const CourseListPage = () => {
           className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm min-w-[140px] flex-shrink-0"
         >
           <option value="">All Courses</option>
-          <option value="published">📗 Published</option>
-          <option value="unpublished">📙 Unpublished</option>
+          <option value="published">Published</option>
+          <option value="unpublished">Unpublished</option>
         </select>
         {statusFilter && (
           <button
@@ -200,8 +216,8 @@ const CourseListPage = () => {
 
   // Responsive stats component
   const CourseStats = () => {
-    const publishedCount = courses.filter(course => course.status === true).length;
-    const unpublishedCount = courses.filter(course => course.status === false).length;
+    const publishedCount = courses.filter((c) => c.status === true).length;
+    const unpublishedCount = courses.filter((c) => c.status === false).length;
 
     return (
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm bg-white sm:bg-transparent p-3 sm:p-0 rounded-lg sm:rounded-none border sm:border-0">
@@ -222,28 +238,26 @@ const CourseListPage = () => {
     );
   };
 
-  // Generate confirmation message as string
   const getConfirmationMessage = () => {
-    return `Are you sure you want to delete the course "${courseToDelete?.courseName || ""}"? This action cannot be undone and will permanently remove all course content.`;
+    return `Are you sure you want to delete the course "${
+      courseToDelete?.courseName || ""
+    }"? This action cannot be undone and will permanently remove all course content.`;
   };
 
   return (
     <div className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-full overflow-hidden">
-      {/* Enhanced responsive header */}
+      {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col gap-4 mb-4 sm:mb-6">
-          {/* Title and description */}
           <div className="text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">My Courses</h1>
             <p className="text-gray-600 text-sm sm:text-base">Manage and edit all your created courses</p>
           </div>
-          
-          {/* Stats section - mobile first */}
+
           <div className="order-2 sm:order-1">
             <CourseStats />
           </div>
-          
-          {/* Active filter indicator */}
+
           {statusFilter && (
             <div className="flex justify-center sm:justify-start">
               <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium inline-flex items-center gap-1">
@@ -253,15 +267,14 @@ const CourseListPage = () => {
             </div>
           )}
         </div>
-        
-        {/* Filter section */}
+
         <StatusFilter />
       </div>
 
-      {/* Data table with responsive wrapper */}
+      {/* Data Table */}
       <div className="overflow-x-auto -mx-2 sm:mx-0">
         <div className="min-w-full inline-block align-middle">
-          <InstructorDataTable
+          <InstructorDataTable<TableCourse>
             data={courses}
             columns={columns}
             actions={actions}
@@ -272,7 +285,7 @@ const CourseListPage = () => {
             onRetry={fetchCourses}
             emptyStateTitle={statusFilter ? "No matching courses found" : "No courses created yet"}
             emptyStateDescription={
-              statusFilter 
+              statusFilter
                 ? `No ${statusFilter} courses found. Try adjusting your filter or create a new course.`
                 : "Start creating your first course to get started with teaching."
             }
@@ -286,7 +299,7 @@ const CourseListPage = () => {
         </div>
       </div>
 
-      {/* Responsive confirmation modal */}
+      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={isModalOpen}
         title="Delete Course"

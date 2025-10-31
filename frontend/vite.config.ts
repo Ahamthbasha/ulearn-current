@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: [
-      '.ngrok-free.app',   // allow any ngrok subdomain
+      '.ngrok-free.app', 
       'localhost' 
     ] // 👈 allow all hosts (so ngrok links work)
   }

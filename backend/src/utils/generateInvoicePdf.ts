@@ -63,7 +63,7 @@ export async function generateInvoicePdf(
     // Header background
     addColoredRect(0, 0, 595, 120, colors.primary);
 
-    // Company logo area (placeholder circle)
+   
     doc.circle(70, 40, 20).fill(colors.white);
     doc
       .fontSize(16)
@@ -71,7 +71,6 @@ export async function generateInvoicePdf(
       .font("Helvetica-Bold")
       .text("uL", 63, 33);
 
-    // Company details
     doc
       .fontSize(28)
       .fillColor(colors.white)
@@ -492,7 +491,7 @@ export async function generateInvoicePdf(
         footerY + 35,
       )
       .text(
-        "For any queries, please contact us at support@ulearn.com",
+        "For queries, please contact us at support@ulearn.com",
         50,
         footerY + 50,
       );

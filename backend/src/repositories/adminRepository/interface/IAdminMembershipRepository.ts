@@ -1,3 +1,4 @@
+import { SortOrder } from "mongoose";
 import { IMembershipPlan } from "../../../models/membershipPlanModel";
 
 export interface IAdminMembershipRepository {
@@ -15,7 +16,7 @@ export interface IAdminMembershipRepository {
     filter: object,
     page: number,
     limit: number,
-    sort?: Record<string, any>,
+    sort?: Record<string,SortOrder>,
   ): Promise<{ data: IMembershipPlan[]; total: number }>;
 
   toggleStatus(id: string): Promise<IMembershipPlan | null>;

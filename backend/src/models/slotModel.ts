@@ -61,3 +61,8 @@ const SlotSchema = new Schema<ISlot>(
 );
 
 export default model<ISlot>("Slot", SlotSchema);
+
+
+export function isSlot(obj: Types.ObjectId | ISlot): obj is ISlot {
+  return (obj as ISlot).endTime !== undefined;
+}

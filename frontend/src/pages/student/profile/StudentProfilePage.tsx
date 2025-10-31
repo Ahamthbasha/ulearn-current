@@ -7,9 +7,25 @@ import { toast } from "react-toastify";
 import Card from "../../../components/common/Card";
 import { setUser } from "../../../redux/slices/userSlice";
 import { useDispatch } from "react-redux";
+import { type ApiError } from "../../../types/interfaces/ICommon";
+
+interface ProfileData {
+  username: string;
+  email: string;
+  profilePicUrl?: string;
+  skills?: string[];
+  expertise?: string[];
+  currentStatus?: string;
+}
+
+interface PasswordFormValues {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 const StudentProfilePage = () => {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const dispatch = useDispatch();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
@@ -19,11 +35,11 @@ const StudentProfilePage = () => {
         const response = await getProfile();
         if (response.success) {
           dispatch(setUser(response.data));
-          setProfile(response.data);
+          setProfile(response.data as ProfileData);
         } else {
           toast.error(response.message || "Failed to fetch profile ❌");
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Failed to load profile", error);
         toast.error("Something went wrong while fetching profile.");
       }
@@ -121,7 +137,7 @@ const StudentProfilePage = () => {
       {showPasswordForm && (
         <div className="w-full max-w-xl mt-6 bg-white p-6 rounded shadow">
           <h2 className="text-lg font-semibold mb-4">🔒 Change Password</h2>
-          <Formik
+          <Formik<PasswordFormValues>
             initialValues={{
               currentPassword: "",
               newPassword: "",
@@ -145,12 +161,13 @@ const StudentProfilePage = () => {
                 .oneOf([Yup.ref("newPassword")], "Passwords must match")
                 .required("Confirm your new password"),
             })}
-            onSubmit={async (values, { resetForm }) => {
+            onSubmit={async (values: PasswordFormValues, { resetForm }) => {
               try {
-                const res = await updatePassword({
-                  currentPassword: values.currentPassword,
-                  newPassword: values.newPassword,
-                });
+                const formData = new FormData();
+                formData.append("currentPassword", values.currentPassword);
+                formData.append("newPassword", values.newPassword);
+
+                const res = await updatePassword(formData);
 
                 if (res.success) {
                   toast.success("Password updated successfully ✅");
@@ -159,11 +176,12 @@ const StudentProfilePage = () => {
                 } else {
                   toast.error(res.message || "Password update failed ❌");
                 }
-              } catch (error: any) {
+              } catch (error) {
                 console.error("Password update error:", error);
+                const apiError = error as ApiError;
                 const errorMessage =
-                  error?.response?.data?.message ||
-                  error?.message ||
+                  apiError?.response?.data?.message ||
+                  apiError?.message ||
                   "Password update failed";
                 toast.error(errorMessage);
               }

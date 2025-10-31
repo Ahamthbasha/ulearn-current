@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import type { CourseDetailsResponse } from "../interface/adminInterface";
+import type { AxiosError } from "axios";
 
 const AdminCourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -76,10 +77,20 @@ const AdminCourseDetailPage = () => {
       await fetchCourseDetails(); // Refresh to reflect updated status
       setRejectReason("");
       setShowRejectReason(false);
-    } catch (err: any) {
-      console.error("Failed to verify course", err);
-      toast.error(err?.response?.data?.message || "Verification failed");
-    } finally {
+    } 
+    catch (err: unknown) {
+  console.error("Failed to verify course", err);
+
+  let message = "Verification failed";
+  if (err && typeof err === "object" && "response" in err) {
+    const axiosErr = err as AxiosError<{ message?: string }>;
+    if (axiosErr.response?.data?.message) {
+      message = axiosErr.response.data.message;
+    }
+  }
+  toast.error(message);
+}
+    finally {
       setVerifying(false);
     }
   };
@@ -447,7 +458,7 @@ const AdminCourseDetailPage = () => {
                           </p>
                           {!question.options.includes(question.correctAnswer) && (
                             <p className="text-xs sm:text-sm text-red-600 bg-red-100 p-2 sm:p-3 rounded-lg mt-2">
-                              Note: The correct answer does not match any provided options.
+                              Note: The correct answer does not match with provided options.
                             </p>
                           )}
                         </div>

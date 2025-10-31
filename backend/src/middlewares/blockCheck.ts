@@ -59,13 +59,13 @@ export const restrictBlockedUser = async (
       return;
     }
     next();
-  } catch (error: any) {
+  } catch (error) {
     appLogger.error("Restrict Blocked User Error:", error);
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
     res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
       message: AuthErrorMsg.INTERNAL_SERVER_ERROR,
-      error: error.message,
+      error: error instanceof Error && error.message,
     });
   }
 };

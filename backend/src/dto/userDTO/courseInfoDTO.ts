@@ -1,5 +1,10 @@
 import { Types } from "mongoose";
 
+export interface UserDTO {
+  username:string,
+  email:string
+}
+
 export interface CourseInfoDTO {
   courseId: Types.ObjectId;
   courseName: string;

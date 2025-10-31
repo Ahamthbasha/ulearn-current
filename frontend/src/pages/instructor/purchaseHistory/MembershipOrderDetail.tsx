@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"; // Add useRef
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
@@ -7,27 +7,33 @@ import {
   downloadReceiptForMembership,
   retryPayment,
   markOrderAsFailed,
-  verifyMembershipPurchase, // Add verifyMembershipPurchase
+  verifyMembershipPurchase,
 } from "../../../api/action/InstructorActionApi";
 import { Download, RefreshCw, AlertTriangle } from "lucide-react";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import type { IMembershipOrderDetail } from "../interface/instructorInterface";
+import type {
+  RazorpayInstance,
+  RazorpayOptions,
+  RazorpayResponse,
+  RazorpayErrorResponse,
+  ApiError,
+} from "../../../types/interfaces/ICommon"; // Adjust path as needed
 
 const MembershipOrderDetail = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<IMembershipOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false); // Add missing state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const navigate = useNavigate();
-  const razorpayInstanceRef = useRef<any>(null); // Add ref for Razorpay instance
+  const razorpayInstanceRef = useRef<RazorpayInstance | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         if (!orderId) return;
         const data = await membershipDetail(orderId);
-        console.log("data", data);
         setOrder(data);
       } catch (err) {
         toast.error("Failed to load membership order.");
@@ -38,9 +44,9 @@ const MembershipOrderDetail = () => {
     };
     fetchOrder();
 
-    // Cleanup Razorpay modal on component unmount
+    // Cleanup Razorpay modal on unmount
     return () => {
-      if (razorpayInstanceRef.current) {
+      if (razorpayInstanceRef.current?.close) {
         try {
           razorpayInstanceRef.current.close();
         } catch (e) {
@@ -58,15 +64,14 @@ const MembershipOrderDetail = () => {
       const result = await retryPayment(orderId);
       toast.success("Payment retry initiated successfully!");
 
-      // Initiate Razorpay payment
-      const options = {
+      const options: RazorpayOptions = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: result.amount * 100, // Convert to paise
+        amount: result.amount * 100,
         currency: result.currency,
         name: "uLearn Membership",
         description: `Retry Payment - ${order.membershipPlan.name}`,
         order_id: result.razorpayOrderId,
-        handler: async function (response: any) {
+        handler: async (response: RazorpayResponse) => {
           try {
             await verifyMembershipPurchase({
               razorpayOrderId: response.razorpay_order_id,
@@ -75,33 +80,32 @@ const MembershipOrderDetail = () => {
               planId: result.planId,
             });
 
-            toast.success("✅ Membership activated successfully!");
+            toast.success("Membership activated successfully!");
             setActionLoading(null);
             navigate("/instructor/slots");
-          } catch (err: any) {
-            console.error("Payment verification failed:", err);
-            console.log("Response keys:", Object.keys(response));
+          } catch (err: unknown) {
+            const error = err as ApiError;
+            console.error("Payment verification failed:", error);
 
             try {
               await markOrderAsFailed(result.razorpayOrderId);
-              console.log("Order marked as failed for razorpay order ID:", result.razorpayOrderId);
             } catch (markFailedError) {
               console.error("Failed to mark order as failed:", markFailedError);
             }
 
             const errorMessage =
-              err?.response?.data?.message || "❌ Payment verification failed";
+              error?.response?.data?.message || "Payment verification failed";
             toast.error(errorMessage);
             setActionLoading(null);
             navigate("/instructor/purchaseHistory");
           }
         },
         modal: {
-          ondismiss: function () {
+          ondismiss: () => {
             console.log("Razorpay modal dismissed by user");
             setActionLoading(null);
           },
-          onhidden: function () {
+          onhidden: () => {
             console.log("Razorpay modal hidden");
             setActionLoading(null);
           },
@@ -118,13 +122,11 @@ const MembershipOrderDetail = () => {
       const razorpay = new window.Razorpay(options);
       razorpayInstanceRef.current = razorpay;
 
-      razorpay.on("payment.failed", async function (response: any) {
+      razorpay.on("payment.failed", async (response: RazorpayErrorResponse) => {
         console.error("Razorpay payment failed:", response.error);
-        console.log("Failed payment response:", response);
 
         try {
           await markOrderAsFailed(result.razorpayOrderId);
-          console.log("Order marked as failed for razorpay order ID:", result.razorpayOrderId);
         } catch (markFailedError) {
           console.error("Failed to mark order as failed:", markFailedError);
         }
@@ -135,36 +137,35 @@ const MembershipOrderDetail = () => {
       });
 
       razorpay.open();
-    } catch (err: any) {
-      console.error("Retry payment error:", err);
-      toast.error(err.response?.data?.message || "Failed to retry payment");
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      console.error("Retry payment error:", error);
+      toast.error(error?.response?.data?.message || "Failed to retry payment");
       setActionLoading(null);
     }
   };
 
-  // Move confirmMarkAsFailed function outside to make it accessible
   const confirmMarkAsFailed = async () => {
     if (!order?.razorpayOrderId) return;
-    
+
     setActionLoading("failed");
-    setShowConfirmModal(false); // Close modal
+    setShowConfirmModal(false);
     try {
       await markOrderAsFailed(order.razorpayOrderId);
       toast.success("Order marked as failed successfully!");
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-    } catch (err: any) {
-      console.error("Mark as failed error:", err);
-      toast.error(err.response?.data?.message || "Failed to mark order as failed");
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      console.error("Mark as failed error:", error);
+      toast.error(error?.response?.data?.message || "Failed to mark order as failed");
       setActionLoading(null);
     }
   };
 
-  const handleMarkAsFailed = async () => {
+  const handleMarkAsFailed = () => {
     if (!order?.razorpayOrderId) return;
-    
-    // Show confirmation modal instead of toast
     setShowConfirmModal(true);
   };
 
@@ -175,7 +176,7 @@ const MembershipOrderDetail = () => {
     try {
       await downloadReceiptForMembership(order.razorpayOrderId);
       toast.success("Receipt downloaded successfully!");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error("Failed to download receipt.");
     } finally {
@@ -284,7 +285,7 @@ const MembershipOrderDetail = () => {
           </div>
         </div>
 
-        {/* Status Alert */}
+        {/* Status Alerts */}
         {isPending && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
@@ -332,7 +333,9 @@ const MembershipOrderDetail = () => {
           <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Status</p>
             <p
-              className={`inline-block font-semibold text-sm px-2 sm:px-3 py-1 rounded-full ${getStatusColor(order.paymentStatus)}`}
+              className={`inline-block font-semibold text-sm px-2 sm:px-3 py-1 rounded-full ${getStatusColor(
+                order.paymentStatus
+              )}`}
             >
               {order.paymentStatus.toUpperCase()}
             </p>
@@ -406,7 +409,7 @@ const MembershipOrderDetail = () => {
           </div>
         )}
 
-        {/* Order Timeline/History */}
+        {/* Order Timeline */}
         <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200">
           <p className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
             Order Timeline

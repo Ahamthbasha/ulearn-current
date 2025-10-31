@@ -13,6 +13,38 @@ import {
 import { useDispatch } from "react-redux";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
 
+interface ProfileFormValues {
+  name: string;
+  skills: string;
+  expertise: string;
+  profilePic: File | null;
+}
+
+interface InstructorProfile {
+  instructorName?: string;
+  skills?: string[];
+  expertise?: string[];
+  profilePicUrl?: string;
+}
+
+interface ProfileResponse {
+  success: boolean;
+  data: InstructorProfile;
+}
+
+interface UpdateProfileResponse {
+  success: boolean;
+  data: {
+    _id: string;
+    username: string;
+    email: string;
+    role: string;
+    isBlocked: boolean;
+    isVerified: boolean;
+    profilePicUrl?: string;
+  };
+}
+
 const ProfileSchema = Yup.object().shape({
   name: Yup.string()
     .trim()
@@ -58,7 +90,7 @@ const ProfileSchema = Yup.object().shape({
 });
 
 const InstructorProfileEditPage = () => {
-  const [initialValues, setInitialValues] = useState<any>(null);
+  const [initialValues, setInitialValues] = useState<ProfileFormValues | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -66,7 +98,7 @@ const InstructorProfileEditPage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await instructorGetProfile();
+        const response = await instructorGetProfile() as ProfileResponse;
         if (response.success) {
           const profile = response.data;
           setInitialValues({
@@ -88,7 +120,7 @@ const InstructorProfileEditPage = () => {
     fetchProfile();
   }, []);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: ProfileFormValues) => {
     const formData = new FormData();
     formData.append("username", values.name.trim());
     formData.append(
@@ -104,7 +136,7 @@ const InstructorProfileEditPage = () => {
     }
 
     try {
-      const response = await instructorUpdateProfile(formData);
+      const response = await instructorUpdateProfile(formData) as UpdateProfileResponse;
       if (response.success) {
         dispatch(
           setInstructor({
@@ -112,9 +144,9 @@ const InstructorProfileEditPage = () => {
             name: response.data.username,
             email: response.data.email,
             role: response.data.role,
-            isBlocked: response.data.isBlocked,
+            isBlocked: response.data.isBlocked ? "true" : "false",
             isVerified: response.data.isVerified,
-            profilePicture: response.data.profilePicUrl,
+            profilePicture: response.data.profilePicUrl || null,
           })
         );
         toast.success("Profile updated successfully");
@@ -127,6 +159,40 @@ const InstructorProfileEditPage = () => {
     } catch (err) {
       console.error("Update error", err);
       toast.error("Something went wrong");
+    }
+  };
+
+  const handleFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    setFieldValue: (field: string, value: File | null) => void
+  ) => {
+    const fileInput = event.currentTarget;
+    const file = fileInput.files?.[0];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/webp",
+    ];
+
+    if (file) {
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(
+          "Only image files (JPG, JPEG, PNG, WebP) are allowed"
+        );
+        fileInput.value = "";
+        return;
+      }
+
+      setFieldValue("profilePic", file);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setPreviewImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -169,33 +235,7 @@ const InstructorProfileEditPage = () => {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(event: any) => {
-                    const fileInput = event.currentTarget;
-                    const file = fileInput.files[0];
-                    const allowedTypes = [
-                      "image/jpeg",
-                      "image/png",
-                      "image/jpg",
-                      "image/webp",
-                    ];
-
-                    if (file) {
-                      if (!allowedTypes.includes(file.type)) {
-                        toast.error(
-                          "Only image files (JPG, JPEG, PNG, WebP) are allowed"
-                        );
-                        fileInput.value = "";
-                        return;
-                      }
-
-                      setFieldValue("profilePic", file);
-
-                      const reader = new FileReader();
-                      reader.onload = () =>
-                        setPreviewImage(reader.result as string);
-                      reader.readAsDataURL(file);
-                    }
-                  }}
+                  onChange={(event) => handleFileChange(event, setFieldValue)}
                 />
 
                 {previewImage && (

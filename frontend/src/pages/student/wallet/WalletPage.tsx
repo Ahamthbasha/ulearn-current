@@ -11,6 +11,7 @@ import { Button } from "../../../components/common/Button";
 import InputField from "../../../components/common/InputField";
 
 import { type Transaction, type Wallet } from "../interface/studentInterface";
+import type { ApiError, RazorpayOptions, RazorpayResponse } from "../../../types/interfaces/ICommon";
 
 export default function WalletPage() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -79,49 +80,52 @@ export default function WalletPage() {
     }
   };
 
-  const handleAddMoney = async () => {
-    try {
-      if (!amount || amount < 1) return toast.warning("Enter valid amount (minimum ₹1)");
-      if (amount > 50000) return toast.warning("Maximum amount allowed is ₹50,000");
-      
-      setLoading(true);
+const handleAddMoney = async () => {
+  try {
+    if (!amount || amount < 1) return toast.warning("Enter valid amount (minimum ₹1)");
+    if (amount > 50000) return toast.warning("Maximum amount allowed is ₹50,000");
+    
+    setLoading(true);
 
-      const orderData = await createWalletRechargeOrder({ amount });
+    const orderData = await createWalletRechargeOrder({ amount });
 
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: orderData.order.amount,
-        currency: "INR",
-        name: "uLearn Wallet",
-        description: "Wallet Recharge",
-        order_id: orderData.order.id,
-        handler: async function (response: any) {
-          try {
-            await verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              amount,
-            });
-            toast.success("Wallet recharged successfully");
-            setAmount(0);
-            fetchWallet();
-            fetchTransactions(1);
-          } catch {
-            toast.error("Payment verification failed");
-          }
-        },
-        theme: { color: "#6366f1" },
-      };
+    const options: RazorpayOptions = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: orderData.order.amount,
+      currency: "INR",
+      name: "uLearn Wallet",
+      description: "Wallet Recharge",
+      order_id: orderData.order.id,
+      handler: async function (response: RazorpayResponse) {
+        try {
+          await verifyPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            amount,
+          });
+          toast.success("Wallet recharged successfully");
+          setAmount(0);
+          fetchWallet();
+          fetchTransactions(1);
+        } catch (error: unknown) {
+          const apiError = error as ApiError;
+          toast.error(apiError.response?.data?.message || apiError.message || "Payment verification failed");
+        }
+      },
+      theme: { color: "#6366f1" },
+    };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch {
-      toast.error("Failed to initiate payment");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    toast.error(apiError.response?.data?.message || apiError.message || "Failed to initiate payment");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Quick amount selection
   const quickAmounts = [100, 500, 1000, 2000, 5000];

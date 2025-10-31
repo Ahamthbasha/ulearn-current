@@ -33,10 +33,14 @@ const LoginPage = () => {
       } else {
         toast.error(response.message); // ✅ Correct error message from backend
       }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      toast.error("Login failed. Please try again.");
-    }
+    } catch (error: unknown) {
+  if (error instanceof Error) {
+    console.error("Login error:", error);
+  } else {
+    console.error("Login error:", error);
+  }
+  toast.error("Login failed. Please try again.");
+}
   };
 
   return (

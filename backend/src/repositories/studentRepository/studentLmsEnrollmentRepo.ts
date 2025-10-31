@@ -330,11 +330,14 @@ export class StudentLmsEnrollmentRepo implements IStudentLmsEnrollmentRepo {
           (enrollment.userId as Types.ObjectId).toString(),
           (courseId as Types.ObjectId).toString(),
           [
-            {
-              path: "courseId",
-              populate: { path: "chapters quizzes" },
-            },
-          ],
+  {
+    path: "courseId",
+    populate: [
+      { path: "chapters" },
+      { path: "quizzes" },
+    ],
+  },
+]
         );
       if (!populatedEnrollment || !populatedEnrollment.courseId) {
         throw new Error("Populated course enrollment not found");

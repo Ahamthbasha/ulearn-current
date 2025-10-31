@@ -4,7 +4,8 @@ import EntityTable from "../../../components/common/EntityTable";
 import { allOrder } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type DisplayOrder, type OrderHistory } from "../interface/studentInterface";
+import { type DisplayOrder, type ExtendedDisplayOrder, type OrderHistory } from "../interface/studentInterface";
+import { type EntityTableProps } from "../../../components/common/interface/commonComponent";
 
 export default function StudentOrderHistoryPage() {
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
@@ -36,9 +37,12 @@ export default function StudentOrderHistoryPage() {
       
       setOrders(formattedOrders);
       setTotalOrders(res.total);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Fetch orders error:", error);
-      toast.error(error.response?.data?.message || "Failed to load orders");
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to load orders"
+        : "Failed to load orders";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setIsSearching(false);
@@ -83,8 +87,9 @@ export default function StudentOrderHistoryPage() {
     fetchOrders(1, "", "");
   };
 
-  const handleView = (order: DisplayOrder) => {
-    navigate(`/user/order/${order.orderId}`);
+  const handleView = (order: ExtendedDisplayOrder) => {
+    const displayOrder = order as DisplayOrder;
+    navigate(`/user/order/${displayOrder.orderId}`);
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -110,36 +115,42 @@ export default function StudentOrderHistoryPage() {
     return "";
   };
 
-  const columns = [
+  const tableColumns: EntityTableProps<ExtendedDisplayOrder>['columns'] = [
     {
-      key: "orderId" as keyof DisplayOrder,
+      key: "orderId",
       label: "Order ID",
-      render: (value: string) => (
+      render: (value: ExtendedDisplayOrder[keyof ExtendedDisplayOrder]) => (
         <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-          {value.slice(-8).toUpperCase()}
+          {String(value).slice(-8).toUpperCase()}
         </span>
       ),
     },
     {
-      key: "formattedAmount" as keyof DisplayOrder,
+      key: "formattedAmount",
       label: "Amount",
     },
     {
-      key: "orderDate" as keyof DisplayOrder,
+      key: "orderDate",
       label: "Date",
     },
     {
-      key: "statusDisplay" as keyof DisplayOrder,
+      key: "statusDisplay",
       label: "Status",
-      render: (value: string, row: DisplayOrder) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(row.status)}`}
-        >
-          {value}
-        </span>
-      ),
+      render: (value: ExtendedDisplayOrder[keyof ExtendedDisplayOrder], row: ExtendedDisplayOrder) => {
+        const displayOrder = row as DisplayOrder;
+        return (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(displayOrder.status)}`}
+          >
+            {String(value)}
+          </span>
+        );
+      },
     },
   ];
+
+  // Cast orders to satisfy the type constraint
+  const tableData = orders as ExtendedDisplayOrder[];
 
   return (
     <div className="min-h-screen bg-white px-4 py-8 sm:px-6 md:px-8 lg:px-12 xl:px-16">
@@ -293,7 +304,7 @@ export default function StudentOrderHistoryPage() {
             </div>
           </div>
         ) : (
-          <EntityTable<DisplayOrder>
+          <EntityTable<ExtendedDisplayOrder>
             title={
               statusFilter
                 ? `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Orders`
@@ -301,8 +312,8 @@ export default function StudentOrderHistoryPage() {
                 ? `Search Results`
                 : "Order History"
             }
-            data={orders}
-            columns={columns}
+            data={tableData}
+            columns={tableColumns}
             actionLabel="View Details"
             onAction={handleView}
             emptyText={

@@ -1,3 +1,9 @@
+export interface RecurrenceRule {
+  daysOfWeek: number[];
+  startDate: Date;
+  endDate: Date;
+}
+
 export interface Slot {
   _id: string;
   startTime: string;
@@ -39,14 +45,14 @@ export interface Props {
 
 /////////////////////////////////////////////////////////////////////////////
 
-export interface InstructorColumn<T = any> {
-  key: string;
+export interface InstructorColumn<T extends Record<string, unknown>> {
+  key: keyof T | string;
   title: string;
-  render?: (value: any, record: T, index: number) => React.ReactNode;
+  render?: (value: T[keyof T], record: T, index: number) => React.ReactNode;
   width?: string;
 }
 
-export interface InstructorActionButton<T = any> {
+export interface InstructorActionButton<T extends Record<string, unknown>> {
   key: string;
   label: string | ((record: T) => string);
   icon: React.ReactNode | ((record: T) => React.ReactNode);
@@ -55,7 +61,7 @@ export interface InstructorActionButton<T = any> {
   condition?: (record: T) => boolean;
 }
 
-export interface InstructorDataTableProps<T = any> {
+export interface InstructorDataTableProps<T extends Record<string, unknown>> {
   data: T[];
   columns: InstructorColumn<T>[];
   loading?: boolean;
@@ -79,11 +85,12 @@ export interface InstructorDataTableProps<T = any> {
 }
 
 export interface Column<T> {
-  key: string;
+  key: keyof T & string; // restrict key to string keys of T
   title: string;
-  render?: (value: any, record: T, index: number) => React.ReactNode;
+  render?: (value: T[keyof T], record: T, index: number) => React.ReactNode;
   width?: string;
 }
+
 
 export interface ActionButton<T> {
   key: string;

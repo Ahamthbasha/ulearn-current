@@ -5,7 +5,7 @@ import { razorpay } from "../../utils/razorpay";
 import { Types } from "mongoose";
 import { IWalletService } from "../interface/IWalletService";
 import { IBooking } from "../../models/bookingModel";
-import { IInstructor } from "../../models/instructorModel";
+import { IInstructor, isInstructor } from "../../models/instructorModel";
 import { PopulatedSlot } from "../../types/PopulatedSlot";
 import { PopulatedBooking } from "../../types/PopulatedBooking";
 import { format } from "date-fns";
@@ -17,6 +17,7 @@ import { IEmail } from "../../types/Email";
 import { ISlot } from "../../models/slotModel";
 import mongoose from "mongoose";
 import { SlotAvailabilityResult } from "../../types/ISlotAvailabilityResult";
+import { IRazorpayOrder } from "../../types/razorpay";
 
 export class StudentSlotBookingService implements IStudentSlotBookingService {
   private _emailService: IEmail;
@@ -36,80 +37,95 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
     this._emailService = emailService;
   }
 
-  async initiateCheckout(slotId: string, studentId: string) {
-    if (!Types.ObjectId.isValid(slotId)) throw new Error("Invalid slot ID");
-    if (!Types.ObjectId.isValid(studentId))
-      throw new Error("Invalid student ID");
+  async initiateCheckout(slotId: string, studentId: string): Promise<{
+  booking: {
+    slotId: ISlot;
+    instructorId: IInstructor;
+    bookingId: string;
+  };
+  razorpayOrder: IRazorpayOrder;
+}> {
+  if (!Types.ObjectId.isValid(slotId)) throw new Error("Invalid slot ID");
+  if (!Types.ObjectId.isValid(studentId)) throw new Error("Invalid student ID");
 
-    const session = await mongoose.startSession();
-    try {
-      return await session.withTransaction(async () => {
-        // Mark stale pending bookings as failed (older than 15 minutes)
-        await this._bookingRepo.markStalePendingBookingsAsFailed(
-          new Types.ObjectId(slotId),
-          session,
-        );
+  const session = await mongoose.startSession();
+  try {
+    return await session.withTransaction(async () => {
+      await this._bookingRepo.markStalePendingBookingsAsFailed(
+        new Types.ObjectId(slotId),
+        session,
+      );
 
-        const availability = await this.checkSlotAvailabilityForStudent(
-          slotId,
-          studentId,
-        );
-        if (!availability.available) {
-          if (availability.reason === "PENDING_BOOKING_EXISTS") {
-            throw new Error(`PENDING_BOOKING_EXISTS:${availability.bookingId}`);
-          } else if (availability.reason === "PENDING_BOOKING_BY_OTHERS") {
-            throw new Error("PENDING_BOOKING_BY_OTHERS");
-          } else if (availability.reason === "SLOT_ALREADY_BOOKED") {
-            throw new Error("SLOT_ALREADY_BOOKED");
-          } else {
-            throw new Error(availability.message || "Slot not available");
-          }
+      const availability = await this.checkSlotAvailabilityForStudent(slotId, studentId);
+      if (!availability.available) {
+        if (availability.reason === "PENDING_BOOKING_EXISTS") {
+          throw new Error(`PENDING_BOOKING_EXISTS:${availability.bookingId}`);
+        } else if (availability.reason === "PENDING_BOOKING_BY_OTHERS") {
+          throw new Error("PENDING_BOOKING_BY_OTHERS");
+        } else if (availability.reason === "SLOT_ALREADY_BOOKED") {
+          throw new Error("SLOT_ALREADY_BOOKED");
+        } else {
+          throw new Error(availability.message || "Slot not available");
         }
+      }
 
-        const slot = availability.slot as PopulatedSlot;
-        if (!slot) throw new Error("Slot not found");
-        if (!slot.price || isNaN(slot.price))
-          throw new Error("Invalid slot price");
-        if (typeof slot.instructorId === "string")
-          throw new Error("Instructor not populated");
+      const slot = availability.slot as ISlot;
+      if (!slot) throw new Error("Slot not found");
+      if (!slot.price || isNaN(slot.price)) throw new Error("Invalid slot price");
+      if (typeof slot.instructorId === "string") throw new Error("Instructor not populated");
+      const receipt: string = `slot-${slotId}-${studentId}-${Date.now()}`.substring(0, 40);
 
-        // Generate Razorpay order
-        const receipt = `slot-${slotId}-${studentId}-${Date.now()}`.substring(
-          0,
-          40,
-        );
-        const razorpayOrder = await razorpay.orders.create({
-          amount: Math.round(slot.price * 100),
-          currency: "INR",
-          receipt,
-          payment_capture: true,
-        });
+const rawRazorpayOrder = await razorpay.orders.create({
+  amount: Math.round(slot.price * 100),
+  currency: "INR",
+  receipt,
+  payment_capture: true,
+});
 
-        // Create a pending booking to reserve the slot
-        const pendingBooking = await this._bookingRepo.createBooking(
-          {
-            studentId: new Types.ObjectId(studentId),
-            instructorId: slot.instructorId,
-            slotId: slot._id,
-            status: "pending",
-            paymentStatus: "pending",
-          },
-          session,
-        );
+// Map to IRazorpayOrder ...
+const razorpayOrder: IRazorpayOrder = {
+  id: rawRazorpayOrder.id,
+  entity: rawRazorpayOrder.entity,
+  amount: typeof rawRazorpayOrder.amount === "string" ? parseInt(rawRazorpayOrder.amount, 10) : rawRazorpayOrder.amount,
+  amount_paid: typeof rawRazorpayOrder.amount_paid === "string" ? parseInt(rawRazorpayOrder.amount_paid, 10) : rawRazorpayOrder.amount_paid,
+  amount_due: typeof rawRazorpayOrder.amount_due === "string" ? parseInt(rawRazorpayOrder.amount_due, 10) : rawRazorpayOrder.amount_due,
+  currency: rawRazorpayOrder.currency,
+  receipt: receipt,
+  status: rawRazorpayOrder.status,
+  attempts: rawRazorpayOrder.attempts,
+  created_at: rawRazorpayOrder.created_at,
+};
 
-        return {
-          booking: {
-            slotId: slot,
-            instructorId: slot.instructorId as IInstructor,
-            bookingId: pendingBooking._id.toString(),
-          },
-          razorpayOrder,
-        };
-      });
-    } finally {
-      await session.endSession();
-    }
+if (!isInstructor(slot.instructorId)) {
+  throw new Error("Instructor not populated");
+}
+
+const pendingBooking = await this._bookingRepo.createBooking(
+  {
+    studentId: new Types.ObjectId(studentId),
+    instructorId: slot.instructorId,
+    slotId: slot._id,
+    status: "pending",
+    paymentStatus: "pending",
+  },
+  session,
+);
+
+return {
+  booking: {
+    slotId: slot,
+    instructorId: slot.instructorId,
+    bookingId: pendingBooking._id.toString(),
+  },
+  razorpayOrder,
+};
+
+    });
+  } finally {
+    await session.endSession();
   }
+}
+
 
   async verifyPayment(
     slotId: string,
@@ -164,7 +180,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
         if (!pendingBooking) throw new Error("Pending booking not found");
 
         // Mark slot as booked
-        await this._slotRepo.update(
+        await this._slotRepo.updateWithSession(
           slot._id.toString(),
           { isBooked: true },
           session,
@@ -190,7 +206,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
           session,
         );
 
-        // Fetch updated booking with population
+
         const updatedBooking = await this._bookingRepo.findBookingById(
           pendingBooking._id.toString(),
           [
@@ -217,7 +233,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
 
         return populated;
       });
-    } catch (error: any) {
+    } catch (error) {
       throw error;
     } finally {
       await session.endSession();
@@ -269,8 +285,6 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
           throw new Error("Slot already booked by another user");
         if (!slot.price || isNaN(slot.price))
           throw new Error("Invalid slot price");
-
-        // Check for any other confirmed booking for this slot
         const confirmedBooking = await this._bookingRepo.findOne(
           {
             slotId: new Types.ObjectId(slot._id.toString()),
@@ -284,7 +298,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
           throw new Error("Slot already booked by another user");
 
         // Mark slot as booked
-        await this._slotRepo.update(
+        await this._slotRepo.updateWithSession(
           slot._id.toString(),
           { isBooked: true },
           session,
@@ -337,7 +351,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
 
         return finalPopulated;
       });
-    } catch (error: any) {
+    } catch (error) {
       throw error;
     } finally {
       await session.endSession();
@@ -404,7 +418,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
         );
 
         // Mark slot as booked
-        await this._slotRepo.update(slotId, { isBooked: true }, session);
+        await this._slotRepo.updateWithSession(slotId, { isBooked: true }, session);
 
         // Create booking
         const booking = await this._bookingRepo.createBooking(
@@ -446,7 +460,7 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
 
         return populated;
       });
-    } catch (error: any) {
+    } catch (error) {
       throw error;
     } finally {
       await session.endSession();
@@ -658,108 +672,126 @@ export class StudentSlotBookingService implements IStudentSlotBookingService {
   }
 
   async retryPayment(
-    bookingId: string,
-    studentId: string,
-  ): Promise<{
-    booking: {
-      slotId: ISlot;
-      instructorId: IInstructor;
-      bookingId: string;
-    };
-    razorpayOrder: any;
-  }> {
-    if (!Types.ObjectId.isValid(bookingId))
-      throw new Error("Invalid booking ID");
-    if (!Types.ObjectId.isValid(studentId))
-      throw new Error("Invalid student ID");
+  bookingId: string,
+  studentId: string,
+): Promise<{
+  booking: {
+    slotId: ISlot;
+    instructorId: IInstructor;
+    bookingId: string;
+  };
+  razorpayOrder: IRazorpayOrder;
+}> {
+  if (!Types.ObjectId.isValid(bookingId))
+    throw new Error("Invalid booking ID");
+  if (!Types.ObjectId.isValid(studentId))
+    throw new Error("Invalid student ID");
 
-    const session = await mongoose.startSession();
-    try {
-      return await session.withTransaction(async () => {
-        // Find the failed booking
-        const booking = await this._bookingRepo.findOne(
-          {
-            _id: new Types.ObjectId(bookingId),
-            studentId: new Types.ObjectId(studentId),
-            status: "failed",
-          },
-          [
-            { path: "slotId" },
-            { path: "instructorId", select: "username email" },
-          ],
-          session,
-        );
+  const session = await mongoose.startSession();
+  try {
+    return await session.withTransaction(async () => {
+      // Find the failed booking with populated fields
+      const booking = await this._bookingRepo.findOne(
+        {
+          _id: new Types.ObjectId(bookingId),
+          studentId: new Types.ObjectId(studentId),
+          status: "failed",
+        },
+        [
+          { path: "slotId" },
+          { path: "instructorId", select: "username email" },
+        ],
+        session,
+      );
 
-        if (!booking) throw new Error("Failed booking not found");
+      if (!booking) throw new Error("Failed booking not found");
 
-        const slot = booking.slotId as PopulatedSlot;
-        if (!slot || typeof slot === "string")
-          throw new Error("Slot not populated");
-        if (slot.isBooked) throw new Error("SLOT_ALREADY_BOOKED");
+      const slot = booking.slotId as ISlot;
+      if (!slot || typeof slot === "string")
+        throw new Error("Slot not populated");
+      if (slot.isBooked) throw new Error("SLOT_ALREADY_BOOKED");
 
-        // Mark stale pending bookings as failed
-        await this._bookingRepo.markStalePendingBookingsAsFailed(
-          new Types.ObjectId(slot._id.toString()),
-          session,
-        );
+      // Mark stale pending bookings as failed
+      await this._bookingRepo.markStalePendingBookingsAsFailed(
+        new Types.ObjectId(slot._id.toString()),
+        session,
+      );
 
-        // Check slot availability
-        const availability = await this.checkSlotAvailabilityForStudent(
-          slot._id.toString(),
-          studentId,
-        );
-        if (!availability.available) {
-          if (availability.reason === "PENDING_BOOKING_BY_OTHERS") {
-            throw new Error("PENDING_BOOKING_BY_OTHERS");
-          } else if (availability.reason === "SLOT_ALREADY_BOOKED") {
-            throw new Error("SLOT_ALREADY_BOOKED");
-          } else {
-            throw new Error(availability.message || "Slot not available");
-          }
+      // Check slot availability
+      const availability = await this.checkSlotAvailabilityForStudent(
+        slot._id.toString(),
+        studentId,
+      );
+      if (!availability.available) {
+        if (availability.reason === "PENDING_BOOKING_BY_OTHERS") {
+          throw new Error("PENDING_BOOKING_BY_OTHERS");
+        } else if (availability.reason === "SLOT_ALREADY_BOOKED") {
+          throw new Error("SLOT_ALREADY_BOOKED");
+        } else {
+          throw new Error(availability.message || "Slot not available");
         }
+      }
 
-        if (!slot.price || isNaN(slot.price))
-          throw new Error("Invalid slot price");
-        if (typeof slot.instructorId === "string")
-          throw new Error("Instructor not populated");
+      if (!slot.price || isNaN(slot.price))
+        throw new Error("Invalid slot price");
+      
+      if (!isInstructor(slot.instructorId))
+        throw new Error("Instructor not populated");
 
-        // Generate new Razorpay order
-        const receipt =
-          `retry-slot-${slot._id.toString()}-${studentId}-${Date.now()}`.substring(
-            0,
-            40,
-          );
-        const razorpayOrder = await razorpay.orders.create({
-          amount: Math.round(slot.price * 100),
-          currency: "INR",
-          receipt,
-          payment_capture: true,
-        });
+      // Generate new Razorpay order
+      const receipt = `retry-slot-${slot._id.toString()}-${studentId}-${Date.now()}`.substring(0, 40);
 
-        // Update booking to pending status
-        await this._bookingRepo.updateBookingStatus(
-          bookingId,
-          {
-            status: "pending",
-            paymentStatus: "pending",
-            txnId: undefined, // Clear previous transaction ID
-          },
-          session,
-        );
-
-        return {
-          booking: {
-            slotId: slot,
-            instructorId: slot.instructorId as IInstructor,
-            bookingId: booking._id.toString(),
-          },
-          razorpayOrder,
-        };
+      const rawRazorpayOrder = await razorpay.orders.create({
+        amount: Math.round(slot.price * 100),
+        currency: "INR",
+        receipt,
+        payment_capture: true,
       });
-    } catch (error: any) {
-      throw error;
-    } finally {
-      await session.endSession();
-    }
+
+      // Map raw order fields to IRazorpayOrder, ensuring proper types
+      const razorpayOrder: IRazorpayOrder = {
+        id: rawRazorpayOrder.id,
+        entity: rawRazorpayOrder.entity,
+        amount: typeof rawRazorpayOrder.amount === "string"
+          ? parseInt(rawRazorpayOrder.amount, 10)
+          : rawRazorpayOrder.amount,
+        amount_paid: typeof rawRazorpayOrder.amount_paid === "string"
+          ? parseInt(rawRazorpayOrder.amount_paid, 10)
+          : rawRazorpayOrder.amount_paid,
+        amount_due: typeof rawRazorpayOrder.amount_due === "string"
+          ? parseInt(rawRazorpayOrder.amount_due, 10)
+          : rawRazorpayOrder.amount_due,
+        currency: rawRazorpayOrder.currency,
+        receipt: receipt,
+        status: rawRazorpayOrder.status,
+        attempts: rawRazorpayOrder.attempts,
+        created_at: rawRazorpayOrder.created_at,
+      };
+
+      // Update booking to pending status
+      await this._bookingRepo.updateBookingStatus(
+        bookingId,
+        {
+          status: "pending",
+          paymentStatus: "pending",
+          txnId: undefined,
+        },
+        session,
+      );
+
+      return {
+        booking: {
+          slotId: slot,
+          instructorId: slot.instructorId,
+          bookingId: booking._id.toString(),
+        },
+        razorpayOrder,
+      };
+    });
+  } catch (error) {
+    throw error;
+  } finally {
+    await session.endSession();
   }
+}
 }

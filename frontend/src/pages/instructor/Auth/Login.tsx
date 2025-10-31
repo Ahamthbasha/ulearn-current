@@ -7,15 +7,13 @@ import { Formik, Form, Field } from "formik";
 import PasswordField from "../../../components/common/PasswordField";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
 import { login, googleLogin } from "../../../api/auth/InstructorAuthentication";
-import type { Login } from "../../../types/LoginTypes";
+import type { DecodedGoogleCredential, Login } from "../../../types/LoginTypes";
 
 import { getVerificationRequestByemail } from "../../../api/action/InstructorActionApi";
 
-// Google OAuth
-import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
+import { GoogleOAuthProvider, GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import {jwtDecode}from "jwt-decode";
 
-// ✅ Improved validation
 const loginSchema = Yup.object().shape({
   email: Yup.string()
     .email("Enter a valid email address")
@@ -32,6 +30,7 @@ const loginSchema = Yup.object().shape({
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const initialValues = {
     email: "",
     password: "",
@@ -48,8 +47,8 @@ const LoginPage = () => {
       });
       const user = response.user;
 
-      console.log(user) 
-      
+      console.log(user);
+
       if (user) {
         localStorage.setItem("instructor", JSON.stringify(user));
         toast.success(response?.message);
@@ -86,10 +85,14 @@ const LoginPage = () => {
     }
   };
 
-  // ✅ Google login handler
-  const handleGoogleLogin = async (credentialResponse: any) => {
+  const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
     try {
-      const decoded: any = jwtDecode(credentialResponse.credential);
+      if (!credentialResponse.credential) {
+        toast.error("Google login failed: Missing credential.");
+        return;
+      }
+
+      const decoded = jwtDecode<DecodedGoogleCredential>(credentialResponse.credential);
 
       const response = await googleLogin({
         name: decoded.name,
@@ -119,7 +122,7 @@ const LoginPage = () => {
           navigate("/instructor/dashboard");
         } else {
           const verifyStatus = await getVerificationRequestByemail(instructor.email);
-          console.log('verifyStatus',verifyStatus)
+          console.log("verifyStatus", verifyStatus);
           if (verifyStatus?.data?.status) {
             navigate(`/instructor/verificationStatus/${instructor.email}`);
           } else {
@@ -129,30 +132,25 @@ const LoginPage = () => {
       } else {
         toast.error(response.message || "Google login failed");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Google login failed");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Google login failed");
+      } else {
+        toast.error("Google login failed");
+      }
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100">
       <div className="bg-white p-10 rounded-xl shadow-xl w-full max-w-md border border-gray-200">
-        <h2 className="text-3xl font-bold text-center text-blue-700 mb-8">
-          Welcome Back
-        </h2>
+        <h2 className="text-3xl font-bold text-center text-blue-700 mb-8">Welcome Back</h2>
 
-        <Formik
-          initialValues={initialValues}
-          validationSchema={loginSchema}
-          onSubmit={onSubmit}
-        >
+        <Formik initialValues={initialValues} validationSchema={loginSchema} onSubmit={onSubmit}>
           {() => (
             <Form className="space-y-5">
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Email
                 </label>
                 <Field
@@ -168,10 +166,7 @@ const LoginPage = () => {
               </div>
 
               <div className="flex justify-between items-center">
-                <Link
-                  to="/instructor/verifyEmail"
-                  className="text-sm text-blue-600 hover:underline"
-                >
+                <Link to="/instructor/verifyEmail" className="text-sm text-blue-600 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -188,9 +183,7 @@ const LoginPage = () => {
 
         {/* Google Login Section */}
         <div className="mt-6">
-          <p className="text-center text-sm text-gray-500 mb-2">
-            Or login with Google
-          </p>
+          <p className="text-center text-sm text-gray-500 mb-2">Or login with Google</p>
           <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
             <div className="flex justify-center">
               <GoogleLogin

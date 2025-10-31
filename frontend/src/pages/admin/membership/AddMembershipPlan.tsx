@@ -1,9 +1,10 @@
-import { Formik, Form } from "formik";
+import { Formik, Form ,type FormikHelpers} from "formik";
 import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
 import { createMembership } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
 
 const AddMembershipPlan = () => {
   const navigate = useNavigate();
@@ -88,41 +89,47 @@ const AddMembershipPlan = () => {
       ),
   });
 
-  const handleSubmit = async (
-    values: typeof initialValues,
-    { setSubmitting, resetForm, setFieldError }: any
-  ) => {
-    try {
-      const payload = {
-        name: values.name,
-        durationInDays: Number(values.durationInDays),
-        price: Number(values.price),
-        description: values.description || undefined,
-        benefits: values.benefits
-          ? values.benefits
-              .split(",")
-              .map((b) => b.trim())
-              .filter(Boolean)
-          : [],
-      };
+const handleSubmit = async (
+  values: typeof initialValues,
+  { setSubmitting, resetForm, setFieldError }: FormikHelpers<typeof initialValues>
+) => {
+  try {
+    const payload = {
+      name: values.name,
+      durationInDays: Number(values.durationInDays),
+      price: Number(values.price),
+      description: values.description || undefined,
+      benefits: values.benefits
+        ? values.benefits
+            .split(",")
+            .map((b) => b.trim())
+            .filter(Boolean)
+        : [],
+    };
 
-      await createMembership(payload);
-      toast.success("Membership plan created");
-      resetForm();
-      navigate("/admin/membership");
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.error || "Failed to create membership plan";
+    await createMembership(payload);
+    toast.success("Membership plan created");
+    resetForm();
+    navigate("/admin/membership");
+  } catch (error: unknown) {
+    let message = "Failed to create membership plan";
 
-      if (message.includes("already exists")) {
-        setFieldError("name", message);
-      } else {
-        toast.error(message);
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosError = error as AxiosError<{ error?: string }>;
+      if (axiosError.response?.data?.error) {
+        message = axiosError.response.data.error;
       }
-    } finally {
-      setSubmitting(false);
     }
-  };
+
+    if (message.includes("already exists")) {
+      setFieldError("name", message);
+    } else {
+      toast.error(message);
+    }
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">

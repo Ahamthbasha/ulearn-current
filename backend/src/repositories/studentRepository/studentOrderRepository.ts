@@ -1,4 +1,4 @@
-import { Types, PipelineStage } from "mongoose";
+import { Types, PipelineStage, FilterQuery } from "mongoose";
 import { IOrder, OrderModel } from "../../models/orderModel";
 import { IStudentOrderRepository } from "./interface/IStudentOrderRepository";
 import { GenericRepository } from "../genericRepository";
@@ -18,7 +18,7 @@ export class StudentOrderRepository
     limit: number,
     search?: string,
   ): Promise<{ orders: IOrder[]; total: number }> {
-    const baseMatch: any = { userId };
+    const baseMatch: FilterQuery<IOrder> = { userId };
 
     if (!search || !search.trim()) {
       baseMatch.status = { $in: ["SUCCESS", "FAILED", "PENDING"] };

@@ -34,11 +34,11 @@ export class StudentSlotBookingController
         studentId,
       );
       res.status(StatusCode.OK).json({ success: true, ...result });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("initiateCheckout error:", err);
 
       if (
-        err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
+       err instanceof Error && err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
       ) {
         const bookingId = err.message.split(":")[1];
         res.status(StatusCode.CONFLICT).json({
@@ -52,7 +52,7 @@ export class StudentSlotBookingController
         });
         return;
       } else if (
-        err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS
+        err instanceof Error && err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS
       ) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
@@ -60,7 +60,7 @@ export class StudentSlotBookingController
           message: StudentErrorMessages.ANOTHER_USER_PROCESSING,
         });
         return;
-      } else if (err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
+      } else if (err instanceof Error && err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           error: StudentErrorMessages.SLOT_ALREADY_BOOKED_ERROR_MSG,
@@ -71,7 +71,7 @@ export class StudentSlotBookingController
 
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || StudentErrorMessages.CHECKOUT_FAILED,
+        message: err instanceof Error ? err.message : StudentErrorMessages.CHECKOUT_FAILED,
       });
     }
   }
@@ -95,12 +95,12 @@ export class StudentSlotBookingController
         success: true,
         ...availability,
       });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("checkSlotAvailability error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
-          err.message || StudentErrorMessages.FAILED_TO_CHECK_SLOT_AVAILABILITY,
+          err instanceof Error ? err.message : StudentErrorMessages.FAILED_TO_CHECK_SLOT_AVAILABILITY,
       });
     }
   }
@@ -130,12 +130,12 @@ export class StudentSlotBookingController
           message: StudentErrorMessages.FAILED_TO_CANCEL_PENDING_BOOKING,
         });
       }
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("cancelPendingBooking error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
-          err.message || StudentErrorMessages.FAILED_TO_CANCEL_PENDING_BOOKING,
+          err instanceof Error ? err.message : StudentErrorMessages.FAILED_TO_CANCEL_PENDING_BOOKING,
       });
     }
   }
@@ -154,11 +154,11 @@ export class StudentSlotBookingController
         razorpay_payment_id,
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("verifyPayment error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || StudentErrorMessages.PAYMENT_FAILED,
+        message: err instanceof Error ? err.message : StudentErrorMessages.PAYMENT_FAILED,
       });
     }
   }
@@ -180,10 +180,10 @@ export class StudentSlotBookingController
         razorpay_payment_id,
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("verifyRetryPayment error:", err);
 
-      if (err.message === StudentErrorMessages.SLOT_BOOKED_BY_OTHERS) {
+      if (err instanceof Error && err.message === StudentErrorMessages.SLOT_BOOKED_BY_OTHERS) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           error: StudentErrorMessages.SLOT_ALREADY_BOOKED_CONFIRM,
@@ -195,7 +195,7 @@ export class StudentSlotBookingController
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
-          err.message || StudentErrorMessages.PAYMENT_VERIFICATION_FAILED,
+          err instanceof Error ? err.message : StudentErrorMessages.PAYMENT_VERIFICATION_FAILED,
       });
     }
   }
@@ -211,11 +211,11 @@ export class StudentSlotBookingController
         studentId,
       );
       res.status(StatusCode.CREATED).json({ success: true, booking });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("bookViaWallet error:", err);
 
       if (
-        err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
+        err instanceof Error && err.message.startsWith(StudentErrorMessages.PENDING_BOOKING_EXISTS_SLOT)
       ) {
         const bookingId = err.message.split(":")[1];
         res.status(StatusCode.CONFLICT).json({
@@ -230,7 +230,7 @@ export class StudentSlotBookingController
         });
         return;
       } else if (
-        err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS
+        err instanceof Error && err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS
       ) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
@@ -238,7 +238,7 @@ export class StudentSlotBookingController
           message: StudentErrorMessages.ANOTHER_USER_PROCESSING,
         });
         return;
-      } else if (err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
+      } else if (err instanceof Error && err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           error: StudentErrorMessages.SLOT_ALREADY_BOOKED_ERROR_MSG,
@@ -249,7 +249,7 @@ export class StudentSlotBookingController
 
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || StudentErrorMessages.PAYMENT_FAILED,
+        message: err instanceof Error ? err.message : StudentErrorMessages.PAYMENT_FAILED,
       });
     }
   }
@@ -279,11 +279,11 @@ export class StudentSlotBookingController
         data: result.data,
         total: result.total,
       });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("getBookingHistory error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || StudentErrorMessages.FAILED_TO_FETCH_BOOKINGS,
+        message: err instanceof Error ? err.message : StudentErrorMessages.FAILED_TO_FETCH_BOOKINGS,
       });
     }
   }
@@ -308,11 +308,11 @@ export class StudentSlotBookingController
       }
 
       res.status(StatusCode.OK).json({ success: true, data: bookingDetail });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("getBookingDetail error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || StudentErrorMessages.FAILED_TO_FETCH_BOOKING,
+        message: err instanceof Error ? err.message : StudentErrorMessages.FAILED_TO_FETCH_BOOKING,
       });
     }
   }
@@ -344,11 +344,11 @@ export class StudentSlotBookingController
         `attachment; filename=slot-receipt-${bookingId}.pdf`,
       );
       generateSlotReceiptPdf(res, populatedBooking);
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("downloadReceipt error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || StudentErrorMessages.FAILED_TO_GENERATE_RECEIPT,
+        message: err instanceof Error ? err.message : StudentErrorMessages.FAILED_TO_GENERATE_RECEIPT,
       });
     }
   }
@@ -368,12 +368,12 @@ export class StudentSlotBookingController
         success: true,
         message: StudentSuccessMessages.BOOKING_MARKED_AS_FAILED,
       });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("handlePaymentFailure error:", err);
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
         message:
-          err.message || StudentErrorMessages.FAILED_TO_MARK_BOOKING_AS_FAILED,
+          err instanceof Error ? err.message : StudentErrorMessages.FAILED_TO_MARK_BOOKING_AS_FAILED,
       });
     }
   }
@@ -390,17 +390,17 @@ export class StudentSlotBookingController
         studentId,
       );
       res.status(StatusCode.OK).json({ success: true, ...result });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("retryPayment error:", err);
 
-      if (err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS) {
+      if (err instanceof Error && err.message === StudentErrorMessages.PENDING_BOOKING_BY_OTHERS) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           error: StudentErrorMessages.PENDING_BOOKING_BY_OTHERS_ERROR_MSG,
           message: StudentErrorMessages.ANOTHER_USER_PROCESSING,
         });
         return;
-      } else if (err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
+      } else if (err instanceof Error && err.message === StudentErrorMessages.SLOT_ALREADY_BOOKED_MSG) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           error: StudentErrorMessages.SLOT_ALREADY_BOOKED_ERROR_MSG,
@@ -411,7 +411,7 @@ export class StudentSlotBookingController
 
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: err.message || StudentErrorMessages.SLOT_RETRY_PAYMENT_FAILED,
+        message: err instanceof Error ? err.message : StudentErrorMessages.SLOT_RETRY_PAYMENT_FAILED,
       });
     }
   }

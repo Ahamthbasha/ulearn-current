@@ -4,6 +4,7 @@ import { getMembershipPurchaseHistoryDetail } from "../../../api/action/AdminAct
 import { ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
 import { type MembershipOrder } from "../interface/adminInterface";
+import { AxiosError } from "axios";
 
 const MembershipOrderDetail: React.FC = () => {
   const { txnId } = useParams<{ txnId: string }>();
@@ -17,8 +18,10 @@ const MembershipOrderDetail: React.FC = () => {
       setLoading(true);
       const response = await getMembershipPurchaseHistoryDetail(txnId!);
       setOrder(response.data);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to load order detail");
+    } catch (err: unknown) {
+      if(err instanceof AxiosError){
+        toast.error(err.response?.data?.message || "Failed to load order detail");
+      }
     } finally {
       setLoading(false);
     }

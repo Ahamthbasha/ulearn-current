@@ -78,29 +78,41 @@ const EditCouponPage: React.FC = () => {
           expiryDate: convertToInputDateFormat(coupon.expiryDate),
         });
         setLoading(false);
-      } catch (err: any) {
-        setFetchError(err.message || 'Failed to fetch coupon');
-        setLoading(false);
-      }
+      } catch (err: unknown) {
+  let message = 'Failed to fetch coupon';
+  if (err instanceof Error) {
+    message = err.message;
+  }
+  setFetchError(message);
+  setLoading(false);
+}
     };
     fetchCoupon();
   }, [couponId]);
 
-  const handleSubmit = async (values: adminCouponDto, { setSubmitting }: any) => {
-    setServerError(null);
-    try {
-      if (!couponId) throw new Error('Invalid coupon ID');
-      const submissionValues = {
-        ...values,
-        expiryDate: convertToApiDateFormat(values.expiryDate),
-      };
-      await editCoupon(couponId, submissionValues);
-      navigate('/admin/coupons');
-    } catch (err: any) {
-      setServerError(err.message || 'Failed to update coupon');
-      setSubmitting(false);
+const handleSubmit = async (
+  values: adminCouponDto,
+  { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
+) => {
+  setServerError(null);
+  try {
+    if (!couponId) throw new Error('Invalid coupon ID');
+    const submissionValues = {
+      ...values,
+      expiryDate: convertToApiDateFormat(values.expiryDate),
+    };
+    await editCoupon(couponId, submissionValues);
+    navigate('/admin/coupons');
+  } catch (err: unknown) {
+    let message = 'Failed to update coupon';
+    if (err instanceof Error) {
+      message = err.message;
     }
-  };
+    setServerError(message);
+    setSubmitting(false);
+  }
+};
+
 
   if (loading) {
     return (

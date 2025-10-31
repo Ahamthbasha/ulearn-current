@@ -5,7 +5,8 @@ import {
 } from "../../../api/action/StudentAction";
 import CourseCard from "../../../components/StudentComponents/CourseCard";
 import { toast } from "react-toastify";
-import { type CourseList, type Category, type CourseFilterResponse } from "../interface/studentInterface";
+import { type CourseList, type Category, type CourseFilterResponse,type SortOption } from "../interface/studentInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const CourseListPage = () => {
   const [courses, setCourses] = useState<CourseList[]>([]);
@@ -15,9 +16,7 @@ const CourseListPage = () => {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  const [sortOption, setSortOption] = useState<
-    "name-asc" | "name-desc" | "price-asc" | "price-desc"
-  >("name-asc");
+  const [sortOption, setSortOption] = useState<SortOption>("name-asc");
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -53,7 +52,8 @@ const CourseListPage = () => {
       setCourses(response.data || []);
       setTotalPages(response.totalPages || Math.ceil((response.total || 0) / coursesPerPage));
     } catch (error) {
-      toast.error("Failed to load courses");
+      const apiError = error as ApiError;
+      toast.error(apiError.response?.data?.message || "Failed to load courses");
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,8 @@ const CourseListPage = () => {
       const categoriesData = response.data || response;
       setCategories(categoriesData);
     } catch (error) {
-      toast.error("Failed to load categories");
+      const apiError = error as ApiError;
+      toast.error(apiError.response?.data?.message || "Failed to load categories");
     }
   };
 
@@ -157,15 +158,15 @@ const CourseListPage = () => {
             </h3>
             <ul className="space-y-1 sm:space-y-1.5">
               {[
-                { value: "price-asc", label: "Price: Low to High" },
-                { value: "price-desc", label: "Price: High to Low" },
-                { value: "name-asc", label: "A - Z" },
-                { value: "name-desc", label: "Z - A" },
+                { value: "price-asc" as const, label: "Price: Low to High" },
+                { value: "price-desc" as const, label: "Price: High to Low" },
+                { value: "name-asc" as const, label: "A - Z" },
+                { value: "name-desc" as const, label: "Z - A" },
               ].map((option) => (
                 <li
                   key={option.value}
                   onClick={() => {
-                    setSortOption(option.value as any);
+                    setSortOption(option.value);
                     setIsSidebarOpen(false);
                   }}
                   className={`cursor-pointer px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm md:text-base transition-colors duration-200 ${
@@ -225,8 +226,7 @@ const CourseListPage = () => {
                     id={course.courseId}
                     title={course.courseName}
                     description={course.description}
-
-                    originalPrice={course.originalPrice} // Added originalPrice
+                    originalPrice={course.originalPrice}
                     discountedPrice={course.discountedPrice}
                     duration={course.duration}
                     level={course.level}

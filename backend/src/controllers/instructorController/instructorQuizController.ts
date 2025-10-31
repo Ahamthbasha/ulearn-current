@@ -9,6 +9,10 @@ import {
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
 
+const isError = (err: unknown): err is Error => {
+  return err instanceof Error;
+};
+
 export class InstructorQuizController implements IInstructorQuizController {
   private _quizService: IInstructorQuizService;
   constructor(quizService: IInstructorQuizService) {
@@ -148,8 +152,8 @@ export class InstructorQuizController implements IInstructorQuizController {
         message: QuizSuccessMessages.QUESTION_ADDED,
         data: added,
       });
-    } catch (err: any) {
-      if (err.message?.includes("already exists")) {
+    } catch (err) {
+      if (isError(err) && err.message?.includes("already exists")) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           message: err.message,
@@ -186,9 +190,9 @@ export class InstructorQuizController implements IInstructorQuizController {
         message: QuizSuccessMessages.QUESTION_UPDATED,
         data: updated,
       });
-    } catch (err: any) {
+    } catch (err) {
       appLogger.error("error in update question", err);
-      if (err.message?.includes("already exists")) {
+      if (isError(err) && err.message?.includes("already exists")) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           message: err.message,

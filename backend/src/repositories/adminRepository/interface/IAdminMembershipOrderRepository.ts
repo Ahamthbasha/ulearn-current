@@ -5,7 +5,7 @@ export interface IAdminMembershipOrderRepository {
     page: number,
     limit: number,
     search?: string,
-    status?: string,
+    status?: "paid" | "failed" | "cancelled",
   ): Promise<{ data: InstructorMembershipOrderDTO[]; total: number }>;
 
   findByTxnId(

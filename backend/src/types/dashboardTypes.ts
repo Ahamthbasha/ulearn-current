@@ -1,5 +1,22 @@
 import { Types } from "mongoose";
 
+export interface TokenPayload {
+  id: string;
+  email: string;
+  role: string;
+  iat?: number;
+  exp?: number;
+}
+
+export interface OrderItem {
+  type: string;
+  name: string;
+  originalPrice: number;
+  offerPrice?: number;
+  offerPercentage?: number;
+}
+
+
 export interface ITopSellingCourse {
   _id: Types.ObjectId;
   courseName: string;
@@ -86,8 +103,8 @@ export interface IStudentSlotReportItem {
   totalPrice: number;
 }
 
-export type AggregationPipelineStage = {
-  $match?: { [key: string]: any };
+export type AggregationStage<TSchema = {}> = {
+  $match?: { [K in keyof TSchema]?: TSchema[K] | unknown };
   $unwind?: string | { path: string; preserveNullAndEmptyArrays?: boolean };
   $lookup?: {
     from: string;
@@ -95,9 +112,9 @@ export type AggregationPipelineStage = {
     foreignField: string;
     as: string;
   };
-  $group?: { [key: string]: any };
-  $project?: { [key: string]: any };
-  $sort?: { [key: string]: any };
+  $group?: { [K: string]: unknown };
+  $project?: { [K: string]: unknown };
+  $sort?: { [K: string]: 1 | -1 | "asc" | "desc" };
   $skip?: number;
   $limit?: number;
 };

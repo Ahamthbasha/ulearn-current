@@ -7,7 +7,8 @@ import "react-toastify/dist/ReactToastify.css";
 import InputField from "../../../components/common/InputField";
 import CourseSelector from "../../../components/StudentComponents/CourseSelector";
 import { createLearningPath, getAllCategories } from "../../../api/action/StudentAction";
-import type { CreateLearningPathRequest } from "../../../types/interfaces/IStudentInterface";
+import type { CreateLearningPathRequest,CourseItem } from "../../../types/interfaces/IStudentInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const isValidObjectId = (id: string): boolean => {
   return /^[0-9a-fA-F]{24}$/.test(id);
@@ -65,7 +66,7 @@ const validationSchema = Yup.object({
       "Duplicate courses are not allowed",
       (items) => {
         if (!items) return true;
-        const courseIds = items.map((item: any) => item.courseId);
+        const courseIds = items.map((item) => (item as CourseItem).courseId);
         const uniqueCourseIds = new Set(courseIds);
         return uniqueCourseIds.size === courseIds.length;
       }
@@ -75,7 +76,7 @@ const validationSchema = Yup.object({
       "Duplicate order numbers are not allowed",
       (items) => {
         if (!items) return true;
-        const orders = items.map((item: any) => item.order);
+        const orders = items.map((item) => (item as CourseItem).order);
         const uniqueOrders = new Set(orders);
         return uniqueOrders.size === orders.length;
       }
@@ -182,13 +183,10 @@ const LearningPathCreatePage: React.FC = () => {
         autoClose: 3000,
       });
       navigate("/user/createdLms");
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Failed to create learning path";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 5000,
-      });
-      console.error("Create learning path error:", err.response?.data || err);
+    } catch (err) {
+      const apiError = err as ApiError;
+      const errorMessage = apiError.response?.data?.message || apiError.message || "Failed to create learning path";
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -237,21 +235,25 @@ const LearningPathCreatePage: React.FC = () => {
               <ErrorMessage name="category" component="p" className="text-red-500 text-sm mt-1" />
             </div>
 
-            <CourseSelector name="items" label="Courses" categoryId={values.category} /> {/* Pass the selected category */}
+            <CourseSelector name="items" label="Courses" categoryId={values.category} />
             {errors.items && touched.items && (
               <div className="text-red-500 text-sm mt-1">
                 {typeof errors.items === "string" ? (
                   <p>{errors.items}</p>
-                ) : (
-                  errors.items.map((itemError, index) => (
-                    <p key={index}>
-                      Course {index + 1}:{" "}
-                      {(itemError as { courseId?: string; order?: string }).courseId ||
-                        (itemError as { courseId?: string; order?: string }).order ||
-                        "Invalid course or order"}
-                    </p>
-                  ))
-                )}
+                ) : Array.isArray(errors.items) ? (
+                  errors.items.map((itemError, index) => {
+                    if (typeof itemError === "object" && itemError !== null) {
+                      const error = itemError as { courseId?: string; order?: string };
+                      return (
+                        <p key={index}>
+                          Course {index + 1}:{" "}
+                          {error.courseId || error.order || "Invalid course or order"}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })
+                ) : null}
               </div>
             )}
 

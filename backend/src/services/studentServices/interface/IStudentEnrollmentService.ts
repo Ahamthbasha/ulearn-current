@@ -23,7 +23,6 @@ export interface IStudentEnrollmentService {
       scorePercentage: number;
     },
   ): Promise<IEnrollment | null>;
-
   areAllChaptersCompleted(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,

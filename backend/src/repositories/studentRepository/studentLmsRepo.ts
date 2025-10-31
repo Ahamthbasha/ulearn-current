@@ -1,4 +1,4 @@
-import { Types, SortOrder, PopulateOptions } from "mongoose";
+import { Types, SortOrder, PopulateOptions, FilterQuery } from "mongoose";
 import {
   ILearningPath,
   LearningPathModel,
@@ -30,7 +30,7 @@ export class StudentLmsRepo
     total: number;
     offers: Map<string, ICourseOffer>;
   }> {
-    const filter: any = {};
+    const filter: FilterQuery<ILearningPath> = {};
 
     if (query) {
       filter.$or = [

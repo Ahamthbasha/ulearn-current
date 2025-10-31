@@ -8,8 +8,8 @@ import {
 
 import { type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesParam";
 import type { IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
+import { AxiosError } from "axios";
 
-//verification api call
 
 export const sendVerification = async (formData: FormData) => {
   try {
@@ -43,9 +43,11 @@ export const instructorGetProfile = async () => {
       InstructorRouterEndPoints.instructorProfilePage
     );
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      return error.response.data;
+  } catch (error) {
+    if(error instanceof AxiosError){
+      if (error.response && error.response.data) {
+        return error.response.data;
+      }
     }
   }
 };
@@ -72,9 +74,11 @@ export const instructorUpdatePassword = async ({currentPassword,newPassword}:{cu
       {currentPassword,newPassword}
     );
     return response.data;
-  } catch (error: any) {
-    if (error.response && error.response.data) {
-      return error.response.data;
+  } catch (error) {
+    if(error instanceof AxiosError){
+      if (error.response && error.response.data) {
+        return error.response.data;
+      }
     }
   }
 };
@@ -443,7 +447,7 @@ export const exportRevenueReport = async (
   endDate?: string
 ): Promise<void> => {
   try {
-    const params: Record<string, any> = { range, format };
+    const params: Record<string, unknown> = { range, format };
     if (range === "custom") {
       params.startDate = startDate;
       params.endDate = endDate;
@@ -943,10 +947,15 @@ export const slotHistory = async (
   }
 ) => {
   try {
-    const queryParams = new URLSearchParams({
-      mode,
-      ...params,
-    } as any).toString();
+    // Build an object with string values only for URLSearchParams
+    const queryObject: Record<string, string> = { mode };
+    if (params.month !== undefined) queryObject.month = params.month.toString();
+    if (params.year !== undefined) queryObject.year = params.year.toString();
+    if (params.startDate) queryObject.startDate = params.startDate;
+    if (params.endDate) queryObject.endDate = params.endDate;
+
+    const queryParams = new URLSearchParams(queryObject).toString();
+
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorSlotHistory}?${queryParams}`
     );
@@ -955,6 +964,7 @@ export const slotHistory = async (
     throw error;
   }
 };
+
 
 export const slotDetailsInInstructor = async (slotId: string) => {
   try {

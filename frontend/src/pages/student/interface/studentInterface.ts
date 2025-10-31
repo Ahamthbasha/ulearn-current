@@ -1,11 +1,62 @@
+
+
+export interface ApiResponse {
+  data: Array<{
+    orderId: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    price: number;
+    gateway?: string;
+    status?: string;
+  }>;
+  total?: number;
+}
+
+export type ExtendedSlotOrderHistory = SlotOrderHistory & Record<string, unknown>;
+
+export type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc";
+
+export type ExtendedDisplayOrder = DisplayOrder & Record<string, unknown>;
+
+export interface RawCartItem {
+  itemId: string;
+  type: string;
+  title: string;
+  price: number | string;
+  thumbnailUrl: string;
+  isAlreadyEnrolled?: boolean;
+  enrolledCourses?: string[];
+}
+
+
+export interface IRazorpayOrder {
+  id: string;
+  amount: number;
+  currency: string;
+}
+
+export interface IRazorpayPaymentResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+export interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+      message?: string;
+    };
+  };
+}
+
 export interface CartCourseDTO {
   courseId: string;
   courseName: string;
   price: number;
   thumbnailUrl: string;
 }
-
-
 
 export interface Course {
   _id: string;

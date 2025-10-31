@@ -1,6 +1,7 @@
 import { IUser } from "../../models/userModel";
 import IStudentService from "./interface/IStudentService";
 import { IStudentRepository } from "../../repositories/studentRepository/interface/IStudentRepository";
+import { Types } from "mongoose";
 
 export class StudentServices implements IStudentService {
   private _studentRepository: IStudentRepository;
@@ -12,6 +13,11 @@ export class StudentServices implements IStudentService {
   async findByEmail(email: string): Promise<IUser | null> {
     return await this._studentRepository.findByEmail(email);
   }
+
+  async findById(userId: string | Types.ObjectId): Promise<IUser | null> {
+  return await this._studentRepository.findById(userId);
+}
+
 
   async createUser(userData: IUser): Promise<IUser | null> {
     return await this._studentRepository.create(userData);

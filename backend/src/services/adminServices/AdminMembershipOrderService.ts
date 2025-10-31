@@ -18,11 +18,13 @@ export class AdminMembershipOrderService
     search?: string,
     status?: string,
   ): Promise<{ data: AdminMembershipOrderListDTO[]; total: number }> {
+    const validStatuses = new Set(["paid", "failed", "cancelled"]);
+  const narrowedStatus = status && validStatuses.has(status) ? status as "paid" | "failed" | "cancelled" : undefined;
     const { data, total } = await this._orderRepo.findAllPaginated(
       page,
       limit,
       search,
-      status,
+      narrowedStatus,
     );
     const mappedData = mapMembershipOrdersToListDTO(data);
     return { data: mappedData, total };

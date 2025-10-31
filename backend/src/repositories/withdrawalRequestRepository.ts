@@ -12,6 +12,7 @@ import {
   BadRequestError 
 } from "../utils/error";
 import { appLogger } from "../utils/logger";
+import { AggregationResult } from "../interface/common/Icommon";
 
 export class WithdrawalRequestRepository
   extends GenericRepository<IWithdrawalRequest>
@@ -274,29 +275,30 @@ export class WithdrawalRequestRepository
   }
 
   async getTotalPendingAmount(instructorId: Types.ObjectId): Promise<number> {
-    try {
-      const result = await this.aggregate([
-        {
-          $match: {
-            instructorId: instructorId,
-            status: "pending",
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            totalPending: { $sum: "$amount" },
-          },
-        },
-      ]);
+  try {
 
-      return result.length > 0 ? result[0].totalPending : 0;
-    } catch (error) {
-      appLogger.error("Error calculating total pending amount", { 
-        error, 
-        instructorId 
-      });
-      throw new InternalServerError("Failed to calculate pending amount");
-    }
+    const result = await this.aggregate<AggregationResult>([
+      {
+        $match: {
+          instructorId: instructorId,
+          status: "pending",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPending: { $sum: "$amount" },
+        },
+      },
+    ]);
+
+    return result.length > 0 ? result[0].totalPending : 0;
+  } catch (error) {
+    appLogger.error("Error calculating total pending amount", { 
+      error, 
+      instructorId 
+    });
+    throw new InternalServerError("Failed to calculate pending amount");
   }
+}
 }

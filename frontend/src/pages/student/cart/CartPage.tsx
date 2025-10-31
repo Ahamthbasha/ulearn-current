@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { getCart, removeFromCart } from "../../../api/action/StudentAction";
 import { ShoppingCart, Trash2, IndianRupee } from "lucide-react";
 import { type CartItemDTO } from "../../../types/interfaces/IStudentInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const CartPage = () => {
   const [items, setItems] = useState<CartItemDTO[]>([]);
@@ -40,9 +41,12 @@ const CartPage = () => {
         toast.info(enrolledMessages.join(" "), { autoClose: 7000 });
       }
       toast.success("Cart fetched successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load cart.");
-    } finally {
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Failed to load cart.");
+} 
+    finally {
       setLoading(false);
     }
   };
@@ -54,15 +58,18 @@ const CartPage = () => {
       const cart = response || [];
       setItems(cart);
       toast.success(`${title} removed from cart.`);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error.message || "Failed to remove item.";
-      if (errorMessage.includes("already enrolled")) {
-        toast.info(`${title} is already enrolled, removing from cart.`);
-        setItems((prev) => prev.filter((item) => item.itemId !== itemId));
-      } else {
-        toast.error(`Failed to remove ${title} from cart: ${errorMessage}`);
-      }
-    } finally {
+    }
+     catch (error) {
+  const apiError = error as ApiError;
+  const errorMessage = apiError.response?.data?.message || apiError.message || "Failed to remove item.";
+  if (errorMessage.includes("already enrolled")) {
+    toast.info(`${title} is already enrolled, removing from cart.`);
+    setItems((prev) => prev.filter((item) => item.itemId !== itemId));
+  } else {
+    toast.error(`Failed to remove ${title} from cart: ${errorMessage}`);
+  }
+}
+    finally {
       setIsRemoving(null);
     }
   };

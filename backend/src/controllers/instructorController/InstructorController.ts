@@ -19,6 +19,7 @@ import {
   InternalServerError,
 } from "../../utils/errorHandlerUtil";
 import { IInstructor } from "../../models/instructorModel";
+import { JwtPayload } from "jsonwebtoken";
 
 
 const getHeader = (req: Request, header: string): string => {
@@ -116,31 +117,56 @@ export class InstructorController implements IInstructorController {
     }
   }
 
-  async createUser(req: Request, res: Response): Promise<void> {
-    try {
-      const { otp } = req.body as { otp: string };
-      const tokenHeader = getHeader(req, "the-verify-token");
+ async createUser(req: Request, res: Response): Promise<void> {
+  try {
+    const { otp } = req.body as { otp: string };
+    const tokenHeader = getHeader(req, "the-verify-token");
 
-      if (!otp) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.OTP_REQUIRED);
+    if (!otp) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.OTP_REQUIRED);
 
-      const decoded = await this._jwt.verifyToken(tokenHeader);
-      if (!decoded?.email) throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
+    const decodedRaw = await this._jwt.verifyToken(tokenHeader);
 
-      const isValid = await this._otpService.verifyOtp(decoded.email, otp);
-      if (!isValid) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.INCORRECT_OTP);
-
-      const user = await this._instructorService.createUser(decoded);
-      if (!user) throwAppError(InternalServerError, INSTRUCTOR_MESSAGES.FAILED_TO_RESET_PASSWORD);
-
-      res.status(StatusCode.CREATED).json({
-        success: true,
-        message: INSTRUCTOR_MESSAGES.USER_CREATED,
-        user,
-      });
-    } catch (error) {
-      handleControllerError(error, res);
+    // If token decoded to a string, it is invalid here
+    if (typeof decodedRaw === "string") {
+      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
     }
+
+    // Cast decoded Raw to JwtPayload extended with id and email
+    const decoded = decodedRaw as JwtPayload & { id?: string; email?: string };
+
+    if (!decoded?.email) {
+      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
+      return;
+    }
+
+    // Verify OTP for the email
+    const isValid = await this._otpService.verifyOtp(decoded.email, otp);
+    if (!isValid) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.INCORRECT_OTP);
+
+    if (!decoded.id) {
+      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
+      return;
+    }
+
+    // Find the full instructor user by decoded id
+    const instructorFromDb: IInstructor | null = await this._instructorService.findById(decoded.id);
+    if (!instructorFromDb) {
+      throwAppError(NotFoundError, INSTRUCTOR_MESSAGES.USER_NOT_FOUND);
+      return
+    }
+
+    const user = await this._instructorService.createUser(instructorFromDb);
+    if (!user) throwAppError(InternalServerError, INSTRUCTOR_MESSAGES.FAILED_TO_RESET_PASSWORD);
+
+    res.status(StatusCode.CREATED).json({
+      success: true,
+      message: INSTRUCTOR_MESSAGES.USER_CREATED,
+      user,
+    });
+  } catch (error) {
+    handleControllerError(error, res);
   }
+}
 
   async login(req: Request, res: Response): Promise<void> {
     try {
@@ -274,28 +300,39 @@ export class InstructorController implements IInstructorController {
     }
   }
   
-  async resetPassword(req: Request, res: Response): Promise<void> {
-    try {
-      const { password } = req.body as { password: string };
-      if (!password) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.PASSWORD_REQUIRED);
+ async resetPassword(req: Request, res: Response): Promise<void> {
+  try {
+    const { password } = req.body as { password: string };
+    if (!password) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.PASSWORD_REQUIRED);
 
-      const token = req.cookies.forgotToken;
-      if (!token) throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.RESET_TOKEN_REQUIRED);
+    const token = req.cookies.forgotToken;
+    if (!token) throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.RESET_TOKEN_REQUIRED);
 
-      const payload = await this._jwt.verifyToken(token);
-      if (!payload?.email) throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
+    const payloadRaw = await this._jwt.verifyToken(token);
 
-      const hashed = await bcrypt.hash(password, 10);
-      const updated = await this._instructorService.resetPassword(payload.email, hashed);
-      if (!updated) throwAppError(InternalServerError, INSTRUCTOR_MESSAGES.FAILED_TO_RESET_PASSWORD);
-
-      await this._otpService.deleteOtp(payload.email);
-      res.clearCookie("forgotToken", { httpOnly: true });
-      res.status(StatusCode.OK).json({ success: true, message: INSTRUCTOR_MESSAGES.PASSWORD_RESET });
-    } catch (error) {
-      handleControllerError(error, res);
+    if (typeof payloadRaw === "string") {
+      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
     }
+
+    const payload = payloadRaw as JwtPayload & { email?: string, id?: string };
+
+    if (!payload.email) {
+      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
+      return
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const updated = await this._instructorService.resetPassword(payload.email, hashed);
+    if (!updated) throwAppError(InternalServerError, INSTRUCTOR_MESSAGES.FAILED_TO_RESET_PASSWORD);
+
+    await this._otpService.deleteOtp(payload.email);
+    res.clearCookie("forgotToken", { httpOnly: true });
+    res.status(StatusCode.OK).json({ success: true, message: INSTRUCTOR_MESSAGES.PASSWORD_RESET });
+  } catch (error) {
+    handleControllerError(error, res);
   }
+}
+
 
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
     try {

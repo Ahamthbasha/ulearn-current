@@ -4,7 +4,8 @@ import { membershipPurchaseHistory } from "../../../api/action/InstructorActionA
 import EntityTable from "../../../components/common/EntityTable";
 import { toast } from "react-toastify";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type DisplayOrder, type MembershipOrder } from "../interface/instructorInterface";
+import { type DisplayOrder, type MembershipOrder} from "../interface/instructorInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const Orders = () => {
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
@@ -44,9 +45,17 @@ const Orders = () => {
 
       setOrders(formattedOrders);
       setTotal(total || 0);
-    } catch (err: any) {
-      console.error("Error fetching orders:", err);
-      toast.error(err.response?.data?.message || "Failed to fetch order history");
+    } catch (err) {
+      const error = err as ApiError;
+      console.error("Error fetching orders:", error);
+      
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.response?.data?.error || 
+        error.message ||
+        "Failed to fetch order history";
+      
+      toast.error(errorMessage);
       setOrders([]);
       setTotal(0);
     } finally {
@@ -72,14 +81,14 @@ const Orders = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setStatusFilter(""); // Clear status filter when typing
+    setStatusFilter("");
     setPage(1);
     setIsSearching(true);
   };
 
   const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStatusFilter(e.target.value);
-    setSearchQuery(""); // Clear text search when selecting status
+    setSearchQuery("");
     setPage(1);
     setIsSearching(true);
   };
@@ -117,42 +126,42 @@ const Orders = () => {
     {
       key: "orderId" as keyof DisplayOrder,
       label: "Order ID",
-      render: (value: string) => (
+      render: (value: unknown) => (
         <span className="font-mono text-xs sm:text-sm bg-gray-100 px-2 sm:px-3 py-1 rounded truncate">
-          {value.length > 16 ? `${value.slice(0, 8)}...${value.slice(-8)}` : value}
+          {typeof value === 'string' && value.length > 16 ? `${value.slice(0, 8)}...${value.slice(-8)}` : String(value)}
         </span>
       ),
     },
     {
       key: "planName" as keyof DisplayOrder,
       label: "Plan Name",
-      render: (value: string) => (
-        <span className="font-medium text-gray-900 text-sm sm:text-base">{value}</span>
+      render: (value: unknown) => (
+        <span className="font-medium text-gray-900 text-sm sm:text-base">{String(value)}</span>
       ),
     },
     {
       key: "formattedAmount" as keyof DisplayOrder,
       label: "Amount",
-      render: (value: string) => (
-        <span className="font-semibold text-green-600 text-sm sm:text-base">{value}</span>
+      render: (value: unknown) => (
+        <span className="font-semibold text-green-600 text-sm sm:text-base">{String(value)}</span>
       ),
     },
     {
       key: "statusDisplay" as keyof DisplayOrder,
       label: "Status",
-      render: (value: string, row: DisplayOrder) => (
+      render: (value: unknown, row: DisplayOrder) => (
         <span
           className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusBadgeColor(row.status)}`}
         >
-          {value}
+          {String(value)}
         </span>
       ),
     },
     {
       key: "formattedDate" as keyof DisplayOrder,
       label: "Purchase Date",
-      render: (value: string) => (
-        <span className="text-sm sm:text-base">{value}</span>
+      render: (value: unknown) => (
+        <span className="text-sm sm:text-base">{String(value)}</span>
       ),
     },
   ];
@@ -179,7 +188,6 @@ const Orders = () => {
                   statusFilter ? "bg-gray-50 text-gray-500 cursor-not-allowed" : ""
                 }`}
               />
-              {/* Search Icon */}
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
                   className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
@@ -195,7 +203,6 @@ const Orders = () => {
                   />
                 </svg>
               </div>
-              {/* Clear Button */}
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
@@ -219,7 +226,6 @@ const Orders = () => {
               )}
             </div>
 
-            {/* Status Filter */}
             <div className="relative w-full sm:w-auto">
               <select
                 value={statusFilter}
@@ -235,7 +241,6 @@ const Orders = () => {
               </select>
             </div>
 
-            {/* Clear All Filters Button */}
             {(searchQuery || statusFilter) && (
               <button
                 onClick={handleClearFilters}
@@ -260,7 +265,6 @@ const Orders = () => {
             )}
           </div>
 
-          {/* Filter Status Display */}
           {(searchQuery || statusFilter) && (
             <div className="text-xs sm:text-sm text-gray-600">
               {isSearching ? (
@@ -306,7 +310,7 @@ const Orders = () => {
             </div>
           </div>
         ) : (
-          <EntityTable
+          <EntityTable<DisplayOrder>
             title={
               statusFilter
                 ? `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Membership Orders`

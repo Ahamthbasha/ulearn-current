@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { verifyEmail, verifyResetOtp } from "../../../api/auth/UserAuthentication";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const ResetVerificationOTP = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -86,10 +87,12 @@ const ResetVerificationOTP = () => {
       } else {
         toast.error(response.message);
       }
-    } catch (error:any) {
-      console.error("Axios error:", error);
-      toast.error(error?.response?.data?.message);
-    }
+    } 
+    catch (error) {
+  console.error("Axios error:", error);
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || "An error occurred");
+}
   };
 
   return (

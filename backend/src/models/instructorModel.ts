@@ -1,4 +1,4 @@
-import mongoose, { Document, ObjectId, Schema } from "mongoose";
+import mongoose, { Types, Document, ObjectId, Schema } from "mongoose";
 export interface IInstructorDTO {
   username: string;
   email: string;
@@ -13,8 +13,8 @@ export interface InstructorProfileDTO {
   isBlocked: boolean;
   skills?: string[];
   expertise?: string[];
-  status: boolean; // isVerified
-  mentor: boolean; // isMentor
+  status: boolean;
+  mentor: boolean;
   bankAccountLinked: boolean;
   profilePicUrl?: string;
 }
@@ -115,3 +115,8 @@ const InstructorModel = mongoose.model<IInstructor>(
 );
 
 export default InstructorModel;
+
+
+export function isInstructor(obj: Types.ObjectId | IInstructor): obj is IInstructor {
+  return (obj as IInstructor)?.username !== undefined;
+}

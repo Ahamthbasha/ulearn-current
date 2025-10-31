@@ -3,3 +3,10 @@ export type Login = {
     password : string,
     role:string
 }
+
+export interface DecodedGoogleCredential {
+  name: string;
+  email: string;
+  picture: string;
+  role:string;
+}

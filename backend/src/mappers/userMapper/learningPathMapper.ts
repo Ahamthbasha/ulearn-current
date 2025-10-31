@@ -12,6 +12,7 @@ export function mapLearningPathToListDTO(
     learningPathId: learningPath._id.toString(),
     title: learningPath.title,
     thumbnailUrl: learningPath.thumbnailUrl,
+    isPurchased:learningPath.isPurchased
   };
 }
 

@@ -6,6 +6,7 @@ import {
   instructorVerifyResetOtp,
   instructorForgotResendOtp,
 } from "../../../api/auth/InstructorAuthentication";
+import type { AxiosError } from "axios";
 
 const ResetVerificationOTP = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -88,10 +89,27 @@ const ResetVerificationOTP = () => {
       } else {
         toast.error(response.message); // Displays "Incorrect OTP" when success is false
       }
-    } catch (error:any) {
-      console.error("Error:", error);
-      toast.error(error?.response?.data?.message);
-    }
+    } 
+    catch (error: unknown) {
+console.error("Error:", error);
+
+let message: string | undefined;
+
+if (
+error &&
+typeof error === "object" &&
+"response" in error
+) {
+const axiosError = error as AxiosError<{ message?: string }>;
+message = axiosError.response?.data?.message;
+}
+
+if (message) {
+toast.error(message);
+} else {
+toast.error("An unexpected error occurred");
+}
+}
   };
 
   return (

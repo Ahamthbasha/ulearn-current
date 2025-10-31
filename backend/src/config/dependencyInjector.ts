@@ -149,7 +149,7 @@ const instructorProfileRepo: IInstructorProfileRepository =
 const instructorProfileService: IInstructorProfileService =
   new InstructorProfileService(instructorProfileRepo);
 const instructorProfileController: IInstructorProfileController =
-  new InstructorProfileController(instructorProfileService, jwtService);
+  new InstructorProfileController(instructorProfileService);
 
 //////////////////////ADMIN CATEGORY CONTROLLER////////////////////////////////////////
 

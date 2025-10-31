@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import {  Response } from "express";
 import { IInstructorProfileService } from "../../services/instructorServices/interface/IInstructorProfileService";
 import { IInstructorProfileController } from "./interfaces/IInstructorProfileController";
 import { uploadToS3Bucket } from "../../utils/s3Bucket";
@@ -7,30 +7,32 @@ import {
   InstructorErrorMessages,
   InstructorSuccessMessages,
 } from "../../utils/constants";
-import { IJwtService } from "../../services/interface/IJwtService";
 import { appLogger } from "../../utils/logger";
+import { IInstructor } from "../../models/instructorModel";
+import { AuthenticatedRequest } from "src/middlewares/authenticatedRoutes";
 
 export class InstructorProfileController
   implements IInstructorProfileController
 {
   private _profileService: IInstructorProfileService;
-  private _jwt: IJwtService;
 
   constructor(
     profileService: IInstructorProfileService,
-    jwtService: IJwtService,
   ) {
     this._profileService = profileService;
-    this._jwt = jwtService;
   }
 
-  async getProfile(req: Request, res: Response): Promise<void> {
+  async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const token = req.cookies["accessToken"];
-      const decoded = await this._jwt.verifyToken(token);
+      const decoded = req.user?.email;
+
+      if(!decoded){
+        res.status(StatusCode.FORBIDDEN).json({messag:InstructorErrorMessages.ACCESS_DENIED})
+        return
+      }
 
       const instructorProfile = await this._profileService.getProfile(
-        decoded.email,
+        decoded,
       );
 
       if (!instructorProfile || !instructorProfile.status) {
@@ -55,44 +57,90 @@ export class InstructorProfileController
     }
   }
 
-  async updateProfile(req: Request, res: Response): Promise<void> {
+  async updateProfile(req: 
+    AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const token = req.cookies["accessToken"];
-      const decoded = await this._jwt.verifyToken(token);
-      const userId = decoded.id;
-
-      const { username, skills, expertise } = req.body;
-
-      let profilePicUrl;
-      if (req.file) {
-        profilePicUrl = await uploadToS3Bucket(req.file, "instructors");
-      }
-
-      const updateData: any = {
-        ...(username && { username }),
-        ...(skills && { skills: JSON.parse(skills) }),
-        ...(expertise && { expertise: JSON.parse(expertise) }),
-        ...(profilePicUrl && { profilePicUrl }),
-      };
-
-      const updatedProfile = await this._profileService.updateProfile(
-        userId,
-        updateData,
-      );
-
-      if (!updatedProfile) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: InstructorErrorMessages.PROFILE_UPDATE_FAILED,
-        });
-        return;
-      }
-
-      res.status(StatusCode.OK).json({
-        success: true,
-        message: InstructorSuccessMessages.PROFILE_UPDATED,
-        data: updatedProfile,
+    const token = req.cookies["accessToken"] as string | undefined;
+    if (!token) {
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: InstructorErrorMessages.TOKEN_INVALID,
       });
+      return;
+    }
+    const userId = req.user?.id;
+
+    if(!userId){
+        res.status(StatusCode.FORBIDDEN).json({messag:InstructorErrorMessages.ACCESS_DENIED})
+        return
+      }
+    const {
+      username,
+      skills: skillsJson,
+      expertise: expertiseJson,
+    } = req.body as {
+      username?: string;
+      skills?: string;
+      expertise?: string;
+    };
+
+    const file = req.file
+    let profilePicUrl: string | undefined;
+
+    if (file) {
+      profilePicUrl = await uploadToS3Bucket(
+        {
+          originalname: file.originalname,
+          buffer: file.buffer,
+          mimetype: file.mimetype,
+        },
+        "instructors",
+      );
+    }
+
+    const parseJsonArray = (jsonStr: string | undefined): string[] | undefined => {
+      if (!jsonStr) return undefined;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        return Array.isArray(parsed) ? parsed : undefined;
+      } catch {
+        return undefined;
+      }
+    };
+
+    const skills = parseJsonArray(skillsJson);
+    const expertise = parseJsonArray(expertiseJson);
+
+    const updateData: Partial<IInstructor> = {};
+
+    if (username?.trim()) updateData.username = username.trim();
+    if (skills) updateData.skills = skills;
+    if (expertise) updateData.expertise = expertise;
+    if (profilePicUrl) updateData.profilePicUrl = profilePicUrl;
+
+    if (Object.keys(updateData).length === 0) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: InstructorErrorMessages.NO_VALID_FIELDS_PROVIDED,
+      });
+      return;
+    }
+
+    const updatedProfile = await this._profileService.updateProfile(userId, updateData);
+
+    if (!updatedProfile) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: InstructorErrorMessages.PROFILE_UPDATE_FAILED,
+      });
+      return;
+    }
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: InstructorSuccessMessages.PROFILE_UPDATED,
+      data: updatedProfile,
+    });
     } catch (err) {
       appLogger.error("error in updating profile", err);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
@@ -102,11 +150,15 @@ export class InstructorProfileController
     }
   }
 
-  async updatePassword(req: Request, res: Response): Promise<void> {
+  async updatePassword(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const token = req.cookies["accessToken"];
-      const decoded = await this._jwt.verifyToken(token);
-      const email = decoded.email;
+      const email = req.user?.email;
+
+      if(!email){
+        res.status(StatusCode.FORBIDDEN).json({messag:InstructorErrorMessages.ACCESS_DENIED})
+        return
+      }
+
       const { currentPassword, newPassword } = req.body;
 
       const updated = await this._profileService.updatePassword(
@@ -136,11 +188,15 @@ export class InstructorProfileController
     }
   }
 
-  async updateBankAccount(req: Request, res: Response): Promise<void> {
+  async updateBankAccount(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const token = req.cookies["accessToken"];
-      const decoded = await this._jwt.verifyToken(token);
-      const userId = decoded.id;
+
+      const userId = req.user?.id;
+
+      if(!userId){
+        res.status(StatusCode.FORBIDDEN).json({messag:InstructorErrorMessages.ACCESS_DENIED})
+        return
+      }
 
       const { accountHolderName, accountNumber, ifscCode, bankName } = req.body;
 

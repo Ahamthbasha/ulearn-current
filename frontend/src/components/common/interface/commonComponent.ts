@@ -32,13 +32,13 @@ export interface PaginationPropsEntityTable {
   onPageChange: (page: number) => void;
 }
 
-export interface EntityTableProps<T> {
+export interface EntityTableProps<T extends Record<string, unknown>> {
   title: string;
   data: T[];
   columns: {
     key: keyof T;
     label: string;
-    render?: (value: any, row: T) => ReactNode;
+    render?: (value: T[keyof T], row: T) => ReactNode;
   }[];
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;

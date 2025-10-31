@@ -12,5 +12,5 @@ export interface IAdminUserRepository {
   getUserData(email: string): Promise<IUser | null>;
 
   //block and unblock
-  updateProfile(email: string, data: any): Promise<any>;
+  updateProfile(email: string, data: Partial<IUser>): Promise<IUser|null>;
 }

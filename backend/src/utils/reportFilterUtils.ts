@@ -41,8 +41,9 @@ export function getDateRange(
         if (start > end) {
           throw new Error("startDate cannot be after endDate");
         }
-      } catch (error: any) {
-        throw new Error(`Invalid custom date range: ${error.message}`);
+      } catch (error) {
+        const errorMessage = error instanceof Error && error.message
+        throw new Error(`Invalid custom date range: ${errorMessage}`);
       }
       break;
     default:

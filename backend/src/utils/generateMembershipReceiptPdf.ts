@@ -26,7 +26,6 @@ export async function generateMembershipReceiptPdf(
     // Background accent for header
     doc.rect(0, 0, doc.page.width, 100).fill(accentColor);
 
-    // Company logo area (placeholder)
     doc.rect(40, 25, 50, 50).fill(primaryColor);
     doc
       .fillColor("white")
@@ -34,7 +33,6 @@ export async function generateMembershipReceiptPdf(
       .font("Helvetica-Bold")
       .text("uL", 55, 45);
 
-    // Company details
     doc
       .fillColor(textColor)
       .fontSize(20)
@@ -129,7 +127,6 @@ export async function generateMembershipReceiptPdf(
 
     currentY += 20;
 
-    // Plan name with highlight
     doc.rect(40, currentY, doc.page.width - 80, 30).fill(primaryColor);
     doc
       .fillColor("white")
@@ -304,7 +301,7 @@ export async function generateMembershipReceiptPdf(
       .fontSize(8)
       .font("Helvetica")
       .text(
-        "This is a computer-generated receipt. For any queries, please contact support.",
+        "This is a computer-generated receipt. For queries, please contact support.",
         0,
         footerStartY + 35,
         {

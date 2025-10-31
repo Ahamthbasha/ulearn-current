@@ -10,6 +10,8 @@ import {
   instructorUpdateCourse,
   getInstructorCategories,
 } from "../../../api/action/InstructorActionApi";
+import { AxiosError } from "axios";
+import type { Category } from "../interface/instructorInterface";
 
 const MAX_VIDEO_SIZE_MB = 200;
 const ALLOWED_IMAGE_TYPES = [
@@ -129,8 +131,10 @@ const CourseEditPage = () => {
         const res = await instructorUpdateCourse(courseId!, formData);
         toast.success(res.message);
         navigate("/instructor/courses");
-      } catch (error: any) {
-        toast.error(error?.response?.data.message);
+      } catch (error:unknown) {
+        if(error instanceof AxiosError){
+          toast.error(error?.response?.data.message);
+        }
       } finally {
         setSubmitting(false);
       }
@@ -147,11 +151,10 @@ const CourseEditPage = () => {
 
         const course = courseRes?.data;
         const categories = categoryRes || [];
+const matchingCategory = categories.find(
+ (cat: Category) => cat.categoryName === course.categoryName
+);
 
-        // Find the category ID by matching the categoryName
-        const matchingCategory = categories.find(
-          (cat) => cat.categoryName === course.categoryName
-        );
 
         // Normalize level value to match validation schema
         const normalizeLevel = (level: string) => {

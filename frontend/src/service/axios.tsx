@@ -7,7 +7,7 @@ import { type AnyAction, type Dispatch } from "@reduxjs/toolkit";
 import { StatusCode, Roles, AuthErrorMsg } from "../utils/enums";
 
 export const API: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BASEURL || "http://localhost:3000",
+  baseURL: import.meta.env.VITE_BASEURL || "http://localhost:3001",
   withCredentials: true,
 });
 
@@ -18,9 +18,8 @@ export const configureAxiosInterceptors = (
   API.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
       const verificationToken = localStorage.getItem("verificationToken");
-      const verificationTokenStudent = localStorage.getItem("verificationTokenStudent");
-
-      const token = verificationTokenStudent || verificationToken;
+     
+      const token = verificationToken;
 
       if (token && config.headers) {
         config.headers["the-verify-token"] = token;
@@ -63,7 +62,6 @@ export const configureAxiosInterceptors = (
         }
       } else if (error.response?.status === StatusCode.UNAUTHORIZED) {
         console.warn("401 Unauthorized: clearing tokens");
-        localStorage.removeItem("verificationTokenStudent");
         localStorage.removeItem("verificationToken");
       } else {
         console.error("Axios error:", error);

@@ -1,4 +1,4 @@
-import { ClientSession } from "mongoose";
+import { ClientSession, PopulateOptions } from "mongoose";
 import { ILearningPath, LearningPathModel } from "../models/learningPathModel";
 import { ILearningPathRepository } from "./interfaces/ILearningPathRepository";
 import { GenericRepository } from "./genericRepository";
@@ -11,7 +11,7 @@ export class LearningPathRepo
     super(LearningPathModel);
   }
 
-  async findAll(filter: object, populate?: any[]): Promise<ILearningPath[]> {
+  async findAll(filter: object, populate?: PopulateOptions[]): Promise<ILearningPath[]> {
     let query = LearningPathModel.find(filter);
     if (populate) {
       query = query.populate(populate);
@@ -22,7 +22,7 @@ export class LearningPathRepo
   async findAllWithSession(
     filter: object,
     session: ClientSession,
-    populate?: any[],
+    populate?: PopulateOptions[],
   ): Promise<ILearningPath[]> {
     let query = LearningPathModel.find(filter).session(session);
     if (populate) {

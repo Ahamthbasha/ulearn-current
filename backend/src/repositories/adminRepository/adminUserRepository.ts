@@ -58,7 +58,7 @@ export class AdmiUserRespository
 
   //block or unblock
 
-  async updateProfile(email: string, data: any): Promise<any> {
+  async updateProfile(email: string, data: Partial<IUser>): Promise<IUser|null> {
     try {
       const response = await this.findOneAndUpdate(
         { email },

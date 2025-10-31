@@ -12,6 +12,7 @@ import {
 import { Heart, ShoppingCart } from "lucide-react";
 import { isStudentLoggedIn } from "../../../utils/auth";
 import { type CourseDetail,type CartItemDTO } from "../interface/studentInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 
 const CourseDetailPage = () => {
@@ -38,10 +39,13 @@ const CourseDetailPage = () => {
           setIsInCart(cartRes.some((item: CartItemDTO) => item.itemId === courseId && item.type === "course"));
           setIsInWishlist(wishRes.exists);
         }
-      } catch (error: any) {
-        console.error(error);
-        toast.error(error.message || "Failed to fetch course details");
-      } finally {
+      } 
+      catch (error) {
+  console.error(error);
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Failed to fetch course details");
+}
+      finally {
         setLoading(false);
       }
     };
@@ -59,14 +63,16 @@ const CourseDetailPage = () => {
       await addToCart(courseId!, "course");
       toast.success("Course added to cart");
       setIsInCart(true);
-    } catch (error: any) {
-      if (error?.response?.status === 409) {
-        toast.info("Course is already in cart");
-        setIsInCart(true);
-      } else {
-        toast.error(error.message || "Failed to add to cart");
-      }
-    }
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  if (apiError.response?.status === 409) {
+    toast.info("Course is already in cart");
+    setIsInCart(true);
+  } else {
+    toast.error(apiError.response?.data?.message || apiError.message || "Failed to add to cart");
+  }
+}
   };
 
   const handleWishlistToggle = async () => {
@@ -87,10 +93,12 @@ const CourseDetailPage = () => {
         toast.success(response.message || "Added to wishlist");
         setIsInWishlist(true);
       }
-    } catch (error: any) {
-      toast.error(error.message || "Wishlist operation failed");
-      console.error(error);
-    }
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || apiError.message || "Wishlist operation failed");
+  console.error(error);
+}
   };
 
   if (loading) return <div className="text-center py-6 sm:py-8 md:py-10">Loading...</div>;

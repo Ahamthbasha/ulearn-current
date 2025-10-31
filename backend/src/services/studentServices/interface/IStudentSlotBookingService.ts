@@ -4,6 +4,7 @@ import { IInstructor } from "../../../models/instructorModel";
 import { StudentSlotBookingHistoryDTO } from "../../../dto/userDTO/StudentSlotBookingHistoryDTO";
 import { StudentBookingDetailDTO } from "../../../dto/userDTO/studentBookingDetailDTO";
 import { SlotAvailabilityResult } from "../../../types/ISlotAvailabilityResult";
+import { IRazorpayOrder } from "../../../types/razorpay";
 
 export interface IStudentSlotBookingService {
   initiateCheckout(
@@ -15,7 +16,7 @@ export interface IStudentSlotBookingService {
       instructorId: IInstructor;
       bookingId: string;
     };
-    razorpayOrder: any;
+    razorpayOrder: IRazorpayOrder;
   }>;
 
   verifyPayment(
@@ -63,6 +64,6 @@ export interface IStudentSlotBookingService {
       instructorId: IInstructor;
       bookingId: string;
     };
-    razorpayOrder: any;
+    razorpayOrder: IRazorpayOrder;
   }>;
 }

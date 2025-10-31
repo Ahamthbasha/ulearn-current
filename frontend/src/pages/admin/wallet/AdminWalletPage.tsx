@@ -10,6 +10,7 @@ import Card from "../../../components/common/Card";
 import { Button } from "../../../components/common/Button";
 import InputField from "../../../components/common/InputField";
 import { type Wallet, type Transaction } from "../interface/adminInterface";
+import type { RazorpayOptions, RazorpayResponse } from "../../../types/interfaces/ICommon";
 
 
 export default function AdminWalletPage() {
@@ -48,48 +49,50 @@ export default function AdminWalletPage() {
   };
 
   const handleAddMoney = async () => {
-    if (!amount || amount < 1) return toast.warning("Enter a valid amount", { autoClose: 3000 });
+  if (!amount || amount < 1) {
+    return toast.warning("Enter a valid amount", { autoClose: 3000 });
+  }
 
-    try {
-      setLoading(true);
-      const orderData = await createWalletRechargeOrder({ amount });
+  try {
+    setLoading(true);
+    const orderData = await createWalletRechargeOrder({ amount });
 
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: orderData.order.amount,
-        currency: "INR",
-        name: "uLearn Admin Wallet",
-        description: "Wallet Recharge",
-        order_id: orderData.order.id,
-        handler: async function (response: any) {
-          try {
-            const verifyData = await verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              amount,
-            });
+    const options: RazorpayOptions = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID as string,
+      amount: orderData.order.amount,
+      currency: "INR",
+      name: "uLearn Admin Wallet",
+      description: "Wallet Recharge",
+      order_id: orderData.order.id,
+      handler: async function (response: RazorpayResponse) {
+        try {
+          const verifyData = await verifyPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            amount,
+          });
 
-            console.log("✅ Admin Wallet Verified:", verifyData);
-            toast.success("Wallet recharged successfully", { autoClose: 3000 });
-            setAmount(0);
-            fetchWallet();
-            fetchTransactions(1);
-          } catch (err) {
-            toast.error("Payment verification failed", { autoClose: 3000 });
-          }
-        },
-        theme: { color: "#9333ea" },
-      };
+          console.log("✅ Admin Wallet Verified:", verifyData);
+          toast.success("Wallet recharged successfully", { autoClose: 3000 });
+          setAmount(0);
+          fetchWallet();
+          fetchTransactions(1);
+        } catch {
+          toast.error("Payment verification failed", { autoClose: 3000 });
+        }
+      },
+      theme: { color: "#9333ea" },
+    };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      toast.error("Failed to initiate payment", { autoClose: 3000 });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch {
+    toast.error("Failed to initiate payment", { autoClose: 3000 });
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchWallet();

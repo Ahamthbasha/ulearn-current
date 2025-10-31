@@ -5,11 +5,15 @@ import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { IInstructorWalletPaymentController } from "./interfaces/IInstructorWalletPaymentController";
 import { INSTRUCTOR_ERROR_MESSAGE } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
+import { NotFoundError} from "../../utils/error";
+
+import { handleControllerError } from "../../utils/errorHandlerUtil";
 
 export class InstructorWalletPaymentController
   implements IInstructorWalletPaymentController
 {
   private _walletPaymentService: IWalletPaymentService;
+  
   constructor(walletPaymentService: IWalletPaymentService) {
     this._walletPaymentService = walletPaymentService;
   }
@@ -20,11 +24,8 @@ export class InstructorWalletPaymentController
       const order = await this._walletPaymentService.createOrder(amount);
       res.status(StatusCode.OK).json({ success: true, order });
     } catch (error) {
-      appLogger.error("error in create order", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: INSTRUCTOR_ERROR_MESSAGE.FAILED_TO_CREATE_RAZORPAY_ORDER,
-      });
+      appLogger.error("Error in create order", { error });
+      handleControllerError(error, res);
     }
   }
 
@@ -39,11 +40,9 @@ export class InstructorWalletPaymentController
       const userId = req.user?.id;
 
       if (!userId) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ID_NOT_FOUND,
-        });
-        return;
+        throw new NotFoundError(
+          INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ID_NOT_FOUND
+        );
       }
 
       const wallet = await this._walletPaymentService.verifyAndCreditWallet({
@@ -57,13 +56,9 @@ export class InstructorWalletPaymentController
       });
 
       res.status(StatusCode.OK).json({ success: true, wallet });
-    } catch (error: any) {
-      appLogger.error("error in verify payment", error);
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message:
-          error.message || INSTRUCTOR_ERROR_MESSAGE.PAYMENT_VERIFICATION_FAILED,
-      });
+    } catch (error) {
+      appLogger.error("Error in verify payment", { error });
+      handleControllerError(error, res);
     }
   }
 }

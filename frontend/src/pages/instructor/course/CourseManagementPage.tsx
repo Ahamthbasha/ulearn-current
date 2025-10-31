@@ -9,6 +9,7 @@ import {
 import Card from "../../../components/common/Card";
 import Modal from "react-modal";
 import type { CourseManagement } from "../interface/instructorInterface";
+import { AxiosError } from "axios";
 
 Modal.setAppElement("#root");
 
@@ -104,9 +105,11 @@ const CourseManagementPage = () => {
       toast.success(res?.message || "Course published successfully");
       await fetchCourseDetails();
       handleClosePublishModal();
-    } catch (error: any) {
-      const errMsg = error?.response?.data?.message || "Publish failed";
-      toast.error(errMsg);
+    } catch (error: unknown) {
+      if(error instanceof AxiosError){
+        const errMsg = error?.response?.data?.message || "Publish failed";
+        toast.error(errMsg);
+      }
     }
   };
 
@@ -129,9 +132,11 @@ const CourseManagementPage = () => {
       toast.success(res?.message || "Course scheduled for publishing");
       await fetchCourseDetails();
       handleClosePublishModal();
-    } catch (error: any) {
-      const errMsg = error?.response?.data?.message || "Failed to schedule publish";
-      toast.error(errMsg);
+    } catch (error: unknown) {
+      if(error instanceof AxiosError){
+        const errMsg = error?.response?.data?.message || "Failed to schedule publish";
+        toast.error(errMsg);
+      }
     }
   };
 
@@ -145,9 +150,11 @@ const CourseManagementPage = () => {
       toast.success(res?.message || "Publish schedule canceled");
       await fetchCourseDetails();
       handleClosePublishModal();
-    } catch (error: any) {
-      const errMsg = error?.response?.data?.message || "Failed to cancel schedule";
-      toast.error(errMsg);
+    } catch (error: unknown) {
+      if(error instanceof AxiosError){
+        const errMsg = error?.response?.data?.message || "Failed to cancel schedule";
+        toast.error(errMsg);
+      }
     }
   };
 
@@ -160,9 +167,11 @@ const CourseManagementPage = () => {
       const res = await submitCourseForVerification(courseId);
       toast.success(res?.message || "Course submitted for verification");
       await fetchCourseDetails();
-    } catch (error: any) {
-      const errMsg = error?.response?.data?.message || "Failed to submit course for verification";
-      toast.error(errMsg);
+    } catch (error: unknown) {
+      if(error instanceof AxiosError){
+        const errMsg = error?.response?.data?.message || "Failed to submit course for verification";
+        toast.error(errMsg);
+      }
     }
   };
 

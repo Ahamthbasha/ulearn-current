@@ -6,6 +6,8 @@ import {
   PipelineStage,
   ClientSession,
   HydratedDocument,
+  UpdateQuery,
+  FilterQuery,
 } from "mongoose";
 import { appLogger } from "../utils/logger";
 
@@ -14,7 +16,7 @@ export interface MongooseOptions {
   new?: boolean;
   upsert?: boolean;
   ordered?: boolean;
-  [key: string]: any;
+  runValidators?: boolean;
 }
 
 type PopulateArg = PopulateOptions | PopulateOptions[] | string[];
@@ -29,7 +31,7 @@ export interface IGenericRepository<T extends Document> {
   ): Promise<T[]>;
 
   findOne(
-    filter: object,
+    filter: FilterQuery<T>,
     populate?: PopulateArg,
     session?: ClientSession,
   ): Promise<T | null>;
@@ -37,31 +39,31 @@ export interface IGenericRepository<T extends Document> {
   findByIdWithLock(id: string, session: ClientSession): Promise<T | null>;
 
   findAll(
-    filter?: object,
+    filter?: FilterQuery<T>,
     populate?: PopulateArg,
     sort?: Record<string, SortOrder>,
   ): Promise<T[] | null>;
-  findAllWithSession(filter: any, session: ClientSession): Promise<T[] | null>;
+  findAllWithSession(filter: FilterQuery<T>, session: ClientSession): Promise<T[] | null>;
 
   update(
     id: string,
-    data: Partial<T>,
+    data: UpdateQuery<T>,
     options?: MongooseOptions,
   ): Promise<T | null>;
   updateWithSession(
     id: string,
-    data: Partial<T>,
+    data: UpdateQuery<T>,
     session: ClientSession,
   ): Promise<T | null>;
 
   updateOne(
-    filter: object,
-    data: Partial<T> | Record<string, any>,
+    filter: FilterQuery<T>,
+    data: UpdateQuery<T>,
     options?: MongooseOptions,
   ): Promise<T | null>;
   updateMany(
-    filter: object,
-    data: Partial<T> | Record<string, any>,
+    filter: FilterQuery<T>,
+    data: UpdateQuery<T>,
     options?: MongooseOptions,
   ): Promise<void>;
 
@@ -70,12 +72,12 @@ export interface IGenericRepository<T extends Document> {
 
   findByIdWithPopulate(id: string, populate?: PopulateArg): Promise<T | null>;
   updateOneWithPopulate(
-    filter: object,
-    data: Partial<T> | Record<string, any>,
+    filter: FilterQuery<T>,
+    data: UpdateQuery<T>,
     populate?: PopulateArg,
   ): Promise<T | null>;
   paginate(
-    filter: object,
+    filter: FilterQuery<T>,
     page: number,
     limit: number,
     sort?: Record<string, SortOrder>,
@@ -87,37 +89,37 @@ export interface IGenericRepository<T extends Document> {
     limit: number,
   ): Promise<{ data: T[]; total: number }>;
   findOneAndUpdate(
-    filter: object,
-    update: object,
+    filter: FilterQuery<T>,
+    update: UpdateQuery<T>,
     options?: MongooseOptions,
   ): Promise<T | null>;
-  aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]>;
+  aggregate<R = T>(pipeline: PipelineStage[]): Promise<R[]>;
   find(
-    filter: object,
+    filter: FilterQuery<T>,
     populate?: PopulateArg,
     sort?: Record<string, SortOrder>,
   ): Promise<T[]>;
-  countDocuments(filter: object): Promise<number>;
+  countDocuments(filter: FilterQuery<T>): Promise<number>;
 
   findWithProjection(
-    filter: object,
-    projection: object,
+    filter: FilterQuery<T>,
+    projection: Record<string, 0 | 1>,
     populate?: PopulateArg,
     sort?: Record<string, SortOrder>,
   ): Promise<T[]>;
 
   findOneWithProjection(
-    filter: object,
-    projection: object,
+    filter: FilterQuery<T>,
+    projection: Record<string, 0 | 1>,
     populate?: PopulateArg,
     session?: ClientSession,
   ): Promise<T | null>;
 
   findOneAndDelete(
-    filter: object,
+    filter: FilterQuery<T>,
     options?: MongooseOptions,
   ): Promise<T | null>;
-  deleteMany(filter: object, options?: MongooseOptions): Promise<void>;
+  deleteMany(filter: FilterQuery<T>, options?: MongooseOptions): Promise<void>;
 }
 
 export class GenericRepository<T extends Document>
@@ -161,7 +163,7 @@ export class GenericRepository<T extends Document>
   }
 
   async findOne(
-    filter: object,
+    filter: FilterQuery<T>,
     populate?: PopulateArg,
     session?: ClientSession,
   ): Promise<T | null> {
@@ -172,7 +174,7 @@ export class GenericRepository<T extends Document>
   }
 
   async findAll(
-    filter: object = {},
+    filter: FilterQuery<T> = {},
     populate?: PopulateArg,
     sort: Record<string, SortOrder> = {},
   ): Promise<T[]> {
@@ -182,7 +184,7 @@ export class GenericRepository<T extends Document>
     return await query.exec();
   }
 
-  async findAllWithSession(filter: any, session: ClientSession): Promise<T[]> {
+  async findAllWithSession(filter: FilterQuery<T>, session: ClientSession): Promise<T[]> {
     return await this.model.find(filter).session(session).exec();
   }
 
@@ -198,8 +200,8 @@ export class GenericRepository<T extends Document>
   ): Promise<T | null> {
     return await this.model
       .findOneAndUpdate(
-        { _id: id },
-        {},
+        { _id: id } as FilterQuery<T>,
+        {} as UpdateQuery<T>,
         { session, new: true, runValidators: false },
       )
       .exec();
@@ -207,7 +209,7 @@ export class GenericRepository<T extends Document>
 
   async update(
     id: string,
-    data: Partial<T>,
+    data: UpdateQuery<T>,
     options: MongooseOptions = { new: true },
   ): Promise<T | null> {
     return await this.model.findByIdAndUpdate(id, data, options).exec();
@@ -215,7 +217,7 @@ export class GenericRepository<T extends Document>
 
   async updateWithSession(
     id: string,
-    data: Partial<T>,
+    data: UpdateQuery<T>,
     session: ClientSession,
   ): Promise<T | null> {
     return await this.model
@@ -224,8 +226,8 @@ export class GenericRepository<T extends Document>
   }
 
   async updateOne(
-    filter: object,
-    data: Partial<T> | Record<string, any>,
+    filter: FilterQuery<T>,
+    data: UpdateQuery<T>,
     options?: MongooseOptions,
   ): Promise<T | null> {
     const updatedDoc = await this.model
@@ -238,8 +240,8 @@ export class GenericRepository<T extends Document>
   }
 
   async updateMany(
-    filter: object,
-    data: Partial<T>,
+    filter: FilterQuery<T>,
+    data: UpdateQuery<T>,
     options?: MongooseOptions,
   ): Promise<void> {
     await this.model.updateMany(filter, data, options).exec();
@@ -257,7 +259,7 @@ export class GenericRepository<T extends Document>
   }
 
   async paginate(
-    filter: object,
+    filter: FilterQuery<T>,
     page: number,
     limit: number,
     sort: Record<string, SortOrder> = { createdAt: -1 },
@@ -279,12 +281,12 @@ export class GenericRepository<T extends Document>
     limit: number,
   ): Promise<{ data: T[]; total: number }> {
     // Create a pipeline to count total documents
-    const countPipeline = [...pipeline, { $count: "total" }];
+    const countPipeline: PipelineStage[] = [...pipeline, { $count: "total" }];
     const countResult = await this.model.aggregate(countPipeline).exec();
     const total = countResult.length > 0 ? countResult[0].total : 0;
 
     // Add pagination stages to the original pipeline
-    const paginatedPipeline = [
+    const paginatedPipeline: PipelineStage[] = [
       ...pipeline,
       { $skip: (page - 1) * limit },
       { $limit: limit },
@@ -304,8 +306,8 @@ export class GenericRepository<T extends Document>
   }
 
   async updateOneWithPopulate(
-    filter: object,
-    data: Partial<T> | Record<string, any>,
+    filter: FilterQuery<T>,
+    data: UpdateQuery<T>,
     populate?: PopulateArg,
   ): Promise<T | null> {
     let query = this.model.findOneAndUpdate(filter, data, {
@@ -317,19 +319,19 @@ export class GenericRepository<T extends Document>
   }
 
   async findOneAndUpdate(
-    filter: object,
-    update: object,
+    filter: FilterQuery<T>,
+    update: UpdateQuery<T>,
     options: MongooseOptions = { new: true },
   ): Promise<T | null> {
     return await this.model.findOneAndUpdate(filter, update, options).exec();
   }
 
-  async aggregate<R = any>(pipeline: PipelineStage[]): Promise<R[]> {
+  async aggregate<R = T>(pipeline: PipelineStage[]): Promise<R[]> {
     return await this.model.aggregate<R>(pipeline).exec();
   }
 
   async find(
-    filter: object = {},
+    filter: FilterQuery<T> = {},
     populate?: PopulateArg,
     sort: Record<string, SortOrder> = {},
   ): Promise<T[]> {
@@ -339,13 +341,13 @@ export class GenericRepository<T extends Document>
     return await query.exec();
   }
 
-  async countDocuments(filter: object): Promise<number> {
+  async countDocuments(filter: FilterQuery<T>): Promise<number> {
     return await this.model.countDocuments(filter).exec();
   }
 
   async findWithProjection(
-    filter: object = {},
-    projection: object = {},
+    filter: FilterQuery<T> = {},
+    projection: Record<string, 0 | 1> = {},
     populate?: PopulateArg,
     sort: Record<string, SortOrder> = {},
   ): Promise<T[]> {
@@ -356,8 +358,8 @@ export class GenericRepository<T extends Document>
   }
 
   async findOneWithProjection(
-    filter: object,
-    projection: object,
+    filter: FilterQuery<T>,
+    projection: Record<string, 0 | 1>,
     populate?: PopulateArg,
     session?: ClientSession,
   ): Promise<T | null> {
@@ -368,13 +370,13 @@ export class GenericRepository<T extends Document>
   }
 
   async findOneAndDelete(
-    filter: object,
+    filter: FilterQuery<T>,
     options?: MongooseOptions,
   ): Promise<T | null> {
     return await this.model.findOneAndDelete(filter, options).exec();
   }
 
-  async deleteMany(filter: object, options?: MongooseOptions): Promise<void> {
+  async deleteMany(filter: FilterQuery<T>, options?: MongooseOptions): Promise<void> {
     await this.model.deleteMany(filter, options).exec();
   }
 }

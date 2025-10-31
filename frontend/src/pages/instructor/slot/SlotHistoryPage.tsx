@@ -3,11 +3,13 @@ import { slotHistory } from "../../../api/action/InstructorActionApi";
 import EntityTable from "../../../components/common/EntityTable";
 import { format, isValid, parseISO } from "date-fns";
 import { toast } from "react-toastify";
-import { type SlotStat } from "../interface/instructorInterface";
+import { type SlotStatWithIndex } from "../interface/instructorInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
+
 
 const SlotHistoryPage = () => {
   const currentDate = new Date();
-  const [stats, setStats] = useState<SlotStat[]>([]);
+  const [stats, setStats] = useState<SlotStatWithIndex[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [mode, setMode] = useState<"monthly" | "yearly" | "custom">("monthly");
@@ -70,7 +72,7 @@ const SlotHistoryPage = () => {
 
       setLoading(true);
 
-      const params: Record<string, any> = {};
+      const params: Record<string, string | number> = {};
       if (mode === "monthly") {
         params.month = month;
         params.year = year;
@@ -84,7 +86,8 @@ const SlotHistoryPage = () => {
       const res = await slotHistory(mode, params);
       setStats(res.data);
     } catch (error) {
-      toast.error("Failed to fetch slot stats");
+      const apiError = error as ApiError;
+      toast.error(apiError?.response?.data?.message || "Failed to fetch slot stats");
     } finally {
       setLoading(false);
     }
@@ -142,7 +145,7 @@ const SlotHistoryPage = () => {
             className="w-full border p-2 rounded"
             value={mode}
             onChange={(e) => {
-              setMode(e.target.value as any);
+              setMode(e.target.value as "monthly" | "yearly" | "custom");
               // Reset dates when switching modes
               if (e.target.value !== "custom") {
                 setStartDate("");
@@ -236,7 +239,7 @@ const SlotHistoryPage = () => {
           Loading slot stats...
         </div>
       ) : (
-        <EntityTable
+        <EntityTable<SlotStatWithIndex>
           title=""
           data={stats}
           emptyText="No slot activity found"
@@ -244,8 +247,9 @@ const SlotHistoryPage = () => {
             {
               key: "date",
               label: "Date",
-              render: (value: string) => {
-                const parsed = parseISO(value);
+              render: (value: unknown) => {
+                const dateValue = value as string;
+                const parsed = parseISO(dateValue);
                 return isValid(parsed)
                   ? format(parsed, "dd-MM-yyyy")
                   : "Invalid date";

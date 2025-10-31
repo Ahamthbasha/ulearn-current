@@ -7,6 +7,7 @@ import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { ICourseOffer } from "../../models/courseOfferModel";
 import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo";
 import { appLogger } from "../../utils/logger";
+import { FilterQuery, SortOrder } from "mongoose";
 
 export class StudentCourseRepository
   extends GenericRepository<ICourse>
@@ -91,7 +92,7 @@ export class StudentCourseRepository
     }[];
     total: number;
   }> {
-    const filter: any = {
+    const filter: FilterQuery<ICourse> = {
       isListed: true,
       isPublished: true,
     };
@@ -107,7 +108,7 @@ export class StudentCourseRepository
       filter.category = categoryId;
     }
 
-    let sortOption: any = { createdAt: -1 };
+    let sortOption: Record<string, SortOrder> = { createdAt: -1 };
     switch (sort) {
       case "name-asc":
         sortOption = { courseName: 1 };
@@ -209,7 +210,7 @@ export class StudentCourseRepository
 
   async getCourses(categoryId?:string): Promise<Array<{ _id: string; courseName: string }>> {
     
-    const filter : any = {isListed:true,isPublished:true};
+    const filter : FilterQuery<ICourse> = {isListed:true,isPublished:true};
     if(categoryId){
       filter.category = categoryId
     }

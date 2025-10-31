@@ -10,10 +10,12 @@ import {
   toggleCategoryStatus,
 } from "../../../api/action/AdminActionApi";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import { useDebounce } from "../../../hooks/UseDebounce"; 
+import { useDebounce } from "../../../hooks/UseDebounce";
+import { isApiError, type Category,type GetCategoriesResponse } from "../interface/adminInterface";
+
 
 const AdminCategoryListPage = () => {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,71 +25,60 @@ const AdminCategoryListPage = () => {
   const [total, setTotal] = useState(0);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   const navigate = useNavigate();
-
-  // ✅ Use debounced search term
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // ✅ Memoize fetchCategories to prevent unnecessary re-renders
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getAllCategories(currentPage, limit, debouncedSearchTerm);
+      const response = await getAllCategories(currentPage, limit, debouncedSearchTerm) as GetCategoriesResponse;
       if (!response || !Array.isArray(response.data))
         throw new Error("Invalid category data received");
       setCategories(response.data);
       setTotal(response.total || 0);
       setError(null);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to load categories");
+    } catch (err: unknown) {
+      const errorMessage = isApiError(err)
+        ? err.response?.data?.message || "Failed to load categories"
+        : "Failed to load categories";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, [currentPage, limit, debouncedSearchTerm]);
 
-  // ✅ Effect depends on fetchCategories function
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
-  const openModalForToggle = (record: any) => {
+  const openModalForToggle = (record: Category): void => {
     setSelectedCategory(record);
     setModalOpen(true);
   };
 
-  // ✅ Optimized toggle handler with local state update
-  const handleConfirmToggle = async () => {
+  const handleConfirmToggle = async (): Promise<void> => {
     if (selectedCategory) {
       try {
-        // ✅ Optimistic update - Update UI immediately
-        setCategories(prev => 
-          prev.map(category => 
-            category._id === selectedCategory._id 
+        setCategories(prev =>
+          prev.map(category =>
+            category._id === selectedCategory._id
               ? { ...category, isListed: !category.isListed }
               : category
           )
         );
 
         await toggleCategoryStatus(selectedCategory._id);
-        
-        // ✅ Optional: Refresh data to ensure consistency
-        // fetchCategories();
-        
       } catch (error) {
         console.error("Toggle failed:", error);
-        
-        // ✅ Revert optimistic update on error
-        setCategories(prev => 
-          prev.map(category => 
-            category._id === selectedCategory._id 
+        setCategories(prev =>
+          prev.map(category =>
+            category._id === selectedCategory._id
               ? { ...category, isListed: !category.isListed }
               : category
           )
         );
-        
-        // ✅ Show error message if needed
         setError("Failed to update category status");
       } finally {
         setModalOpen(false);
@@ -96,29 +87,29 @@ const AdminCategoryListPage = () => {
     }
   };
 
-  const handleCancelToggle = () => {
+  const handleCancelToggle = (): void => {
     setModalOpen(false);
     setSelectedCategory(null);
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = (): void => {
     navigate("/admin/addCategory");
   };
 
-  const handleSearchChange = (value: string) => {
+  const handleSearchChange = (value: string): void => {
     setSearchTerm(value);
     setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number): void => {
     setCurrentPage(page);
   };
 
-  const columns: Column[] = [
+  const columns: Column<Category>[] = [
     {
       key: "serialNo",
       title: "S.NO",
-      render: (_value, _record, index) => (
+      render: (_value: Category[keyof Category], _record: Category, index: number) => (
         <span className="text-sm text-gray-900">
           {(currentPage - 1) * limit + index + 1}
         </span>
@@ -128,7 +119,7 @@ const AdminCategoryListPage = () => {
     {
       key: "isListed",
       title: "Listed",
-      render: (value) => (
+      render: (value: Category[keyof Category]) => (
         <span
           className={`inline-block px-2 py-1 text-xs rounded-full ${
             value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -140,24 +131,24 @@ const AdminCategoryListPage = () => {
     },
   ];
 
-  const actions: ActionButton[] = [
+  const actions: ActionButton<Category>[] = [
     {
       key: "edit",
       label: "Edit",
       icon: <Pencil size={16} />,
-      onClick: (record) => navigate(`/admin/category/edit/${record._id}`),
+      onClick: (record: Category) => navigate(`/admin/category/edit/${record._id}`),
     },
     {
       key: "toggle",
-      label: (record) => (record.isListed ? "Unlist" : "List"),
-      icon: (record) =>
+      label: (record: Category) => (record.isListed ? "Unlist" : "List"),
+      icon: (record: Category) =>
         record.isListed ? (
           <ShieldX size={16} color="white" />
         ) : (
           <ShieldCheck size={16} color="white" />
         ),
       onClick: openModalForToggle,
-      className: (record) =>
+      className: (record: Category) =>
         record.isListed
           ? "bg-green-500 hover:bg-green-600 text-white"
           : "bg-red-500 hover:bg-red-600 text-white",
@@ -168,7 +159,7 @@ const AdminCategoryListPage = () => {
 
   return (
     <>
-      <DataTable
+      <DataTable<Category>
         title="Categories"
         description="View, edit, or toggle category status."
         data={categories}

@@ -1,5 +1,18 @@
 import { Types } from "mongoose";
 
+export interface DebugItem {
+  courseId: string;
+  offerPrice: number;
+  coursePrice: number;
+  perItemDiscount: number;
+  effectiveCoursePrice: number;
+  couponDiscount: number;
+  totalStandaloneCourses: number;
+  totalLPCourses: number;
+  totalItems: number;
+}
+
+
 export interface ITopSellingCourse {
   _id: Types.ObjectId;
   courseName: string;
@@ -40,29 +53,28 @@ export interface ILearningPath {
   learningPathFinalPrice: number;
 }
 
+
 export interface IRevenueReportItem {
-  orderId: Types.ObjectId;
+  orderId: string;
   date: string;
   totalOrderAmount: number;
-  instructorEarnings: number;
-  instructorRevenue:number;
   couponCode: string;
   couponDiscount: number;
-  couponDiscountAmount: number;
-  standaloneCourse: IStandaloneCourse[];
-  learningPath: ILearningPath[];
+  couponDiscountAmount: number | null;
+  instructorRevenue: number;
+  courses: Array<{
+    courseName: string;
+    price: number;
+  }>;
 }
 
 export interface IInstructorDashboard {
   topCourses: ITopSellingCourse[];
-  topLearningPaths: ITopSellingLearningPath[];
   categorySales: ICategorySales[];
   monthlySales: IMonthlySales[];
   totalRevenue: number;
   totalCourseSales: number;
-  totalLearningPathSales: number;
   publishedCourses: number;
-  publishedLearningPaths: number;
   categoryWiseCount: number;
 }
 

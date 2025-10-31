@@ -1,6 +1,8 @@
+import  { JwtPayload } from "jsonwebtoken";
+
 export interface IJwtService {
-  createToken(payload: Object): Promise<string>;
-  accessToken(payload: Object): Promise<string>;
-  refreshToken(payload: Object): Promise<string>;
-  verifyToken(token: string): Promise<any>;
+  createToken(payload: Record<string, unknown>): Promise<string>;
+  accessToken(payload: Record<string, unknown>): Promise<string>;
+  refreshToken(payload: Record<string, unknown>): Promise<string>;
+  verifyToken(token: string): Promise<JwtPayload | string>;
 }

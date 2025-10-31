@@ -10,6 +10,7 @@ import {
 } from "../../../api/action/InstructorActionApi";
 import InputField from "../../../components/common/InputField";
 import { type Category } from "../interface/instructorInterface";
+import { AxiosError } from "axios";
 
 const MAX_VIDEO_SIZE_MB = 200;
 const ALLOWED_IMAGE_TYPES = [
@@ -138,8 +139,10 @@ const CourseCreatePage = () => {
         const res = await instructorCreateCourse(formData);
         toast.success(res.data.message);
         navigate("/instructor/courses");
-      } catch (err: any) {
-        toast.error(err?.response?.data?.message);
+      } catch (err: unknown) {
+        if(err instanceof AxiosError){
+          toast.error(err?.response?.data?.message);
+        }
       } finally {
         setSubmitting(false);
       }

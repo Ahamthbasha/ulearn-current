@@ -11,31 +11,39 @@ import { UserX, UserCheck, Users } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type Instructors } from "../interface/adminInterface";
+import type { BlockInstructorResponse, GetInstructorsResult, InstructorApiResponse, Instructors } from "../interface/adminInterface";
+
 
 const InstructorList: React.FC = () => {
   const [users, setUsers] = useState<Instructors[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10); // Increased limit for better UX
+  const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
-  // Modal state
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] =
     useState<Instructors | null>(null);
 
-  // Debounced search term
   const debouncedSearch = useDebounce(search, 500);
 
   const fetchUsers = useCallback(async () => {
-    console.log("🔄 Fetching instructors with:", { page, limit, search: debouncedSearch });
+    console.log("🔄 Fetching instructors with:", {
+      page,
+      limit,
+      search: debouncedSearch,
+    });
     try {
       setLoading(true);
       setError(null);
-      const response = await getAllInstructor(page, limit, debouncedSearch);
+      const response = (await getAllInstructor(
+        page,
+        limit,
+        debouncedSearch
+      )) as GetInstructorsResult;
+
       console.log("✅ instructorList.tsx:=>", response);
 
       if (!response || !Array.isArray(response.instructors)) {
@@ -44,7 +52,7 @@ const InstructorList: React.FC = () => {
 
       // Map backend response to Instructors interface
       const formattedUsers: Instructors[] = response.instructors.map(
-        (user: any) => ({
+        (user: InstructorApiResponse) => ({
           id: user.id,
           username: user.name || "N/A",
           email: user.email || "N/A",
@@ -56,8 +64,9 @@ const InstructorList: React.FC = () => {
 
       setUsers(formattedUsers);
       setTotal(response.total);
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to fetch instructors";
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch instructors";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -86,7 +95,9 @@ const InstructorList: React.FC = () => {
         )
       );
 
-      const response = await blockInstructor(selectedInstructor.email);
+      const response = (await blockInstructor(
+        selectedInstructor.email
+      )) as BlockInstructorResponse;
 
       if (response.success) {
         toast.success(response.message);
@@ -105,7 +116,7 @@ const InstructorList: React.FC = () => {
         );
         toast.error(response.message);
       }
-    } catch (error: any) {
+    } catch (err) {
       // Revert optimistic update
       setUsers((prev) =>
         prev.map((u) =>
@@ -118,7 +129,11 @@ const InstructorList: React.FC = () => {
             : u
         )
       );
-      toast.error(error.message || "Error occurred while blocking instructor");
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Error occurred while blocking instructor";
+      toast.error(errorMessage);
     } finally {
       setConfirmModalOpen(false);
       setSelectedInstructor(null);
@@ -141,12 +156,12 @@ const InstructorList: React.FC = () => {
 
   const columns: Column<Instructors>[] = [
     {
-      key: "serialNo",
+      key: "id",
       title: "S.NO",
       width: "60px",
       minWidth: "50px",
       hideOnMobile: false,
-      render: (_, __, index) => (
+      render: (_value, _record, index) => (
         <span className="text-xs sm:text-sm text-gray-900 font-medium">
           {(page - 1) * limit + index + 1}
         </span>
@@ -155,30 +170,36 @@ const InstructorList: React.FC = () => {
     {
       key: "username",
       title: "Name",
-      minWidth: "100px", // Reduced for better fit
+      minWidth: "100px",
       hideOnMobile: false,
-      render: (value) => (
-        <div
-          className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-[150px]"
-          title={value}
-        >
-          {value}
-        </div>
-      ),
+      render: (value) => {
+        const name = String(value);
+        return (
+          <div
+            className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[100px] sm:max-w-[150px]"
+            title={name}
+          >
+            {name}
+          </div>
+        );
+      },
     },
     {
       key: "email",
       title: "Email",
-      minWidth: "120px", // Reduced for better responsiveness
+      minWidth: "120px",
       hideOnMobile: false,
-      render: (value) => (
-        <div
-          className="text-xs sm:text-sm text-gray-900 truncate max-w-[120px] sm:max-w-[200px]"
-          title={value}
-        >
-          {value}
-        </div>
-      ),
+      render: (value) => {
+        const email = String(value);
+        return (
+          <div
+            className="text-xs sm:text-sm text-gray-900 truncate max-w-[120px] sm:max-w-[200px]"
+            title={email}
+          >
+            {email}
+          </div>
+        );
+      },
     },
     {
       key: "status",
@@ -186,29 +207,35 @@ const InstructorList: React.FC = () => {
       width: "100px",
       minWidth: "80px",
       hideOnMobile: false,
-      render: (value) => (
-        <span
-          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-            value === "Blocked"
-              ? "bg-red-100 text-red-800"
-              : "bg-green-100 text-green-800"
-          }`}
-        >
-          {value}
-        </span>
-      ),
+      render: (value) => {
+        const status = String(value);
+        return (
+          <span
+            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+              status === "Blocked"
+                ? "bg-red-100 text-red-800"
+                : "bg-green-100 text-green-800"
+            }`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       key: "created",
       title: "Created",
-      width: "100px", // Adjusted width
-      minWidth: "80px", // Reduced for better fit
-      hideOnMobile: false, // Ensure visibility on all devices
-      render: (value) => (
-        <span className="text-xs sm:text-sm text-gray-900 whitespace-nowrap">
-          {value}
-        </span>
-      ),
+      width: "100px",
+      minWidth: "80px",
+      hideOnMobile: false,
+      render: (value) => {
+        const created = String(value);
+        return (
+          <span className="text-xs sm:text-sm text-gray-900 whitespace-nowrap">
+            {created}
+          </span>
+        );
+      },
     },
   ];
 
@@ -236,7 +263,7 @@ const InstructorList: React.FC = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 min-h-screen bg-gray-50 overflow-x-auto">
       <div className="max-w-7xl mx-auto">
-        <DataTable
+        <DataTable<Instructors>
           data={users}
           columns={columns}
           actions={actions}

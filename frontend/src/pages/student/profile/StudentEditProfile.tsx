@@ -9,6 +9,9 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../../redux/slices/userSlice";
+import type { ProfileData, ProfileFormValues } from "../../../types/interfaces/IStudentInterface";
+
+
 
 const ProfileSchema = Yup.object().shape({
   username: Yup.string()
@@ -52,16 +55,17 @@ const ProfileSchema = Yup.object().shape({
 });
 
 const StudentProfileEditPage = () => {
-  const [initialValues, setInitialValues] = useState<any>(null);
+  const [initialValues, setInitialValues] = useState<ProfileFormValues | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await getProfile();
         if (response.success) {
-          const profile = response.data;
+          const profile = response.data as ProfileData;
           setInitialValues({
             username: profile.username || "",
             skills: profile.skills?.join(", ") || "",
@@ -82,7 +86,7 @@ const StudentProfileEditPage = () => {
     fetchProfile();
   }, []);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: ProfileFormValues) => {
     const formData = new FormData();
     formData.append("username", values.username);
     formData.append(
@@ -161,9 +165,9 @@ const StudentProfileEditPage = () => {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(event: any) => {
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     const fileInput = event.currentTarget;
-                    const file = fileInput.files[0];
+                    const file = fileInput.files?.[0];
 
                     if (file) {
                       const validImageTypes = [
@@ -176,7 +180,7 @@ const StudentProfileEditPage = () => {
                         toast.error(
                           "Only image files (JPG, PNG, GIF, WebP) are allowed"
                         );
-                        fileInput.value = ""; // ❌ Clear invalid file
+                        fileInput.value = ""; // Clear invalid file
                         return;
                       }
 

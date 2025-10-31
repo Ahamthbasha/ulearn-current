@@ -24,9 +24,7 @@ const InstructorDashboard = () => {
   const [dashboardData, setDashboardData] = useState<IDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reportRange, setReportRange] = useState<
-    "daily" | "weekly" | "monthly" | "yearly" | "custom"
-  >("daily");
+  const [reportRange, setReportRange] = useState<"daily" | "weekly" | "monthly" | "yearly" | "custom">("daily");
   const [reportData, setReportData] = useState<IRevenueReportItem[]>([]);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -36,25 +34,14 @@ const InstructorDashboard = () => {
   const [reportLoading, setReportLoading] = useState(false);
 
   const fetchReport = async (page: number = 1) => {
-    if (
-      reportRange === "custom" &&
-      (!startDate || !endDate || new Date(startDate) > new Date(endDate))
-    ) {
-      alert(
-        "Please provide a valid date range. Start date must be before or equal to end date."
-      );
+    if (reportRange === "custom" && (!startDate || !endDate || new Date(startDate) > new Date(endDate))) {
+      alert("Please provide a valid date range. Start date must be before or equal to end date.");
       return;
     }
 
     try {
       setReportLoading(true);
-      const response = await getRevenueDashboard(
-        reportRange,
-        page,
-        limit,
-        startDate,
-        endDate
-      );
+      const response = await getRevenueDashboard(reportRange, page, limit, startDate, endDate);
       setReportData(response?.data || []);
       setTotalRecords(response?.total || 0);
       setCurrentPage(page);
@@ -138,17 +125,10 @@ const InstructorDashboard = () => {
   const categoryData = categorySales.map((item) => ({
     name: item.categoryName,
     value: item.totalSales,
-    percentage: Math.round((item.totalSales / (totalCourseSales)) * 100),
+    percentage: Math.round((item.totalSales / totalCourseSales) * 100) || 0,
   }));
 
-  const COLORS = [
-    "#3B82F6",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#8B5CF6",
-    "#EC4899",
-  ];
+  const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
@@ -167,9 +147,7 @@ const InstructorDashboard = () => {
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">
-                  Total Revenue
-                </p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Revenue</p>
                 <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
                   ₹{totalRevenue.toLocaleString()}
                 </p>
@@ -183,12 +161,8 @@ const InstructorDashboard = () => {
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">
-                  Total Course Sales
-                </p>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                  {totalCourseSales}
-                </p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Course Sales</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{totalCourseSales}</p>
               </div>
               <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-blue-600" />
@@ -199,12 +173,8 @@ const InstructorDashboard = () => {
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">
-                  Published Courses
-                </p>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                  {publishedCourses}
-                </p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Published Courses</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{publishedCourses}</p>
               </div>
               <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-purple-100 rounded-full flex items-center justify-center">
                 <Award className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-purple-600" />
@@ -215,12 +185,8 @@ const InstructorDashboard = () => {
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">
-                  Categories Used
-                </p>
-                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-                  {categoryWiseCount}
-                </p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Categories Used</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{categoryWiseCount}</p>
               </div>
               <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <Target className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-orange-600" />
@@ -235,21 +201,29 @@ const InstructorDashboard = () => {
             Generate Revenue Report
           </h3>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-end">
-            <select
-              value={reportRange}
-              onChange={(e) => {
-                setReportRange(e.target.value as any);
-                setCurrentPage(1);
-              }}
-              className="border rounded px-2 sm:px-3 py-1 sm:py-2 w-full sm:w-auto"
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-              <option value="custom">Custom</option>
-            </select>
-
+           <select
+  value={reportRange}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (
+      value === "daily" ||
+      value === "weekly" ||
+      value === "monthly" ||
+      value === "yearly" ||
+      value === "custom"
+    ) {
+      setReportRange(value);
+      setCurrentPage(1);
+    }
+  }}
+  className="border rounded px-2 sm:px-3 py-1 sm:py-2 w-full sm:w-auto"
+>
+  <option value="daily">Daily</option>
+  <option value="weekly">Weekly</option>
+  <option value="monthly">Monthly</option>
+  <option value="yearly">Yearly</option>
+  <option value="custom">Custom</option>
+</select>
             {reportRange === "custom" && (
               <>
                 <input
@@ -271,19 +245,9 @@ const InstructorDashboard = () => {
 
             <button
               onClick={() => fetchReport(1)}
-              disabled={
-                reportLoading ||
-                (reportRange === "custom" &&
-                  (!startDate ||
-                    !endDate ||
-                    new Date(startDate) > new Date(endDate)))
-              }
+              disabled={reportLoading || (reportRange === "custom" && (!startDate || !endDate))}
               className={`${
-                reportLoading ||
-                (reportRange === "custom" &&
-                  (!startDate ||
-                    !endDate ||
-                    new Date(startDate) > new Date(endDate)))
+                reportLoading || (reportRange === "custom" && (!startDate || !endDate))
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-emerald-600 hover:bg-emerald-700"
               } text-white px-2 sm:px-4 py-1 sm:py-2 rounded transition w-full sm:w-auto`}
@@ -297,22 +261,13 @@ const InstructorDashboard = () => {
               {/* Export Buttons */}
               <div className="flex justify-end gap-2 sm:gap-4 mb-2 sm:mb-4">
                 <button
-                  onClick={() =>
-                    exportRevenueReport(
-                      reportRange,
-                      "excel",
-                      startDate,
-                      endDate
-                    )
-                  }
+                  onClick={() => exportRevenueReport(reportRange, "excel", startDate, endDate)}
                   className="bg-blue-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded hover:bg-blue-700 transition w-full sm:w-auto"
                 >
                   Export Excel
                 </button>
                 <button
-                  onClick={() =>
-                    exportRevenueReport(reportRange, "pdf", startDate, endDate)
-                  }
+                  onClick={() => exportRevenueReport(reportRange, "pdf", startDate, endDate)}
                   className="bg-red-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded hover:bg-red-700 transition w-full sm:w-auto"
                 >
                   Export PDF
@@ -326,51 +281,47 @@ const InstructorDashboard = () => {
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Order ID</th>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Date</th>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Courses</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Learning Paths</th>
                     <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Coupon</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Total Order Amount</th>
-                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Instructor Revenue</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Total Amount</th>
+                    <th className="px-2 sm:px-4 py-1 sm:py-2 text-left text-xs sm:text-sm">Your Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reportData.map((item, idx) => (
                     <tr key={idx} className="border-t">
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">#{item.orderId}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">#{item.orderId.slice(-7)}</td>
                       <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">{item.date}</td>
                       <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        <ul className="list-disc list-inside">
-                          {item.standaloneCourse.map((course, courseIdx) => (
-                            <li key={courseIdx} className="mb-1">
+                        <ul className="list-disc list-inside space-y-1">
+                          {item.courses.map((course, cIdx) => (
+                            <li key={cIdx}>
                               <span className="font-medium">{course.courseName}</span>
                               <br />
-                              Final Price: ₹{course.standAloneCourseTotalPrice.toFixed(2)}
+                              <span className="text-gray-600">₹{course.price.toFixed(2)}</span>
                             </li>
                           ))}
                         </ul>
                       </td>
                       <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        <ul className="list-disc list-inside">
-                          {item.learningPath.map((lp, lpIdx) => (
-                            <li key={lpIdx} className="mb-1">
-                              <span className="font-medium">{lp.learningPathName}</span>
-                              <br />
-                              Final Price: ₹{lp.learningPathTotalPrice.toFixed(2)}
-                            </li>
-                          ))}
-                        </ul>
-                      </td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
-                        {item.couponCode} ({item.couponDiscount}%)<br />
-                        Discount: ₹{item.couponDiscountAmount.toFixed(2)}
+                        {item.couponCode !== "N/A" ? (
+                          <>
+                            {item.couponCode} ({item.couponDiscount}%)<br />
+                            <span className="text-red-600">-₹{(item.couponDiscountAmount || 0).toFixed(2)}</span>
+                          </>
+                        ) : (
+                          "N/A"
+                        )}
                       </td>
                       <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">₹{item.totalOrderAmount.toFixed(2)}</td>
-                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700">₹{item.instructorRevenue.toFixed(2)}</td>
+                      <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700 font-semibold">
+                        ₹{item.instructorRevenue.toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={6} className="px-2 sm:px-4 py-1 sm:py-2 text-right text-xs sm:text-sm">
+                    <td colSpan={5} className="px-2 sm:px-4 py-1 sm:py-2 text-right text-xs sm:text-sm">
                       Total Instructor Revenue
                     </td>
                     <td className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm text-green-700">
@@ -380,7 +331,7 @@ const InstructorDashboard = () => {
                 </tfoot>
               </table>
 
-              {/* Pagination Controls */}
+              {/* Pagination */}
               <div className="flex items-center justify-between mt-2 sm:mt-4">
                 <div className="flex items-center space-x-1 sm:space-x-2">
                   <button
@@ -395,9 +346,7 @@ const InstructorDashboard = () => {
                   </span>
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={
-                      currentPage >= Math.ceil(totalRecords / limit) || reportLoading
-                    }
+                    disabled={currentPage >= Math.ceil(totalRecords / limit) || reportLoading}
                     className="px-1 sm:px-2 py-0.5 sm:py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:bg-gray-200 disabled:text-gray-400 text-xs sm:text-sm"
                   >
                     <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -407,9 +356,7 @@ const InstructorDashboard = () => {
             </div>
           ) : (
             <p className="text-gray-500 mt-2 sm:mt-4 text-sm sm:text-base">
-              {reportLoading
-                ? "Loading report..."
-                : "No data available. Please generate a report."}
+              {reportLoading ? "Loading report..." : "No data available. Please generate a report."}
             </p>
           )}
         </div>
@@ -455,42 +402,26 @@ const InstructorDashboard = () => {
                       dataKey="value"
                     >
                       {categoryData.map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value) => [`${value} sales`, "Sales"]}
-                    />
+                    <Tooltip formatter={(value) => [`${value} sales`, "Sales"]} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
               <div className="flex-1 mt-2 sm:mt-0 sm:ml-2 sm:ml-4 space-y-1 sm:space-y-2">
                 {categoryData.map((entry, index) => (
-                  <div
-                    key={entry.name}
-                    className="flex items-center justify-between text-xs sm:text-sm"
-                  >
+                  <div key={entry.name} className="flex items-center justify-between text-xs sm:text-sm">
                     <div className="flex items-center space-x-1 sm:space-x-2">
                       <div
                         className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
-                        style={{
-                          backgroundColor: COLORS[index % COLORS.length],
-                        }}
-                      ></div>
-                      <span className="font-medium text-gray-700">
-                        {entry.name}
-                      </span>
+                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      />
+                      <span className="font-medium text-gray-700">{entry.name}</span>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-gray-900">
-                        {entry.value}
-                      </div>
-                      <div className="text-gray-500">
-                        {entry.percentage}%
-                      </div>
+                      <div className="font-bold text-gray-900">{entry.value}</div>
+                      <div className="text-gray-500">{entry.percentage}%</div>
                     </div>
                   </div>
                 ))}
@@ -499,6 +430,7 @@ const InstructorDashboard = () => {
           </div>
         </div>
 
+        {/* Top Selling Courses */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 md:p-6 border border-gray-100">
             <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 md:mb-4">
@@ -519,8 +451,7 @@ const InstructorDashboard = () => {
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
                           target.style.display = "none";
-                          const fallback =
-                            target.nextElementSibling as HTMLElement | null;
+                          const fallback = target.nextElementSibling as HTMLElement | null;
                           if (fallback) fallback.style.display = "flex";
                         }}
                       />
@@ -533,16 +464,12 @@ const InstructorDashboard = () => {
                         {course.courseName}
                       </h4>
                       <div className="flex items-center space-x-1 mt-0.5 sm:mt-1">
-                        <span className="text-xs sm:text-sm text-gray-500">
-                          {course.count} sales
-                        </span>
+                        <span className="text-xs sm:text-sm text-gray-500">{course.count} sales</span>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full">
-                        <span className="text-xs sm:text-sm font-bold text-blue-600">
-                          #{index + 1}
-                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-blue-600">#{index + 1}</span>
                       </div>
                     </div>
                   </div>

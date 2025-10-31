@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 
 import { resendOtp, verifyOtp } from "../../../api/auth/UserAuthentication";
 import otpImage from "../../../assets/otp.jpg";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -84,9 +85,11 @@ const OTPVerification = () => {
         } else {
           toast.error(response.message);
         }
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || "An error occurred while verifying OTP");
-      }
+      } 
+      catch (error) {
+  const apiError = error as ApiError;
+  toast.error(apiError.response?.data?.message || "An error occurred while verifying OTP");
+}
     } else {
       toast.error("Please enter the complete OTP");
     }

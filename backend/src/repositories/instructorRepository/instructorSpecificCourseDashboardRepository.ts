@@ -180,136 +180,88 @@ export class InstructorSpecificCourseDashboardRepository
   }
 
   async getCourseRevenueReport(
-    courseId: Types.ObjectId,
-    range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
-    page: number,
-    limit: number,
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<{
-    data: {
-      orderId: string;
-      purchaseDate: string;
-      courseName: string;
-      originalCoursePrice: number;
-      courseOfferPrice: number;
-      couponCode: string | null;
-      couponUsed: boolean;
-      couponDeductionAmount: number;
-      finalCoursePrice: number;
-      instructorRevenue: number;
-      totalEnrollments: number;
-    }[];
-    total: number;
-  }> {
-    // Helper function to format date to "day-month-year time AM/PM"
-    const formatDate = (date: Date): string => {
-      const day = String(date.getDate()).padStart(2, "0");
-      const monthNames = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
-      const month = monthNames[date.getMonth()];
-      const year = date.getFullYear();
-      let hours = date.getHours();
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-      return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
-    };
-
-    const now = new Date();
-    let start: Date;
-    let end: Date;
-
-    switch (range) {
-      case "daily":
-        start = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          0,
-          0,
-          0,
-          0,
-        );
-        end = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          23,
-          59,
-          59,
-          999,
-        );
-        break;
-      case "weekly":
-        start = new Date(now);
-        start.setDate(now.getDate() - now.getDay());
-        start.setHours(0, 0, 0, 0);
-        end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        end.setHours(23, 59, 59, 999);
-        break;
-      case "monthly":
-        start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        end = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-          999,
-        );
-        break;
-      case "yearly":
-        start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-        end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
-        break;
-      case "custom":
-        if (!startDate || !endDate) {
-          throw new Error("Start and end date are required for custom range");
-        }
-        if (startDate > endDate) {
-          throw new Error("Start date must be before end date");
-        }
-        start = new Date(startDate);
-        end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        break;
-      default:
-        throw new Error("Invalid range");
-    }
-
-    const totalPipeline = [
-      { $match: { status: "SUCCESS", createdAt: { $gte: start, $lte: end } } },
-      {
-        $match: {
-          $or: [
-            { "courses.courseId": courseId },
-            { "learningPaths.courses.courseId": courseId },
-          ],
-        },
-      },
-      { $count: "total" },
+  courseId: Types.ObjectId,
+  range: "daily" | "weekly" | "monthly" | "yearly" | "custom",
+  page: number,
+  limit: number,
+  startDate?: Date,
+  endDate?: Date,
+): Promise<{
+  data: {
+    orderId: string;
+    purchaseDate: string;
+    courseName: string;
+    originalCoursePrice: number;
+    courseOfferPrice: number;
+    couponCode: string | null;
+    couponUsed: boolean;
+    couponDeductionAmount: number;
+    finalCoursePrice: number;
+    instructorRevenue: number;
+    totalEnrollments: number;
+  }[];
+  total: number;
+}> {
+  // Helper: format date to "01-Jan-2025 03:30 PM"
+  const formatDate = (date: Date): string => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const monthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
+  };
 
-    const totalResult = await this._orderRepo.aggregate(totalPipeline);
-    const total = totalResult[0]?.total || 0;
+  const now = new Date();
+  let start: Date;
+  let end: Date = new Date();
 
-    const { data: orders } = await this._orderRepo.paginate(
-      {
+  switch (range) {
+    case "daily":
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      break;
+    case "weekly":
+      start = new Date(now);
+      start.setDate(now.getDate() - now.getDay());
+      start.setHours(0, 0, 0, 0);
+      end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      break;
+    case "monthly":
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      break;
+    case "yearly":
+      start = new Date(now.getFullYear(), 0, 1);
+      end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+      break;
+    case "custom":
+      if (!startDate || !endDate) {
+        throw new Error("Start and end date are required for custom range");
+      }
+      if (startDate > endDate) {
+        throw new Error("Start date must be before end date");
+      }
+      start = new Date(startDate);
+      end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      break;
+    default:
+      throw new Error("Invalid range");
+  }
+
+  // === 1. Get total count ===
+  const totalPipeline = [
+    {
+      $match: {
         status: "SUCCESS",
         createdAt: { $gte: start, $lte: end },
         $or: [
@@ -317,91 +269,107 @@ export class InstructorSpecificCourseDashboardRepository
           { "learningPaths.courses.courseId": courseId },
         ],
       },
-      page,
-      limit,
-      { createdAt: -1 },
-    );
+    },
+    { $count: "total" },
+  ];
 
-    const enrollments = await this.getCourseEnrollmentCount(courseId);
-    const results = [];
+  const totalResult = await this._orderRepo.aggregate<{ total: number }>(totalPipeline);
+  const total = totalResult[0]?.total ?? 0;
 
-    for (const order of orders || []) {
-      // Calculate total courses (standalone + learning path courses)
-      const totalCourses =
-        order.courses.length +
-        order.learningPaths.reduce((sum, lp) => sum + lp.courses.length, 0);
-      const perCourseDeduction =
-        order.coupon && totalCourses > 0
-          ? Number((order.coupon.discountAmount / totalCourses).toFixed(2))
-          : 0;
+  // === 2. Get paginated orders using GenericRepository.paginate ===
+  const paginated = await this._orderRepo.paginate(
+    {
+      status: "SUCCESS",
+      createdAt: { $gte: start, $lte: end },
+      $or: [
+        { "courses.courseId": courseId },
+        { "learningPaths.courses.courseId": courseId },
+      ],
+    },
+    page,
+    limit,
+    { createdAt: -1 },
+  );
 
-      // Process standalone course
-      const standaloneCourse = order.courses.find((c) =>
-        c.courseId.equals(courseId),
-      );
-      if (standaloneCourse) {
-        let finalCoursePrice =
-          standaloneCourse.offerPrice || standaloneCourse.coursePrice;
-        if (order.coupon && totalCourses > 0) {
-          finalCoursePrice = Number(
-            (finalCoursePrice - perCourseDeduction).toFixed(2),
-          );
-        }
-        results.push({
-          orderId: order._id.toString(),
-          purchaseDate: formatDate(order.createdAt),
-          courseName: standaloneCourse.courseName,
-          originalCoursePrice: Number(standaloneCourse.coursePrice.toFixed(2)),
-          courseOfferPrice: Number(
-            (
-              standaloneCourse.offerPrice || standaloneCourse.coursePrice
-            ).toFixed(2),
-          ),
-          couponCode: order.coupon?.couponName || null,
-          couponUsed: !!order.coupon,
-          couponDeductionAmount: Number(perCourseDeduction.toFixed(2)),
-          finalCoursePrice: Number(finalCoursePrice.toFixed(2)),
-          instructorRevenue: Number(
-            (finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2),
-          ),
-          totalEnrollments: enrollments,
-        });
+  // Type-safe: paginated.data is HydratedDocument<IOrder>[]
+  const orders = paginated.data;
+  const enrollments = await this.getCourseEnrollmentCount(courseId);
+  const results: {
+    orderId: string;
+    purchaseDate: string;
+    courseName: string;
+    originalCoursePrice: number;
+    courseOfferPrice: number;
+    couponCode: string | null;
+    couponUsed: boolean;
+    couponDeductionAmount: number;
+    finalCoursePrice: number;
+    instructorRevenue: number;
+    totalEnrollments: number;
+  }[] = [];
+
+  const INSTRUCTOR_REVENUE_SHARE = 0.9; // Adjust as needed
+
+  for (const order of orders) {
+    const totalCourses =
+      order.courses.length +
+      order.learningPaths.reduce((sum, lp) => sum + lp.courses.length, 0);
+
+    const perCourseDeduction =
+      order.coupon && totalCourses > 0
+        ? Number((order.coupon.discountAmount / totalCourses).toFixed(2))
+        : 0;
+
+    // Standalone course
+    const standaloneCourse = order.courses.find((c) => c.courseId.equals(courseId));
+    if (standaloneCourse) {
+      let finalCoursePrice = standaloneCourse.offerPrice ?? standaloneCourse.coursePrice;
+      if (order.coupon && totalCourses > 0) {
+        finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
       }
 
-      // Process learning path courses
-      const learningPathCourses = order.learningPaths
-        .flatMap((lp) => lp.courses)
-        .filter((c) => c.courseId.equals(courseId));
-      for (const lpCourse of learningPathCourses) {
-        let finalCoursePrice = lpCourse.offerPrice || lpCourse.coursePrice;
-        if (order.coupon && totalCourses > 0) {
-          finalCoursePrice = Number(
-            (finalCoursePrice - perCourseDeduction).toFixed(2),
-          );
-        }
-        results.push({
-          orderId: order._id.toString(),
-          purchaseDate: formatDate(order.createdAt),
-          courseName: lpCourse.courseName,
-          originalCoursePrice: Number(lpCourse.coursePrice.toFixed(2)),
-          courseOfferPrice: Number(
-            (lpCourse.offerPrice || lpCourse.coursePrice).toFixed(2),
-          ),
-          couponCode: order.coupon?.couponName || null,
-          couponUsed: !!order.coupon,
-          couponDeductionAmount: Number(perCourseDeduction.toFixed(2)),
-          finalCoursePrice: Number(finalCoursePrice.toFixed(2)),
-          instructorRevenue: Number(
-            (finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2),
-          ),
-          totalEnrollments: enrollments,
-        });
-      }
+      results.push({
+        orderId: order._id.toString(),
+        purchaseDate: formatDate(order.createdAt),
+        courseName: standaloneCourse.courseName,
+        originalCoursePrice: Number(standaloneCourse.coursePrice.toFixed(2)),
+        courseOfferPrice: Number((standaloneCourse.offerPrice ?? standaloneCourse.coursePrice).toFixed(2)),
+        couponCode: order.coupon?.couponName ?? null,
+        couponUsed: !!order.coupon,
+        couponDeductionAmount: perCourseDeduction,
+        finalCoursePrice,
+        instructorRevenue: Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2)),
+        totalEnrollments: enrollments,
+      });
     }
 
-    return {
-      data: results,
-      total,
-    };
+    // Learning path courses
+    for (const lp of order.learningPaths) {
+      for (const c of lp.courses) {
+        if (c.courseId.equals(courseId)) {
+          let finalCoursePrice = c.offerPrice ?? c.coursePrice;
+          if (order.coupon && totalCourses > 0) {
+            finalCoursePrice = Number((finalCoursePrice - perCourseDeduction).toFixed(2));
+          }
+
+          results.push({
+            orderId: order._id.toString(),
+            purchaseDate: formatDate(order.createdAt),
+            courseName: c.courseName,
+            originalCoursePrice: Number(c.coursePrice.toFixed(2)),
+            courseOfferPrice: Number((c.offerPrice ?? c.coursePrice).toFixed(2)),
+            couponCode: order.coupon?.couponName ?? null,
+            couponUsed: !!order.coupon,
+            couponDeductionAmount: perCourseDeduction,
+            finalCoursePrice,
+            instructorRevenue: Number((finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2)),
+            totalEnrollments: enrollments,
+          });
+        }
+      }
+    }
   }
+
+  return { data: results, total };
+}
 }

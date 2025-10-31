@@ -5,7 +5,8 @@ import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
 import { getInstructorCourseOfferById, editInstructorCourseOffer } from "../../../api/action/InstructorActionApi";
 import { toast } from "react-toastify";
-import type { ICourseOfferDetails } from "../interface/instructorInterface";
+import type { FormValues, ICourseOfferDetails } from "../interface/instructorInterface";
+import { AxiosError } from "axios";
 
 const getTodayDate = () => {
   const today = new Date();
@@ -77,11 +78,25 @@ const EditInstructorCourseOfferPage: React.FC = () => {
         } else {
           throw new Error("Invalid response format");
         }
-      } catch (e: any) {
-        console.error("Error fetching offer:", e);
-        setError(e.message || "Failed to load offer");
-        toast.error(e.message || "Failed to load offer");
-      } finally {
+      }
+      catch (e: unknown) {
+  if (e instanceof AxiosError) {
+    const message = e.response?.data?.message || e.message || "Failed to load offer";
+    console.error("Error fetching offer:", e);
+    setError(message);
+    toast.error(message);
+  } else if (e instanceof Error) {
+    console.error("Error fetching offer:", e);
+    setError(e.message);
+    toast.error(e.message);
+  } else {
+    const fallback = "Failed to load offer";
+    console.error("Unexpected error fetching offer:", e);
+    setError(fallback);
+    toast.error(fallback);
+  }
+}
+      finally {
         setLoading(false);
       }
     };
@@ -89,23 +104,37 @@ const EditInstructorCourseOfferPage: React.FC = () => {
     fetchOffer();
   }, [offerId]);
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
-    try {
-      await editInstructorCourseOffer(
-        offerId!,
-        values.discount,
-        new Date(values.startDate),
-        new Date(values.endDate)
-      );
-      toast.success("Course offer updated successfully");
-      navigate("/instructor/courseOffers");
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "Failed to update offer";
-      toast.error(errorMessage);
-    } finally {
-      setSubmitting(false);
+const handleSubmit = async (
+  values: FormValues,
+  { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
+): Promise<void> => {
+  try {
+    await editInstructorCourseOffer(
+      offerId!,
+      values.discount,
+      new Date(values.startDate),
+      new Date(values.endDate)
+    );
+    toast.success("Course offer updated successfully");
+    navigate("/instructor/courseOffers");
+  } catch (err: unknown) {
+    let errorMessage = "Failed to update offer";
+
+    if (err && typeof err === "object" && "response" in err) {
+      // @ts-ignore
+      if (err.response?.data?.message) {
+        // @ts-ignore
+        errorMessage = err.response.data.message;
+      }
+    } else if (err instanceof Error) {
+      errorMessage = err.message;
     }
-  };
+
+    toast.error(errorMessage);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) return <div className="p-6 text-center">Loading offer...</div>;
   if (error || !offer) return <div className="p-6 text-center text-red-500">{error || "Offer not found"}</div>;

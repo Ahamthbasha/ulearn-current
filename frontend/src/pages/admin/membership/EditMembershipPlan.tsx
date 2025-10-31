@@ -8,7 +8,8 @@ import {
   editMembership,
 } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
-import { type FormValues } from "../interface/adminInterface";
+import { type FormHelpers, type FormValues } from "../interface/adminInterface";
+import type { AxiosError } from "axios";
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -112,47 +113,52 @@ const EditMembershipPlanPage = () => {
     fetchPlan();
   }, [membershipId]);
 
-  const handleSubmit = async (
-    values: FormValues,
-    { setSubmitting, setFieldError }: any
-  ) => {
-    try {
-      if (!membershipId) return;
+const handleSubmit = async (
+  values: FormValues,
+  { setSubmitting, setFieldError }: FormHelpers
+) => {
+  try {
+    if (!membershipId) return;
 
-      const payload = {
-        name: values.name,
-        durationInDays: Number(values.durationInDays),
-        price: Number(values.price),
-        description: values.description || undefined,
-        benefits: values.benefits
-          ? values.benefits
-              .split(",")
-              .map((b) => b.trim())
-              .filter(Boolean)
-          : [],
-      };
+    const payload = {
+      name: values.name,
+      durationInDays: Number(values.durationInDays),
+      price: Number(values.price),
+      description: values.description || undefined,
+      benefits: values.benefits
+        ? values.benefits
+            .split(",")
+            .map((b) => b.trim())
+            .filter(Boolean)
+        : [],
+    };
 
-      const response = await editMembership(membershipId, payload);
+    const response = await editMembership(membershipId, payload);
 
-      console.log("edit membership", response);
-      toast.success("Membership plan updated");
-      navigate("/admin/membership");
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message || "Failed to update membership plan";
+    console.log("edit membership", response);
+    toast.success("Membership plan updated");
+    navigate("/admin/membership");
+  } catch (err: unknown) {
+    let message = "Failed to update membership plan";
 
-      if (
-        message.includes("already exists") ||
-        err?.response?.data?.error?.includes("already exists")
-      ) {
-        setFieldError("name", err?.response?.data?.error || message);
-      } else {
-        toast.error(message);
+    if (err && typeof err === "object" && "response" in err) {
+      const axiosErr = err as AxiosError<{ message?: string; error?: string }>;
+      message = axiosErr.response?.data?.message || message;
+
+      const errorText = axiosErr.response?.data?.error;
+
+      if (message.includes("already exists") || errorText?.includes("already exists")) {
+        setFieldError("name", errorText || message);
+        setSubmitting(false);
+        return;
       }
-    } finally {
-      setSubmitting(false);
     }
-  };
+
+    toast.error(message);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading || !initialValues) {
     return (

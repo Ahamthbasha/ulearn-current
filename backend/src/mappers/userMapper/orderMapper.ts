@@ -7,6 +7,8 @@ import {
   CourseInfoDTO,
   CouponInfoDTO,
   UserInfoDTO,
+  UserDTO,
+
 } from "../../dto/userDTO/courseInfoDTO";
 import { LearningPathInfoDTO } from "../../dto/userDTO/orderDetailsDTO";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
@@ -94,7 +96,7 @@ export function mapCoupon(coupon: ICouponDetails): CouponInfoDTO {
 }
 
 // Maps user details to UserInfoDTO
-export function mapUserInfo(user: any): UserInfoDTO {
+export function mapUserInfo(user: UserDTO): UserInfoDTO {
   return {
     username: user.username,
     email: user.email,

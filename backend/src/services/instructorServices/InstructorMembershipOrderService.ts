@@ -13,6 +13,8 @@ import { IMembershipPlan } from "../../models/membershipPlanModel";
 import { IWalletService } from "../interface/IWalletService";
 import { IEmail } from "../../types/Email";
 import { appLogger } from "../../utils/logger";
+import { isInstructor } from "../../models/instructorModel";
+import { isMembershipPlan } from "../../utils/isMembershipPlan";
 
 export class InstructorMembershipOrderService
   implements IInstructorMembershipOrderService
@@ -284,7 +286,7 @@ export class InstructorMembershipOrderService
           membershipExpiryDate: expiryDate,
           membershipPlanId: new Types.ObjectId(plan._id),
         },
-        session,
+        session ? {session} : undefined,
       );
 
       await this._walletService.creditAdminWalletByEmail(
@@ -407,7 +409,7 @@ export class InstructorMembershipOrderService
           membershipExpiryDate: expiry,
           membershipPlanId: new Types.ObjectId(plan._id),
         },
-        session,
+        session ? {session} : undefined,
       );
 
       await this._emailService.sendMembershipPurchaseEmail(
@@ -440,50 +442,68 @@ export class InstructorMembershipOrderService
         search,
       );
 
-    const dtoData: InstructorMembershipOrderListDTO[] = data.map((order) => ({
-      orderId: order.orderId,
-      planName: (order.membershipPlanId as any).name,
-      amount: order.price,
-      status: order.paymentStatus,
-      purchaseDate: order.createdAt,
-    }));
+    const dtoData: InstructorMembershipOrderListDTO[] = data.map((order) => {
+  let planName = "";
+
+  if (isMembershipPlan(order.membershipPlanId)) {
+    planName = order.membershipPlanId.name;
+  }
+
+  return {
+    orderId: order.orderId,
+    planName,
+    amount: order.price,
+    status: order.paymentStatus,
+    purchaseDate: order.createdAt,
+  };
+});
+
 
     return { data: dtoData, total };
   }
 
   async getOrderByOrderId(
-    orderId: string,
-    instructorId: string,
-  ): Promise<InstructorMembershipOrderDTO | null> {
-    const order = await this._membershipOrderRepo.findOneByOrderId(orderId);
-    if (!order) throw new Error("Order not found");
+  orderId: string,
+  instructorId: string,
+): Promise<InstructorMembershipOrderDTO | null> {
+  const order = await this._membershipOrderRepo.findOneByOrderId(orderId);
+  if (!order) throw new Error("Order not found");
 
-    const orderInstructorId = (order.instructorId as any)._id.toString();
-
-    if (orderInstructorId !== instructorId.toString()) {
-      throw new Error("Unauthorized access");
-    }
-
-    return {
-      orderId: order.orderId,
-      instructor: {
-        name: (order.instructorId as any).username,
-        email: (order.instructorId as any).email,
-      },
-      membershipPlan: {
-        name: (order.membershipPlanId as any).name,
-        durationInDays: (order.membershipPlanId as any).durationInDays,
-        description: (order.membershipPlanId as any).description,
-        benefits: (order.membershipPlanId as any).benefits || [],
-      },
-      price: order.price,
-      paymentStatus: order.paymentStatus,
-      startDate: order.startDate,
-      endDate: order.endDate,
-      razorpayOrderId: order.razorpayOrderId, // Updated from txnId to orderId
-      createdAt: order.createdAt,
-    };
+  // Use type guard instead of unsafe casting
+  if (!isInstructor(order.instructorId)) {
+    throw new Error("Instructor data not populated");
   }
+
+  const orderInstructorId = order.instructorId._id.toString();
+
+  if (orderInstructorId !== instructorId.toString())
+    throw new Error("Unauthorized access");
+
+  if (!isMembershipPlan(order.membershipPlanId)) {
+    throw new Error("Membership plan data not populated");
+  }
+
+  return {
+    orderId: order.orderId,
+    instructor: {
+      name: order.instructorId.username,
+      email: order.instructorId.email,
+    },
+    membershipPlan: {
+      name: order.membershipPlanId.name,
+      durationInDays: order.membershipPlanId.durationInDays,
+      description: order.membershipPlanId.description,
+      benefits: order.membershipPlanId.benefits || [],
+    },
+    price: order.price,
+    paymentStatus: order.paymentStatus,
+    startDate: order.startDate,
+    endDate: order.endDate,
+    razorpayOrderId: order.razorpayOrderId,
+    createdAt: order.createdAt,
+  };
+}
+
 
   async cancelOrder(orderId: string, instructorId: string): Promise<void> {
     const session: ClientSession = await startSession();

@@ -16,6 +16,7 @@ import type {
   PasswordFormValues,
   BankFormValues,
 } from "../interface/instructorInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const InstructorProfilePage = () => {
   const [profile, setProfile] = useState<InstructorProfile | null>(null);
@@ -194,10 +195,11 @@ const InstructorProfilePage = () => {
                     response.message || "Password update failed"
                   );
                 }
-              } catch (error: any) {
+              } catch (error: unknown) {
+                const apiError = error as ApiError
                 setFieldError(
                   "currentPassword",
-                  error.response?.data?.message || "An error occurred"
+                  apiError.response?.data?.message || "An error occurred"
                 );
               }
             }}
@@ -291,9 +293,10 @@ const InstructorProfilePage = () => {
                 } else {
                   toast.error(res.message || "Bank details update failed");
                 }
-              } catch (error: any) {
+              } catch (error: unknown) {
+                const apiError = error as ApiError
                 toast.error(
-                  error.response?.data?.message || "Bank details update failed"
+                  apiError.response?.data?.message || "Bank details update failed"
                 );
               }
             }}

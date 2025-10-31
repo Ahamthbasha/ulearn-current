@@ -17,23 +17,21 @@ export class AdminMembershipOrderController implements IAdminMembershipOrderCont
   constructor(private readonly service: IAdminMembershipOrderService) {}
 
   private parseQuery(req: Request) {
-    const raw = {
-      page: req.query.page as string | undefined,
-      limit: req.query.limit as string | undefined,
-      search: req.query.search as string | undefined,
-      status: req.query.status as string | undefined,
-    };
+  const rawStatus = req.query.status as string | undefined;
+  const validStatuses = ["paid", "failed", "cancelled"];
+  const status =
+    rawStatus && validStatuses.includes(rawStatus)
+      ? rawStatus as "paid" | "failed" | "cancelled"
+      : undefined;
 
-    return {
-      page: raw.page ? Math.max(1, parseInt(raw.page, 10)) : 1,
-      limit: raw.limit ? Math.max(1, Math.min(100, parseInt(raw.limit, 10))) : 10,
-      search: raw.search?.trim() || undefined,
-      status:
-        raw.status && ["paid", "failed","cancelled"].includes(raw.status.trim())
-          ? raw.status.trim()
-          : undefined,
-    };
-  }
+  return {
+    page: req.query.page ? Math.max(1, parseInt(req.query.page as string, 10)) : 1,
+    limit: req.query.limit ? Math.max(1, Math.min(100, parseInt(req.query.limit as string, 10))) : 10,
+    search: (req.query.search as string | undefined)?.trim() || undefined,
+    status,
+  };
+}
+
 
   async getAllOrders(req: Request, res: Response): Promise<void> {
     try {

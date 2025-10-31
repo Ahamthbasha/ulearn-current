@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { IInstructorChapterController } from "./interfaces/IInstructorChapterController";
 import { IInstructorChapterService } from "../../services/instructorServices/interface/IInstructorChapterService";
 import { StatusCode } from "../../utils/enums";
-import { uploadToS3Bucket } from "../../utils/s3Bucket";
+import {  uploadToS3Bucket } from "../../utils/s3Bucket";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import {
   ChapterErrorMessages,
@@ -89,22 +89,27 @@ export class InstructorChapterController
   ): Promise<void> {
     try {
       const { courseId } = req.params;
-      const { page = 1, limit = 10, search = "" } = req.query;
+      const { page = "1", limit = "10", search = "" } = req.query;
 
-      const filter: any = {
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+
+      const filter: Record<string, unknown> = {
         courseId,
-        ...(search && {
-          $or: [
-            { chapterTitle: { $regex: search, $options: "i" } },
-            { chapterNumber: isNaN(Number(search)) ? -1 : Number(search) },
-          ],
-        }),
       };
+
+      if (search) {
+        const searchNum = Number(search);
+        filter.$or = [
+          { chapterTitle: { $regex: search as string, $options: "i" } },
+          { chapterNumber: isNaN(searchNum) ? -1 : searchNum },
+        ];
+      }
 
       const result = await this._chapterService.paginateChapters(
         filter,
-        Number(page),
-        Number(limit),
+        pageNum,
+        limitNum,
       );
 
       res.status(StatusCode.OK).json({
@@ -118,104 +123,135 @@ export class InstructorChapterController
     }
   }
 
-  async updateChapter(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
-    try {
-      const { chapterId } = req.params;
-      const { chapterTitle, chapterNumber, description } = req.body;
+async updateChapter(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { chapterId } = req.params;
+    const { chapterTitle, chapterNumber, description } = req.body as {
+      chapterTitle?: string;
+      chapterNumber?: string;
+      description?: string;
+    };
 
-      const originalChapter =
-        await this._chapterService.getChapterById(chapterId);
-      if (!originalChapter) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
-        });
-        return;
-      }
+    const originalChapter = await this._chapterService.getChapterById(chapterId);
+    if (!originalChapter) {
+      res.status(StatusCode.NOT_FOUND).json({
+        success: false,
+        message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
+      });
+      return;
+    }
 
-      const courseId = originalChapter.courseId.toString();
+    const courseId = originalChapter.courseId.toString();
 
-      const existing =
-        await this._chapterService.findByTitleOrNumberAndCourseId(
+    // Only check for conflicts if title or number is being updated
+    if (chapterTitle || chapterNumber) {
+      const titleToCheck = chapterTitle?.trim();
+      const numberToCheck = chapterNumber ? Number(chapterNumber) : undefined;
+
+      // Skip if both are missing or invalid
+      if (titleToCheck || (numberToCheck !== undefined && !isNaN(numberToCheck))) {
+        const existing = await this._chapterService.findByTitleOrNumberAndCourseId(
           courseId,
-          chapterTitle,
-          Number(chapterNumber),
+          titleToCheck ?? "", // safe: only called if titleToCheck exists or number is valid
+          numberToCheck ?? 0, // safe fallback
           chapterId,
         );
 
-      if (existing) {
-        const isTitleConflict =
-          existing.chapterTitle.toLowerCase() === chapterTitle.toLowerCase();
-        const isNumberConflict =
-          existing.chapterNumber === Number(chapterNumber);
+        if (existing) {
+          const isTitleConflict =
+            titleToCheck &&
+            existing.chapterTitle.toLowerCase() === titleToCheck.toLowerCase();
+          const isNumberConflict =
+            numberToCheck !== undefined &&
+            existing.chapterNumber === numberToCheck;
 
-        let errorMessage = "";
-        if (isTitleConflict && isNumberConflict) {
-          errorMessage = "Chapter title and number already exist";
-        } else if (isTitleConflict) {
-          errorMessage = ChapterErrorMessages.CHAPTER_ALREADY_EXIST;
-        } else if (isNumberConflict) {
-          errorMessage = ChapterErrorMessages.CHAPTER_NUMBER_ALREADY_EXIST;
+          let errorMessage = "";
+          if (isTitleConflict && isNumberConflict) {
+            errorMessage = "Chapter title and number already exist";
+          } else if (isTitleConflict) {
+            errorMessage = ChapterErrorMessages.CHAPTER_ALREADY_EXIST;
+          } else if (isNumberConflict) {
+            errorMessage = ChapterErrorMessages.CHAPTER_NUMBER_ALREADY_EXIST;
+          }
+
+          if (errorMessage) {
+            res.status(StatusCode.CONFLICT).json({
+              success: false,
+              message: errorMessage,
+            });
+            return;
+          }
         }
-
-        res.status(StatusCode.CONFLICT).json({
-          success: false,
-          message: errorMessage,
-        });
-        return;
       }
-
-      // Step 3: Handle file uploads
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      let videoUrl: string | undefined;
-
-      const videoFile = files?.["video"]?.[0];
-
-      if (videoFile) {
-        videoUrl = await uploadToS3Bucket(
-          {
-            originalname: videoFile.originalname,
-            buffer: videoFile.buffer,
-            mimetype: videoFile.mimetype,
-          },
-          "chapters/videos",
-        );
-      }
-
-      // Step 4: Update chapter
-      const updatedChapterData: any = {
-        chapterTitle,
-        chapterNumber: Number(chapterNumber),
-        description,
-      };
-      if (videoUrl) updatedChapterData.videoUrl = videoUrl;
-
-      const updated = await this._chapterService.updateChapter(
-        chapterId,
-        updatedChapterData,
-      );
-
-      if (!updated) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
-        });
-        return;
-      }
-
-      res.status(StatusCode.OK).json({
-        success: true,
-        data: updated,
-        message: ChapterSuccessMessages.CHAPTER_UPDATED,
-      });
-    } catch (error) {
-      next(error);
     }
+
+    // Handle file upload
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    const videoFile = files?.["video"]?.[0];
+    let videoUrl: string | undefined;
+
+    if (videoFile) {
+      videoUrl = await uploadToS3Bucket(
+        {
+          originalname: videoFile.originalname,
+          buffer: videoFile.buffer,
+          mimetype: videoFile.mimetype,
+        },
+        "chapters/videos",
+      );
+    }
+
+    // Build update payload
+    const updatedChapterData: Partial<{
+      chapterTitle: string;
+      chapterNumber: number;
+      description: string | undefined;
+      videoUrl: string;
+    }> = {};
+
+    if (chapterTitle !== undefined) updatedChapterData.chapterTitle = chapterTitle.trim();
+    if (chapterNumber !== undefined) {
+      const num = Number(chapterNumber);
+      if (!isNaN(num)) updatedChapterData.chapterNumber = num;
+    }
+    if (description !== undefined) updatedChapterData.description = description;
+    if (videoUrl) updatedChapterData.videoUrl = videoUrl;
+
+    // Only update if there's something to update
+    if (Object.keys(updatedChapterData).length === 0) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: "No valid fields provided to update",
+      });
+      return;
+    }
+
+    const updated = await this._chapterService.updateChapter(
+      chapterId,
+      updatedChapterData,
+    );
+
+    if (!updated) {
+      res.status(StatusCode.NOT_FOUND).json({
+        success: false,
+        message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
+      });
+      return;
+    }
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: updated,
+      message: ChapterSuccessMessages.CHAPTER_UPDATED,
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
   async deleteChapter(
     req: Request,

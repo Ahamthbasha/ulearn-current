@@ -122,7 +122,7 @@ const SlotDetailPage = () => {
               </div>
             </div>
           ) : (
-            <div className="text-gray-500 italic text-sm sm:text-base">Not booked by any student</div>
+            <div className="text-gray-500 italic text-sm sm:text-base">Not booked by student</div>
           )}
         </div>
 

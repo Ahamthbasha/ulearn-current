@@ -7,6 +7,13 @@ export interface IWithdrawalRequest {
   remarks?: string;
 }
 
+export interface WithdrawalRequestParams {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}
+
 export interface WithdrawalRequestDto {
   requestId: string;
   instructorName: string;

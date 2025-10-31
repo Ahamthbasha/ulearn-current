@@ -13,14 +13,19 @@ import {
   deleteQuestionFromQuiz,
 } from "../../../api/action/InstructorActionApi";
 import { type IQuestion } from "../../../types/interfaces/IQuiz";
+import type { ApiError } from "../../../types/interfaces/ICommon";
+
+// Extend IQuestion to make it compatible with Record<string, unknown>
+interface QuestionWithQuizId extends IQuestion {
+  [key: string]: unknown;
+  quizId?: string;
+}
 
 const QuizManagementPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
-  const [questions, setQuestions] = useState<
-    (IQuestion & { quizId?: string })[]
-  >([]);
+  const [questions, setQuestions] = useState<QuestionWithQuizId[]>([]);
   const [quizId, setQuizId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -39,14 +44,14 @@ const QuizManagementPage = () => {
         courseId,
         page,
         limit,
-        debouncedSearch // Use debounced search
+        debouncedSearch
       );
       console.log("Paginated Quiz Response:", response);
 
       const derivedQuizId =
         response.quizId || (response.questions[0]?._id ?? null);
 
-      const questionsWithQuizId = response.questions.map((q: IQuestion) => ({
+      const questionsWithQuizId: QuestionWithQuizId[] = response.questions.map((q: IQuestion) => ({
         ...q,
         quizId: derivedQuizId,
       }));
@@ -54,11 +59,12 @@ const QuizManagementPage = () => {
       setQuestions(questionsWithQuizId);
       setQuizId(derivedQuizId);
       setTotal(response.total || 0);
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       setQuestions([]);
       setQuizId(null);
       setTotal(0);
-      toast.error("Failed to load quiz");
+      toast.error(apiError?.response?.data?.message || "Failed to load quiz");
     } finally {
       setLoading(false);
     }
@@ -69,8 +75,9 @@ const QuizManagementPage = () => {
       await deleteQuestionFromQuiz(quizId, questionId);
       toast.success("Question deleted");
       fetchQuestions();
-    } catch {
-      toast.error("Failed to delete question");
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError?.response?.data?.message || "Failed to delete question");
     }
   };
 
@@ -80,14 +87,15 @@ const QuizManagementPage = () => {
       await deleteQuiz(quizId);
       toast.success("Quiz deleted");
       fetchQuestions();
-    } catch {
-      toast.error("Failed to delete quiz");
+    } catch (error) {
+      const apiError = error as ApiError;
+      toast.error(apiError?.response?.data?.message || "Failed to delete quiz");
     }
   };
 
   useEffect(() => {
     fetchQuestions();
-  }, [courseId, page, debouncedSearch]); // Depend on debouncedSearch instead of search
+  }, [courseId, page, debouncedSearch]);
 
   return (
     <div className="px-4 py-6">
@@ -147,7 +155,7 @@ const QuizManagementPage = () => {
         {loading ? (
           <p className="text-sm text-gray-600">Loading questions...</p>
         ) : questions.length > 0 ? (
-          <EntityTable
+          <EntityTable<QuestionWithQuizId>
             title="All Quiz Questions"
             data={questions}
             columns={[
@@ -156,7 +164,7 @@ const QuizManagementPage = () => {
             ]}
             onEdit={(q) =>
               navigate(
-                `/instructor/course/${courseId}/quiz/edit/${q.quizId}?questionId=${q._id}`
+                `/instructor/course/${courseId}/quiz/edit/${q.quizId ?? ''}?questionId=${q._id ?? ''}`
               )
             }
             onDelete={(q) => {

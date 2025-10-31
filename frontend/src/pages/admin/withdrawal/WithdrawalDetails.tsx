@@ -31,10 +31,16 @@ export default function WithdrawalDetailsPage() {
       const response = await adminGetWithdrawalRequestById(requestId);
       setWithdrawalRequest(response.data as IWithdrawalRequestDetail);
       setRemarks(response.data.remarks || "");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load withdrawal request");
-      navigate("/admin/withdrawal");
-    } finally {
+    } 
+    catch (error: unknown) {
+  if (error instanceof Error) {
+    toast.error(error.message || "Failed to load withdrawal request");
+  } else {
+    toast.error("Failed to load withdrawal request");
+  }
+  navigate("/admin/withdrawal");
+}
+    finally {
       setPageLoading(false);
     }
   };
@@ -64,7 +70,7 @@ export default function WithdrawalDetailsPage() {
       const response = await adminApproveWithdrawal(withdrawalRequest.requestId, remarks);
       toast.success(response.message || "Withdrawal request approved successfully");
       fetchWithdrawalRequest();
-    } catch (error: any) {
+    } catch (error) {
       toast.error("instructor has insufficient wallet balance");
     } finally {
       setLoading(false);
@@ -87,9 +93,15 @@ export default function WithdrawalDetailsPage() {
       const response = await adminRejectWithdrawal(withdrawalRequest.requestId, remarks);
       toast.success(response.message || "Withdrawal request rejected successfully");
       fetchWithdrawalRequest();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to reject withdrawal request");
-    } finally {
+    } 
+    catch (error: unknown) {
+  if (error instanceof Error) {
+    toast.error(error.message || "Failed to reject withdrawal request");
+  } else {
+    toast.error("Failed to reject withdrawal request");
+  }
+}
+    finally {
       setLoading(false);
     }
   };

@@ -8,6 +8,7 @@ import {
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
 import type { Order,CourseOrder,LearningPathInfo } from "../interface/studentInterface";
+import type { ApiError, RazorpayErrorResponse, RazorpayOptions, RazorpayResponse } from "../../../types/interfaces/ICommon";
 
 export default function StudentOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -43,127 +44,133 @@ export default function StudentOrderDetailPage() {
     }
   };
 
-  const handleRetryPayment = async () => {
-    try {
-      setIsRetrying(true);
-      setPaymentDismissed(false);
+const handleRetryPayment = async () => {
+  try {
+    setIsRetrying(true);
+    setPaymentDismissed(false);
 
-      const res = await retryPayment(orderId!);
+    const res = await retryPayment(orderId!);
 
-      if (res.success && res.paymentData) {
-        const { amount, currency, razorpayOrderId, key } = res.paymentData;
-        const retryAttemptId = Date.now().toString();
+    if (res.success && res.paymentData) {
+      const { amount, currency, razorpayOrderId, key } = res.paymentData;
+      const retryAttemptId = Date.now().toString();
 
-        if (!razorpayOrderId || !amount) {
-          toast.error("Invalid payment configuration received from server");
-          return;
-        }
+      if (!razorpayOrderId || !amount) {
+        toast.error("Invalid payment configuration received from server");
+        return;
+      }
 
-        const razorpayKey = key || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      const razorpayKey = key || import.meta.env.VITE_RAZORPAY_KEY_ID;
 
-        if (!razorpayKey) {
-          toast.error("Payment service not configured properly");
-          return;
-        }
+      if (!razorpayKey) {
+        toast.error("Payment service not configured properly");
+        return;
+      }
 
-        console.log("Initializing Razorpay with:", {
-          key: razorpayKey,
-          razorpayOrderId,
-          amount,
-          amountInPaise: amount * 100,
-          retryAttemptId,
-        });
+      console.log("Initializing Razorpay with:", {
+        key: razorpayKey,
+        razorpayOrderId,
+        amount,
+        amountInPaise: amount * 100,
+        retryAttemptId,
+      });
 
-        if (!(window as any).Razorpay) {
-          toast.error("Payment service not available. Please refresh the page and try again.");
-          return;
-        }
+      if (!window.Razorpay) {
+        toast.error("Payment service not available. Please refresh the page and try again.");
+        return;
+      }
 
-        const options = {
-          key: razorpayKey,
-          amount: Math.round(amount * 100),
-          currency: currency || "INR",
-          order_id: razorpayOrderId,
-          name: "uLearn",
-          description: `Retry Payment for Order ${orderId}`,
-          handler: async (response: any) => {
-            try {
-              console.log("Payment successful, verifying with backend:", response);
-              const verifyRes = await retryPayment(orderId!, {
-                paymentId: response.razorpay_payment_id,
-                method: "razorpay",
-                amount,
-                retryAttemptId,
-              });
+      const options: RazorpayOptions = {
+        key: razorpayKey,
+        amount: Math.round(amount * 100),
+        currency: currency || "INR",
+        order_id: razorpayOrderId,
+        name: "uLearn",
+        description: `Retry Payment for Order ${orderId}`,
+        handler: async (response: RazorpayResponse) => {
+          try {
+            console.log("Payment successful, verifying with backend:", response);
+            const verifyRes = await retryPayment(orderId!, {
+              paymentId: response.razorpay_payment_id,
+              method: "razorpay",
+              amount,
+              retryAttemptId,
+            });
 
-              if (verifyRes.success) {
-                toast.success("Payment successful! Order updated.");
-                const updatedOrder = await orderDetail(orderId!);
-                setOrder(updatedOrder.order);
-                setPaymentDismissed(false);
-              } else {
-                toast.error(`Payment verification failed: ${verifyRes.message}`);
-                setPaymentDismissed(false);
-              }
-            } catch (error: any) {
-              console.error("Payment verification error:", error);
-              toast.error(error.response?.data?.message || "Failed to verify payment");
+            if (verifyRes.success) {
+              toast.success("Payment successful! Order updated.");
+              const updatedOrder = await orderDetail(orderId!);
+              setOrder(updatedOrder.order);
+              setPaymentDismissed(false);
+            } else {
+              toast.error(`Payment verification failed: ${verifyRes.message}`);
               setPaymentDismissed(false);
             }
-          },
-          modal: {
-            ondismiss: () => {
-              console.log("Payment modal dismissed by user");
-              setPaymentDismissed(true);
-              toast.warn(
-                "Payment was not completed",
-                { autoClose: false, closeOnClick: false, pauseOnHover: true }
-              );
-            },
-            escape: true,
-            backdrop_close: false,
-          },
-          prefill: { name: order?.userInfo.username || "", email: order?.userInfo.email || "" },
-          theme: { color: "#2563eb" },
-          retry: { enabled: true, max_count: 3 },
-        };
-
-        try {
-          const razorpay = new (window as any).Razorpay(options);
-          razorpay.on("payment.failed", async (response: any) => {
-            console.error("Payment failed:", response.error);
-            toast.error(`Payment failed: ${response.error.description || "Unknown error"}`);
-            try {
-              const failRes = await markOrderAsFailed(orderId!);
-              if (failRes.success) {
-                toast.success("Order marked as failed successfully");
-                const updatedOrder = await orderDetail(orderId!);
-                setOrder(updatedOrder.order);
-              } else {
-                toast.error(failRes.message || "Failed to mark order as failed");
-              }
-            } catch (error: any) {
-              console.error("Error marking order as failed:", error);
-              toast.error(error.response?.data?.message || "Failed to mark order as failed");
-            }
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            const apiError = error as ApiError;
+            toast.error(apiError.response?.data?.message || "Failed to verify payment");
             setPaymentDismissed(false);
-          });
-          razorpay.open();
-        } catch (razorpayError) {
-          console.error("Failed to initialize Razorpay:", razorpayError);
-          toast.error("Failed to open payment interface");
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            console.log("Payment modal dismissed by user");
+            setPaymentDismissed(true);
+            toast.warn(
+              "Payment was not completed",
+              { autoClose: false, closeOnClick: false, pauseOnHover: true }
+            );
+          },
+        },
+        prefill: { 
+          name: order?.userInfo.username || "", 
+          email: order?.userInfo.email || "" 
+        },
+        theme: { color: "#2563eb" },
+      };
+
+      try {
+        const razorpay = new window.Razorpay(options);
+        
+        razorpay.on("payment.failed", async (response: RazorpayErrorResponse) => {
+          console.error("Payment failed:", response.error);
+          toast.error(`Payment failed: ${response.error.description || "Unknown error"}`);
+          
+          try {
+            const failRes = await markOrderAsFailed(orderId!);
+            if (failRes.success) {
+              toast.success("Order marked as failed successfully");
+              const updatedOrder = await orderDetail(orderId!);
+              setOrder(updatedOrder.order);
+            } else {
+              toast.error(failRes.message || "Failed to mark order as failed");
+            }
+          } catch (error) {
+            console.error("Error marking order as failed:", error);
+            const apiError = error as ApiError;
+            toast.error(apiError.response?.data?.message || "Failed to mark order as failed");
+          }
           setPaymentDismissed(false);
-        }
-      } else {
-        toast.error(res.message || "Failed to initiate payment retry");
+        });
+        
+        razorpay.open();
+      } catch (razorpayError) {
+        console.error("Failed to initialize Razorpay:", razorpayError);
+        toast.error("Failed to open payment interface");
+        setPaymentDismissed(false);
       }
-    } catch (error: any) {
-      console.error("Retry payment error:", error);
-      toast.error(error.response?.data?.message || "Failed to initiate payment retry");
-    } finally {
-      setIsRetrying(false);
+    } else {
+      toast.error(res.message || "Failed to initiate payment retry");
     }
-  };
+  } catch (error) {
+    console.error("Retry payment error:", error);
+    const apiError = error as ApiError;
+    toast.error(apiError.response?.data?.message || "Failed to initiate payment retry");
+  } finally {
+    setIsRetrying(false);
+  }
+};
 
   const handleMarkOrderAsFailed = async () => {
     try {
@@ -176,10 +183,19 @@ export default function StudentOrderDetailPage() {
       } else {
         toast.error(res.message || "Failed to mark order as failed");
       }
-    } catch (error: any) {
-      console.error("Mark order as failed error:", error);
-      toast.error(error.response?.data?.message || "Failed to mark order as failed");
-    } finally {
+    } 
+    catch (error) {
+  const isApiError = (err: unknown): err is ApiError => {
+    return typeof err === 'object' && err !== null && 'response' in err;
+  };
+  
+  const errorMessage = isApiError(error) 
+    ? error.response?.data?.message || "Failed to mark order as failed"
+    : "Failed to mark order as failed";
+    
+  toast.error(errorMessage);
+}
+    finally {
       setIsMarkingFailed(false);
     }
   };

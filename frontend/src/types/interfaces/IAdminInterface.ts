@@ -1,4 +1,16 @@
 type ObjectId = string
+
+export interface CouponWithIndex extends Record<string, unknown> {
+  couponId: string;
+  code: string;
+  discount: number;
+  minPurchase: number;
+  maxDiscount: number;
+  expiryDate: string;
+  status: boolean;
+  _index?: number; 
+}
+
 export interface CouponData {
   code: string;
   discount: number;

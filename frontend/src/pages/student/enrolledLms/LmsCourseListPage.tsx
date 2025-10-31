@@ -4,6 +4,7 @@ import { getLearningPathDetails, completeCourseAndUnlockNext } from "../../../ap
 import { toast } from "react-toastify";
 import { Loader2, BookOpen, CheckCircle, Clock, Lock, Award } from "lucide-react";
 import {type LearningPathDetails } from "../interface/studentInterface";
+import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const LmsCourseListPage = () => {
   const [learningPath, setLearningPath] = useState<LearningPathDetails | null>(null);
@@ -39,10 +40,12 @@ const LmsCourseListPage = () => {
       toast.success("Course completed and next course unlocked!");
       const response = await getLearningPathDetails(learningPathId);
       setLearningPath(response);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Failed to complete course";
-      toast.error(errorMessage);
-    }
+    } 
+    catch (error) {
+  const apiError = error as ApiError;
+  const errorMessage = apiError.response?.data?.message || "Failed to complete course";
+  toast.error(errorMessage);
+}
   };
 
   const handleViewCertificate = (certificateUrl: string) => {

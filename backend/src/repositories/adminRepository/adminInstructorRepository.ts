@@ -46,7 +46,7 @@ export class AdminInstructorRespository
 
   //block or unblock
 
-  async updateInstructorProfile(email: string, data: any): Promise<any> {
+  async updateInstructorProfile(email: string, data:Partial<IInstructor>): Promise<IInstructor | null> {
     try {
       const response = await this.findOneAndUpdate(
         { email },

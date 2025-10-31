@@ -5,6 +5,7 @@ import {
   InstructorPopulated,
   MembershipPlanPopulated,
 } from "../../models/instructorMembershipOrderModel";
+import { PipelineStage } from "mongoose";
 
 export class AdminMembershipOrderRepository
   implements IAdminMembershipOrderRepository
@@ -13,12 +14,12 @@ export class AdminMembershipOrderRepository
     page: number,
     limit: number,
     search?: string,
-    status?: string,
+    status?: "paid" | "failed" | "cancelled",
   ): Promise<{ data: InstructorMembershipOrderDTO[]; total: number }> {
     const skip = (page - 1) * limit;
 
     // Use aggregation pipeline for advanced search
-    const pipeline: any[] = [
+    const pipeline: PipelineStage[] = [
       // Lookup instructor details
       {
         $lookup: {
@@ -50,10 +51,13 @@ export class AdminMembershipOrderRepository
     ];
 
     // Build match conditions
-    const matchConditions: any = {};
+    const matchConditions:{
+      paymentStatus?: "paid" | "failed" | "cancelled";
+      $or?: Array<Record<string, unknown>>;
+    } = {};
 
     // Status filter
-    if (status && ["paid", "failed","cancelled"].includes(status)) {
+    if (status) {
       matchConditions.paymentStatus = status;
     }
 

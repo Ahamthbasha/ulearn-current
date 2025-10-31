@@ -19,8 +19,9 @@ export class StudentCouponRepo
         expiryDate: { $gte: currentDate },
       });
       return coupons;
-    } catch (error: any) {
-      throw new Error(`Failed to fetch available coupons: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to fetch available coupons: ${errorMessage}`);
     }
   }
 
@@ -30,8 +31,9 @@ export class StudentCouponRepo
   ): Promise<ICoupon | null> {
     try {
       return await this.findById(couponId.toString(), session);
-    } catch (error: any) {
-      throw new Error(`Failed to fetch coupon: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to fetch coupon: ${errorMessage}`);
     }
   }
 
@@ -50,8 +52,9 @@ export class StudentCouponRepo
       if (!updatedCoupon) {
         throw new Error("Coupon not found");
       }
-    } catch (error: any) {
-      throw new Error(`Failed to update coupon usage: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+      throw new Error(`Failed to update coupon usage: ${errorMessage}`);
     }
   }
 }

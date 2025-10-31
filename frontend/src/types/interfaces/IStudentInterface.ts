@@ -1,5 +1,62 @@
 type ObjectId = string
 
+export interface ProfileFormValues {
+  username: string;
+  skills: string;
+  expertise: string;
+  currentStatus: string;
+  profilePic: File | null;
+}
+
+export interface ProfileData {
+  username?: string;
+  skills?: string[];
+  expertise?: string[];
+  currentStatus?: string;
+  profilePicUrl?: string;
+}
+
+export interface FormValues extends UpdateLearningPathRequest {
+  thumbnail?: File;
+}
+
+export interface CourseItem {
+  courseId: string;
+  order: number;
+}
+
+export type ExportSlotReportFilter = {
+  type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+};
+
+export type ExportSlotReportParams = {
+  format: "pdf" | "excel";
+  filter: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+  page?: number;
+  limit: number;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type ExportCourseReportFilter = {
+  type: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+};
+
+export type ExportCourseReportParams = {
+  format: "pdf" | "excel";
+  filter: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+  page?: number;
+  limit: number;
+  startDate?: string;
+  endDate?: string;
+};
+
 export interface CourseDTO {
   _id: string;
   courseName: string;
@@ -37,6 +94,7 @@ export interface LearningPathListDTO {
   learningPathId: string;
   title: string;
   thumbnailUrl?: string;
+  isPurchased:boolean
 }
 
 export interface LearningPathItemDTO {
@@ -55,7 +113,7 @@ export interface LearningPathDTO {
   items: LearningPathItemDTO[];
   totalAmount:number;
   totalPrice:number;
-  isPublished: boolean;
+  isPurchased: boolean;
   publishDate?: string;
   createdAt: string;
   updatedAt: string;

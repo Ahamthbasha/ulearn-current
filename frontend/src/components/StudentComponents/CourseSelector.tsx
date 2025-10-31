@@ -24,9 +24,15 @@ const CourseSelector: React.FC<CourseSelectorProps> = ({ name, label, categoryId
         } else {
           setError("Failed to fetch courses");
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch courses");
-      }
+      } catch (err: unknown) {
+  let message = "Failed to fetch courses";
+
+  if (err instanceof Error) {
+    message = err.message;
+  }
+
+  setError(message);
+}
     };
     fetchCourses();
   }, [categoryId]); // Re-fetch when categoryId changes

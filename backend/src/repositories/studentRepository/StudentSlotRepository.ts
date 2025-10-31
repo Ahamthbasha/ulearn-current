@@ -53,15 +53,6 @@ export class StudentSlotRepository
     return await query.exec();
   }
 
-  async update(
-    slotId: string,
-    update: Partial<ISlot>,
-    session?: ClientSession,
-  ): Promise<ISlot | null> {
-    let query = this.model.findByIdAndUpdate(slotId, update, { new: true });
-    if (session) query = query.session(session);
-    return await query.exec();
-  }
 
   async findOne(
     filter: object,

@@ -1,4 +1,3 @@
-// src/utils/errorHandlerUtil.ts
 import { Response } from "express";
 import { StatusCode } from "./enums";
 import {
@@ -14,9 +13,6 @@ import {
 } from "./error";
 import { appLogger } from "./logger";
 
-/* --------------------------------------------------------------- */
-/*  Throw typed AppError – keeps controllers clean                 */
-/* --------------------------------------------------------------- */
 export const throwAppError = (
   Ctor:
     | typeof BadRequestError
@@ -31,9 +27,6 @@ export const throwAppError = (
   throw new Ctor(message ?? "");
 };
 
-/* --------------------------------------------------------------- */
-/*  Centralised controller error handler                           */
-/* --------------------------------------------------------------- */
 export const handleControllerError = (error: unknown, res: Response): void => {
   if (error instanceof BadRequestError) {
     res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
@@ -85,9 +78,6 @@ export const handleControllerError = (error: unknown, res: Response): void => {
   });
 };
 
-/* --------------------------------------------------------------- */
-/*  Export error classes for use in controllers                    */
-/* --------------------------------------------------------------- */
 export {
   BadRequestError,
   UnauthorizedError,
