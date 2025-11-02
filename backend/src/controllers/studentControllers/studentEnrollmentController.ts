@@ -10,7 +10,7 @@ import {
 } from "../../utils/constants";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
-import { IPopulatedCourse } from "src/models/courseModel";
+import { IPopulatedCourse } from "../../models/courseModel";
 
 
 export class StudentEnrollmentController implements IStudentEnrollmentController {

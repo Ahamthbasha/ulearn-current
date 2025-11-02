@@ -1,4 +1,4 @@
-// src/mappers/courseMapper.ts
+
 import { ICourse } from "../../models/courseModel";
 import { ICourseDTO } from "../../dto/adminDTO/courseListDTO";
 

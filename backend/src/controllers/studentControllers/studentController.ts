@@ -13,7 +13,7 @@ import { IOtpGenerate } from "../../types/types";
 import { IJwtService } from "../../services/interface/IJwtService";
 import { IEmail } from "../../types/Email";
 import { appLogger } from "../../utils/logger";
-import { TokenPayload } from "src/types/dashboardTypes";
+import { TokenPayload } from "../../types/dashboardTypes";
 
 export class StudentController implements IStudentController {
   private _studentService: IStudentService;

@@ -3,7 +3,7 @@ import { IInstructorSlotBookingRepository } from "../../repositories/instructorR
 import { Types } from "mongoose";
 import createHttpError from "http-errors";
 import { IBooking } from "../../models/bookingModel";
-import { IInstructor } from "src/models/instructorModel";
+import { IInstructor } from "../../models/instructorModel";
 
 export class InstructorSlotBookingService
   implements IInstructorSlotBookingService

@@ -1,4 +1,4 @@
-import { SlotDTO } from "src/dto/instructorDTO/slotDTO";
+import { SlotDTO } from "../../../dto/instructorDTO/slotDTO";
 import { ISlot } from "../../../models/slotModel";
 import { Types } from "mongoose";
 

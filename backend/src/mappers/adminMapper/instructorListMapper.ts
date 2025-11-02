@@ -1,4 +1,4 @@
-// src/mappers/instructorMapper.ts
+
 import { InstructorDTO } from "../../dto/adminDTO/instructorListDTO";
 import { IInstructor } from "../../models/instructorModel";
 

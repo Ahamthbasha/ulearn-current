@@ -9,7 +9,7 @@ import {
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
 import { IInstructor } from "../../models/instructorModel";
-import { AuthenticatedRequest } from "src/middlewares/authenticatedRoutes";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 
 export class InstructorProfileController
   implements IInstructorProfileController
