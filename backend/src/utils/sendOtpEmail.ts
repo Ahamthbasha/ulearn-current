@@ -1,35 +1,43 @@
 import { IEmail } from "../types/Email";
-import nodeMailer, { SentMessageInfo } from "nodemailer";
+import nodeMailer, { SentMessageInfo, Transporter } from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 export class SendEmail implements IEmail {
-  
+  private transporter: Transporter;
+
+  constructor() {
+    const sendgridApiKey = process.env.SENDGRID_API_KEY;
+    const senderEmail = process.env.SENDER_EMAIL;
+
+    if (!sendgridApiKey || !senderEmail) {
+      throw new Error("SendGrid credentials missing in environment variables");
+    }
+
+    // Create transporter with SendGrid SMTP
+    this.transporter = nodeMailer.createTransport({
+      host: "smtp.sendgrid.net",
+      port: 587,
+      secure: false, // Use TLS
+      auth: {
+        user: "apikey", // This is literally the string "apikey"
+        pass: sendgridApiKey, // Your SendGrid API key
+      },
+    });
+
+    console.log('✅ Email transporter initialized with SendGrid');
+  }
+
   async sentEmailVerification(
     name: string,
     email: string,
     verificationCode: string,
   ): Promise<SentMessageInfo> {
-    const userEmail = process.env.USER_EMAIL;
-    const userPassword = process.env.USER_PASSWORD;
-
-    if (!userEmail || !userPassword) {
-      throw new Error("Email credentials are not set in the environment");
-    }
-
-const transporter = nodeMailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: userEmail,
-    pass: userPassword,
-  },
-});
+    const senderEmail = process.env.SENDER_EMAIL;
 
     const mailOptions = {
-      from: userEmail,
+      from: senderEmail,
       to: email,
       subject: "🌟 Welcome to ulearn - Verify Your Email 🌟",
       text: `Hello ${name},\n\nYour verification code is: ${verificationCode}\n\nThanks,\nThe ulearn Team`,
@@ -41,7 +49,7 @@ const transporter = nodeMailer.createTransport({
             <div style="margin: 20px 0; font-size: 1.5em; font-weight: bold; color: #4CAF50; background: #f0f0f0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
               ${verificationCode}
             </div>
-            <p>If you didn’t request this, please ignore this email.</p>
+            <p>If you didn't request this, please ignore this email.</p>
             <br>
             <p>Thank you, ${name}</p>
             <p><strong>The Ulearn Team</strong></p>
@@ -57,9 +65,11 @@ const transporter = nodeMailer.createTransport({
     };
 
     try {
-      const info = await transporter.sendMail(mailOptions);
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Email sent successfully:', info.messageId);
       return info;
     } catch (error) {
+      console.error('❌ Email sending failed:', error);
       throw error;
     }
   }
@@ -69,25 +79,10 @@ const transporter = nodeMailer.createTransport({
     email: string,
     reason: string,
   ): Promise<SentMessageInfo> {
-    const userEmail = process.env.USER_EMAIL;
-    const userPassword = process.env.USER_PASSWORD;
-
-    if (!userEmail || !userPassword) {
-      throw new Error("Email credentials are not set in the environment");
-    }
-
-    const transporter = nodeMailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: userEmail,
-    pass: userPassword,
-  },
-});
+    const senderEmail = process.env.SENDER_EMAIL;
 
     const mailOptions = {
-      from: userEmail,
+      from: senderEmail,
       to: email,
       subject: "📢 uLearn - Verification Request Rejected",
       text: `Hello ${name},\n\nWe regret to inform you that your instructor verification request has been rejected.\n\nReason: ${reason}\n\nYou can re-apply after resolving the issue.\n\nThank you,\nThe uLearn Team`,
@@ -111,9 +106,11 @@ const transporter = nodeMailer.createTransport({
     };
 
     try {
-      const info = await transporter.sendMail(mailOptions);
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Rejection email sent:', info.messageId);
       return info;
     } catch (error) {
+      console.error('❌ Email sending failed:', error);
       throw error;
     }
   }
@@ -122,25 +119,10 @@ const transporter = nodeMailer.createTransport({
     name: string,
     email: string,
   ): Promise<SentMessageInfo> {
-    const userEmail = process.env.USER_EMAIL;
-    const userPassword = process.env.USER_PASSWORD;
-
-    if (!userEmail || !userPassword) {
-      throw new Error("Email credentials are not set in the environment");
-    }
-
-   const transporter = nodeMailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: userEmail,
-    pass: userPassword,
-  },
-});
+    const senderEmail = process.env.SENDER_EMAIL;
 
     const mailOptions = {
-      from: userEmail,
+      from: senderEmail,
       to: email,
       subject: "🎉 uLearn - Instructor Verification Approved!",
       text: `Hello ${name},\n\nCongratulations! Your instructor verification has been successfully approved.\n\nYou now have access to your instructor dashboard.\n\nWelcome aboard!\n\nThanks,\nThe uLearn Team`,
@@ -160,9 +142,11 @@ const transporter = nodeMailer.createTransport({
     };
 
     try {
-      const info = await transporter.sendMail(mailOptions);
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Verification success email sent:', info.messageId);
       return info;
     } catch (error) {
+      console.error('❌ Email sending failed:', error);
       throw error;
     }
   }
@@ -173,25 +157,10 @@ const transporter = nodeMailer.createTransport({
     planName: string,
     expiryDate: Date,
   ): Promise<SentMessageInfo> {
-    const userEmail = process.env.USER_EMAIL;
-    const userPassword = process.env.USER_PASSWORD;
-
-    if (!userEmail || !userPassword) {
-      throw new Error("Email credentials are not set in the environment");
-    }
-
-   const transporter = nodeMailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: userEmail,
-    pass: userPassword,
-  },
-});
+    const senderEmail = process.env.SENDER_EMAIL;
 
     const mailOptions = {
-      from: userEmail,
+      from: senderEmail,
       to: email,
       subject: `✅ uLearn - Membership Activated for "${planName}"`,
       html: `
@@ -207,7 +176,14 @@ const transporter = nodeMailer.createTransport({
     `,
     };
 
-    return await transporter.sendMail(mailOptions);
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Membership purchase email sent:', info.messageId);
+      return info;
+    } catch (error) {
+      console.error('❌ Email sending failed:', error);
+      throw error;
+    }
   }
 
   async sendMembershipExpiryReminder(
@@ -215,25 +191,10 @@ const transporter = nodeMailer.createTransport({
     email: string,
     expiryDate: Date,
   ): Promise<SentMessageInfo> {
-    const userEmail = process.env.USER_EMAIL;
-    const userPassword = process.env.USER_PASSWORD;
-
-    if (!userEmail || !userPassword) {
-      throw new Error("Email credentials are not set in the environment");
-    }
-
-    const transporter = nodeMailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: userEmail,
-    pass: userPassword,
-  },
-});
+    const senderEmail = process.env.SENDER_EMAIL;
 
     const mailOptions = {
-      from: userEmail,
+      from: senderEmail,
       to: email,
       subject: `⚠️ Membership Expiring Soon`,
       html: `
@@ -248,7 +209,14 @@ const transporter = nodeMailer.createTransport({
     `,
     };
 
-    return await transporter.sendMail(mailOptions);
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Expiry reminder email sent:', info.messageId);
+      return info;
+    } catch (error) {
+      console.error('❌ Email sending failed:', error);
+      throw error;
+    }
   }
 
   async sendSlotBookingConfirmation(
@@ -259,25 +227,10 @@ const transporter = nodeMailer.createTransport({
     startTime: string,
     endTime: string,
   ): Promise<SentMessageInfo> {
-    const userEmail = process.env.USER_EMAIL;
-    const userPassword = process.env.USER_PASSWORD;
-
-    if (!userEmail || !userPassword) {
-      throw new Error("Email credentials are not set in the environment");
-    }
-
-    const transporter = nodeMailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: userEmail,
-    pass: userPassword,
-  },
-});
+    const senderEmail = process.env.SENDER_EMAIL;
 
     const mailOptions = {
-      from: userEmail,
+      from: senderEmail,
       to: email,
       subject: "✅ Slot Booking Confirmed - uLearn",
       html: `
@@ -296,6 +249,13 @@ const transporter = nodeMailer.createTransport({
     `,
     };
 
-    return await transporter.sendMail(mailOptions);
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Slot booking confirmation sent:', info.messageId);
+      return info;
+    } catch (error) {
+      console.error('❌ Email sending failed:', error);
+      throw error;
+    }
   }
 }
