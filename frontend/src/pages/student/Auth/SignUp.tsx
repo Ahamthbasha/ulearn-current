@@ -42,14 +42,22 @@ const SignUp = () => {
         localStorage.setItem("email", values.email);
         toast.success(response.message);
         navigate("/user/verifyOtp");
-      } else {
-        toast.error(response.message);
       }
+    } catch (error) {
+      const apiError = error as ApiError;
+    
+    // ✅ Check if there's a response from the server
+    if (apiError.response?.data?.message) {
+      // Backend sent a message (like "User already exists")
+      toast.error(apiError.response.data.message);
+    } else if (apiError.message) {
+      // Network error or other axios error
+      toast.error(apiError.message);
+    } else {
+      // Fallback for unknown errors
+      toast.error("An unexpected error occurred");
     }
-     catch (error) {
-  const apiError = error as ApiError;
-  toast.error(apiError.response?.data?.message || apiError.message || "Unknown error occurred");
-}
+    }
   };
 
   return (
