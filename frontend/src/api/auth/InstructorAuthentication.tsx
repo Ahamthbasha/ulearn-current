@@ -3,6 +3,7 @@ import type { userData } from "../../types/userData";
 
 import authenticationRoutes from "../../types/endPoints/authEndpoints";
 import type { Login } from "../../types/LoginTypes";
+import { AxiosError } from "axios";
 
 export const signup = async (userData: userData)=> {
   try {
@@ -37,7 +38,10 @@ export const verifyOtp = async (otp: string) => {
 
     return response.data;
   } catch (error) {
-   throw error
+   if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw new Error('OTP verification failed');
   }
 };
 

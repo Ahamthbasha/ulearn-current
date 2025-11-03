@@ -7,7 +7,6 @@ import {
   verifyOtp,
 } from "../../../api/auth/InstructorAuthentication";
 import otpImage from "../../../assets/otp.jpg";
-import { AxiosError } from "axios";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -106,38 +105,40 @@ const OTPVerification = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    const OTP = otp.join("");
-    
-    if (OTP.length !== 4) {
-      toast.error("Please enter the complete OTP");
-      return;
-    }
+const handleSubmit = async () => {
+  const OTP = otp.join("");
+  
+  if (OTP.length !== 4) {
+    toast.error("Please enter the complete OTP");
+    return;
+  }
 
-    setIsSubmitting(true);
-    try {
-      const response = await verifyOtp(OTP);
-      if (response.success) {
-        toast.success(response.message || "OTP verified successfully!");
-        localStorage.removeItem("verificationToken");
-        localStorage.removeItem("email");
-        setTimeout(() => {
-          navigate("/instructor/login");
-        }, 1000);
-      }
-    } catch (error) {
-      const errorMsg = error instanceof AxiosError 
-        ? error.response?.data.message 
-        : "OTP verification failed";
-      toast.error(errorMsg);
-      
-      // Clear OTP on error
-      setOtp(Array(4).fill(""));
-      document.getElementById("otpInput-0")?.focus();
-    } finally {
-      setIsSubmitting(false);
+  setIsSubmitting(true);
+  try {
+    const response = await verifyOtp(OTP);
+    if (response.success) {
+      toast.success(response.message || "OTP verified successfully!");
+      localStorage.removeItem("verificationToken");
+      localStorage.removeItem("email");
+      setTimeout(() => {
+        navigate("/instructor/login");
+      }, 1000);
     }
-  };
+  } catch (error) {
+    // Now error is already a standard Error with the message from backend
+    const errorMsg = error instanceof Error 
+      ? error.message 
+      : "OTP verification failed";
+    toast.error(errorMsg);
+    
+    // Clear OTP on error
+    setOtp(Array(4).fill(""));
+    document.getElementById("otpInput-0")?.focus();
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4 py-8 sm:p-4">
