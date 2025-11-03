@@ -28,7 +28,7 @@ const AdminCategoryListPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   const navigate = useNavigate();
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
