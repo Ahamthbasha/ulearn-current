@@ -1,5 +1,11 @@
 import dotenv from "dotenv";
-dotenv.config({ path: ".env.development" });
+
+if (process.env.NODE_ENV === "production") {
+  dotenv.config();
+} else {
+  dotenv.config({ path: ".env.development" }); 
+}
+
 import express from "express";
 import connectDB from "./config/db";
 import cors, { CorsOptions } from "cors";
