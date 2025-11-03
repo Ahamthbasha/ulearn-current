@@ -42,9 +42,7 @@ const AddCategoryPage = () => {
             if (response.success) {
               toast.success("Category added successfully");
               navigate("/admin/category");
-            } else {
-              toast.error(response.message || "Failed to add category");
-            }
+            } 
           }
           catch(error){
             const errorMsg = error instanceof AxiosError ? error.response?.data.message : "unexpected error"
