@@ -28,7 +28,7 @@ declare module "socket.io-client" {
   }
 }
 
-const SERVER_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+const SERVER_URL = import.meta.env.VITE_BACKEND_URL || "https://ulearnbackend-op7t.onrender.com";
 
 const VideoCallRoom: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();

@@ -7,7 +7,7 @@ import { type AnyAction, type Dispatch } from "@reduxjs/toolkit";
 import { StatusCode, Roles, AuthErrorMsg } from "../utils/enums";
 
 export const API: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BASEURL || "http://localhost:3001",
+  baseURL: import.meta.env.VITE_BASEURL || "https://ulearnbackend-op7t.onrender.com",
   withCredentials: true,
 });
 
