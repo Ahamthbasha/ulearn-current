@@ -4,6 +4,7 @@ import InputField from "../../../components/common/InputField";
 import { addCategory } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 
 const AddCategoryPage = () => {
   const navigate = useNavigate();
@@ -44,8 +45,11 @@ const AddCategoryPage = () => {
             } else {
               toast.error(response.message || "Failed to add category");
             }
-          } 
-          
+          }
+          catch(error){
+            const errorMsg = error instanceof AxiosError ? error.response?.data.message : "unexpected error"
+            toast.error(errorMsg)
+          }
           finally {
             setSubmitting(false);
           }
