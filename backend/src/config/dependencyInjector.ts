@@ -241,7 +241,7 @@ import { IInstructorCourseService } from "../services/instructorServices/interfa
 import { InstructorCourseService } from "../services/instructorServices/instructorCourseService";
 
 import { IInstructorCourseController } from "../controllers/instructorController/interfaces/IInstructorCourseController";
-import { InstructorCourseController } from "../controllers/instructorController/InstructorCourseController";
+import { InstructorCourseController } from "../controllers/instructorController/instructorCourseController";
 
 import { CoursePublishCron } from "../cron/coursePublishCron";
 
