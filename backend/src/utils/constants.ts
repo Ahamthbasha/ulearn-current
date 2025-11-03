@@ -5,6 +5,8 @@ export const VALID_ORDER_STATUSES = ["pending", "paid", "failed","cancelled"] as
 export type OrderStatus = typeof VALID_ORDER_STATUSES[number];
 
 export const INSTRUCTOR_MESSAGES = {
+  INSTRUCTOR_CREATED_SUCCESSFULLY : "instructor created successfully",
+  FAILED_TO_CREATE_INSTRUCTOR:"Failed to create instructor",
   // General Messages
   EMAIL_PASSWORD_USERNAME_REQUIRED:
     "Email, password, and username are required",

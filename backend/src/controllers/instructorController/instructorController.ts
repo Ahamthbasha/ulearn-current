@@ -4,7 +4,7 @@ import IInstructorController from "./interfaces/IInstructorController";
 import IInstructorService from "../../services/instructorServices/interface/IInstructorService";
 import IOtpServices from "../../services/interface/IOtpService";
 import { Roles, StatusCode } from "../../utils/enums";
-import { INSTRUCTOR_MESSAGES } from "../../utils/constants";
+import { INSTRUCTOR_MESSAGES, SERVER_ERROR } from "../../utils/constants";
 import { IJwtService } from "../../services/interface/IJwtService";
 import { IEmail } from "../../types/Email";
 import { IOtpGenerate } from "../../types/types";
@@ -20,15 +20,7 @@ import {
 } from "../../utils/errorHandlerUtil";
 import { IInstructor } from "../../models/instructorModel";
 import { JwtPayload } from "jsonwebtoken";
-
-
-const getHeader = (req: Request, header: string): string => {
-  const value = req.headers[header];
-  if (typeof value !== "string") {
-    throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
-  }
-  return value as string;
-};
+import { appLogger } from "src/utils/logger";
 
 export class InstructorController implements IInstructorController {
   private _instructorService: IInstructorService;
@@ -118,56 +110,117 @@ export class InstructorController implements IInstructorController {
     }
   }
 
- async createUser(req: Request, res: Response): Promise<void> {
+
+async createUser(req: Request, res: Response): Promise<void> {
   try {
-    const { otp } = req.body as { otp: string };
-    const tokenHeader = getHeader(req, "the-verify-token");
+    const { otp } = req.body;
 
-    if (!otp) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.OTP_REQUIRED);
+    if (!otp) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: INSTRUCTOR_MESSAGES.OTP_REQUIRED,
+      });
+      return;
+    }
 
-    const decodedRaw = await this._jwt.verifyToken(tokenHeader);
+    const token = req.headers["the-verify-token"] || "";
+    if (typeof token !== "string") {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: INSTRUCTOR_MESSAGES.TOKEN_INVALID,
+      });
+      return;
+    }
 
-    // If token decoded to a string, it is invalid here
+    const decodedRaw = await this._jwt.verifyToken(token);
+
     if (typeof decodedRaw === "string") {
-      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
-    }
-
-    // Cast decoded Raw to JwtPayload extended with id and email
-    const decoded = decodedRaw as JwtPayload & { id?: string; email?: string };
-
-    if (!decoded?.email) {
-      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: INSTRUCTOR_MESSAGES.TOKEN_INVALID,
+      });
       return;
     }
 
-    // Verify OTP for the email
-    const isValid = await this._otpService.verifyOtp(decoded.email, otp);
-    if (!isValid) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.INCORRECT_OTP);
+    const decoded = decodedRaw as JwtPayload & {
+      email?: string;
+      password?: string;
+      username?: string;
+      role?: string;
+    };
 
-    if (!decoded.id) {
-      throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.TOKEN_INVALID);
+    if (!decoded || !decoded.email || !decoded.password || !decoded.username) {
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: INSTRUCTOR_MESSAGES.TOKEN_INVALID,
+      });
       return;
     }
 
-    // Find the full instructor user by decoded id
-    const instructorFromDb: IInstructor | null = await this._instructorService.findById(decoded.id);
-    if (!instructorFromDb) {
-      throwAppError(NotFoundError, INSTRUCTOR_MESSAGES.USER_NOT_FOUND);
-      return
+    // Verify OTP
+    const isOtpValid = await this._otpService.verifyOtp(decoded.email, otp);
+
+    if (!isOtpValid) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: INSTRUCTOR_MESSAGES.INCORRECT_OTP,
+      });
+      return;
+    }
+    const existingUser = await this._instructorService.findByEmail(decoded.email);
+    if (existingUser) {
+      res.status(StatusCode.CONFLICT).json({
+        success: false,
+        message: INSTRUCTOR_MESSAGES.USER_ALREADY_EXISTS,
+      });
+      return;
     }
 
-    const user = await this._instructorService.createUser(instructorFromDb);
-    if (!user) throwAppError(InternalServerError, INSTRUCTOR_MESSAGES.FAILED_TO_RESET_PASSWORD);
+    // Create new user from token data
+    // isVerified: false - will be verified by admin later
+    const userData = {
+      email: decoded.email,
+      password: decoded.password, // Already hashed from signup
+      username: decoded.username,
+      role: decoded.role || Roles.INSTRUCTOR,
+      isVerified: false, // ✅ Admin needs to verify instructor
+      isBlocked: false,
+    };
 
-    res.status(StatusCode.CREATED).json({
-      success: true,
-      message: INSTRUCTOR_MESSAGES.USER_CREATED,
-      user,
-    });
+    const user = await this._instructorService.createUser(userData as IInstructor);
+
+    if (user) {
+      await this._otpService.deleteOtp(decoded.email);
+
+      res.status(StatusCode.CREATED).json({
+        success: true,
+        message: INSTRUCTOR_MESSAGES.INSTRUCTOR_CREATED_SUCCESSFULLY,
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          isVerified: user.isVerified,
+        },
+      });
+      return;
+    } else {
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: INSTRUCTOR_MESSAGES.FAILED_TO_CREATE_INSTRUCTOR,
+      });
+      return;
+    }
   } catch (error) {
-    handleControllerError(error, res);
+    appLogger.error("Create Instructor Error:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+    });
   }
 }
+
 
 async login(req: Request, res: Response): Promise<void> {
   try {
