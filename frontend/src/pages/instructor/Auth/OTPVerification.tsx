@@ -7,6 +7,7 @@ import {
   verifyOtp,
 } from "../../../api/auth/InstructorAuthentication";
 import otpImage from "../../../assets/otp.jpg";
+import { AxiosError } from "axios";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -84,19 +85,14 @@ const OTPVerification = () => {
           setTimeout(() => {
             navigate("/instructor/login");
           }, 1000);
-        } else {
-          toast.error(response.message);
         }
+      } catch (error) {
+        const errorMsg =
+          error instanceof AxiosError
+            ? error.response?.data.message
+            : "unexpected error";
+        toast.error(errorMsg);
       }
-       catch (error) {
-  const errorMessage = 
-    error instanceof Error 
-      ? error.message 
-      : (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 
-        "An unexpected error occurred";
-  
-  toast.error(errorMessage);
-}
     } else {
       toast.error("Please enter the complete OTP");
     }
