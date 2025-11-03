@@ -238,7 +238,7 @@ import { IInstructorCourseRepository } from "../repositories/instructorRepositor
 import { InstructorCourseRepository } from "../repositories/instructorRepository/instructorCourseRepository";
 
 import { IInstructorCourseService } from "../services/instructorServices/interface/IInstructorCourseService";
-import { InstructorCourseService } from "../services/instructorServices/InstructorCourseService";
+import { InstructorCourseService } from "../services/instructorServices/instructorCourseService";
 
 import { IInstructorCourseController } from "../controllers/instructorController/interfaces/IInstructorCourseController";
 import { InstructorCourseController } from "../controllers/instructorController/InstructorCourseController";
@@ -390,7 +390,7 @@ import { IStudentCartRepository } from "../repositories/studentRepository/interf
 import { StudentCartRepository } from "../repositories/studentRepository/studentCartRepository";
 
 import { IStudentCartService } from "../services/studentServices/interface/IStudentCartService";
-import { StudentCartService } from "../services/studentServices/StudentCartService";
+import { StudentCartService } from "../services/studentServices/studentCartService";
 
 import { IStudentCartController } from "../controllers/studentControllers/interfaces/IStudentCartController";
 import { StudentCartController } from "../controllers/studentControllers/studentCartController";
@@ -416,7 +416,7 @@ import { IStudentWishlistRepository } from "../repositories/studentRepository/in
 import { StudentWishlistRepository } from "../repositories/studentRepository/studentWishlistRepository";
 
 import { IStudentWishlistService } from "../services/studentServices/interface/IStudentWishlistService";
-import { StudentWishlistService } from "../services/studentServices/StudentWishlistService";
+import { StudentWishlistService } from "../services/studentServices/studentWishlistService";
 
 import { IStudentWishlistController } from "../controllers/studentControllers/interfaces/IStudentWishlistController";
 import { StudentWishlistController } from "../controllers/studentControllers/studentWishlistController";
@@ -466,7 +466,7 @@ import { IStudentCheckoutRepository } from "../repositories/studentRepository/in
 import { StudentCheckoutRepository } from "../repositories/studentRepository/studentCheckoutRepository";
 
 import { IStudentCheckoutService } from "../services/studentServices/interface/IStudentCheckoutService";
-import { StudentCheckoutService } from "../services/studentServices/StudentCheckoutService";
+import { StudentCheckoutService } from "../services/studentServices/studentCheckoutService";
 
 import { IStudentCheckoutController } from "../controllers/studentControllers/interfaces/IStudentCheckoutController";
 import { StudentCheckoutController } from "../controllers/studentControllers/studentCheckoutController";
@@ -514,7 +514,7 @@ import { IInstructorAllCourseDashboardRepository } from "../repositories/instruc
 import { InstructorAllCourseDashboardRepository } from "../repositories/instructorRepository/instructorAllCourseDashboardRepository";
 
 import { IInstructorAllCourseDashboardService } from "../services/instructorServices/interface/IInstructorAllDashboardService";
-import { InstructorAllCourseDashboardService } from "../services/instructorServices/InstructorAllDashboardService";
+import { InstructorAllCourseDashboardService } from "../services/instructorServices/instructorAllDashboardService";
 
 import { IInstructorAllDashboardController } from "../controllers/instructorController/interfaces/IInstructorAllDashboardController";
 import { InstructorAllCourseDashboardController } from "../controllers/instructorController/instructorAllDashboardController";
@@ -544,7 +544,7 @@ import { IInstructorCourseSpecificDashboardRepository } from "../repositories/in
 import { InstructorSpecificCourseDashboardRepository } from "../repositories/instructorRepository/instructorSpecificCourseDashboardRepository";
 
 import { IInstructorSpecificCourseDashboardService } from "../services/instructorServices/interface/IInstructorSpecificCourseService";
-import { InstructorSpecificCourseDashboardService } from "../services/instructorServices/InstructorSpecificCourseService";
+import { InstructorSpecificCourseDashboardService } from "../services/instructorServices/instructorSpecificCourseService";
 
 import { IInstructorCourseSpecificDashboardController } from "../controllers/instructorController/interfaces/IInstructorSpecificCourseController";
 import { InstructorSpecificCourseDashboardController } from "../controllers/instructorController/instructorSpecificCourseController";
@@ -686,7 +686,7 @@ import { IStudentOrderRepository } from "../repositories/studentRepository/inter
 import { StudentOrderRepository } from "../repositories/studentRepository/studentOrderRepository";
 
 import { IStudentOrderService } from "../services/studentServices/interface/IStudentOrderService";
-import { StudentOrderService } from "../services/studentServices/StudentOrderService";
+import { StudentOrderService } from "../services/studentServices/studentOrderService";
 
 import { IStudentOrderController } from "../controllers/studentControllers/interfaces/IStudentOrderController";
 import { StudentOrderController } from "../controllers/studentControllers/studentOrderController";
@@ -908,7 +908,7 @@ import { IAdminDashboardRepository } from "../repositories/adminRepository/inter
 import { AdminDashboardRepository } from "../repositories/adminRepository/adminDashboardRepository";
 
 import { IAdminDashboardService } from "../services/adminServices/interface/IAdminDashboardService";
-import { AdminDashboardService } from "../services/adminServices/AdminDashboardService";
+import { AdminDashboardService } from "../services/adminServices/adminDashboardService";
 
 import { IAdminDashboardController } from "../controllers/adminControllers/interface/IAdminDashboardController";
 import { AdminDashboardController } from "../controllers/adminControllers/adminDashboardController";
