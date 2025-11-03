@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export class SendEmail implements IEmail {
+  
   async sentEmailVerification(
     name: string,
     email: string,
@@ -17,16 +18,15 @@ export class SendEmail implements IEmail {
       throw new Error("Email credentials are not set in the environment");
     }
 
-    const transporter = nodeMailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: userEmail,
-        pass: userPassword,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+const transporter = nodeMailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: userEmail,
+    pass: userPassword,
+  },
+});
 
     const mailOptions = {
       from: userEmail,
@@ -77,15 +77,14 @@ export class SendEmail implements IEmail {
     }
 
     const transporter = nodeMailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: userEmail,
-        pass: userPassword,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: userEmail,
+    pass: userPassword,
+  },
+});
 
     const mailOptions = {
       from: userEmail,
@@ -130,16 +129,15 @@ export class SendEmail implements IEmail {
       throw new Error("Email credentials are not set in the environment");
     }
 
-    const transporter = nodeMailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: userEmail,
-        pass: userPassword,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+   const transporter = nodeMailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: userEmail,
+    pass: userPassword,
+  },
+});
 
     const mailOptions = {
       from: userEmail,
@@ -182,16 +180,15 @@ export class SendEmail implements IEmail {
       throw new Error("Email credentials are not set in the environment");
     }
 
-    const transporter = nodeMailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: userEmail,
-        pass: userPassword,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+   const transporter = nodeMailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: userEmail,
+    pass: userPassword,
+  },
+});
 
     const mailOptions = {
       from: userEmail,
@@ -226,15 +223,14 @@ export class SendEmail implements IEmail {
     }
 
     const transporter = nodeMailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: userEmail,
-        pass: userPassword,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: userEmail,
+    pass: userPassword,
+  },
+});
 
     const mailOptions = {
       from: userEmail,
@@ -271,15 +267,14 @@ export class SendEmail implements IEmail {
     }
 
     const transporter = nodeMailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: userEmail,
-        pass: userPassword,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: userEmail,
+    pass: userPassword,
+  },
+});
 
     const mailOptions = {
       from: userEmail,

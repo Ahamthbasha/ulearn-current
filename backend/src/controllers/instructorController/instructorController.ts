@@ -86,6 +86,7 @@ export class InstructorController implements IInstructorController {
         token,
       });
     } catch (error) {
+      console.log(error)
       handleControllerError(error, res);
     }
   }
@@ -386,4 +387,5 @@ export class InstructorController implements IInstructorController {
       handleControllerError(error, res);
     }
   }
+  
 }
