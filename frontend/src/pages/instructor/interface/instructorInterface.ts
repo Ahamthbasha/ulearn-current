@@ -48,7 +48,7 @@ export interface BankFormValues {
   bankName: string;
 }
 
-export interface Chapter {
+export interface Chapter extends Record<string,unknown>{
   courseId: string;
   chapterId: string;
   chapterTitle: string;
