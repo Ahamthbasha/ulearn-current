@@ -1,7 +1,6 @@
 import Redis from "ioredis";
 import { appLogger } from "../utils/logger";
 
-// Use REDIS_URL for cloud, fallback to host/port for local
 const redisClient = process.env.REDIS_URL
   ? new Redis(process.env.REDIS_URL)
   : new Redis({
