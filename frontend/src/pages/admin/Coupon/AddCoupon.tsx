@@ -7,25 +7,31 @@ import { createCoupon } from '../../../api/action/AdminActionApi';
 import { type CouponData } from '../../../types/interfaces/IAdminInterface';
 import { isApiError } from '../interface/adminInterface';
 
-
-
 const validationSchema = Yup.object({
   code: Yup.string()
     .required('Coupon code is required')
     .matches(/^[A-Z0-9\s]{4,10}$/, 'Coupon code must be 4-10 uppercase letters, numbers, or spaces'),
   discount: Yup.number()
     .required('Discount is required')
+    .positive('Discount must be a positive number')
     .min(5, 'Discount must be at least 5')
     .max(100, 'Discount cannot exceed 100'),
   expiryDate: Yup.date()
     .required('Expiry date is required')
-    .min(new Date(), 'Expiry date must be in the future'),
+    .test('is-future', 'Expiry date must be in the future', function(value) {
+      if (!value) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return new Date(value) >= today;
+    }),
   minPurchase: Yup.number()
     .required('Minimum purchase is required')
-    .min(0, 'Minimum purchase cannot be negative'),
+    .positive('Minimum purchase must be a positive number')
+    .max(1000000, 'Minimum purchase cannot exceed 1,000,000'),
   maxDiscount: Yup.number()
     .required('Maximum discount is required')
-    .min(0, 'Maximum discount cannot be negative'),
+    .positive('Maximum discount must be a positive number')
+    .max(100000, 'Maximum discount cannot exceed 100,000'),
 });
 
 const AddCouponPage: React.FC = () => {
@@ -34,10 +40,10 @@ const AddCouponPage: React.FC = () => {
 
   const initialValues: CouponData = {
     code: '',
-    discount: 0,
+    discount: undefined as unknown as number,
     expiryDate: '',
-    minPurchase: 0,
-    maxDiscount: 0,
+    minPurchase: undefined as unknown as number,
+    maxDiscount: undefined as unknown as number,
   };
 
   const handleSubmit = async (

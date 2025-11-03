@@ -5,7 +5,7 @@ import DataTable, {
   type ActionButton,
   type PaginationProps,
 } from '../../../components/AdminComponents/DataTable';
-import { type adminCouponDto,type CouponWithIndex } from '../../../types/interfaces/IAdminInterface';
+import { type adminCouponDto, type CouponWithIndex } from '../../../types/interfaces/IAdminInterface';
 import {
   getCoupon,
   deleteCoupon,
@@ -37,7 +37,14 @@ const CouponManagementPage: React.FC = () => {
 
   const debouncedSearchValue = useDebounce(searchValue, 500);
 
-  /* -------------------------- API -------------------------- */
+  const isCouponExpired = (expiryDate: string): boolean => {
+    const [day, month, year] = expiryDate.split('-');
+    const expiry = new Date(`${year}-${month}-${day}`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+    return expiry < today;
+  };
+
   const fetchCoupons = useCallback(
     async (page: number, searchCode?: string) => {
       setLoading(true);
@@ -47,8 +54,7 @@ const CouponManagementPage: React.FC = () => {
         const couponsData: adminCouponDto[] = Array.isArray(data.coupons)
           ? data.coupons
           : [];
-        
-        // Add index for serial number
+
         const couponsWithIndex: CouponWithIndex[] = couponsData.map((coupon, idx) => ({
           ...coupon,
           _index: (page - 1) * limit + idx + 1
@@ -58,14 +64,13 @@ const CouponManagementPage: React.FC = () => {
         setTotalPages(Math.ceil((data.total ?? 0) / limit));
       }
       catch (err: unknown) {
-  let message = 'Failed to fetch coupons';
-  if (err instanceof Error) {
-    message = err.message;
-  }
-  setError(message);
-  setCoupons([]);
-}
-
+        let message = 'Failed to fetch coupons';
+        if (err instanceof Error) {
+          message = err.message;
+        }
+        setError(message);
+        setCoupons([]);
+      }
       finally {
         setLoading(false);
       }
@@ -77,7 +82,6 @@ const CouponManagementPage: React.FC = () => {
     fetchCoupons(currentPage, debouncedSearchValue);
   }, [currentPage, debouncedSearchValue, fetchCoupons]);
 
-  /* ----------------------- Handlers ----------------------- */
   const handlePageChange = (page: number) => setCurrentPage(page);
 
   const handleSearchChange = (value: string) => {
@@ -92,10 +96,16 @@ const CouponManagementPage: React.FC = () => {
 
   const handleRetry = () => fetchCoupons(currentPage, debouncedSearchValue);
 
-  /* ---------------------- Toggle ----------------------- */
   const openToggleModal = (coupon: CouponWithIndex) => {
     setCouponToToggle(coupon);
     setIsModalOpen(true);
+  };
+
+  const handleToggleClick = (coupon: CouponWithIndex) => {
+    if (isCouponExpired(coupon.expiryDate)) {
+      return; // Do nothing if expired
+    }
+    openToggleModal(coupon);
   };
 
   const confirmToggle = async () => {
@@ -118,28 +128,27 @@ const CouponManagementPage: React.FC = () => {
       );
     }
     catch (err: unknown) {
-  // Revert
-  setCoupons((prev) =>
-    prev.map((c) =>
-      c.couponId === couponToToggle.couponId
-        ? { ...c, status: couponToToggle.status }
-        : c
-    )
-  );
+      // Revert
+      setCoupons((prev) =>
+        prev.map((c) =>
+          c.couponId === couponToToggle.couponId
+            ? { ...c, status: couponToToggle.status }
+            : c
+        )
+      );
 
-  let message = 'Failed to toggle coupon status';
-  if (err instanceof Error) {
-    message = err.message;
-  }
-  setError(message);
-}
+      let message = 'Failed to toggle coupon status';
+      if (err instanceof Error) {
+        message = err.message;
+      }
+      setError(message);
+    }
     finally {
       setIsModalOpen(false);
       setCouponToToggle(null);
     }
   };
 
-  /* ---------------------- Delete ----------------------- */
   const openDeleteModal = (coupon: CouponWithIndex) => {
     setCouponToDelete(coupon);
     setIsModalOpen(true);
@@ -154,18 +163,17 @@ const CouponManagementPage: React.FC = () => {
         prev.filter((c) => c.couponId !== couponToDelete.couponId)
       );
 
-      // If the page becomes empty, go back one page
       if (coupons.length === 1 && currentPage > 1) {
         setCurrentPage((p) => p - 1);
       }
     } 
     catch (err: unknown) {
-  let message = 'Failed to delete coupon';
-  if (err instanceof Error) {
-    message = err.message;
-  }
-  setError(message);
-}
+      let message = 'Failed to delete coupon';
+      if (err instanceof Error) {
+        message = err.message;
+      }
+      setError(message);
+    }
     finally {
       setIsModalOpen(false);
       setCouponToDelete(null);
@@ -178,7 +186,6 @@ const CouponManagementPage: React.FC = () => {
     setCouponToDelete(null);
   };
 
-  /* ----------------------- Columns ----------------------- */
   const columns: Column<CouponWithIndex>[] = [
     {
       key: '_index',
@@ -223,9 +230,7 @@ const CouponManagementPage: React.FC = () => {
       title: 'Expiry Date',
       render: (value) => {
         const dateStr = value as string;
-        const [day, month, year] = dateStr.split('-');
-        const date = new Date(`${year}-${month}-${day}`);
-        const isExpired = date < new Date();
+        const isExpired = isCouponExpired(dateStr);
         return (
           <span className={isExpired ? 'text-red-500' : 'text-gray-700'}>
             {dateStr}
@@ -256,7 +261,6 @@ const CouponManagementPage: React.FC = () => {
     },
   ];
 
-  /* ----------------------- Actions ----------------------- */
   const actions: ActionButton<CouponWithIndex>[] = [
     {
       key: 'edit',
@@ -268,13 +272,24 @@ const CouponManagementPage: React.FC = () => {
     },
     {
       key: 'toggle',
-      label: (c) => (c.status ? 'Deactivate' : 'Activate'),
-      icon: (c) => (c.status ? <ToggleLeft size={16} /> : <ToggleRight size={16} />),
-      onClick: openToggleModal,
-      className: (c) =>
-        c.status
+      label: (c) => {
+        const isExpired = isCouponExpired(c.expiryDate);
+        if (isExpired) return '';
+        return c.status ? 'Deactivate' : 'Activate';
+      },
+      icon: (c) => {
+        const isExpired = isCouponExpired(c.expiryDate);
+        if (isExpired) return null;
+        return c.status ? <ToggleLeft size={16} /> : <ToggleRight size={16} />;
+      },
+      onClick: handleToggleClick,
+      className: (c) => {
+        const isExpired = isCouponExpired(c.expiryDate);
+        if (isExpired) return 'hidden'; // Hide button completely
+        return c.status
           ? 'bg-yellow-500 hover:bg-yellow-600 text-white transition-colors duration-200'
-          : 'bg-green-500 hover:bg-green-600 text-white transition-colors duration-200',
+          : 'bg-green-500 hover:bg-green-600 text-white transition-colors duration-200';
+      },
     },
     {
       key: 'delete',
@@ -292,7 +307,6 @@ const CouponManagementPage: React.FC = () => {
     onPageChange: handlePageChange,
   };
 
-  /* -------------------------- JSX -------------------------- */
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <DataTable<CouponWithIndex>
