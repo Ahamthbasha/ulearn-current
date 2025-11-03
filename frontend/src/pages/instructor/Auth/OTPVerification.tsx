@@ -7,6 +7,7 @@ import {
   verifyOtp,
 } from "../../../api/auth/InstructorAuthentication";
 import otpImage from "../../../assets/otp.jpg";
+import { AxiosError } from "axios";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
@@ -125,9 +126,8 @@ const OTPVerification = () => {
         }, 1000);
       }
     } catch (error) {
-      // Handle the error from the API function
-      const errorMsg = error instanceof Error 
-        ? error.message 
+      const errorMsg = error instanceof AxiosError 
+        ? error.response?.data.message 
         : "OTP verification failed";
       toast.error(errorMsg);
       
