@@ -149,6 +149,8 @@ export class StudentController implements IStudentController {
     }
   }
 
+
+
 async createUser(req: Request, res: Response): Promise<void> {
   try {
     const { otp } = req.body;
@@ -234,10 +236,20 @@ async createUser(req: Request, res: Response): Promise<void> {
         role: user.role,
       });
 
+      // Production-ready cookie settings
+      const isProduction = process.env.NODE_ENV === "production";
+      
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction, // HTTPS only in production
+        sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      };
+
       res
         .status(StatusCode.CREATED)
-        .cookie("accessToken", accessToken, { httpOnly: true })
-        .cookie("refreshToken", refreshToken, { httpOnly: true })
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
         .json({
           success: true,
           message: MESSAGES.USER_CREATED,
@@ -265,7 +277,6 @@ async createUser(req: Request, res: Response): Promise<void> {
     });
   }
 }
-
 
 
 async login(req: Request, res: Response): Promise<void> {
@@ -424,47 +435,55 @@ async login(req: Request, res: Response): Promise<void> {
     }
   }
 
-  async verifyResetOtp(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, otp } = req.body;
+async verifyResetOtp(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, otp } = req.body;
 
-      if (!email || !otp) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.OTP_REQUIRED}`,
-        });
-        return;
-      }
-
-      const isOtpValid = await this._otpService.verifyOtp(email, otp);
-
-      if (isOtpValid) {
-        let token = await this._JWT.createToken({ email });
-
-        res
-          .status(StatusCode.OK)
-          .cookie("forgotToken", token, {
-            httpOnly: true,
-          })
-          .json({
-            success: true,
-            message: MESSAGES.REDIERCTING_PASSWORD_RESET_PAGE,
-          });
-      } else {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: MESSAGES.INCORRECT_OTP,
-        });
-      }
-    } catch (error) {
-      appLogger.error("Verify Reset OTP Error:", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+    if (!email || !otp) {
+      res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error:error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+        message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.OTP_REQUIRED}`,
+      });
+      return;
+    }
+
+    const isOtpValid = await this._otpService.verifyOtp(email, otp);
+
+    if (isOtpValid) {
+      let token = await this._JWT.createToken({ email });
+
+      // Production-ready cookie settings for forgot password token
+      const isProduction = process.env.NODE_ENV === "production";
+      
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction, // HTTPS only in production
+        sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+        maxAge: 15 * 60 * 1000, // 15 minutes (shorter for security)
+      };
+
+      res
+        .status(StatusCode.OK)
+        .cookie("forgotToken", token, cookieOptions)
+        .json({
+          success: true,
+          message: MESSAGES.REDIERCTING_PASSWORD_RESET_PAGE,
+        });
+    } else {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: MESSAGES.INCORRECT_OTP,
       });
     }
+  } catch (error) {
+    appLogger.error("Verify Reset OTP Error:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+    });
   }
+}
 
   async forgotResendOtp(req: Request, res: Response): Promise<void> {
     try {

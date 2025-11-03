@@ -263,27 +263,39 @@ async login(req: Request, res: Response): Promise<void> {
     }
   }
 
-  async verifyResetOtp(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, otp } = req.body as { email: string; otp: string };
-      if (!email || !otp)
-        throwAppError(
-          BadRequestError,
-          `${INSTRUCTOR_MESSAGES.EMAIL_REQUIRED} and ${INSTRUCTOR_MESSAGES.OTP_REQUIRED}`
-        );
+async verifyResetOtp(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, otp } = req.body as { email: string; otp: string };
+    if (!email || !otp)
+      throwAppError(
+        BadRequestError,
+        `${INSTRUCTOR_MESSAGES.EMAIL_REQUIRED} and ${INSTRUCTOR_MESSAGES.OTP_REQUIRED}`
+      );
 
-      const valid = await this._otpService.verifyOtp(email, otp);
-      if (!valid) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.INCORRECT_OTP);
+    const valid = await this._otpService.verifyOtp(email, otp);
+    if (!valid) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.INCORRECT_OTP);
 
-      const token = await this._jwt.createToken({ email });
-      res
-        .status(StatusCode.OK)
-        .cookie("forgotToken", token, { httpOnly: true })
-        .json({ success: true, message: INSTRUCTOR_MESSAGES.REDIERCTING_PASSWORD_RESET_PAGE });
-    } catch (error) {
-      handleControllerError(error, res);
-    }
+    const token = await this._jwt.createToken({ email });
+
+    // Production-ready cookie settings for forgot password token
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction, // HTTPS only in production
+      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+      maxAge: 15 * 60 * 1000, // 15 minutes (shorter for security)
+    };
+
+    res
+      .status(StatusCode.OK)
+      .cookie("forgotToken", token, cookieOptions)
+      .json({ success: true, message: INSTRUCTOR_MESSAGES.REDIERCTING_PASSWORD_RESET_PAGE });
+  } catch (error) {
+    handleControllerError(error, res);
   }
+}
+
 
   async forgotResendOtp(req: Request, res: Response): Promise<void> {
     try {
