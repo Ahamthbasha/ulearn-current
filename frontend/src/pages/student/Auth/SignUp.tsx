@@ -8,7 +8,6 @@ import { signup } from "../../../api/auth/UserAuthentication";
 import studentLogin from "../../../assets/studentLogin.jpeg";
 
 import type { signUp } from "../../../types/signUpType";
-import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const signupSchema = Yup.object().shape({
   username: Yup.string()
@@ -43,20 +42,11 @@ const SignUp = () => {
         toast.success(response.message);
         navigate("/user/verifyOtp");
       }
+      else{
+        toast.error(response.message)
+      }
     } catch (error) {
-      const apiError = error as ApiError;
-    
-    // ✅ Check if there's a response from the server
-    if (apiError.response?.data?.message) {
-     
-      toast.error(apiError.response.data.message);
-    } else if (apiError.message) {
-
-      toast.error(apiError.message);
-    } else {
-
-      toast.error("An unexpected error occurred");
-    }
+      toast.error("Network error. Please try again")
     }
   };
 

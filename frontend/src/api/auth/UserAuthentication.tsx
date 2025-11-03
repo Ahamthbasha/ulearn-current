@@ -5,7 +5,7 @@ import authenticationRoutes from "../../types/endPoints/authEndpoints";
 import type { userData } from "../../types/userData";
 
 import type { Login } from "../../types/LoginTypes";
-import { AxiosError } from "axios";
+
 
 export const signup = async (userData: userData)=> {
   try {
@@ -15,11 +15,7 @@ export const signup = async (userData: userData)=> {
     );
     return response.data;
   } catch (error) {
-    if(error instanceof AxiosError){
-      if (error?.response?.status == 404) {
-        throw error;
-      }
-    }
+    throw error
   }
 };
 
