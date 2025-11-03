@@ -101,8 +101,6 @@ const requiredEnv = [
   "JWT_SECRET",
   "RAZORPAY_KEY_ID",
   "RAZORPAY_KEY_SECRET",
-  "REDIS_HOST",
-  "REDIS_PORT",
 ];
 requiredEnv.forEach((key) => {
   if (!process.env[key]) {
