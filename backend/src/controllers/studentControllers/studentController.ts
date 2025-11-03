@@ -268,82 +268,89 @@ async createUser(req: Request, res: Response): Promise<void> {
 
 
 
-  async login(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password } = req.body;
+async login(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, password } = req.body;
 
-      if (!email || !password) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.PASSWORD_REQUIRED}`,
-        });
-        return
-      }
-
-      const student = await this._studentService.findByEmail(email);
-
-      if (!student) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: MESSAGES.INVALID_CREDENTIALS,
-        });
-        return
-      }
-
-      // Block check
-      if (student.isBlocked) {
-        res.status(StatusCode.FORBIDDEN).json({
-          success: false,
-          message: MESSAGES.ACCOUNT_BLOCKED,
-        });
-        return
-      }
-
-      const passwordMatch = await bcrypt.compare(password, student.password);
-
-      if (!passwordMatch) {
-        res.status(StatusCode.UNAUTHORIZED).json({
-          success: false,
-          message: MESSAGES.INVALID_CREDENTIALS,
-        });
-        return
-      }
-
-      const role = student.role;
-      const id = student.id;
-
-      const accessToken = await this._JWT.accessToken({ id, role, email });
-      const refreshToken = await this._JWT.refreshToken({ id, role, email });
-
-      res
-        .status(StatusCode.OK)
-        .cookie("accessToken", accessToken, {
-          httpOnly: true,
-        })
-        .cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-        })
-        .json({
-          success: true,
-          message: MESSAGES.LOGIN_SUCCESS,
-          user: {
-            id: student.id,
-            email: student.email,
-            username: student.username,
-            role: student.role,
-            isBlocked: student.isBlocked,
-          },
-        });
-        return
-    } catch (error) {
-      appLogger.error("Login Error:", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+    if (!email || !password) {
+      res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error instanceof Error ? error.message :SERVER_ERROR.UNKNOWN_ERROR,
+        message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.PASSWORD_REQUIRED}`,
       });
+      return;
     }
+
+    const student = await this._studentService.findByEmail(email);
+
+    if (!student) {
+      res.status(StatusCode.NOT_FOUND).json({
+        success: false,
+        message: MESSAGES.INVALID_CREDENTIALS,
+      });
+      return;
+    }
+
+    // Block check
+    if (student.isBlocked) {
+      res.status(StatusCode.FORBIDDEN).json({
+        success: false,
+        message: MESSAGES.ACCOUNT_BLOCKED,
+      });
+      return;
+    }
+
+    const passwordMatch = await bcrypt.compare(password, student.password);
+
+    if (!passwordMatch) {
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: MESSAGES.INVALID_CREDENTIALS,
+      });
+      return;
+    }
+
+    const role = student.role;
+    const id = student.id;
+
+    const accessToken = await this._JWT.accessToken({ id, role, email });
+    const refreshToken = await this._JWT.refreshToken({ id, role, email });
+
+    // Production-ready cookie settings
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction, // HTTPS only in production
+      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    res
+      .status(StatusCode.OK)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json({
+        success: true,
+        message: MESSAGES.LOGIN_SUCCESS,
+        user: {
+          id: student.id,
+          email: student.email,
+          username: student.username,
+          role: student.role,
+          isBlocked: student.isBlocked,
+        },
+      });
+    return;
+  } catch (error) {
+    appLogger.error("Login Error:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+    });
   }
+}
+
 
   async logout(_req: Request, res: Response): Promise<void> {
     try {
@@ -566,97 +573,100 @@ if (!data.email) {
   }
 
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
-    try {
-      const { name, email } = req.body;
+  try {
+    const { name, email } = req.body;
 
-      if (!name || !email) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: MESSAGES.NAME_REQUIRED,
-        });
-        return;
-      }
-
-      const existingUser = await this._studentService.findByEmail(email);
-
-      if (!existingUser) {
-        const user = await this._studentService.googleLogin(name, email);
-
-        if (user) {
-          const role = user.role;
-          const accessToken = await this._JWT.accessToken({
-            id: user._id,
-            email,
-            role,
-          });
-          const refreshToken = await this._JWT.refreshToken({
-            id: user._id,
-            email,
-            role,
-          });
-
-          res
-            .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, {
-              httpOnly: true,
-            })
-            .cookie("refreshToken", refreshToken, {
-              httpOnly: true,
-            })
-            .json({
-              success: true,
-              message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
-              user: {
-                id: user._id,
-                email: user.email,
-                username: user.username,
-                role: user.role,
-              },
-            });
-        }
-      } else {
-        if (!existingUser.isBlocked) {
-          const role = existingUser.role;
-          const id = existingUser._id;
-          const accessToken = await this._JWT.accessToken({ id, email, role });
-          const refreshToken = await this._JWT.refreshToken({
-            id,
-            email,
-            role,
-          });
-
-          res
-            .status(StatusCode.OK)
-            .cookie("accessToken", accessToken, {
-              httpOnly: true,
-            })
-            .cookie("refreshToken", refreshToken, {
-              httpOnly: true,
-            })
-            .json({
-              success: true,
-              message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
-              user: {
-                id: existingUser._id,
-                email: existingUser.email,
-                username: existingUser.username,
-                role: existingUser.role,
-              },
-            });
-        } else {
-          res.status(StatusCode.FORBIDDEN).json({
-            success: false,
-            message: MESSAGES.ACCOUNT_BLOCKED,
-          });
-        }
-      }
-    } catch (error) {
-      appLogger.error("Google Login Error:", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+    if (!name || !email) {
+      res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error:error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+        message: MESSAGES.NAME_REQUIRED,
       });
+      return;
     }
+
+    const existingUser = await this._studentService.findByEmail(email);
+
+    // Production-ready cookie settings
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction, // HTTPS only in production
+      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    if (!existingUser) {
+      const user = await this._studentService.googleLogin(name, email);
+
+      if (user) {
+        const role = user.role;
+        const accessToken = await this._JWT.accessToken({
+          id: user._id,
+          email,
+          role,
+        });
+        const refreshToken = await this._JWT.refreshToken({
+          id: user._id,
+          email,
+          role,
+        });
+
+        res
+          .status(StatusCode.OK)
+          .cookie("accessToken", accessToken, cookieOptions)
+          .cookie("refreshToken", refreshToken, cookieOptions)
+          .json({
+            success: true,
+            message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
+            user: {
+              id: user._id,
+              email: user.email,
+              username: user.username,
+              role: user.role,
+            },
+          });
+      }
+    } else {
+      if (!existingUser.isBlocked) {
+        const role = existingUser.role;
+        const id = existingUser._id;
+        const accessToken = await this._JWT.accessToken({ id, email, role });
+        const refreshToken = await this._JWT.refreshToken({
+          id,
+          email,
+          role,
+        });
+
+        res
+          .status(StatusCode.OK)
+          .cookie("accessToken", accessToken, cookieOptions)
+          .cookie("refreshToken", refreshToken, cookieOptions)
+          .json({
+            success: true,
+            message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
+            user: {
+              id: existingUser._id,
+              email: existingUser.email,
+              username: existingUser.username,
+              role: existingUser.role,
+            },
+          });
+      } else {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: MESSAGES.ACCOUNT_BLOCKED,
+        });
+      }
+    }
+  } catch (error) {
+    appLogger.error("Google Login Error:", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+    });
   }
+}
+
 }

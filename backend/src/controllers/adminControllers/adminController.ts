@@ -22,68 +22,75 @@ export class AdminController implements IAdminController {
     this._JWT = jwtService;
   }
 
-  async login(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password } = req.body;
+async login(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, password } = req.body;
 
-      const adminEmail = process.env.ADMINEMAIL;
-      const adminPassword = process.env.ADMINPASSWORD;
+    const adminEmail = process.env.ADMINEMAIL;
+    const adminPassword = process.env.ADMINPASSWORD;
 
-      if (email !== adminEmail || password !== adminPassword) {
-        res.send({
-          success: false,
-          message:
-            email !== adminEmail
-              ? AdminErrorMessages.EMAIL_INCORRECT
-              : AdminErrorMessages.PASSWORD_INCORRECT,
-        });
-        return;
-      }
-
-      let admin = await this._adminService.getAdminData(email);
-      if (!admin) {
-        admin = await this._adminService.createAdmin({ email, password });
-      }
-
-      const accessToken = await this._JWT.accessToken({
-        email,
-        role: Roles.ADMIN,
-        id: admin?._id,
-      });
-
-      const refreshToken = await this._JWT.refreshToken({
-        email,
-        role: Roles.ADMIN,
-        id: admin?._id,
-      });
-
-      res
-        .cookie("accessToken", accessToken, {
-          httpOnly: true,
-        })
-        .cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-        })
-        .status(StatusCode.OK)
-        .send({
-          success: true,
-          message: AdminSuccessMessages.LOGIN_SUCCESS,
-          token: accessToken,
-          data: {
-            email,
-            role: Roles.ADMIN,
-            name: Roles.ADMIN,
-            adminId: admin?._id,
-          },
-        });
-    } catch (error) {
-      appLogger.error("Admin login error", error);
-      res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
+    if (email !== adminEmail || password !== adminPassword) {
+      res.send({
         success: false,
-        message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
+        message:
+          email !== adminEmail
+            ? AdminErrorMessages.EMAIL_INCORRECT
+            : AdminErrorMessages.PASSWORD_INCORRECT,
       });
+      return;
     }
+
+    let admin = await this._adminService.getAdminData(email);
+    if (!admin) {
+      admin = await this._adminService.createAdmin({ email, password });
+    }
+
+    const accessToken = await this._JWT.accessToken({
+      email,
+      role: Roles.ADMIN,
+      id: admin?._id,
+    });
+
+    const refreshToken = await this._JWT.refreshToken({
+      email,
+      role: Roles.ADMIN,
+      id: admin?._id,
+    });
+
+    // Production-ready cookie settings
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction, // HTTPS only in production
+      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    res
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .status(StatusCode.OK)
+      .send({
+        success: true,
+        message: AdminSuccessMessages.LOGIN_SUCCESS,
+        token: accessToken,
+        data: {
+          email,
+          role: Roles.ADMIN,
+          name: Roles.ADMIN,
+          adminId: admin?._id,
+        },
+      });
+  } catch (error) {
+    appLogger.error("Admin login error", error);
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
+      success: false,
+      message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
+    });
   }
+}
+
 
   async logout(_req: Request, res: Response): Promise<void> {
     try {

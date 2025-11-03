@@ -169,52 +169,62 @@ export class InstructorController implements IInstructorController {
   }
 }
 
-  async login(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password } = req.body as { email: string; password: string };
-      if (!email || !password) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.EMAIL_PASSWORD_USERNAME_REQUIRED);
+async login(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, password } = req.body as { email: string; password: string };
+    if (!email || !password) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.EMAIL_PASSWORD_USERNAME_REQUIRED);
 
-      const instructor = await this._instructorService.findByEmail(email);
-      if (!instructor){
-        throwAppError(NotFoundError, INSTRUCTOR_MESSAGES.USER_NOT_FOUND);
-        return
-      }
-      if (instructor.isBlocked) throwAppError(ForbiddenError, INSTRUCTOR_MESSAGES.INSTRUCTOR_BLOCKED);
-
-      const valid = await bcrypt.compare(password, instructor.password);
-      if (!valid) throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.INVALID_CREDENTIALS);
-
-      const accessToken = await this._jwt.accessToken({
-        email,
-        role: instructor.role,
-        id: instructor._id,
-      });
-      const refreshToken = await this._jwt.refreshToken({
-        email,
-        role: instructor.role,
-        id: instructor._id,
-      });
-
-      res
-        .status(StatusCode.OK)
-        .cookie("accessToken", accessToken, { httpOnly: true })
-        .cookie("refreshToken", refreshToken, { httpOnly: true })
-        .json({
-          success: true,
-          message: INSTRUCTOR_MESSAGES.LOGIN_SUCCESS,
-          user: {
-            id: instructor._id,
-            email: instructor.email,
-            username: instructor.username,
-            role: instructor.role,
-            isBlocked: instructor.isBlocked,
-            isVerified: instructor.isVerified,
-          },
-        });
-    } catch (error) {
-      handleControllerError(error, res);
+    const instructor = await this._instructorService.findByEmail(email);
+    if (!instructor){
+      throwAppError(NotFoundError, INSTRUCTOR_MESSAGES.USER_NOT_FOUND);
+      return;
     }
+    if (instructor.isBlocked) throwAppError(ForbiddenError, INSTRUCTOR_MESSAGES.INSTRUCTOR_BLOCKED);
+
+    const valid = await bcrypt.compare(password, instructor.password);
+    if (!valid) throwAppError(UnauthorizedError, INSTRUCTOR_MESSAGES.INVALID_CREDENTIALS);
+
+    const accessToken = await this._jwt.accessToken({
+      email,
+      role: instructor.role,
+      id: instructor._id,
+    });
+    const refreshToken = await this._jwt.refreshToken({
+      email,
+      role: instructor.role,
+      id: instructor._id,
+    });
+
+    // Production-ready cookie settings
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction, // HTTPS only in production
+      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    res
+      .status(StatusCode.OK)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json({
+        success: true,
+        message: INSTRUCTOR_MESSAGES.LOGIN_SUCCESS,
+        user: {
+          id: instructor._id,
+          email: instructor.email,
+          username: instructor.username,
+          role: instructor.role,
+          isBlocked: instructor.isBlocked,
+          isVerified: instructor.isVerified,
+        },
+      });
+  } catch (error) {
+    handleControllerError(error, res);
   }
+}
 
   async logout(_req: Request, res: Response): Promise<void> {
     try {
@@ -335,57 +345,67 @@ export class InstructorController implements IInstructorController {
 }
 
 
-  async doGoogleLogin(req: Request, res: Response): Promise<void> {
-    try {
-      const { name, email } = req.body as { name: string; email: string };
-      if (!name || !email) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.NAME_EMAIL_REQUIRED);
+async doGoogleLogin(req: Request, res: Response): Promise<void> {
+  try {
+    const { name, email } = req.body as { name: string; email: string };
+    if (!name || !email) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.NAME_EMAIL_REQUIRED);
 
-      const existing = await this._instructorService.findByEmail(email);
+    const existing = await this._instructorService.findByEmail(email);
 
-      let instructor: IInstructor;
+    let instructor: IInstructor;
 
-      if (!existing) {
-        const newInstructor = await this._instructorService.googleLogin(name, email);
-        if (!newInstructor) {
-          throwAppError(InternalServerError, INSTRUCTOR_MESSAGES.GOOGLE_LOGIN_FAILED);
-          return; // Add return statement
-        }
-        instructor = newInstructor;
-      } else {
-        if (existing.isBlocked) throwAppError(ForbiddenError, INSTRUCTOR_MESSAGES.INSTRUCTOR_BLOCKED);
-        instructor = existing;
+    if (!existing) {
+      const newInstructor = await this._instructorService.googleLogin(name, email);
+      if (!newInstructor) {
+        throwAppError(InternalServerError, INSTRUCTOR_MESSAGES.GOOGLE_LOGIN_FAILED);
+        return;
       }
-
-      const accessToken = await this._jwt.accessToken({
-        email,
-        id: instructor._id,
-        role: instructor.role,
-      });
-      const refreshToken = await this._jwt.refreshToken({
-        email,
-        id: instructor._id,
-        role: instructor.role,
-      });
-
-      res
-        .status(StatusCode.OK)
-        .cookie("accessToken", accessToken, { httpOnly: true })
-        .cookie("refreshToken", refreshToken, { httpOnly: true })
-        .json({
-          success: true,
-          message: INSTRUCTOR_MESSAGES.GOOGLE_LOGIN_SUCCESS,
-          instructor: {
-            id: instructor._id,
-            email: instructor.email,
-            username: instructor.username,
-            role: instructor.role,
-            isBlocked: instructor.isBlocked,
-            isVerified: instructor.isVerified,
-          },
-        });
-    } catch (error) {
-      handleControllerError(error, res);
+      instructor = newInstructor;
+    } else {
+      if (existing.isBlocked) throwAppError(ForbiddenError, INSTRUCTOR_MESSAGES.INSTRUCTOR_BLOCKED);
+      instructor = existing;
     }
+
+    const accessToken = await this._jwt.accessToken({
+      email,
+      id: instructor._id,
+      role: instructor.role,
+    });
+    const refreshToken = await this._jwt.refreshToken({
+      email,
+      id: instructor._id,
+      role: instructor.role,
+    });
+
+    // Production-ready cookie settings
+    const isProduction = process.env.NODE_ENV === "production";
+    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction, // HTTPS only in production
+      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    res
+      .status(StatusCode.OK)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json({
+        success: true,
+        message: INSTRUCTOR_MESSAGES.GOOGLE_LOGIN_SUCCESS,
+        instructor: {
+          id: instructor._id,
+          email: instructor.email,
+          username: instructor.username,
+          role: instructor.role,
+          isBlocked: instructor.isBlocked,
+          isVerified: instructor.isVerified,
+        },
+      });
+  } catch (error) {
+    handleControllerError(error, res);
   }
+}
   
 }
