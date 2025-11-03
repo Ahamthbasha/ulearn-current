@@ -1,16 +1,15 @@
 {
   "compilerOptions": {
-    /* Language and Environment */
-    "target": "ES2020", // Modern async/await support, better performance
-    "module": "CommonJS", // Node.js module system
-    "lib": ["ES2020"], // Built-in features (like Promise, Map, etc.)
+    "target": "ES2020",
+    "module": "CommonJS", 
+    "lib": ["ES2020"], 
 
-    /* Module Resolution */
-    "rootDir": "./src", // Entry source folder
-    "outDir": "./dist", // Output build folder
-    "moduleResolution": "node", // Look for node_modules
-    "esModuleInterop": true, // Allow default import from CommonJS
-    "resolveJsonModule": true, // Allow importing JSON files
+
+    "rootDir": "./src", 
+    "outDir": "./dist", 
+    "moduleResolution": "node", 
+    "esModuleInterop": true,
+    "resolveJsonModule": true, 
     "allowSyntheticDefaultImports": true, // Allow `import fs from 'fs'`
     "baseUrl": "./", // Enable relative imports from project root
     "paths": {
