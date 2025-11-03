@@ -745,6 +745,7 @@ export const SERVER_ERROR = {
 };
 
 export const MESSAGES = {
+  FAILED_TO_CREATE_USER:"Failed to create user",
   RESET_TOKEN_REQUIRED: "Reset token is required",
   // General Messages
   EMAIL_REQUIRED: "Email is required",

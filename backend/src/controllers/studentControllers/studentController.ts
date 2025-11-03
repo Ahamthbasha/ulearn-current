@@ -201,30 +201,58 @@ async createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Fetch full user from database by decoded ID or email
-    const userFromDb = await this._studentService.findById(decode.id);
-    if (!userFromDb) {
-      res.status(StatusCode.NOT_FOUND).json({
+    // Check if user already exists (shouldn't happen, but safety check)
+    const existingUser = await this._studentService.findByEmail(decode.email);
+    if (existingUser) {
+      res.status(StatusCode.CONFLICT).json({
         success: false,
-        message: MESSAGES.USER_NOT_FOUND,
+        message: MESSAGES.USER_ALREADY_EXISTS,
       });
       return;
     }
 
-    // Now call createUser with full IUser object fetched from DB
-    const user = await this._studentService.createUser(userFromDb);
+    // Create new user from token data
+    const userData = {
+      email: decode.email,
+      password: decode.password, // Already hashed from signup
+      username: decode.username,
+      role: decode.role || Roles.STUDENT,
+    };
+
+    const user = await this._studentService.createUser(userData as any);
 
     if (user) {
-      res.status(StatusCode.CREATED).json({
-        success: true,
-        message: MESSAGES.USER_CREATED,
-        user,
+      // Generate access and refresh tokens
+      const accessToken = await this._JWT.accessToken({
+        id: user._id,
+        email: user.email,
+        role: user.role,
       });
+      const refreshToken = await this._JWT.refreshToken({
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      });
+
+      res
+        .status(StatusCode.CREATED)
+        .cookie("accessToken", accessToken, { httpOnly: true })
+        .cookie("refreshToken", refreshToken, { httpOnly: true })
+        .json({
+          success: true,
+          message: MESSAGES.USER_CREATED,
+          user: {
+            id: user._id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+          },
+        });
       return;
     } else {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: MESSAGES.FAILED_TO_RESET_PASSWORD,
+        message: MESSAGES.FAILED_TO_CREATE_USER,
       });
       return;
     }
@@ -237,6 +265,7 @@ async createUser(req: Request, res: Response): Promise<void> {
     });
   }
 }
+
 
 
   async login(req: Request, res: Response): Promise<void> {

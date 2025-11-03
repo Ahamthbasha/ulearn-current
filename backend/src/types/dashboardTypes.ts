@@ -4,6 +4,8 @@ export interface TokenPayload {
   id: string;
   email: string;
   role: string;
+  password?: string;      // ✅ Add this - for signup token
+  username?: string;
   iat?: number;
   exp?: number;
 }
