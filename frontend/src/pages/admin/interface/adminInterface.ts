@@ -320,7 +320,7 @@ export interface VerificationRequest {
 }
 
 
-export interface VerificationRequestPage {
+export interface VerificationRequestPage extends Record<string, unknown> {
   id: string;
   username: string;
   email: string;

@@ -7,7 +7,7 @@ import DataTable, {
 import { Eye, FileText } from "lucide-react";
 import { getAllVerificationRequests } from "../../../api/action/AdminActionApi";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import { type VerificationRequestPage,type VerificationResponse } from "../interface/adminInterface";
+import { type VerificationRequestPage, type VerificationResponse } from "../interface/adminInterface";
 
 const VerificationPage = () => {
   const [requests, setRequests] = useState<VerificationRequestPage[]>([]);
@@ -61,7 +61,7 @@ const VerificationPage = () => {
 
   const columns: Column<VerificationRequestPage>[] = [
     {
-      key: "serialNo",
+      key: "id",
       title: "S.NO",
       render: (_, __, index) => (
         <span className="text-sm text-gray-900">
@@ -73,30 +73,33 @@ const VerificationPage = () => {
       key: "username", 
       title: "Name",
       render: (value) => (
-        <div className="text-sm font-medium text-gray-900">{value}</div>
+        <div className="text-sm font-medium text-gray-900">{value as string}</div>
       ),
     },
     { 
       key: "email", 
       title: "Email",
-      render: (value) => <div className="text-sm text-gray-900">{value}</div>,
+      render: (value) => <div className="text-sm text-gray-900">{value as string}</div>,
     },
     { 
       key: "status", 
       title: "Status",
-      render: (value) => (
-        <span
-          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-            value === "approved"
-              ? "bg-green-100 text-green-800"
-              : value === "rejected"
-              ? "bg-red-100 text-red-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      ),
+      render: (value) => {
+        const statusValue = value as string;
+        return (
+          <span
+            className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+              statusValue === "approved"
+                ? "bg-green-100 text-green-800"
+                : statusValue === "rejected"
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+          >
+            {statusValue.charAt(0).toUpperCase() + statusValue.slice(1)}
+          </span>
+        );
+      },
     },
   ];
 
@@ -113,7 +116,7 @@ const VerificationPage = () => {
   ];
 
   return (
-    <DataTable
+    <DataTable<VerificationRequestPage>
       title="Verification Requests"
       description="List of instructor verification requests."
       data={requests}
