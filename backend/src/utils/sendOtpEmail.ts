@@ -1,48 +1,40 @@
 import { IEmail } from "../types/Email";
-import nodeMailer, { SentMessageInfo, Transporter } from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 export class SendEmail implements IEmail {
-  private transporter: Transporter;
-
   constructor() {
     const sendgridApiKey = process.env.SENDGRID_API_KEY;
-    const senderEmail = process.env.SENDER_EMAIL;
 
-    if (!sendgridApiKey || !senderEmail) {
-      throw new Error("SendGrid credentials missing in environment variables");
+    if (!sendgridApiKey) {
+      throw new Error("SENDGRID_API_KEY is not set in environment variables");
     }
 
-    // Create transporter with SendGrid SMTP
-    this.transporter = nodeMailer.createTransport({
-      host: "smtp.sendgrid.net",
-      port: 587,
-      secure: false, // Use TLS
-      auth: {
-        user: "apikey", // This is literally the string "apikey"
-        pass: sendgridApiKey, // Your SendGrid API key
-      },
-    });
-
-    console.log('✅ Email transporter initialized with SendGrid');
+    // Initialize SendGrid with API key (uses HTTPS, not SMTP)
+    sgMail.setApiKey(sendgridApiKey);
+    console.log('✅ Email service initialized with SendGrid HTTP API');
   }
 
   async sentEmailVerification(
     name: string,
     email: string,
     verificationCode: string,
-  ): Promise<SentMessageInfo> {
+  ): Promise<any> {
     const senderEmail = process.env.SENDER_EMAIL;
 
-    const mailOptions = {
-      from: senderEmail,
+    if (!senderEmail) {
+      throw new Error("SENDER_EMAIL is not set in environment variables");
+    }
+
+    const msg = {
       to: email,
+      from: senderEmail,
       subject: "🌟 Welcome to ulearn - Verify Your Email 🌟",
       text: `Hello ${name},\n\nYour verification code is: ${verificationCode}\n\nThanks,\nThe ulearn Team`,
       html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; text-align: center; border-radius: 8px; background-color: #f7f7f7; background: url('https://cdn.wallpapersafari.com/13/89/wb4WOU.jpg') no-repeat center center; background-size: cover;">
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; text-align: center; border-radius: 8px; background-color: #f7f7f7;">
           <div style="background-color: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 8px; display: inline-block; width: 80%; max-width: 600px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
             <h2 style="color: #4CAF50; margin-bottom: 10px;">Welcome to ulearn, ${name}!</h2>
             <p style="font-size: 1.1em; margin-bottom: 20px;">We're excited to have you onboard. Please use the verification code below to complete your email verification:</p>
@@ -53,23 +45,17 @@ export class SendEmail implements IEmail {
             <br>
             <p>Thank you, ${name}</p>
             <p><strong>The Ulearn Team</strong></p>
-            <div style="margin-top: 20px; font-size: 0.9em; color: #777;">
-              <p>Follow us on:</p>
-              <a href="https://twitter.com/Ulearn" style="margin: 0 5px; text-decoration: none; color: #4CAF50;">Twitter</a> |
-              <a href="https://facebook.com/Ulearn" style="margin: 0 5px; text-decoration: none; color: #4CAF50;">Facebook</a> |
-              <a href="https://instagram.com/Ulearn" style="margin: 0 5px; text-decoration: none; color: #4CAF50;">Instagram</a>
-            </div>
           </div>
         </div>
       `,
     };
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email sent successfully:', info.messageId);
-      return info;
+      const response = await sgMail.send(msg);
+      console.log('✅ Email sent successfully via SendGrid API:', response[0].statusCode);
+      return response;
     } catch (error) {
-      console.error('❌ Email sending failed:', error);
+      console.error('❌ SendGrid API error:', error);
       throw error;
     }
   }
@@ -78,12 +64,12 @@ export class SendEmail implements IEmail {
     name: string,
     email: string,
     reason: string,
-  ): Promise<SentMessageInfo> {
+  ): Promise<any> {
     const senderEmail = process.env.SENDER_EMAIL;
 
-    const mailOptions = {
-      from: senderEmail,
+    const msg = {
       to: email,
+      from: senderEmail!,
       subject: "📢 uLearn - Verification Request Rejected",
       text: `Hello ${name},\n\nWe regret to inform you that your instructor verification request has been rejected.\n\nReason: ${reason}\n\nYou can re-apply after resolving the issue.\n\nThank you,\nThe uLearn Team`,
       html: `
@@ -106,11 +92,11 @@ export class SendEmail implements IEmail {
     };
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Rejection email sent:', info.messageId);
-      return info;
+      const response = await sgMail.send(msg);
+      console.log('✅ Rejection email sent:', response[0].statusCode);
+      return response;
     } catch (error) {
-      console.error('❌ Email sending failed:', error);
+      console.error('❌ SendGrid API error:', error);
       throw error;
     }
   }
@@ -118,12 +104,12 @@ export class SendEmail implements IEmail {
   async sendVerificationSuccessEmail(
     name: string,
     email: string,
-  ): Promise<SentMessageInfo> {
+  ): Promise<any> {
     const senderEmail = process.env.SENDER_EMAIL;
 
-    const mailOptions = {
-      from: senderEmail,
+    const msg = {
       to: email,
+      from: senderEmail!,
       subject: "🎉 uLearn - Instructor Verification Approved!",
       text: `Hello ${name},\n\nCongratulations! Your instructor verification has been successfully approved.\n\nYou now have access to your instructor dashboard.\n\nWelcome aboard!\n\nThanks,\nThe uLearn Team`,
       html: `
@@ -141,14 +127,7 @@ export class SendEmail implements IEmail {
     `,
     };
 
-    try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Verification success email sent:', info.messageId);
-      return info;
-    } catch (error) {
-      console.error('❌ Email sending failed:', error);
-      throw error;
-    }
+    return await sgMail.send(msg);
   }
 
   async sendMembershipPurchaseEmail(
@@ -156,12 +135,12 @@ export class SendEmail implements IEmail {
     email: string,
     planName: string,
     expiryDate: Date,
-  ): Promise<SentMessageInfo> {
+  ): Promise<any> {
     const senderEmail = process.env.SENDER_EMAIL;
 
-    const mailOptions = {
-      from: senderEmail,
+    const msg = {
       to: email,
+      from: senderEmail!,
       subject: `✅ uLearn - Membership Activated for "${planName}"`,
       html: `
       <div style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px; text-align: center;">
@@ -176,26 +155,19 @@ export class SendEmail implements IEmail {
     `,
     };
 
-    try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Membership purchase email sent:', info.messageId);
-      return info;
-    } catch (error) {
-      console.error('❌ Email sending failed:', error);
-      throw error;
-    }
+    return await sgMail.send(msg);
   }
 
   async sendMembershipExpiryReminder(
     name: string,
     email: string,
     expiryDate: Date,
-  ): Promise<SentMessageInfo> {
+  ): Promise<any> {
     const senderEmail = process.env.SENDER_EMAIL;
 
-    const mailOptions = {
-      from: senderEmail,
+    const msg = {
       to: email,
+      from: senderEmail!,
       subject: `⚠️ Membership Expiring Soon`,
       html: `
       <div style="font-family: Arial, sans-serif; background-color: #fff3cd; padding: 20px; text-align: center;">
@@ -209,14 +181,7 @@ export class SendEmail implements IEmail {
     `,
     };
 
-    try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Expiry reminder email sent:', info.messageId);
-      return info;
-    } catch (error) {
-      console.error('❌ Email sending failed:', error);
-      throw error;
-    }
+    return await sgMail.send(msg);
   }
 
   async sendSlotBookingConfirmation(
@@ -226,12 +191,12 @@ export class SendEmail implements IEmail {
     date: string,
     startTime: string,
     endTime: string,
-  ): Promise<SentMessageInfo> {
+  ): Promise<any> {
     const senderEmail = process.env.SENDER_EMAIL;
 
-    const mailOptions = {
-      from: senderEmail,
+    const msg = {
       to: email,
+      from: senderEmail!,
       subject: "✅ Slot Booking Confirmed - uLearn",
       html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #e8f5e9;">
@@ -249,13 +214,6 @@ export class SendEmail implements IEmail {
     `,
     };
 
-    try {
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Slot booking confirmation sent:', info.messageId);
-      return info;
-    } catch (error) {
-      console.error('❌ Email sending failed:', error);
-      throw error;
-    }
+    return await sgMail.send(msg);
   }
 }
