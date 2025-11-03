@@ -8,6 +8,7 @@ import { signup } from "../../../api/auth/UserAuthentication";
 import studentLogin from "../../../assets/studentLogin.jpeg";
 
 import type { signUp } from "../../../types/signUpType";
+import { AxiosError } from "axios";
 
 const signupSchema = Yup.object().shape({
   username: Yup.string()
@@ -46,7 +47,8 @@ const SignUp = () => {
         toast.error(response.message)
       }
     } catch (error) {
-      toast.error("Network error. Please try again")
+      const errorMsg = error instanceof AxiosError ? error.response?.data.message : "Network error.Please try again"
+      toast.error(errorMsg)
     }
   };
 
