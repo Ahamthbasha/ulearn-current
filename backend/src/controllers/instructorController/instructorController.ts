@@ -20,7 +20,7 @@ import {
 } from "../../utils/errorHandlerUtil";
 import { IInstructor } from "../../models/instructorModel";
 import { JwtPayload } from "jsonwebtoken";
-import { appLogger } from "src/utils/logger";
+import { appLogger } from "../../utils/logger";
 
 export class InstructorController implements IInstructorController {
   private _instructorService: IInstructorService;
