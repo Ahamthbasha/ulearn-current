@@ -8,21 +8,8 @@ import Card from "../../../components/common/Card";
 import { setUser } from "../../../redux/slices/userSlice";
 import { useDispatch } from "react-redux";
 import { type ApiError } from "../../../types/interfaces/ICommon";
+import type { PasswordFormValues, ProfileData } from "../interface/studentProfileInterface";
 
-interface ProfileData {
-  username: string;
-  email: string;
-  profilePicUrl?: string;
-  skills?: string[];
-  expertise?: string[];
-  currentStatus?: string;
-}
-
-interface PasswordFormValues {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
 
 const StudentProfilePage = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -96,35 +83,35 @@ const StudentProfilePage = () => {
             <strong>Email:</strong> {profile.email}
           </p>
 
-          {/* Skills dropdown */}
+          {/* Skills bullet list */}
           <div>
             <strong>Skills:</strong>
             {profile.skills && profile.skills.length > 0 ? (
-              <select className="mt-1 block w-full border rounded px-3 py-2">
+              <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700">
                 {profile.skills.map((skill: string, index: number) => (
-                  <option key={index} value={skill}>
+                  <li key={index} className="ml-4">
                     {skill}
-                  </option>
+                  </li>
                 ))}
-              </select>
+              </ul>
             ) : (
-              <p className="text-gray-500">None</p>
+              <p className="text-gray-500 mt-1">None</p>
             )}
           </div>
 
-          {/* Expertise dropdown */}
+          {/* Expertise bullet list */}
           <div>
             <strong>Expertise:</strong>
             {profile.expertise && profile.expertise.length > 0 ? (
-              <select className="mt-1 block w-full border rounded px-3 py-2">
+              <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700">
                 {profile.expertise.map((exp: string, index: number) => (
-                  <option key={index} value={exp}>
+                  <li key={index} className="ml-4">
                     {exp}
-                  </option>
+                  </li>
                 ))}
-              </select>
+              </ul>
             ) : (
-              <p className="text-gray-500">None</p>
+              <p className="text-gray-500 mt-1">None</p>
             )}
           </div>
 
