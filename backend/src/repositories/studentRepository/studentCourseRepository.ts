@@ -78,7 +78,7 @@ export class StudentCourseRepository
     return result;
   }
 
-  async getFilteredCourses(
+async getFilteredCourses(
     page: number,
     limit: number,
     searchTerm = "",
@@ -108,23 +108,100 @@ export class StudentCourseRepository
       filter.category = categoryId;
     }
 
+    const isPriceSorting = sort === "price-asc" || sort === "price-desc";
+
     let sortOption: Record<string, SortOrder> = { createdAt: -1 };
-    switch (sort) {
-      case "name-asc":
-        sortOption = { courseName: 1 };
-        break;
-      case "name-desc":
-        sortOption = { courseName: -1 };
-        break;
-      case "price-asc":
-        sortOption = { price: 1 };
-        break;
-      case "price-desc":
-        sortOption = { price: -1 };
-        break;
+    if (!isPriceSorting) {
+      switch (sort) {
+        case "name-asc":
+          sortOption = { courseName: 1 };
+          break;
+        case "name-desc":
+          sortOption = { courseName: -1 };
+          break;
+      }
     }
 
-    const { data: courses, total } = await this.paginate(
+    const total = await this.countDocuments(filter);
+
+    if (isPriceSorting) {
+      const allCourses = (await this.findAll(
+        filter,
+        ["category", "instructorId"],
+      )) as ICourse[];
+
+      const courseIds = allCourses.map((course) => course._id.toString());
+      const offers =
+        await this._courseOfferRepo.findValidOffersByCourseIds(courseIds);
+      const offerMap = new Map<string, ICourseOffer>(
+        offers.map((offer) => [offer.courseId.toString(), offer]),
+      );
+
+      const coursesWithEffectivePrice = allCourses.map((course) => {
+        const courseId = course._id.toString();
+        const offer = offerMap.get(courseId);
+        const effectivePrice =
+          offer && offer.isActive && offer.status === "approved"
+            ? course.price * (1 - offer.discountPercentage / 100)
+            : course.price;
+
+        return {
+          course,
+          effectivePrice,
+        };
+      });
+
+      coursesWithEffectivePrice.sort((a, b) => {
+        if (sort === "price-asc") {
+          return a.effectivePrice - b.effectivePrice;
+        } else {
+          return b.effectivePrice - a.effectivePrice;
+        }
+      });
+
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedCourses = coursesWithEffectivePrice.slice(
+        startIndex,
+        endIndex,
+      );
+
+      const result = await Promise.all(
+        paginatedCourses.map(async ({ course, effectivePrice }) => {
+          const courseId = course._id.toString();
+          const chapterCount =
+            await this._chapterRepo.countChaptersByCourse(courseId);
+          const quizQuestionCount =
+            await this._quizRepo.countQuestionsByCourse(courseId);
+          const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+
+          const offer = offerMap.get(courseId);
+          const discountedPrice =
+            offer && offer.isActive && offer.status === "approved"
+              ? course.price * (1 - offer.discountPercentage / 100)
+              : undefined;
+
+          appLogger.info(
+            `getFilteredCourses ${courseId}: price=${course.price}, effectivePrice=${effectivePrice}, discountedPrice=${discountedPrice}`,
+          );
+
+          return {
+            course: {
+              ...course.toObject(),
+              thumbnailUrl: signedThumbnailUrl,
+              originalPrice: course.price,
+              discountedPrice,
+            },
+            chapterCount,
+            quizQuestionCount,
+          };
+        }),
+      );
+
+      return { data: result, total };
+    }
+
+    const { data: courses } = await this.paginate(
       filter,
       page,
       limit,
@@ -163,7 +240,7 @@ export class StudentCourseRepository
             ...course.toObject(),
             thumbnailUrl: signedThumbnailUrl,
             originalPrice: course.price,
-            discountedPrice, // Add discountedPrice
+            discountedPrice,
           },
           chapterCount,
           quizQuestionCount,

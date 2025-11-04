@@ -17,7 +17,7 @@ const InstructorListPage = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedSkill, setSelectedSkill] = useState("");
   const [selectedExpertise, setSelectedExpertise] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Added missing state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [allSkills, setAllSkills] = useState<string[]>([]);
   const [allExpertise, setAllExpertise] = useState<string[]>([]);
@@ -90,7 +90,12 @@ const InstructorListPage = () => {
     setSelectedSkill("");
     setSelectedExpertise("");
     setCurrentPage(1);
-    setIsSidebarOpen(false); // Close sidebar when clearing filters
+    setIsSidebarOpen(false);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setDebouncedSearch("");
   };
 
   return (
@@ -107,7 +112,7 @@ const InstructorListPage = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search instructor by name..."
-            className="w-full pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base transition-all duration-200"
+            className="w-full pl-10 pr-10 py-2 sm:py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base transition-all duration-200"
           />
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
@@ -122,6 +127,27 @@ const InstructorListPage = () => {
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
+          {searchTerm && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none"
+              aria-label="Clear search"
+            >
+              <svg
+                className="h-4 w-4 sm:h-5 sm:w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -209,7 +235,6 @@ const InstructorListPage = () => {
               </li>
             </ul>
           </div>
-
           <button
             onClick={handleClearFilter}
             className="w-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
@@ -223,7 +248,6 @@ const InstructorListPage = () => {
           <p className="mb-2 sm:mb-4 text-sm sm:text-base text-gray-600">
             We found <strong>{instructors.length}</strong> instructors for you!
           </p>
-
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {[...Array(instructorsPerPage)].map((_, index) => (
@@ -272,7 +296,6 @@ const InstructorListPage = () => {
                   </div>
                 ))}
               </div>
-
               {totalPages > 1 && (
                 <div className="flex justify-center items-center mt-6 sm:mt-8 md:mt-10 gap-2 sm:gap-3 flex-wrap">
                   {Array.from({ length: totalPages }, (_, i) => (
