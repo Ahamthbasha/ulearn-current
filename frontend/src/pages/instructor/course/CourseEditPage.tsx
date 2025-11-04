@@ -92,7 +92,7 @@ const CourseEditPage = () => {
       price: Yup.number()
         .typeError("Price must be a number")
         .positive("Price must be greater than zero")
-        .min(1, "Price must be at least ₹1")
+        .min(100, "Price must be at least ₹100")
         .max(999999, "Price cannot exceed ₹9,99,999")
         .test("decimal-places", "Price can have maximum 2 decimal places", (value) => {
           if (!value) return true;
