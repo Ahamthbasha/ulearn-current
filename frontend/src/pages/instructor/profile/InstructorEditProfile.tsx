@@ -12,38 +12,7 @@ import {
 } from "../../../api/action/InstructorActionApi";
 import { useDispatch } from "react-redux";
 import { setInstructor } from "../../../redux/slices/instructorSlice";
-
-interface ProfileFormValues {
-  name: string;
-  skills: string;
-  expertise: string;
-  profilePic: File | null;
-}
-
-interface InstructorProfile {
-  instructorName?: string;
-  skills?: string[];
-  expertise?: string[];
-  profilePicUrl?: string;
-}
-
-interface ProfileResponse {
-  success: boolean;
-  data: InstructorProfile;
-}
-
-interface UpdateProfileResponse {
-  success: boolean;
-  data: {
-    _id: string;
-    username: string;
-    email: string;
-    role: string;
-    isBlocked: boolean;
-    isVerified: boolean;
-    profilePicUrl?: string;
-  };
-}
+import type { ProfileFormValues, ProfileResponse, UpdateProfileResponse } from "../interface/instructorProfileInterface";
 
 const ProfileSchema = Yup.object().shape({
   name: Yup.string()
@@ -57,7 +26,7 @@ const ProfileSchema = Yup.object().shape({
     .required("Skills are required")
     .test(
       "valid-skills",
-      "Each skill must be 2–50 characters, contain only letters, numbers, spaces, hyphens, or underscores, and at least one valid skill is required (max 10 skills)",
+      "Each skill must be 2–50 characters, contain at least one letter, and can include numbers, spaces, hyphens, or underscores. At least one valid skill is required (max 10 skills)",
       (value) => {
         if (!value) return false;
         const skills = value
@@ -66,7 +35,7 @@ const ProfileSchema = Yup.object().shape({
           .filter(Boolean);
         if (skills.length === 0 || skills.length > 10) return false;
         return skills.every((skill) =>
-          /^[a-zA-Z0-9\s\-_]{2,50}$/.test(skill)
+          /^(?=.*[a-zA-Z])[a-zA-Z0-9\s\-_]{2,50}$/.test(skill)
         );
       }
     ),
@@ -74,7 +43,7 @@ const ProfileSchema = Yup.object().shape({
     .required("Expertise is required")
     .test(
       "valid-expertise",
-      "Each expertise must be 2–50 characters, contain only letters, numbers, spaces, hyphens, or underscores, and at least one valid expertise is required (max 10 expertise)",
+      "Each expertise must be 2–50 characters, contain at least one letter, and can include numbers, spaces, hyphens, or underscores. At least one valid expertise is required (max 10 expertise)",
       (value) => {
         if (!value) return false;
         const expertise = value
@@ -82,12 +51,14 @@ const ProfileSchema = Yup.object().shape({
           .map((s) => s.trim())
           .filter(Boolean);
         if (expertise.length === 0 || expertise.length > 10) return false;
+        // Each expertise must contain at least one letter and can have numbers, spaces, hyphens, underscores
         return expertise.every((exp) =>
-          /^[a-zA-Z0-9\s\-_]{2,50}$/.test(exp)
+          /^(?=.*[a-zA-Z])[a-zA-Z0-9\s\-_]{2,50}$/.test(exp)
         );
       }
     ),
 });
+
 
 const InstructorProfileEditPage = () => {
   const [initialValues, setInitialValues] = useState<ProfileFormValues | null>(null);
