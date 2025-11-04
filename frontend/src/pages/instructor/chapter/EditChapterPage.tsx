@@ -14,34 +14,48 @@ import {
 } from "../../../api/action/InstructorActionApi";
 import { AxiosError } from "axios";
 
+const textOnlyRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
 const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
-    .transform((val) => (typeof val === "string" ? val.trim() : ""))
-    .min(5, "Chapter title must be at least 5 characters")
-    .max(50,"Title should not exceed 50 characters")
+    .transform((value) => value.trim())
+    .min(5, "Chapter title must be at least 5 characters long")
+    .max(50, "Title should not exceed 50 characters")
+    .matches(
+      textOnlyRegex,
+      "Chapter title must contain only letters and single spaces"
+    )
     .test(
       "not-blank",
       "Chapter title cannot be only spaces",
-      (val) => typeof val === "string" && val.trim().length >= 5
+      (value) => !!value && value.trim().length >= 5
     )
     .required("Chapter title is required"),
 
   description: Yup.string()
-    .transform((val) => (typeof val === "string" ? val.trim() : ""))
-    .min(10, "Description must be at least 10 characters")
-    .max(100,"Description should not exceed 100 characters")
+    .transform((value) => value.trim())
+    .min(10, "Description must be at least 10 characters long")
+    .max(100, "chapter description should not exceed 100 characters")
+    .matches(
+      textOnlyRegex,
+      "Description must contain only letters and single spaces"
+    )
     .test(
       "not-blank",
       "Description cannot be only spaces",
-      (val) => typeof val === "string" && val.trim().length >= 10
+      (value) => !!value && value.trim().length >= 10
     )
     .required("Description is required"),
 
   chapterNumber: Yup.number()
-    .typeError("Chapter number must be a number")
-    .positive("Must be a positive number")
-    .integer("Must be an integer")
+    .transform((value, originalValue) => {
+      // Convert empty string to undefined so Yup treats it as missing
+      return originalValue === "" ? undefined : value;
+    })
+    .typeError("Chapter number must be a valid number")
+    .positive("Chapter number must be a positive value")
+    .integer("Chapter number must be an integer")
+    .min(1, "Chapter number must be at least 1")
     .max(250, "Chapter number must not exceed 250")
     .required("Chapter number is required"),
 });
@@ -56,10 +70,11 @@ const EditChapterPage = () => {
   const [initialValues, setInitialValues] = useState({
     chapterTitle: "",
     description: "",
-    chapterNumber: "",
+    chapterNumber: "" as unknown as number,
   });
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [existingVideoUrl, setExistingVideoUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -72,7 +87,7 @@ const EditChapterPage = () => {
         setInitialValues({
           chapterTitle: data.chapterTitle || "",
           description: data.description || "",
-          chapterNumber: data.chapterNumber || "",
+          chapterNumber: data.chapterNumber || ("" as unknown as number),
         });
 
         if (data.videoPresignedUrl) {
@@ -88,32 +103,27 @@ const EditChapterPage = () => {
     }
   }, [chapterId, courseId]);
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isVideo) {
+      toast.error("Only video files are allowed.");
+      e.target.value = "";
+      setVideoFile(null);
+      setVideoPreview(null);
+      return;
+    }
+
+    setVideoFile(file);
+    setVideoPreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (values: typeof initialValues) => {
     if (!courseId || !chapterId) return toast.error("Invalid request");
-
-    if (videoFile) {
-      const allowedVideoMimeTypes = [
-        "video/mp4",
-        "video/webm",
-        "video/ogg",
-        "video/x-matroska",
-        "video/quicktime",
-        "video/x-msvideo",
-      ];
-      const allowedExtensions = ["mp4", "webm", "ogg", "mkv", "mov", "avi"];
-
-      const ext = videoFile.name.split(".").pop()?.toLowerCase();
-
-      if (
-        !allowedVideoMimeTypes.includes(videoFile.type) ||
-        !ext ||
-        !allowedExtensions.includes(ext)
-      ) {
-        return toast.error(
-          "Invalid file. Only real video formats (mp4, webm, mkv, etc.) are allowed."
-        );
-      }
-    }
 
     try {
       setLoading(true);
@@ -127,15 +137,15 @@ const EditChapterPage = () => {
       await updateChapter(courseId, chapterId, formData);
       toast.success("Chapter updated successfully");
       navigate(`/instructor/course/${courseId}/chapters`);
-    } 
-    catch (error: unknown) {
-      if(error instanceof AxiosError){
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
         const message =
           error?.response?.data?.message || "Failed to update chapter";
         toast.error(message);
+      } else {
+        toast.error("An unexpected error occurred");
       }
-    } 
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -161,28 +171,51 @@ const EditChapterPage = () => {
                 name="chapterNumber"
                 label="Chapter Number"
                 type="number"
+                placeholder="Enter chapter number"
                 useFormik
               />
 
               {/* Video File Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Existing Video
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Video File
                 </label>
-                {existingVideoUrl && (
-                  <video
-                    src={existingVideoUrl}
-                    controls
-                    muted = {false}
-                    className="w-full h-64 my-2 rounded"
-                  />
+
+                {/* Show Existing Video */}
+                {existingVideoUrl && !videoPreview && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-600 mb-2">Current Video:</p>
+                    <video
+                      src={existingVideoUrl}
+                      controls
+                      muted={false}
+                      className="w-full max-h-96 rounded shadow-md"
+                    />
+                  </div>
                 )}
+
+                {/* Show New Video Preview */}
+                {videoPreview && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-600 mb-2">New Video Preview:</p>
+                    <video
+                      src={videoPreview}
+                      controls
+                      className="w-full max-h-96 rounded shadow-md"
+                    />
+                  </div>
+                )}
+
+                {/* File Input */}
                 <input
                   type="file"
                   accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                  onChange={handleVideoChange}
                   className="w-full px-4 py-2 border rounded bg-gray-100"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave empty to keep the existing video
+                </p>
               </div>
 
               <Button type="submit" disabled={loading}>
@@ -204,55 +237,3 @@ const EditChapterPage = () => {
 };
 
 export default EditChapterPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
