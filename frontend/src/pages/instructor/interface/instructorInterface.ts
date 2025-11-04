@@ -1,5 +1,20 @@
 
+export interface Module extends Record<string,unknown> {
+  _id?: string;
+  moduleId: string;
+  moduleTitle: string;
+  courseId: string;
+  moduleNumber: number;
+  description: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
+export interface ModuleFormValues {
+  moduleTitle: string;
+  moduleNumber: number;
+  description: string;
+}
 
 export interface VerificationFormValues {
   name: string;

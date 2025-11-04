@@ -1,3 +1,18 @@
+export const ModuleErrorMessages = {
+  MODULE_NOT_FOUND: "Module not found",
+  MODULE_ALREADY_EXIST: "Module with this title already exists",
+  MODULE_NUMBER_ALREADY_EXIST: "Module with this number already exists",
+};
+
+export const ModuleSuccessMessages = {
+  MODULE_CREATED: "Module created successfully",
+  MODULE_UPDATED: "Module updated successfully",
+  MODULE_DELETED: "Module deleted successfully",
+  MODULE_RETRIEVED: "Module(s) retrieved successfully",
+};
+
+
+
 export const VALID_OFFER_STATUSES = ["approved", "rejected"] as const;
 export type OfferStatus = typeof VALID_OFFER_STATUSES[number];
 

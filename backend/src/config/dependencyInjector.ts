@@ -245,6 +245,23 @@ import { InstructorCourseController } from "../controllers/instructorController/
 
 import { CoursePublishCron } from "../cron/coursePublishCron";
 
+import { IInstructorModuleRepository } from "../repositories/instructorRepository/interface/IInstructorModuleRepository";
+import { InstructorModuleRepository } from "../repositories/instructorRepository/instructorModuleRepository";
+
+import { IInstructorModuleService } from "../services/instructorServices/interface/IInstructorModuleService";
+import { InstructorModuleService } from "../services/instructorServices/instructorModuleService";
+
+
+import { IInstructorModuleController } from "../controllers/instructorController/interfaces/IInstructorModuleController";
+import { InstructorModuleController } from "../controllers/instructorController/instructorModuleController";
+
+const instructorModuleRepo : IInstructorModuleRepository = new InstructorModuleRepository()
+
+const instructorModuleService : IInstructorModuleService = new InstructorModuleService(instructorModuleRepo)
+
+const instructorModuleController : IInstructorModuleController = new InstructorModuleController(instructorModuleService)
+
+
 const instructorCourseRepository: IInstructorCourseRepository =
   new InstructorCourseRepository();
 
@@ -253,6 +270,7 @@ const instructorCourseService: IInstructorCourseService =
     instructorCourseRepository,
     instructorChapterRepository,
     instructorQuizRepository,
+    instructorModuleRepo
   );
 
 const instructorCourseController: IInstructorCourseController =
@@ -1174,4 +1192,7 @@ export {
 
   //student lms enrollment controller
   studentLmsEnrollmentController,
+
+  //instructorModule controller
+  instructorModuleController,
 };

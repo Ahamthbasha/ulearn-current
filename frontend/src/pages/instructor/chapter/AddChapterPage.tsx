@@ -1,3 +1,5 @@
+// pages/instructor/chapters/AddChapterPage.tsx
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -46,7 +48,6 @@ const chapterSchema = Yup.object().shape({
 
   chapterNumber: Yup.number()
     .transform((value, originalValue) => {
-      // Convert empty string to undefined so Yup treats it as missing
       return originalValue === "" ? undefined : value;
     })
     .typeError("Chapter number must be a valid number")
@@ -58,7 +59,7 @@ const chapterSchema = Yup.object().shape({
 });
 
 const AddChapterPage = () => {
-  const { courseId } = useParams<{ courseId: string }>();
+  const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -85,7 +86,6 @@ const AddChapterPage = () => {
   };
 
   const getErrorMessage = (error: unknown): string => {
-    // Check for API error with response.data.message
     if (
       error &&
       typeof error === "object" &&
@@ -100,17 +100,15 @@ const AddChapterPage = () => {
       return String((error.response.data as { message?: string }).message);
     }
 
-    // Check for standard Error with message
     if (error instanceof Error) {
       return error.message;
     }
 
-    // Fallback
     return "Chapter creation failed";
   };
 
   const handleSubmit = async (values: ChapterFormValues) => {
-    if (!courseId) return toast.error("Invalid course ID");
+    if (!moduleId) return toast.error("Invalid module ID");
 
     if (!videoFile) {
       toast.error("Video file is required.");
@@ -124,12 +122,12 @@ const AddChapterPage = () => {
       formData.append("chapterTitle", values.chapterTitle);
       formData.append("description", values.description);
       formData.append("chapterNumber", String(values.chapterNumber));
-      formData.append("courseId", courseId);
+      formData.append("moduleId", moduleId); // Changed from courseId
       formData.append("video", videoFile);
 
-      const res = await createChapter(courseId, formData);
-      toast.success(res?.data?.message);
-      navigate(`/instructor/course/${courseId}/chapters`);
+      await createChapter(formData);
+      toast.success("Chapter created successfully");
+      navigate(`/instructor/modules/${moduleId}/chapters`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -144,7 +142,7 @@ const AddChapterPage = () => {
           initialValues={{
             chapterTitle: "",
             description: "",
-            chapterNumber: "" as unknown as number, // Empty string for display, but typed as number
+            chapterNumber: "" as unknown as number,
           }}
           validationSchema={chapterSchema}
           onSubmit={handleSubmit}
@@ -161,7 +159,6 @@ const AddChapterPage = () => {
                 useFormik
               />
 
-              {/* Video File Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Video File *
@@ -174,7 +171,6 @@ const AddChapterPage = () => {
                 />
               </div>
 
-              {/* Video Preview */}
               {videoPreview && (
                 <div className="mt-2">
                   <video
@@ -185,7 +181,6 @@ const AddChapterPage = () => {
                 </div>
               )}
 
-              {/* Submit Button with Spinner */}
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <div className="flex items-center gap-2">

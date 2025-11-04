@@ -17,6 +17,7 @@ import {
   instructorSlotBookingController,
   instructorWithdrawalController,
   instructorCourseOfferController,
+  instructorModuleController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 
@@ -221,20 +222,73 @@ router.patch(
   ),
 );
 
-//chapter routes
+//modules routes
 
+// Get Modules by Course (with pagination & search)
 router.get(
-  "/chapters/:courseId",
+  "/course/:courseId/modules",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorChapterController.getChaptersByCourse.bind(
+  instructorModuleController.getModulesByCourse.bind(
+    instructorModuleController,
+  ),
+);
+
+// Create Module
+router.post(
+  "/modules",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorModuleController.createModule.bind(instructorModuleController),
+);
+
+// Get Module by ID
+router.get(
+  "/modules/:moduleId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorModuleController.getModuleById.bind(instructorModuleController),
+);
+
+// Update Module
+router.put(
+  "/modules/:moduleId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorModuleController.updateModule.bind(instructorModuleController),
+);
+
+// Delete Module
+router.delete(
+  "/modules/:moduleId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorModuleController.deleteModule.bind(instructorModuleController),
+);
+
+// ============================================
+// CHAPTER ROUTES (UPDATED - now scoped to modules)
+// ============================================
+
+// Get Chapters by Module (with pagination & search)
+router.get(
+  "/modules/:moduleId/chapters",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorChapterController.getChaptersByModule.bind(
     instructorChapterController,
   ),
 );
 
+// Create Chapter (in a module)
 router.post(
-  "/chapters/:courseId",
+  "/chapters",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
@@ -245,8 +299,18 @@ router.post(
   instructorChapterController.createChapter.bind(instructorChapterController),
 );
 
+// Get Chapter by ID
+router.get(
+  "/chapters/:chapterId",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorChapterController.getChapterById.bind(instructorChapterController),
+);
+
+// Update Chapter
 router.put(
-  "/chapters/:courseId/:chapterId",
+  "/chapters/:chapterId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
@@ -257,21 +321,68 @@ router.put(
   instructorChapterController.updateChapter.bind(instructorChapterController),
 );
 
+// Delete Chapter
 router.delete(
-  "/chapters/:courseId/:chapterId",
+  "/chapters/:chapterId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
   instructorChapterController.deleteChapter.bind(instructorChapterController),
 );
 
-router.get(
-  "/chapters/:courseId/:chapterId",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorChapterController.getChapterById.bind(instructorChapterController),
-);
+// //chapter routes
+
+// router.get(
+//   "/chapters/:courseId",
+//   authenticateToken,
+//   restrictBlockedUser,
+//   isInstructor,
+//   instructorChapterController.getChaptersByCourse.bind(
+//     instructorChapterController,
+//   ),
+// );
+
+
+
+// router.post(
+//   "/chapters/:courseId",
+//   authenticateToken,
+//   restrictBlockedUser,
+//   isInstructor,
+//   upload.fields([
+//     { name: "video", maxCount: 1 },
+//     { name: "captions", maxCount: 1 },
+//   ]),
+//   instructorChapterController.createChapter.bind(instructorChapterController),
+// );
+
+// router.put(
+//   "/chapters/:courseId/:chapterId",
+//   authenticateToken,
+//   restrictBlockedUser,
+//   isInstructor,
+//   upload.fields([
+//     { name: "video", maxCount: 1 },
+//     { name: "captions", maxCount: 1 },
+//   ]),
+//   instructorChapterController.updateChapter.bind(instructorChapterController),
+// );
+
+// router.delete(
+//   "/chapters/:courseId/:chapterId",
+//   authenticateToken,
+//   restrictBlockedUser,
+//   isInstructor,
+//   instructorChapterController.deleteChapter.bind(instructorChapterController),
+// );
+
+// router.get(
+//   "/chapters/:courseId/:chapterId",
+//   authenticateToken,
+//   restrictBlockedUser,
+//   isInstructor,
+//   instructorChapterController.getChapterById.bind(instructorChapterController),
+// );
 
 //quiz routes
 

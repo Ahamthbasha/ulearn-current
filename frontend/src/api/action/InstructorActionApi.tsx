@@ -205,9 +205,9 @@ export const submitCourseForVerification = async(courseId:string)=>{
   }
 }
 
-//chapter related actions
+//module related ACTIONS
 
-export const getChaptersByCourse = async (
+export const getModulesByCourse = async (
   courseId: string,
   page = 1,
   limit = 10,
@@ -215,7 +215,7 @@ export const getChaptersByCourse = async (
 ) => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorGetChaptersByCourse}/${courseId}`,
+      `${InstructorRouterEndPoints.instructorGetModulesByCourse}/${courseId}/modules`,
       {
         params: { page, limit, search },
       }
@@ -226,23 +226,27 @@ export const getChaptersByCourse = async (
   }
 };
 
-export const getChapterById = async (courseId: string, chapterId: string) => {
+export const getModuleById = async (moduleId: string) => {
   try {
     const response = await API.get(
-      `${InstructorRouterEndPoints.instructorGetSingleChapter}/${courseId}/${chapterId}`
+      `${InstructorRouterEndPoints.instructorGetModuleById}/${moduleId}`
     );
-
     return response.data.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const createChapter = async (courseId: string, formData: FormData) => {
+export const createModule = async (moduleData: {
+  courseId: string;
+  moduleTitle: string;
+  moduleNumber: number;
+  description: string;
+}) => {
   try {
     const response = await API.post(
-      `${InstructorRouterEndPoints.instructorCreateChapter}/${courseId}`,
-      formData,
+      InstructorRouterEndPoints.instructorCreateModule,
+      moduleData
     );
     return response.data.data;
   } catch (error) {
@@ -250,14 +254,72 @@ export const createChapter = async (courseId: string, formData: FormData) => {
   }
 };
 
-export const updateChapter = async (
-  courseId: string,
-  chapterId: string,
-  formData: FormData
+export const updateModule = async (
+  moduleId: string,
+  moduleData: {
+    moduleTitle?: string;
+    moduleNumber?: number;
+    description?: string;
+  }
 ) => {
   try {
     const response = await API.put(
-      `${InstructorRouterEndPoints.instructorUpdateChapter}/${courseId}/${chapterId}`,
+      `${InstructorRouterEndPoints.instructorUpdateModule}/${moduleId}`,
+      moduleData
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteModule = async (moduleId: string) => {
+  try {
+    const response = await API.delete(
+      `${InstructorRouterEndPoints.instructorDeleteModule}/${moduleId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+//chapter related code
+
+export const getChaptersByModule = async (
+  moduleId: string,
+  page = 1,
+  limit = 10,
+  search = ""
+) => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetChaptersByModule}/${moduleId}/chapters`,
+      {
+        params: { page, limit, search },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getChapterById = async (chapterId: string) => {
+  try {
+    const response = await API.get(
+      `${InstructorRouterEndPoints.instructorGetSingleChapter}/${chapterId}`
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createChapter = async (formData: FormData) => {
+  try {
+    const response = await API.post(
+      InstructorRouterEndPoints.instructorCreateChapter,
       formData
     );
     return response.data.data;
@@ -266,16 +328,101 @@ export const updateChapter = async (
   }
 };
 
-export const deleteChapter = async (courseId: string, chapterId: string) => {
+export const updateChapter = async (
+  chapterId: string,
+  formData: FormData
+) => {
+  try {
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorUpdateChapter}/${chapterId}`,
+      formData
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteChapter = async (chapterId: string) => {
   try {
     const response = await API.delete(
-      `${InstructorRouterEndPoints.instructorDeleteChapter}/${courseId}/${chapterId}`
+      `${InstructorRouterEndPoints.instructorDeleteChapter}/${chapterId}`
     );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
+
+// export const getChaptersByCourse = async (
+//   courseId: string,
+//   page = 1,
+//   limit = 10,
+//   search = ""
+// ) => {
+//   try {
+//     const response = await API.get(
+//       `${InstructorRouterEndPoints.instructorGetChaptersByCourse}/${courseId}`,
+//       {
+//         params: { page, limit, search },
+//       }
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const getChapterById = async (courseId: string, chapterId: string) => {
+//   try {
+//     const response = await API.get(
+//       `${InstructorRouterEndPoints.instructorGetSingleChapter}/${courseId}/${chapterId}`
+//     );
+
+//     return response.data.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const createChapter = async (courseId: string, formData: FormData) => {
+//   try {
+//     const response = await API.post(
+//       `${InstructorRouterEndPoints.instructorCreateChapter}/${courseId}`,
+//       formData,
+//     );
+//     return response.data.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const updateChapter = async (
+//   courseId: string,
+//   chapterId: string,
+//   formData: FormData
+// ) => {
+//   try {
+//     const response = await API.put(
+//       `${InstructorRouterEndPoints.instructorUpdateChapter}/${courseId}/${chapterId}`,
+//       formData
+//     );
+//     return response.data.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const deleteChapter = async (courseId: string, chapterId: string) => {
+//   try {
+//     const response = await API.delete(
+//       `${InstructorRouterEndPoints.instructorDeleteChapter}/${courseId}/${chapterId}`
+//     );
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
 
 //quiz related actions
 

@@ -8,20 +8,24 @@ import { IInstructorQuizRepository } from "../../repositories/instructorReposito
 import { mapCourseToInstructorDTO } from "../../mappers/instructorMapper/instructorCourseMapper";
 import { mapToCourseResponseDto } from "../../mappers/instructorMapper/courseDetailMapper";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { IInstructorModuleRepository } from "../../repositories/instructorRepository/interface/IInstructorModuleRepository";
 
 export class InstructorCourseService implements IInstructorCourseService {
   private _courseRepository: IInstructorCourseRepository;
   private _chapterRepository: IInstructorChapterRepository;
   private _quizRepository: IInstructorQuizRepository;
+  private _moduleRepository: IInstructorModuleRepository;
 
   constructor(
     courseRepository: IInstructorCourseRepository,
     chapterRepository: IInstructorChapterRepository,
     quizRepository: IInstructorQuizRepository,
+    moduleRepository:IInstructorModuleRepository
   ) {
     this._courseRepository = courseRepository;
     this._chapterRepository = chapterRepository;
     this._quizRepository = quizRepository;
+    this._moduleRepository = moduleRepository;
   }
 
   async createCourse(courseData: ICourse): Promise<ICourse> {
@@ -146,45 +150,47 @@ export class InstructorCourseService implements IInstructorCourseService {
     return !!existing;
   }
 
-  async canPublishCourse(courseId: string): Promise<boolean> {
-    const chapters =
-      await this._chapterRepository.getChaptersByCourse(courseId);
-    const quiz = await this._quizRepository.getQuizByCourseId(courseId);
-    return (
-      chapters.length > 0 &&
-      !!quiz &&
-      Array.isArray(quiz.questions) &&
-      quiz.questions.length > 0
-    );
-  }
+  // async canPublishCourse(courseId: string): Promise<boolean> {
+  //   const modules =
+  //     await this._moduleRepository.getModulesByCourse(courseId);
+  //   const quiz = await this._quizRepository.getQuizByCourseId(courseId);
+  //   return (
+  //     chapters.length > 0 &&
+  //     !!quiz &&
+  //     Array.isArray(quiz.questions) &&
+  //     quiz.questions.length > 0
+  //   );
+  // }
+
+    // async canSubmitForVerification(courseId: string): Promise<boolean> {
+  //   const chapters = await this._chapterRepository.getChaptersByCourse(courseId);
+  //   const quiz = await this._quizRepository.getQuizByCourseId(courseId);
+    
+  //   return (
+  //     chapters.length > 0 &&
+  //     !!quiz &&
+  //     Array.isArray(quiz.questions) &&
+  //     quiz.questions.length > 0
+  //   );
+  // }
+
+  // async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
+  //   const canSubmit = await this.canSubmitForVerification(courseId);
+    
+  //   if (!canSubmit) {
+  //     throw new Error("Course must have at least one chapter and one quiz with questions to submit for verification");
+  //   }
+    
+  //   return await this._courseRepository.submitCourseForVerification(courseId);
+  // }
+
+
 
   async publishCourse(
     courseId: string,
     publishDate?: Date,
   ): Promise<ICourse | null> {
     return await this._courseRepository.publishCourse(courseId, publishDate);
-  }
-
-  async canSubmitForVerification(courseId: string): Promise<boolean> {
-    const chapters = await this._chapterRepository.getChaptersByCourse(courseId);
-    const quiz = await this._quizRepository.getQuizByCourseId(courseId);
-    
-    return (
-      chapters.length > 0 &&
-      !!quiz &&
-      Array.isArray(quiz.questions) &&
-      quiz.questions.length > 0
-    );
-  }
-
-  async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
-    const canSubmit = await this.canSubmitForVerification(courseId);
-    
-    if (!canSubmit) {
-      throw new Error("Course must have at least one chapter and one quiz with questions to submit for verification");
-    }
-    
-    return await this._courseRepository.submitCourseForVerification(courseId);
   }
 
   async getVerifiedInstructorCourses(
@@ -194,4 +200,73 @@ export class InstructorCourseService implements IInstructorCourseService {
       instructorId,
     );
   }
+
+
+  async canPublishCourse(courseId: string): Promise<boolean> {
+  // Check if course has at least one module
+  const modules = await this._moduleRepository.getModulesByCourse(courseId);
+  
+  if (modules.length === 0) {
+    return false;
+  }
+
+  // Check if at least one module has chapters
+  let hasChapters = false;
+  for (const module of modules) {
+    const chapters = await this._chapterRepository.getChaptersByModule(
+      module._id.toString()
+    );
+    if (chapters.length > 0) {
+      hasChapters = true;
+      break;
+    }
+  }
+
+  // Check if course has quiz with questions
+  const quiz = await this._quizRepository.getQuizByCourseId(courseId);
+  const hasValidQuiz =
+    !!quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0;
+
+  return hasChapters && hasValidQuiz;
+}
+
+async canSubmitForVerification(courseId: string): Promise<boolean> {
+  // Check if course has at least one module
+  const modules = await this._moduleRepository.getModulesByCourse(courseId);
+  
+  if (modules.length === 0) {
+    return false;
+  }
+
+  // Check if at least one module has chapters
+  let hasChapters = false;
+  for (const module of modules) {
+    const chapters = await this._chapterRepository.getChaptersByModule(
+      module._id.toString()
+    );
+    if (chapters.length > 0) {
+      hasChapters = true;
+      break;
+    }
+  }
+
+  // Check if course has quiz with questions
+  const quiz = await this._quizRepository.getQuizByCourseId(courseId);
+  const hasValidQuiz =
+    !!quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0;
+
+  return hasChapters && hasValidQuiz;
+}
+
+async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
+  const canSubmit = await this.canSubmitForVerification(courseId);
+  
+  if (!canSubmit) {
+    throw new Error(
+      "Course must have at least one module with chapters and one quiz with questions to submit for verification"
+    );
+  }
+  
+  return await this._courseRepository.submitCourseForVerification(courseId);
+}
 }

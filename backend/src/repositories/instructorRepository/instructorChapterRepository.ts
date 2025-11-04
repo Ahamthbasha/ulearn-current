@@ -1,3 +1,83 @@
+// import {
+//   ChapterModel,
+//   CreateChapterDTO,
+//   IChapter,
+// } from "../../models/chapterModel";
+// import { GenericRepository } from "../genericRepository";
+// import { IInstructorChapterRepository } from "./interface/IInstructorChapterRepository";
+
+// export class InstructorChapterRepository
+//   extends GenericRepository<IChapter>
+//   implements IInstructorChapterRepository
+// {
+//   constructor() {
+//     super(ChapterModel);
+//   }
+
+//   async createChapter(data: CreateChapterDTO): Promise<IChapter> {
+//     return await this.create(data); // using generic
+//   }
+
+//   async getChaptersByCourse(courseId: string): Promise<IChapter[]> {
+//     const chapters = await this.findAll({ courseId });
+//     return chapters || [];
+//   }
+
+//   async getChapterById(chapterId: string): Promise<IChapter | null> {
+//     return await this.findById(chapterId);
+//   }
+
+//   async updateChapter(
+//     chapterId: string,
+//     data: Partial<IChapter>,
+//   ): Promise<IChapter | null> {
+//     return await this.update(chapterId, data);
+//   }
+
+//   async deleteChapter(chapterId: string): Promise<IChapter | null> {
+//     return await this.delete(chapterId);
+//   }
+
+//   async findByTitleOrNumberAndCourseId(
+//     courseId: string,
+//     chapterTitle: string,
+//     chapterNumber: number,
+//     chapterId?: string,
+//   ): Promise<IChapter | null> {
+//     return await this.findOne({
+//       courseId,
+//       _id: { $ne: chapterId },
+//       $or: [
+//         { chapterTitle: { $regex: `^${chapterTitle}$`, $options: "i" } },
+//         { chapterNumber: chapterNumber },
+//       ],
+//     });
+//   }
+
+//   async paginateChapters(
+//     filter: object,
+//     page: number,
+//     limit: number,
+//   ): Promise<{ data: IChapter[]; total: number }> {
+//     return this.paginate(filter, page, limit, { chapterNumber: 1 });
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import {
   ChapterModel,
   CreateChapterDTO,
@@ -15,11 +95,11 @@ export class InstructorChapterRepository
   }
 
   async createChapter(data: CreateChapterDTO): Promise<IChapter> {
-    return await this.create(data); // using generic
+    return await this.create(data);
   }
 
-  async getChaptersByCourse(courseId: string): Promise<IChapter[]> {
-    const chapters = await this.findAll({ courseId });
+  async getChaptersByModule(moduleId: string): Promise<IChapter[]> {
+    const chapters = await this.findAll({ moduleId }); // Changed from courseId
     return chapters || [];
   }
 
@@ -29,7 +109,7 @@ export class InstructorChapterRepository
 
   async updateChapter(
     chapterId: string,
-    data: Partial<IChapter>,
+    data: Partial<IChapter>
   ): Promise<IChapter | null> {
     return await this.update(chapterId, data);
   }
@@ -38,14 +118,14 @@ export class InstructorChapterRepository
     return await this.delete(chapterId);
   }
 
-  async findByTitleOrNumberAndCourseId(
-    courseId: string,
+  async findByTitleOrNumberAndModuleId(
+    moduleId: string,
     chapterTitle: string,
     chapterNumber: number,
-    chapterId?: string,
+    chapterId?: string
   ): Promise<IChapter | null> {
     return await this.findOne({
-      courseId,
+      moduleId, // Changed from courseId
       _id: { $ne: chapterId },
       $or: [
         { chapterTitle: { $regex: `^${chapterTitle}$`, $options: "i" } },
@@ -57,7 +137,7 @@ export class InstructorChapterRepository
   async paginateChapters(
     filter: object,
     page: number,
-    limit: number,
+    limit: number
   ): Promise<{ data: IChapter[]; total: number }> {
     return this.paginate(filter, page, limit, { chapterNumber: 1 });
   }

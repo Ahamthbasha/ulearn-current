@@ -45,6 +45,9 @@ import InstructorCourseOffersPage from '../pages/instructor/courseOffer/Instruct
 import AddCourseOfferPage from '../pages/instructor/courseOffer/AddCourseOfferPage'
 import EditInstructorCourseOfferPage from '../pages/instructor/courseOffer/EditCourseOfferPage'
 import OfferDetailsPage from '../pages/instructor/courseOffer/CourseOfferDetailPage'
+import ModuleManagementPage from '../pages/instructor/Module/ModuleManagementPage'
+import AddModulePage from '../pages/instructor/Module/AddModulePage'
+import EditModulePage from '../pages/instructor/Module/EditModulePage'
 
 
 
@@ -80,10 +83,19 @@ const InstructorRouter = () => {
     <Route path='course/manage/:courseId' element={<CourseManagementPage/>}/>
     <Route path='courseDashboard/:courseId' element={<SpecificDashboardPage/>}/>
 
-    {/* chapterManage */}
+    {/* moduleManage */}
+    <Route path='course/:courseId/modules' element={<ModuleManagementPage/>}/>
+    <Route path='course/:courseId/modules/add' element={<AddModulePage/>}/>
+    <Route path='course/:courseId/modules/:moduleId/edit' element={<EditModulePage/>}/>
+
+    <Route path='modules/:moduleId/chapters' element={<ChapterManagementPage/>} />
+    <Route path='modules/:moduleId/chapters/add' element={<AddChapterPage/>}/>
+    <Route path='modules/:moduleId/chapters/:chapterId/edit' element={<EditChapterPage/>}/>
+
+    {/* chapterManage
     <Route path='course/:courseId/chapters' element={<ChapterManagementPage/>} />
     <Route path='course/:courseId/chapters/add' element={<AddChapterPage/>}/>
-    <Route path='course/:courseId/chapters/:chapterId/edit' element={<EditChapterPage/>}/>
+    <Route path='course/:courseId/chapters/:chapterId/edit' element={<EditChapterPage/>}/> */}
 
     {/* quizManage */}
     <Route path='course/:courseId/quiz' element= {<QuizManagementPage/>}/>
