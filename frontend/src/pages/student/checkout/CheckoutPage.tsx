@@ -149,7 +149,7 @@ const fetchCartItems = async () => {
       }
       setWallet({ balance: res.wallet.balance });
     } catch (error) {
-      toast.error("Failed to fetch wallet balance.");
+      toast.error("Failed to fetch wallet balance or wallet balance is zero");
       setWallet({ balance: 0 });
     }
   };
