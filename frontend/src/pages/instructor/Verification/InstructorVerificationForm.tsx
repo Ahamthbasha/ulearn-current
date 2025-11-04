@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Formik, Form } from "formik";
+import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import InputField from "../../../components/common/InputField";
 import { sendVerification } from "../../../api/action/InstructorActionApi";
@@ -46,8 +46,36 @@ const InstructorVerificationForm: React.FC = () => {
       .trim()
       .lowercase()
       .required("Email is required"),
-    degreeCertificate: Yup.mixed().required("Degree Certificate is required"),
-    resume: Yup.mixed().required("Resume is required"),
+    degreeCertificate: Yup.mixed()
+      .required("Degree Certificate is required")
+      .test("fileType", "Only PDF, PNG, JPG, JPEG files are allowed", (value) => {
+        if (!value) return false;
+        const file = value as File;
+        const validTypes = ["application/pdf", "image/png", "image/jpg", "image/jpeg"];
+        return validTypes.includes(file.type);
+      })
+      .test("fileSize", "File size must be less than 5MB", (value) => {
+        if (!value) return false;
+        const file = value as File;
+        return file.size <= 5 * 1024 * 1024; // 5MB
+      }),
+    resume: Yup.mixed()
+      .required("Resume is required")
+      .test("fileType", "Only PDF, DOC, DOCX files are allowed", (value) => {
+        if (!value) return false;
+        const file = value as File;
+        const validTypes = [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ];
+        return validTypes.includes(file.type);
+      })
+      .test("fileSize", "File size must be less than 5MB", (value) => {
+        if (!value) return false;
+        const file = value as File;
+        return file.size <= 5 * 1024 * 1024; // 5MB
+      }),
   });
 
   const handleSubmit = async (values: VerificationFormValues) => {
@@ -146,6 +174,11 @@ const InstructorVerificationForm: React.FC = () => {
                   }
                 }}
               />
+              <ErrorMessage
+                name="degreeCertificate"
+                component="div"
+                className="text-red-500 text-xs mt-1 font-medium"
+              />
               <p className="text-xs text-gray-500 mt-1">
                 Accepted formats: PDF, PNG, JPG, JPEG (Max 5MB)
               </p>
@@ -168,6 +201,11 @@ const InstructorVerificationForm: React.FC = () => {
                     setFieldValue("resume", e.currentTarget.files[0]);
                   }
                 }}
+              />
+              <ErrorMessage
+                name="resume"
+                component="div"
+                className="text-red-500 text-xs mt-1 font-medium"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Accepted formats: PDF, DOC, DOCX (Max 5MB)
