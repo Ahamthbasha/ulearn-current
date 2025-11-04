@@ -15,7 +15,8 @@ export default function WithdrawalDetailsPage() {
   const navigate = useNavigate();
   const [withdrawalRequest, setWithdrawalRequest] = useState<IWithdrawalRequestDetail | null>(null);
   const [remarks, setRemarks] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [approvingLoading, setApprovingLoading] = useState(false);
+  const [rejectingLoading, setRejectingLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [remarksError, setRemarksError] = useState<string | null>(null);
 
@@ -31,16 +32,14 @@ export default function WithdrawalDetailsPage() {
       const response = await adminGetWithdrawalRequestById(requestId);
       setWithdrawalRequest(response.data as IWithdrawalRequestDetail);
       setRemarks(response.data.remarks || "");
-    } 
-    catch (error: unknown) {
-  if (error instanceof Error) {
-    toast.error(error.message || "Failed to load withdrawal request");
-  } else {
-    toast.error("Failed to load withdrawal request");
-  }
-  navigate("/admin/withdrawal");
-}
-    finally {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to load withdrawal request");
+      } else {
+        toast.error("Failed to load withdrawal request");
+      }
+      navigate("/admin/withdrawal");
+    } finally {
       setPageLoading(false);
     }
   };
@@ -66,14 +65,18 @@ export default function WithdrawalDetailsPage() {
     if (!withdrawalRequest) return;
 
     try {
-      setLoading(true);
+      setApprovingLoading(true);
       const response = await adminApproveWithdrawal(withdrawalRequest.requestId, remarks);
       toast.success(response.message || "Withdrawal request approved successfully");
       fetchWithdrawalRequest();
-    } catch (error) {
-      toast.error("instructor has insufficient wallet balance");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Instructor has insufficient wallet balance");
+      } else {
+        toast.error("Instructor has insufficient wallet balance");
+      }
     } finally {
-      setLoading(false);
+      setApprovingLoading(false);
     }
   };
 
@@ -88,21 +91,19 @@ export default function WithdrawalDetailsPage() {
     }
 
     try {
-      setLoading(true);
+      setRejectingLoading(true);
       setRemarksError(null);
       const response = await adminRejectWithdrawal(withdrawalRequest.requestId, remarks);
       toast.success(response.message || "Withdrawal request rejected successfully");
       fetchWithdrawalRequest();
-    } 
-    catch (error: unknown) {
-  if (error instanceof Error) {
-    toast.error(error.message || "Failed to reject withdrawal request");
-  } else {
-    toast.error("Failed to reject withdrawal request");
-  }
-}
-    finally {
-      setLoading(false);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to reject withdrawal request");
+      } else {
+        toast.error("Failed to reject withdrawal request");
+      }
+    } finally {
+      setRejectingLoading(false);
     }
   };
 
@@ -148,6 +149,8 @@ export default function WithdrawalDetailsPage() {
       </div>
     );
   }
+
+  const isProcessing = approvingLoading || rejectingLoading;
 
   return (
     <div className="p-4 space-y-6 max-w-3xl mx-auto">
@@ -226,7 +229,7 @@ export default function WithdrawalDetailsPage() {
                   setRemarks(e.target.value);
                   setRemarksError(null);
                 }}
-                disabled={loading}
+                disabled={isProcessing}
                 rows={4}
               />
               {remarksError && (
@@ -243,17 +246,17 @@ export default function WithdrawalDetailsPage() {
           <div className="flex gap-4">
             <Button
               onClick={handleApprove}
-              disabled={loading}
+              disabled={isProcessing}
               className="bg-green-600 hover:bg-green-700 flex-1 py-3"
             >
-              {loading ? "Processing..." : "✓ Approve Request"}
+              {approvingLoading ? "Approving..." : "✓ Approve Request"}
             </Button>
             <Button
               onClick={handleReject}
-              disabled={loading}
+              disabled={isProcessing}
               className="bg-red-600 hover:bg-red-700 flex-1 py-3"
             >
-              {loading ? "Processing..." : "✗ Reject Request"}
+              {rejectingLoading ? "Rejecting..." : "✗ Reject Request"}
             </Button>
           </div>
         </Card>
