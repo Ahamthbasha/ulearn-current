@@ -468,6 +468,7 @@ export const CategoryErrorMsg = {
 };
 
 export const CourseErrorMessages = {
+  SUBMIT_VERIFICATION_CONDITION:"Course must have at least one chapter and one quiz with questions to submit for verification",
   MISSING_FILES: "Missing files.",
   COURSE_NOT_FOUND: "Course not found.",
   COURSE_ID_NOT_FOUND: "CourseId not found.",

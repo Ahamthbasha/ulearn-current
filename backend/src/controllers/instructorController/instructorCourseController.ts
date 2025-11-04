@@ -362,6 +362,16 @@ export class InstructorCourseController implements IInstructorCourseController {
         return;
       }
 
+       const canSubmit = await this._courseService.canSubmitForVerification(courseId);
+
+    if (!canSubmit) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message:  CourseErrorMessages.SUBMIT_VERIFICATION_CONDITION,
+      });
+      return;
+    }
+
       const updatedCourse =
         await this._courseService.submitCourseForVerification(courseId);
 

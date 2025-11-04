@@ -32,4 +32,5 @@ export interface IInstructorCourseService {
   getVerifiedInstructorCourses(
     instructorId: string,
   ): Promise<{ courseId: string; courseName: string }[]>;
+  canSubmitForVerification(courseId: string): Promise<boolean>;
 }

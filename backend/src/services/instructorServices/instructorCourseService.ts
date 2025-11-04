@@ -165,7 +165,25 @@ export class InstructorCourseService implements IInstructorCourseService {
     return await this._courseRepository.publishCourse(courseId, publishDate);
   }
 
+  async canSubmitForVerification(courseId: string): Promise<boolean> {
+    const chapters = await this._chapterRepository.getChaptersByCourse(courseId);
+    const quiz = await this._quizRepository.getQuizByCourseId(courseId);
+    
+    return (
+      chapters.length > 0 &&
+      !!quiz &&
+      Array.isArray(quiz.questions) &&
+      quiz.questions.length > 0
+    );
+  }
+
   async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
+    const canSubmit = await this.canSubmitForVerification(courseId);
+    
+    if (!canSubmit) {
+      throw new Error("Course must have at least one chapter and one quiz with questions to submit for verification");
+    }
+    
     return await this._courseRepository.submitCourseForVerification(courseId);
   }
 
