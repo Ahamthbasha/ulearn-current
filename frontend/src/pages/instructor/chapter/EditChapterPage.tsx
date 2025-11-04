@@ -14,38 +14,118 @@ import {
 } from "../../../api/action/InstructorActionApi";
 import { AxiosError } from "axios";
 
-const textOnlyRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+const textOnlyRegex = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
+
+const validateTextOnly = (value: string | undefined): boolean => {
+  if (!value) return false;
+  
+  const trimmed = value.trim();
+  
+  if (!trimmed) return false;
+  
+  if (/\d/.test(trimmed)) return false;
+  
+  if (/[^A-Za-z\s]/.test(trimmed)) return false;
+  
+  if (!textOnlyRegex.test(trimmed)) return false;
+  
+  if (!/[A-Za-z]/.test(trimmed)) return false;
+  
+  return true;
+};
 
 const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
-    .transform((value) => value.trim())
-    .min(5, "Chapter title must be at least 5 characters long")
-    .max(50, "Title should not exceed 50 characters")
-    .matches(
-      textOnlyRegex,
-      "Chapter title must contain only letters and single spaces"
+    .transform((value) => value?.trim())
+    .required("Chapter title is required")
+    .test(
+      "not-empty",
+      "Chapter title cannot be empty or only spaces",
+      (value) => {
+        if (!value) return false;
+        return value.trim().length > 0;
+      }
     )
     .test(
-      "not-blank",
-      "Chapter title cannot be only spaces",
-      (value) => !!value && value.trim().length >= 5
+      "no-numbers",
+      "Chapter title must not contain any numbers",
+      (value) => {
+        if (!value) return false;
+        return !/\d/.test(value);
+      }
     )
-    .required("Chapter title is required"),
+    .test(
+      "no-special-chars",
+      "Chapter title must not contain special characters",
+      (value) => {
+        if (!value) return false;
+        return !/[^A-Za-z\s]/.test(value);
+      }
+    )
+    .test(
+      "valid-format",
+      "Chapter title must contain only letters and single spaces between words",
+      (value) => {
+        if (!value) return false;
+        return validateTextOnly(value);
+      }
+    )
+    .min(5, "Chapter title must be at least 5 characters long")
+    .max(50, "Chapter title should not exceed 50 characters")
+    .test(
+      "min-length-after-trim",
+      "Chapter title must be at least 5 characters long (excluding extra spaces)",
+      (value) => {
+        if (!value) return false;
+        return value.trim().length >= 5;
+      }
+    ),
 
   description: Yup.string()
-    .transform((value) => value.trim())
-    .min(10, "Description must be at least 10 characters long")
-    .max(100, "chapter description should not exceed 100 characters")
-    .matches(
-      textOnlyRegex,
-      "Description must contain only letters and single spaces"
+    .transform((value) => value?.trim())
+    .required("Description is required")
+    .test(
+      "not-empty",
+      "Description cannot be empty or only spaces",
+      (value) => {
+        if (!value) return false;
+        return value.trim().length > 0;
+      }
     )
     .test(
-      "not-blank",
-      "Description cannot be only spaces",
-      (value) => !!value && value.trim().length >= 10
+      "no-numbers",
+      "Description must not contain any numbers",
+      (value) => {
+        if (!value) return false;
+        return !/\d/.test(value);
+      }
     )
-    .required("Description is required"),
+    .test(
+      "no-special-chars",
+      "Description must not contain special characters",
+      (value) => {
+        if (!value) return false;
+        return !/[^A-Za-z\s]/.test(value);
+      }
+    )
+    .test(
+      "valid-format",
+      "Description must contain only letters and single spaces between words",
+      (value) => {
+        if (!value) return false;
+        return validateTextOnly(value);
+      }
+    )
+    .min(10, "Description must be at least 10 characters long")
+    .max(100, "Description should not exceed 100 characters")
+    .test(
+      "min-length-after-trim",
+      "Description must be at least 10 characters long (excluding extra spaces)",
+      (value) => {
+        if (!value) return false;
+        return value.trim().length >= 10;
+      }
+    ),
 
   chapterNumber: Yup.number()
     .transform((value, originalValue) => {
@@ -165,8 +245,18 @@ const EditChapterPage = () => {
         >
           {() => (
             <Form className="space-y-4">
-              <InputField name="chapterTitle" label="Chapter Title" useFormik />
-              <InputField name="description" label="Description" useFormik />
+              <InputField 
+                name="chapterTitle" 
+                label="Chapter Title" 
+                useFormik 
+                placeholder="e.g., Introduction to Programming"
+              />
+              <InputField 
+                name="description" 
+                label="Description" 
+                useFormik 
+                placeholder="e.g., Learn the basics of programming concepts"
+              />
               <InputField
                 name="chapterNumber"
                 label="Chapter Number"
