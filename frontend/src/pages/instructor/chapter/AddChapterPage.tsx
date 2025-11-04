@@ -17,7 +17,7 @@ const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
     .transform((value) => value.trim())
     .min(5, "Chapter title must be at least 5 characters long")
-    .max(50,"Title should not exceed 50 characters")
+    .max(50, "Title should not exceed 50 characters")
     .matches(
       textOnlyRegex,
       "Chapter title must contain only letters and single spaces"
@@ -32,7 +32,7 @@ const chapterSchema = Yup.object().shape({
   description: Yup.string()
     .transform((value) => value.trim())
     .min(10, "Description must be at least 10 characters long")
-    .max(100,'chapter description should not exceed 100 characters')
+    .max(100, "chapter description should not exceed 100 characters")
     .matches(
       textOnlyRegex,
       "Description must contain only letters and single spaces"
@@ -45,9 +45,14 @@ const chapterSchema = Yup.object().shape({
     .required("Description is required"),
 
   chapterNumber: Yup.number()
+    .transform((value, originalValue) => {
+      // Convert empty string to undefined so Yup treats it as missing
+      return originalValue === "" ? undefined : value;
+    })
     .typeError("Chapter number must be a valid number")
     .positive("Chapter number must be a positive value")
     .integer("Chapter number must be an integer")
+    .min(1, "Chapter number must be at least 1")
     .max(250, "Chapter number must not exceed 250")
     .required("Chapter number is required"),
 });
@@ -83,14 +88,14 @@ const AddChapterPage = () => {
     // Check for API error with response.data.message
     if (
       error &&
-      typeof error === 'object' &&
-      'response' in error &&
+      typeof error === "object" &&
+      "response" in error &&
       error.response &&
-      typeof error.response === 'object' &&
-      'data' in error.response &&
+      typeof error.response === "object" &&
+      "data" in error.response &&
       error.response.data &&
-      typeof error.response.data === 'object' &&
-      'message' in error.response.data
+      typeof error.response.data === "object" &&
+      "message" in error.response.data
     ) {
       return String((error.response.data as { message?: string }).message);
     }
@@ -139,7 +144,7 @@ const AddChapterPage = () => {
           initialValues={{
             chapterTitle: "",
             description: "",
-            chapterNumber: 0, // Changed from "" to 0 to match the number type
+            chapterNumber: "" as unknown as number, // Empty string for display, but typed as number
           }}
           validationSchema={chapterSchema}
           onSubmit={handleSubmit}
@@ -152,6 +157,7 @@ const AddChapterPage = () => {
                 name="chapterNumber"
                 label="Chapter Number"
                 type="number"
+                placeholder="Enter chapter number"
                 useFormik
               />
 
