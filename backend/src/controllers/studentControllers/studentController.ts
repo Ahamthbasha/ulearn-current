@@ -334,6 +334,7 @@ async login(req: Request, res: Response): Promise<void> {
       secure: isProduction, // HTTPS only in production
       sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/"
     };
 
     res
