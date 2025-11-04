@@ -182,7 +182,7 @@ export const InstructorErrorMessages = {
   INSTRUCTOR_BLOCKED: "you are blocked by admin",
   UNAUTHORIZED: "you are not verified",
 
-  PASSWORD_UPDATE_FAILED: "password updation failed",
+  PASSWORD_UPDATE_FAILED: "password updation failed you may enter wrong password",
   OTP_EXPIRED: "otp is expired.Request new One",
   OTP_NOT_FOUND: "otp is not found",
   BANK_ACCOUNT_UPDATE_FAILED: "bank account updation failed",
