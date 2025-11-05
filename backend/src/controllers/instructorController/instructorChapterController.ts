@@ -666,4 +666,30 @@ export class InstructorChapterController
       next(error);
     }
   }
+
+  async reorderChapters(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { moduleId } = req.params;
+      const { orderedIds } = req.body as { orderedIds: string[] };
+
+      if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_INVALID_ORDERIDS,
+        });
+        return;
+      }
+
+      const result = await this._chapterService.reorderChapters(moduleId, orderedIds);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: ChapterSuccessMessages.CHAPTER_REORDERED,
+        data: result.data,
+        total: result.total,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

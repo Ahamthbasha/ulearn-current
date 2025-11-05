@@ -41,18 +41,8 @@ export class InstructorModuleService implements IInstructorModuleService {
     return this._moduleRepo.deleteModule(moduleId);
   }
 
-  async findByTitleOrNumberAndCourseId(
-    courseId: string,
-    moduleTitle: string,
-    moduleNumber: number,
-    moduleId?: string
-  ): Promise<IModule | null> {
-    return this._moduleRepo.findByTitleOrNumberAndCourseId(
-      courseId,
-      moduleTitle,
-      moduleNumber,
-      moduleId
-    );
+  async findByTitleAndCourseId(courseId: string, title: string, moduleId?: string):Promise<IModule|null> {
+    return this._moduleRepo.findByTitleAndCourseId(courseId, title, moduleId);
   }
 
   async paginateModules(
@@ -66,4 +56,8 @@ export class InstructorModuleService implements IInstructorModuleService {
       total: result.total,
     };
   }
+
+  async reorderModules(courseId: string, orderedIds: string[]): Promise<void> {
+  await this._moduleRepo.reorderModules(courseId, orderedIds);
+}
 }

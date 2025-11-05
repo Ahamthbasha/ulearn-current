@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { IInstructorModuleController } from "./interfaces/IInstructorModuleController";
 import { IInstructorModuleService } from "../../services/instructorServices/interface/IInstructorModuleService";
 import { StatusCode } from "../../utils/enums";
-import { ModuleErrorMessages, ModuleSuccessMessages } from "src/utils/constants";
+import { ModuleErrorMessages, ModuleSuccessMessages } from "../../utils/constants";
+import { IModule } from "../../models/moduleModel";
 
 export class InstructorModuleController implements IInstructorModuleController {
   private _moduleService: IInstructorModuleService;
@@ -17,13 +18,12 @@ export class InstructorModuleController implements IInstructorModuleController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { moduleTitle, moduleNumber, description, courseId } = req.body;
+      const { moduleTitle, description, courseId } = req.body;
 
       const existing =
-        await this._moduleService.findByTitleOrNumberAndCourseId(
+        await this._moduleService.findByTitleAndCourseId(
           courseId,
           moduleTitle,
-          Number(moduleNumber)
         );
       
       if (existing) {
@@ -39,7 +39,6 @@ export class InstructorModuleController implements IInstructorModuleController {
 
       const moduleDTO = {
         moduleTitle,
-        moduleNumber: Number(moduleNumber),
         courseId,
         description,
       };
@@ -97,114 +96,79 @@ export class InstructorModuleController implements IInstructorModuleController {
     }
   }
 
-  async updateModule(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { moduleId } = req.params;
-      const { moduleTitle, moduleNumber, description } = req.body as {
-        moduleTitle?: string;
-        moduleNumber?: string;
-        description?: string;
-      };
+async updateModule(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { moduleId } = req.params;
+    const { moduleTitle, description } = req.body as {
+      moduleTitle?: string;
+      description?: string;
+    };
 
-      const originalModule = await this._moduleService.getModuleById(moduleId);
-      
-      if (!originalModule) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: ModuleErrorMessages.MODULE_NOT_FOUND,
-        });
-        return;
-      }
+    // Get original module
+    const originalModule = await this._moduleService.getModuleById(moduleId);
+    if (!originalModule) {
+      res.status(StatusCode.NOT_FOUND).json({
+        success: false,
+        message: ModuleErrorMessages.MODULE_NOT_FOUND,
+      });
+      return;
+    }
 
-      const courseId = originalModule.courseId.toString();
+    const courseId = originalModule.courseId.toString();
 
-      if (moduleTitle || moduleNumber) {
-        const titleToCheck = moduleTitle?.trim();
-        const numberToCheck = moduleNumber ? Number(moduleNumber) : undefined;
-
-        if (titleToCheck || (numberToCheck !== undefined && !isNaN(numberToCheck))) {
-          const existing = await this._moduleService.findByTitleOrNumberAndCourseId(
-            courseId,
-            titleToCheck ?? "",
-            numberToCheck ?? 0,
-            moduleId
-          );
-
-          if (existing) {
-            const isTitleConflict =
-              titleToCheck &&
-              existing.moduleTitle.toLowerCase() === titleToCheck.toLowerCase();
-            const isNumberConflict =
-              numberToCheck !== undefined &&
-              existing.moduleNumber === numberToCheck;
-
-            let errorMessage = "";
-            if (isTitleConflict && isNumberConflict) {
-              errorMessage = "Module title and number already exist";
-            } else if (isTitleConflict) {
-              errorMessage = ModuleErrorMessages.MODULE_ALREADY_EXIST;
-            } else if (isNumberConflict) {
-              errorMessage = ModuleErrorMessages.MODULE_NUMBER_ALREADY_EXIST;
-            }
-
-            if (errorMessage) {
-              res.status(StatusCode.CONFLICT).json({
-                success: false,
-                message: errorMessage,
-              });
-              return;
-            }
-          }
-        }
-      }
-
-      const updatedModuleData: Partial<{
-        moduleTitle: string;
-        moduleNumber: number;
-        description: string;
-      }> = {};
-
-      if (moduleTitle !== undefined) updatedModuleData.moduleTitle = moduleTitle.trim();
-      if (moduleNumber !== undefined) {
-        const num = Number(moduleNumber);
-        if (!isNaN(num)) updatedModuleData.moduleNumber = num;
-      }
-      if (description !== undefined) updatedModuleData.description = description;
-
-      if (Object.keys(updatedModuleData).length === 0) {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success: false,
-          message: "No valid fields provided to update",
-        });
-        return;
-      }
-
-      const updated = await this._moduleService.updateModule(
-        moduleId,
-        updatedModuleData
+    // Only check title conflict if title is being updated
+    if (moduleTitle?.trim()) {
+      const existing = await this._moduleService.findByTitleAndCourseId(
+        courseId,
+        moduleTitle.trim(),
+        moduleId
       );
 
-      if (!updated) {
-        res.status(StatusCode.NOT_FOUND).json({
+      if (existing) {
+        res.status(StatusCode.CONFLICT).json({
           success: false,
-          message: ModuleErrorMessages.MODULE_NOT_FOUND,
+          message: ModuleErrorMessages.MODULE_ALREADY_EXIST,
         });
         return;
       }
-
-      res.status(StatusCode.OK).json({
-        success: true,
-        data: updated,
-        message: ModuleSuccessMessages.MODULE_UPDATED,
-      });
-    } catch (error) {
-      next(error);
     }
+
+    // Build update payload — NEVER include moduleNumber
+    const updatedModuleData: Partial<IModule> = {};
+
+    if (moduleTitle !== undefined) updatedModuleData.moduleTitle = moduleTitle.trim();
+    if (description !== undefined) updatedModuleData.description = description;
+
+    if (Object.keys(updatedModuleData).length === 0) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: "No valid fields provided to update",
+      });
+      return;
+    }
+
+    const updated = await this._moduleService.updateModule(moduleId, updatedModuleData);
+    if (!updated) {
+      res.status(StatusCode.NOT_FOUND).json({
+        success: false,
+        message: ModuleErrorMessages.MODULE_NOT_FOUND,
+      });
+      return;
+    }
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: updated,
+      message: ModuleSuccessMessages.MODULE_UPDATED,
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
   async deleteModule(
     req: Request,
@@ -257,4 +221,31 @@ export class InstructorModuleController implements IInstructorModuleController {
       next(error);
     }
   }
+
+  async reorderModules(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { courseId } = req.params;
+    const { orderedIds } = req.body as { orderedIds: string[] };
+
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: ModuleErrorMessages.INVALID_ORDEREDIDS,
+      });
+      return;
+    }
+
+    await this._moduleService.reorderModules(courseId, orderedIds);
+
+    const updatedModules = await this._moduleService.getModulesByCourse(courseId)
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: ModuleSuccessMessages.MODULE_REORDERED,
+      data:updatedModules
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 }

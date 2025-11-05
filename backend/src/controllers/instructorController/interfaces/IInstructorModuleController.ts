@@ -14,4 +14,5 @@ export interface IInstructorModuleController {
     res: Response,
     next: NextFunction
   ): Promise<void>;
+  reorderModules(req: Request, res: Response, next: NextFunction): Promise<void>;
 }

@@ -9,15 +9,15 @@ export interface IInstructorModuleRepository {
     data: Partial<IModule>
   ): Promise<IModule | null>;
   deleteModule(moduleId: string): Promise<IModule | null>;
-  findByTitleOrNumberAndCourseId(
-    courseId: string,
-    moduleTitle: string,
-    moduleNumber: number,
-    moduleId?: string
-  ): Promise<IModule | null>;
+  findByTitleAndCourseId(
+      courseId: string,
+      moduleTitle: string,
+      moduleId?: string
+    ): Promise<IModule | null>
   paginateModules(
     filter: object,
     page: number,
     limit: number
   ): Promise<{ data: IModule[]; total: number }>;
+  reorderModules(courseId:string,orderIds:string[]):Promise<void>
 }

@@ -53,11 +53,11 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
       const course = enrollment.courseId as unknown as IPopulatedCourse;
       if (course.thumbnailUrl) course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
       if (course.demoVideo?.url) course.demoVideo.url = await getPresignedUrl(course.demoVideo.url);
-      if (Array.isArray(course.chapters)) {
-        for (const chapter of course.chapters) {
-          if (chapter.videoUrl) chapter.videoUrl = await getPresignedUrl(chapter.videoUrl);
-        }
-      }
+      // if (Array.isArray(course.chapters)) {
+      //   for (const chapter of course.chapters) {
+      //     if (chapter.videoUrl) chapter.videoUrl = await getPresignedUrl(chapter.videoUrl);
+      //   }
+      // }
 
       res.status(StatusCode.OK).json({
         success: true,

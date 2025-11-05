@@ -30,7 +30,8 @@ const InstructorRouterEndPoints = {
   instructorCreateModule: "/api/instructor/modules",
   instructorGetModuleById: "/api/instructor/modules",
   instructorUpdateModule: "/api/instructor/modules", 
-  instructorDeleteModule: "/api/instructor/modules", 
+  instructorDeleteModule: "/api/instructor/modules",
+  instructorReorderModule: "/api/instructor/courses", 
 
 
   //Chapter Management
@@ -39,17 +40,8 @@ const InstructorRouterEndPoints = {
   instructorCreateChapter: "/api/instructor/chapters",
   instructorUpdateChapter: "/api/instructor/chapters", 
   instructorDeleteChapter: "/api/instructor/chapters",
-  instructorGetSingleChapter: "/api/instructor/chapters", 
-
-
-
-
-
-    // instructorGetChaptersByCourse: "/api/instructor/chapters",            
-    // instructorCreateChapter: "/api/instructor/chapters",                     
-    // instructorUpdateChapter: "/api/instructor/chapters",                    
-    // instructorDeleteChapter: "/api/instructor/chapters",    
-    // instructorGetSingleChapter: "/api/instructor/chapters", 
+  instructorGetSingleChapter: "/api/instructor/chapters",
+  instructorReorderChapter:"/api/instructor",
 
   //instructor quiz routes
 

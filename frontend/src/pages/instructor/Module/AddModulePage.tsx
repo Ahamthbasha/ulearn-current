@@ -11,7 +11,8 @@ import { Button } from "../../../components/common/Button";
 import { Loader2 } from "lucide-react";
 import type { ModuleFormValues } from "../interface/instructorInterface";
 
-const textOnlyRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+// Enhanced regex: allows letters, numbers, and limited special characters
+const meaningfulTextRegex = /^[A-Za-z0-9]+([\s\-,.!?'()&][A-Za-z0-9]+)*$/;
 
 const moduleSchema = Yup.object().shape({
   moduleTitle: Yup.string()
@@ -19,8 +20,27 @@ const moduleSchema = Yup.object().shape({
     .min(5, "Module title must be at least 5 characters long")
     .max(50, "Title should not exceed 50 characters")
     .matches(
-      textOnlyRegex,
-      "Module title must contain only letters and single spaces"
+      meaningfulTextRegex,
+      "Module title must contain meaningful text with proper spacing"
+    )
+    .test(
+      "no-repetitive-chars",
+      "Module title cannot contain repetitive characters (e.g., 'aaaa' or 'rrrr')",
+      (value) => {
+        if (!value) return false;
+        // Check for 3+ consecutive identical characters
+        return !/(.)\1{2,}/.test(value);
+      }
+    )
+    .test(
+      "meaningful-content",
+      "Module title must contain varied characters, not just repetition",
+      (value) => {
+        if (!value) return false;
+        const uniqueChars = new Set(value.toLowerCase().replace(/\s/g, ""));
+        // Must have at least 3 different characters
+        return uniqueChars.size >= 3;
+      }
     )
     .test(
       "not-blank",
@@ -34,8 +54,27 @@ const moduleSchema = Yup.object().shape({
     .min(10, "Description must be at least 10 characters long")
     .max(100, "Module description should not exceed 100 characters")
     .matches(
-      textOnlyRegex,
-      "Description must contain only letters and single spaces"
+      meaningfulTextRegex,
+      "Description must contain meaningful text with proper spacing"
+    )
+    .test(
+      "no-repetitive-chars",
+      "Description cannot contain repetitive characters (e.g., 'aaaa' or 'rrrr')",
+      (value) => {
+        if (!value) return false;
+        // Check for 3+ consecutive identical characters
+        return !/(.)\1{2,}/.test(value);
+      }
+    )
+    .test(
+      "meaningful-content",
+      "Description must contain varied characters, not just repetition",
+      (value) => {
+        if (!value) return false;
+        const uniqueChars = new Set(value.toLowerCase().replace(/\s/g, ""));
+        // Must have at least 5 different characters for longer text
+        return uniqueChars.size >= 5;
+      }
     )
     .test(
       "not-blank",
@@ -43,17 +82,6 @@ const moduleSchema = Yup.object().shape({
       (value) => !!value && value.trim().length >= 10
     )
     .required("Description is required"),
-
-  moduleNumber: Yup.number()
-    .transform((value, originalValue) => {
-      return originalValue === "" ? undefined : value;
-    })
-    .typeError("Module number must be a valid number")
-    .positive("Module number must be a positive value")
-    .integer("Module number must be an integer")
-    .min(1, "Module number must be at least 1")
-    .max(250, "Module number must not exceed 250")
-    .required("Module number is required"),
 });
 
 const AddModulePage = () => {
@@ -93,7 +121,6 @@ const AddModulePage = () => {
       const moduleData = {
         courseId,
         moduleTitle: values.moduleTitle,
-        moduleNumber: values.moduleNumber,
         description: values.description,
       };
 
@@ -114,21 +141,23 @@ const AddModulePage = () => {
           initialValues={{
             moduleTitle: "",
             description: "",
-            moduleNumber: "" as unknown as number,
           }}
           validationSchema={moduleSchema}
           onSubmit={handleSubmit}
         >
           {() => (
             <Form className="space-y-4">
-              <InputField name="moduleTitle" label="Module Title" useFormik />
-              <InputField name="description" label="Description" useFormik />
-              <InputField
-                name="moduleNumber"
-                label="Module Number"
-                type="number"
-                placeholder="Enter module number"
-                useFormik
+              <InputField 
+                name="moduleTitle" 
+                label="Module Title" 
+                useFormik 
+                placeholder="e.g., Introduction to React"
+              />
+              <InputField 
+                name="description" 
+                label="Description" 
+                useFormik 
+                placeholder="e.g., Learn React fundamentals and hooks"
               />
 
               <Button type="submit" disabled={loading}>

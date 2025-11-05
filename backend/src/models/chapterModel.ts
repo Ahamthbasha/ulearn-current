@@ -39,7 +39,8 @@ import { Schema, Types, model, Document } from "mongoose";
 export interface IChapter extends Document {
   _id: Types.ObjectId;
   chapterTitle: string;
-  moduleId: Types.ObjectId; // Changed from courseId to moduleId
+  moduleId: Types.ObjectId; 
+  position:number;
   chapterNumber?: number;
   description: string;
   videoUrl: string;
@@ -48,7 +49,7 @@ export interface IChapter extends Document {
 
 export interface CreateChapterDTO {
   chapterTitle: string;
-  moduleId: Types.ObjectId; // Changed from courseId to moduleId
+  moduleId: Types.ObjectId;
   description: string;
   videoUrl: string;
   chapterNumber?: number;
@@ -57,7 +58,8 @@ export interface CreateChapterDTO {
 const ChapterSchema = new Schema<IChapter>(
   {
     chapterTitle: { type: String, required: true },
-    moduleId: { type: Schema.Types.ObjectId, ref: "Module", required: true }, // Changed
+    moduleId: { type: Schema.Types.ObjectId, ref: "Module", required: true },
+    position: { type: Number, required: true },
     chapterNumber: { type: Number },
     description: { type: String, required: true },
     videoUrl: { type: String, required: true },

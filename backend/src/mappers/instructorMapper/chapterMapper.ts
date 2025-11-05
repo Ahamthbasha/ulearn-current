@@ -3,7 +3,7 @@ import { ChapterDTO } from "../../dto/instructorDTO/chapterDTO";
 
 export function mapChapterToDTO(chapter: IChapter): ChapterDTO {
   return {
-    courseId: chapter.courseId.toString(),
+    moduleId: chapter.moduleId.toString(),
     chapterId: chapter._id.toString(),
     chapterTitle: chapter.chapterTitle,
     videoUrl: chapter.videoUrl,

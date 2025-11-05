@@ -240,7 +240,6 @@ export const getModuleById = async (moduleId: string) => {
 export const createModule = async (moduleData: {
   courseId: string;
   moduleTitle: string;
-  moduleNumber: number;
   description: string;
 }) => {
   try {
@@ -281,6 +280,15 @@ export const deleteModule = async (moduleId: string) => {
     return response.data;
   } catch (error) {
     throw error;
+  }
+}
+
+export const reorderModules = async(courseId:string,orderedIds:string[])=>{
+  try {
+    const response = await API.post(`${InstructorRouterEndPoints.instructorReorderModule}/${courseId}/modules/reorder`,{orderedIds})
+    return response.data
+  } catch (error) {
+    throw error
   }
 }
 
@@ -354,7 +362,19 @@ export const deleteChapter = async (chapterId: string) => {
   }
 };
 
-// export const getChaptersByCourse = async (
+export const reorderChapters = async (moduleId: string, orderedIds: string[]) => {
+  try {
+    const response = await API.post(
+      `${InstructorRouterEndPoints.instructorReorderChapter}/${moduleId}/chapters/reorder`,
+      { orderedIds }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
 //   courseId: string,
 //   page = 1,
 //   limit = 10,

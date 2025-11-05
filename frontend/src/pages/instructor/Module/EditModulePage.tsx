@@ -8,45 +8,70 @@ import { Loader2 } from "lucide-react";
 import Card from "../../../components/common/Card";
 import InputField from "../../../components/common/InputField";
 import { Button } from "../../../components/common/Button";
-import {
-  getModuleById,
-  updateModule,
-} from "../../../api/action/InstructorActionApi";
+import { getModuleById, updateModule } from "../../../api/action/InstructorActionApi";
 import { AxiosError } from "axios";
 
-const textOnlyRegex = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
+// Enhanced regex: allows letters, numbers, and limited special characters
+const meaningfulTextRegex = /^[A-Za-z0-9]+([\s\-,.!?'()&][A-Za-z0-9]+)*$/;
 
 const moduleSchema = Yup.object().shape({
   moduleTitle: Yup.string()
     .transform((value) => value?.trim())
     .required("Module title is required")
-    .matches(
-      textOnlyRegex,
-      "Module title must contain only letters and single spaces"
-    )
     .min(5, "Module title must be at least 5 characters long")
-    .max(50, "Module title should not exceed 50 characters"),
+    .max(50, "Module title should not exceed 50 characters")
+    .matches(
+      meaningfulTextRegex,
+      "Module title must contain meaningful text with proper spacing"
+    )
+    .test(
+      "no-repetitive-chars",
+      "Module title cannot contain repetitive characters (e.g., 'aaaa' or 'rrrr')",
+      (value) => {
+        if (!value) return false;
+        // Check for 3+ consecutive identical characters
+        return !/(.)\1{2,}/.test(value);
+      }
+    )
+    .test(
+      "meaningful-content",
+      "Module title must contain varied characters, not just repetition",
+      (value) => {
+        if (!value) return false;
+        const uniqueChars = new Set(value.toLowerCase().replace(/\s/g, ""));
+        // Must have at least 3 different characters
+        return uniqueChars.size >= 3;
+      }
+    ),
 
   description: Yup.string()
     .transform((value) => value?.trim())
     .required("Description is required")
-    .matches(
-      textOnlyRegex,
-      "Description must contain only letters and single spaces"
-    )
     .min(10, "Description must be at least 10 characters long")
-    .max(100, "Description should not exceed 100 characters"),
-
-  moduleNumber: Yup.number()
-    .transform((value, originalValue) => {
-      return originalValue === "" ? undefined : value;
-    })
-    .typeError("Module number must be a valid number")
-    .positive("Module number must be a positive value")
-    .integer("Module number must be an integer")
-    .min(1, "Module number must be at least 1")
-    .max(250, "Module number must not exceed 250")
-    .required("Module number is required"),
+    .max(100, "Description should not exceed 100 characters")
+    .matches(
+      meaningfulTextRegex,
+      "Description must contain meaningful text with proper spacing"
+    )
+    .test(
+      "no-repetitive-chars",
+      "Description cannot contain repetitive characters (e.g., 'aaaa' or 'rrrr')",
+      (value) => {
+        if (!value) return false;
+        // Check for 3+ consecutive identical characters
+        return !/(.)\1{2,}/.test(value);
+      }
+    )
+    .test(
+      "meaningful-content",
+      "Description must contain varied characters, not just repetition",
+      (value) => {
+        if (!value) return false;
+        const uniqueChars = new Set(value.toLowerCase().replace(/\s/g, ""));
+        // Must have at least 5 different characters for longer text
+        return uniqueChars.size >= 5;
+      }
+    ),
 });
 
 const EditModulePage = () => {
@@ -59,30 +84,34 @@ const EditModulePage = () => {
   const [initialValues, setInitialValues] = useState({
     moduleTitle: "",
     description: "",
-    moduleNumber: "" as unknown as number,
   });
 
+  const [moduleNumber, setModuleNumber] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchModule = async () => {
+      if (!moduleId) return;
+
       try {
-        const data = await getModuleById(moduleId!);
-        if (!data) return toast.error("Module not found");
+        const data = await getModuleById(moduleId);
+        if (!data) {
+          toast.error("Module not found");
+          return;
+        }
 
         setInitialValues({
           moduleTitle: data.moduleTitle || "",
           description: data.description || "",
-          moduleNumber: data.moduleNumber || ("" as unknown as number),
         });
+
+        setModuleNumber(data.moduleNumber || null);
       } catch {
         toast.error("Failed to load module");
       }
     };
 
-    if (moduleId) {
-      fetchModule();
-    }
+    fetchModule();
   }, [moduleId]);
 
   const handleSubmit = async (values: typeof initialValues) => {
@@ -93,7 +122,6 @@ const EditModulePage = () => {
 
       const moduleData = {
         moduleTitle: values.moduleTitle.trim(),
-        moduleNumber: values.moduleNumber,
         description: values.description.trim(),
       };
 
@@ -102,8 +130,7 @@ const EditModulePage = () => {
       navigate(`/instructor/course/${courseId}/modules`);
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        const message =
-          error?.response?.data?.message || "Failed to update module";
+        const message = error?.response?.data?.message || "Failed to update module";
         toast.error(message);
       } else {
         toast.error("An unexpected error occurred");
@@ -115,11 +142,14 @@ const EditModulePage = () => {
 
   return (
     <div className="px-4 py-6">
-      <Card
-        title="Edit Module"
-        padded
-        className="bg-white shadow-sm rounded-lg"
-      >
+      <Card title="Edit Module" padded className="bg-white shadow-sm rounded-lg">
+        {moduleNumber !== null && (
+          <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-md text-sm text-indigo-800 flex items-center gap-2">
+            <span className="font-bold">Module #{moduleNumber}</span>
+            <span className="text-xs text-indigo-600">(Auto-generated)</span>
+          </div>
+        )}
+
         <Formik
           enableReinitialize
           initialValues={initialValues}
@@ -138,14 +168,7 @@ const EditModulePage = () => {
                 name="description"
                 label="Description"
                 useFormik
-                placeholder="e.g., Learn React fundamentals"
-              />
-              <InputField
-                name="moduleNumber"
-                label="Module Number"
-                type="number"
-                placeholder="Enter module number"
-                useFormik
+                placeholder="e.g., Learn React fundamentals and hooks"
               />
 
               <Button type="submit" disabled={loading}>

@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { ILearningPath } from "../../models/learningPathModel";
 import { ILearningPathEnrollment } from "../../models/learningPathEnrollmentModel";
-import { ICourse, IPopulatedCourse } from "../../models/courseModel";
+import { ICourse } from "../../models/courseModel";
 import { IStudentLmsEnrollmentRepo } from "./interface/IStudentLmsEnrollmentRepo";
 import { ILearningPathRepository } from "../interfaces/ILearningPathRepository";
 import { ILearningPathEnrollmentRepo } from "../interfaces/ILearningPathEnrollmentRepo";
@@ -9,14 +9,13 @@ import { IStudentEnrollmentRepository } from "../studentRepository/interface/ISt
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { isPresignedUrl } from "../../utils/isPresignedUrl";
 import { IStudentRepository } from "../studentRepository/interface/IStudentRepository";
-// import IInstructorRepository from "../instructorRepository/interface/IInstructorRepository";
 import { generateCertificate } from "../../utils/certificateGenerator";
-import {
-  ICompletedChapter,
-  ICompletedQuiz,
-} from "../../models/enrollmentModel";
-import { IChapter } from "../../models/chapterModel";
-import { IQuiz } from "../../models/quizModel";
+// import {
+//   ICompletedChapter,
+//   ICompletedQuiz,
+// } from "../../models/enrollmentModel";
+// import { IChapter } from "../../models/chapterModel";
+// import { IQuiz } from "../../models/quizModel";
 import { IOrderRepository } from "../interfaces/IOrderRepository";
 
 export class StudentLmsEnrollmentRepo implements IStudentLmsEnrollmentRepo {
@@ -342,30 +341,30 @@ export class StudentLmsEnrollmentRepo implements IStudentLmsEnrollmentRepo {
       if (!populatedEnrollment || !populatedEnrollment.courseId) {
         throw new Error("Populated course enrollment not found");
       }
-      const course =
-        populatedEnrollment.courseId as unknown as IPopulatedCourse;
-      const allChaptersCompleted =
-        course.chapters?.length > 0 &&
-        course.chapters.every((chapter: IChapter) =>
-          populatedEnrollment.completedChapters.some(
-            (cc: ICompletedChapter) =>
-              cc.chapterId.equals(chapter._id) && cc.isCompleted,
-          ),
-        );
-      const allQuizzesCompleted =
-        course.quizzes?.length > 0
-          ? course.quizzes.every((quiz: IQuiz) =>
-              populatedEnrollment.completedQuizzes.some(
-                (cq: ICompletedQuiz) =>
-                  cq.quizId.equals(quiz._id) && cq.scorePercentage >= 50,
-              ),
-            )
-          : true;
-      if (!allChaptersCompleted || !allQuizzesCompleted) {
-        throw new Error(
-          "Not all chapters or quizzes are completed for this course",
-        );
-      }
+      // const course =
+      //   populatedEnrollment.courseId as unknown as IPopulatedCourse;
+      // const allChaptersCompleted =
+      //   course.chapters?.length > 0 &&
+      //   course.chapters.every((chapter: IChapter) =>
+      //     populatedEnrollment.completedChapters.some(
+      //       (cc: ICompletedChapter) =>
+      //         cc.chapterId.equals(chapter._id) && cc.isCompleted,
+      //     ),
+      //   );
+      // const allQuizzesCompleted =
+      //   course.quizzes?.length > 0
+      //     ? course.quizzes.every((quiz: IQuiz) =>
+      //         populatedEnrollment.completedQuizzes.some(
+      //           (cq: ICompletedQuiz) =>
+      //             cq.quizId.equals(quiz._id) && cq.scorePercentage >= 50,
+      //         ),
+      //       )
+      //     : true;
+      // if (!allChaptersCompleted || !allQuizzesCompleted) {
+      //   throw new Error(
+      //     "Not all chapters or quizzes are completed for this course",
+      //   );
+      // }
       // Mark course as completed in LearningPathEnrollment
       const completedCourse = enrollment.completedCourses.find((cc) =>
         cc.courseId.equals(courseId),

@@ -1,48 +1,8 @@
-// import { Request, Response, NextFunction } from "express";
-
-// export interface IInstructorChapterController {
-//   createChapter(req: Request, res: Response, next: NextFunction): Promise<void>;
-//   getChaptersByCourse(
-//     req: Request,
-//     res: Response,
-//     next: NextFunction,
-//   ): Promise<void>;
-//   updateChapter(req: Request, res: Response, next: NextFunction): Promise<void>;
-//   deleteChapter(req: Request, res: Response, next: NextFunction): Promise<void>;
-//   getChapterById(
-//     req: Request,
-//     res: Response,
-//     next: NextFunction,
-//   ): Promise<void>;
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { Request, Response, NextFunction } from "express";
 
 export interface IInstructorChapterController {
   createChapter(req: Request, res: Response, next: NextFunction): Promise<void>;
-  getChaptersByModule( // Changed
+  getChaptersByModule(
     req: Request,
     res: Response,
     next: NextFunction
@@ -54,4 +14,5 @@ export interface IInstructorChapterController {
     res: Response,
     next: NextFunction
   ): Promise<void>;
+  reorderChapters(req: Request, res: Response, next: NextFunction): Promise<void>
 }

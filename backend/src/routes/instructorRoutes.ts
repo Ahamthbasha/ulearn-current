@@ -271,6 +271,14 @@ router.delete(
   instructorModuleController.deleteModule.bind(instructorModuleController),
 );
 
+router.post(
+  "/courses/:courseId/modules/reorder",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorModuleController.reorderModules.bind(instructorModuleController)
+)
+
 // ============================================
 // CHAPTER ROUTES (UPDATED - now scoped to modules)
 // ============================================
@@ -330,59 +338,13 @@ router.delete(
   instructorChapterController.deleteChapter.bind(instructorChapterController),
 );
 
-// //chapter routes
-
-// router.get(
-//   "/chapters/:courseId",
-//   authenticateToken,
-//   restrictBlockedUser,
-//   isInstructor,
-//   instructorChapterController.getChaptersByCourse.bind(
-//     instructorChapterController,
-//   ),
-// );
-
-
-
-// router.post(
-//   "/chapters/:courseId",
-//   authenticateToken,
-//   restrictBlockedUser,
-//   isInstructor,
-//   upload.fields([
-//     { name: "video", maxCount: 1 },
-//     { name: "captions", maxCount: 1 },
-//   ]),
-//   instructorChapterController.createChapter.bind(instructorChapterController),
-// );
-
-// router.put(
-//   "/chapters/:courseId/:chapterId",
-//   authenticateToken,
-//   restrictBlockedUser,
-//   isInstructor,
-//   upload.fields([
-//     { name: "video", maxCount: 1 },
-//     { name: "captions", maxCount: 1 },
-//   ]),
-//   instructorChapterController.updateChapter.bind(instructorChapterController),
-// );
-
-// router.delete(
-//   "/chapters/:courseId/:chapterId",
-//   authenticateToken,
-//   restrictBlockedUser,
-//   isInstructor,
-//   instructorChapterController.deleteChapter.bind(instructorChapterController),
-// );
-
-// router.get(
-//   "/chapters/:courseId/:chapterId",
-//   authenticateToken,
-//   restrictBlockedUser,
-//   isInstructor,
-//   instructorChapterController.getChapterById.bind(instructorChapterController),
-// );
+router.post(
+  "/:moduleId/chapters/reorder",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorChapterController.reorderChapters.bind(instructorChapterController)
+)
 
 //quiz routes
 

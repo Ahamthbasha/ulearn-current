@@ -1,4 +1,5 @@
 export const ModuleErrorMessages = {
+  INVALID_ORDEREDIDS:"Invalid orderedIds",
   MODULE_NOT_FOUND: "Module not found",
   MODULE_ALREADY_EXIST: "Module with this title already exists",
   MODULE_NUMBER_ALREADY_EXIST: "Module with this number already exists",
@@ -9,6 +10,7 @@ export const ModuleSuccessMessages = {
   MODULE_UPDATED: "Module updated successfully",
   MODULE_DELETED: "Module deleted successfully",
   MODULE_RETRIEVED: "Module(s) retrieved successfully",
+  MODULE_REORDERED :"Modules reordered successfully",
 };
 
 
@@ -543,6 +545,7 @@ export const QuizSuccessMessages = {
 };
 
 export const ChapterErrorMessages = {
+  CHAPTER_INVALID_ORDERIDS:"Invalid orderedIds",
   CHAPTER_ALREADY_EXIST:
     "Chapter already exists with this title in this course",
   CHAPTER_REQUIRE_VIDEOFILE: "Video file is required",
@@ -552,6 +555,7 @@ export const ChapterErrorMessages = {
 };
 
 export const ChapterSuccessMessages = {
+  CHAPTER_REORDERED:"Chapters reordered successfully",
   CHAPTER_CREATED: "chapter created successfully",
   CHAPTER_RETRIEVED: "Course related chapters are retrieved",
   CHAPTER_UPDATED: "Chapter is updated successfully",

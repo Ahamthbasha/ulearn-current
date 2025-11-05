@@ -1,7 +1,6 @@
 
 export interface Module extends Record<string,unknown> {
   _id?: string;
-  moduleId: string;
   moduleTitle: string;
   courseId: string;
   moduleNumber: number;
@@ -12,7 +11,6 @@ export interface Module extends Record<string,unknown> {
 
 export interface ModuleFormValues {
   moduleTitle: string;
-  moduleNumber: number;
   description: string;
 }
 
@@ -66,12 +64,14 @@ export interface BankFormValues {
   bankName: string;
 }
 
-export interface Chapter extends Record<string,unknown>{
-  courseId: string;
+// src/pages/instructor/interface/instructorInterface.ts
+export interface Chapter {
+  moduleId: string;
   chapterId: string;
   chapterTitle: string;
   videoUrl: string;
-  chapterNumber?: number;
+  chapterNumber: number;
+  description?: string;
 }
 
 export interface Category {

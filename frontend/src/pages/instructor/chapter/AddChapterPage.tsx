@@ -1,6 +1,5 @@
 // pages/instructor/chapters/AddChapterPage.tsx
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Formik, Form } from "formik";
@@ -8,7 +7,7 @@ import * as Yup from "yup";
 
 import Card from "../../../components/common/Card";
 import InputField from "../../../components/common/InputField";
-import { createChapter } from "../../../api/action/InstructorActionApi";
+import { createChapter, getChaptersByModule } from "../../../api/action/InstructorActionApi";
 import { Button } from "../../../components/common/Button";
 import { Loader2 } from "lucide-react";
 import type { ChapterFormValues } from "../interface/instructorInterface";
@@ -45,17 +44,6 @@ const chapterSchema = Yup.object().shape({
       (value) => !!value && value.trim().length >= 10
     )
     .required("Description is required"),
-
-  chapterNumber: Yup.number()
-    .transform((value, originalValue) => {
-      return originalValue === "" ? undefined : value;
-    })
-    .typeError("Chapter number must be a valid number")
-    .positive("Chapter number must be a positive value")
-    .integer("Chapter number must be an integer")
-    .min(1, "Chapter number must be at least 1")
-    .max(250, "Chapter number must not exceed 250")
-    .required("Chapter number is required"),
 });
 
 const AddChapterPage = () => {
@@ -65,15 +53,28 @@ const AddChapterPage = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [nextChapterNumber, setNextChapterNumber] = useState<number>(1);
+
+  // Fetch next chapter number
+  useEffect(() => {
+    const fetchNextNumber = async () => {
+      if (!moduleId) return;
+      try {
+        const res = await getChaptersByModule(moduleId, 1, 1, "");
+        const lastChapter = res.data[0];
+        setNextChapterNumber((lastChapter?.chapterNumber || 0) + 1);
+      } catch {
+        toast.error("Failed to load chapter count");
+      }
+    };
+    fetchNextNumber();
+  }, [moduleId]);
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
-    const isVideo = file.type.startsWith("video/");
-
-    if (!isVideo) {
+    if (!file.type.startsWith("video/")) {
       toast.error("Only video files are allowed.");
       e.target.value = "";
       setVideoFile(null);
@@ -99,30 +100,20 @@ const AddChapterPage = () => {
     ) {
       return String((error.response.data as { message?: string }).message);
     }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-
-    return "Chapter creation failed";
+    return error instanceof Error ? error.message : "Chapter creation failed";
   };
 
-  const handleSubmit = async (values: ChapterFormValues) => {
+  const handleSubmit = async (values: Omit<ChapterFormValues, "chapterNumber">) => {
     if (!moduleId) return toast.error("Invalid module ID");
-
-    if (!videoFile) {
-      toast.error("Video file is required.");
-      return;
-    }
+    if (!videoFile) return toast.error("Video file is required.");
 
     try {
       setLoading(true);
-
       const formData = new FormData();
       formData.append("chapterTitle", values.chapterTitle);
       formData.append("description", values.description);
-      formData.append("chapterNumber", String(values.chapterNumber));
-      formData.append("moduleId", moduleId); // Changed from courseId
+      formData.append("chapterNumber", String(nextChapterNumber));
+      formData.append("moduleId", moduleId);
       formData.append("video", videoFile);
 
       await createChapter(formData);
@@ -142,7 +133,6 @@ const AddChapterPage = () => {
           initialValues={{
             chapterTitle: "",
             description: "",
-            chapterNumber: "" as unknown as number,
           }}
           validationSchema={chapterSchema}
           onSubmit={handleSubmit}
@@ -151,13 +141,18 @@ const AddChapterPage = () => {
             <Form className="space-y-4">
               <InputField name="chapterTitle" label="Chapter Title" useFormik />
               <InputField name="description" label="Description" useFormik />
-              <InputField
-                name="chapterNumber"
-                label="Chapter Number"
-                type="number"
-                placeholder="Enter chapter number"
-                useFormik
-              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Chapter Number (Auto)
+                </label>
+                <div className="mt-1 px-4 py-2 bg-gray-100 border border-gray-300 rounded text-sm text-gray-700">
+                  {nextChapterNumber}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Auto-incremented. Reorder later if needed.
+                </p>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">

@@ -1,5 +1,5 @@
 export interface ChapterDTO {
-  courseId: string;
+  moduleId: string;
   chapterId: string;
   chapterTitle: string;
   videoUrl: string;
