@@ -1,8 +1,7 @@
-// pages/instructor/chapter/ChapterManagementPage.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { PlusCircle, ArrowLeft, GripVertical, Edit2, Trash2, BookOpen } from "lucide-react";
+import { PlusCircle, ArrowLeft, GripVertical, Edit2, Trash2, BookOpen, Clock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import Card from "../../../components/common/Card";
 import { useDebounce } from "../../../hooks/UseDebounce";
@@ -41,7 +40,14 @@ const ChapterManagementPage = () => {
 
       setModuleTitle(moduleRes?.moduleTitle || "Unknown Module");
       setCourseId(moduleRes?.courseId || "");
-      setChapters(chapterRes?.data || []);
+
+      const mappedChapters: Chapter[] = (chapterRes?.data || []).map((c: any) => ({
+        ...c,
+        chapterId: String(c.chapterId),
+        durationFormatted: c.durationFormatted || "0m 0s",
+      }));
+
+      setChapters(mappedChapters);
       setTotal(chapterRes?.total || 0);
     } catch {
       toast.error("Failed to load chapters");
@@ -66,8 +72,13 @@ const ChapterManagementPage = () => {
 
     try {
       const response = await reorderChapters(moduleId, orderedIds);
-      setChapters(response.data);
-      setTotal(response.total);
+      const updatedChapters = (response.data || []).map((c: any) => ({
+        ...c,
+        chapterId: String(c.chapterId),
+        durationFormatted: c.durationFormatted || "0m 0s",
+      }));
+      setChapters(updatedChapters);
+      setTotal(response.total || updatedChapters.length);
       toast.success("Order saved!");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to save order");
@@ -193,14 +204,26 @@ const ChapterManagementPage = () => {
                                     </span>
                                   </div>
 
-                                  {/* Title */}
+                                  {/* Title + Video + Duration */}
                                   <div className="flex-1 min-w-0">
                                     <h3 className="font-semibold text-gray-900 truncate">
                                       {chapter.chapterTitle}
                                     </h3>
-                                    <p className="text-sm text-gray-500 truncate mt-0.5">
-                                      {chapter.videoUrl.split("/").pop() || "Video file"}
-                                    </p>
+                                    <div className="flex items-center gap-4 mt-1">
+                                      <p className="text-sm text-gray-500 truncate flex-1">
+                                        {chapter.videoUrl.split("/").pop() || "Video file"}
+                                      </p>
+                                      {/* Duration - Desktop */}
+                                      <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500 font-medium">
+                                        <Clock size={14} />
+                                        <span>{chapter.durationFormatted}</span>
+                                      </div>
+                                    </div>
+                                    {/* Duration - Mobile */}
+                                    <div className="flex sm:hidden items-center gap-1 text-xs text-gray-500 font-medium mt-2">
+                                      <Clock size={14} />
+                                      <span>{chapter.durationFormatted}</span>
+                                    </div>
                                   </div>
 
                                   {/* Actions - Desktop */}

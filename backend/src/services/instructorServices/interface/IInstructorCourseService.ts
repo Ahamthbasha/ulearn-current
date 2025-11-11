@@ -1,9 +1,11 @@
 import { ICourse } from "../../../models/courseModel";
 import { InstructorCourseDTO } from "../../../dto/instructorDTO/instructorCourseDTO";
 import { CourseResponseDto } from "../../../dto/instructorDTO/courseDetailsDTO";
+import { ValidationResult } from "src/interface/instructorInterface/IInstructorInterface";
 
 export interface IInstructorCourseService {
   createCourse(courseData: ICourse): Promise<ICourse>;
+  updateCourseDuration(courseId: string): Promise<void>
   updateCourse(
     courseId: string,
     courseData: Partial<ICourse>,
@@ -28,9 +30,9 @@ export interface IInstructorCourseService {
   ): Promise<boolean>;
   publishCourse(courseId: string, publishDate?: Date): Promise<ICourse | null>;
   canPublishCourse(courseId: string): Promise<boolean>;
-  submitCourseForVerification(courseId: string): Promise<ICourse | null>;
   getVerifiedInstructorCourses(
     instructorId: string,
   ): Promise<{ courseId: string; courseName: string }[]>;
-  canSubmitForVerification(courseId: string): Promise<boolean>;
+  canSubmitForVerification(courseId: string): Promise<ValidationResult>;
+  submitCourseForVerification(courseId: string): Promise<ICourse | null>;
 }

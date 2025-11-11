@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-
 import SingleQuestionForm from "../../../components/InstructorComponents/QuizForm";
 import { type SingleQuestionFormValues, type IQuizPayload, type IQuestion } from "../../../types/interfaces/IQuiz";
 import {
@@ -11,8 +10,9 @@ import {
 import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const EditQuizPage = () => {
-  const { courseId, quizId } = useParams<{
+  const { courseId, moduleId, quizId } = useParams<{
     courseId: string;
+    moduleId: string;
     quizId: string;
   }>();
   const location = useLocation();
@@ -29,7 +29,10 @@ const EditQuizPage = () => {
 
   useEffect(() => {
     const fetchQuestionData = async () => {
-      if (!quizId || !questionId) return;
+      if (!quizId || !questionId) {
+        toast.error("Quiz or Question ID not found");
+        return;
+      }
 
       try {
         const quiz: IQuizPayload = await getQuizById(quizId);
@@ -55,12 +58,15 @@ const EditQuizPage = () => {
   }, [quizId, questionId]);
 
   const handleSubmit = async (data: SingleQuestionFormValues) => {
-    if (!quizId || !questionId) return;
+    if (!quizId || !questionId || !courseId || !moduleId) {
+      toast.error("Required IDs not found");
+      return;
+    }
 
     try {
       await updateQuestionInQuiz(quizId, questionId, data);
       toast.success("Question updated successfully");
-      navigate(`/instructor/course/${courseId}/quiz`);
+      navigate(`/instructor/course/${courseId}/modules/${moduleId}/quiz`);
     } catch (err) {
       const apiError = err as ApiError;
       const errorMessage =

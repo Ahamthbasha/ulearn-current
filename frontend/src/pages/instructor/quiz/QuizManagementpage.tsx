@@ -1,28 +1,29 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Plus, Trash2 } from "lucide-react";
-
+import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import Card from "../../../components/common/Card";
 import { Button } from "../../../components/common/Button";
 import EntityTable from "../../../components/common/EntityTable";
-import { useDebounce } from "../../../hooks/UseDebounce"; 
+import { useDebounce } from "../../../hooks/UseDebounce";
 import {
-  getPaginatedQuestionsByCourseId,
+  getPaginatedQuestionsByModuleId,
   deleteQuiz,
   deleteQuestionFromQuiz,
 } from "../../../api/action/InstructorActionApi";
 import { type IQuestion } from "../../../types/interfaces/IQuiz";
 import type { ApiError } from "../../../types/interfaces/ICommon";
 
-// Extend IQuestion to make it compatible with Record<string, unknown>
 interface QuestionWithQuizId extends IQuestion {
   [key: string]: unknown;
   quizId?: string;
 }
 
 const QuizManagementPage = () => {
-  const { courseId } = useParams<{ courseId: string }>();
+  const { courseId, moduleId } = useParams<{
+    courseId: string;
+    moduleId: string;
+  }>();
   const navigate = useNavigate();
 
   const [questions, setQuestions] = useState<QuestionWithQuizId[]>([]);
@@ -36,28 +37,29 @@ const QuizManagementPage = () => {
   const debouncedSearch = useDebounce(search, 500);
 
   const fetchQuestions = async () => {
-    if (!courseId) return;
+    if (!moduleId) {
+      toast.error("Module ID not found");
+      return;
+    }
 
     try {
       setLoading(true);
-      const response = await getPaginatedQuestionsByCourseId(
-        courseId,
+      const response = await getPaginatedQuestionsByModuleId(
+        moduleId,
         page,
         limit,
         debouncedSearch
       );
-      console.log("Paginated Quiz Response:", response);
 
-      const derivedQuizId =
-        response.quizId || (response.questions[0]?._id ?? null);
-
-      const questionsWithQuizId: QuestionWithQuizId[] = response.questions.map((q: IQuestion) => ({
-        ...q,
-        quizId: derivedQuizId,
-      }));
+      const questionsWithQuizId: QuestionWithQuizId[] = response.questions.map(
+        (q: IQuestion) => ({
+          ...q,
+          quizId: response.quizId,
+        })
+      );
 
       setQuestions(questionsWithQuizId);
-      setQuizId(derivedQuizId);
+      setQuizId(response.quizId);
       setTotal(response.total || 0);
     } catch (error) {
       const apiError = error as ApiError;
@@ -77,7 +79,9 @@ const QuizManagementPage = () => {
       fetchQuestions();
     } catch (error) {
       const apiError = error as ApiError;
-      toast.error(apiError?.response?.data?.message || "Failed to delete question");
+      toast.error(
+        apiError?.response?.data?.message || "Failed to delete question"
+      );
     }
   };
 
@@ -93,24 +97,43 @@ const QuizManagementPage = () => {
     }
   };
 
+  // New: Back to Module
+  const handleBackToModule = () => {
+    navigate(`/instructor/course/${courseId}/modules`);
+  };
+
   useEffect(() => {
     fetchQuestions();
-  }, [courseId, page, debouncedSearch]);
+  }, [moduleId, page, debouncedSearch]);
 
   return (
-    <div className="px-4 py-6">
+    <div className="px-4 py-6 max-w-7xl mx-auto">
       <Card
         padded
         className="bg-white shadow-sm rounded-lg"
         header={
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-lg font-semibold">Quiz Management</h2>
+            {/* Back Button + Title */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleBackToModule}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Back to Module"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h2 className="text-lg font-semibold">Quiz Management</h2>
+            </div>
+
+            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               {quizId ? (
                 <>
                   <Button
                     onClick={() =>
-                      navigate(`/instructor/course/${courseId}/quiz/add`)
+                      navigate(
+                        `/instructor/course/${courseId}/modules/${moduleId}/quiz/add`
+                      )
                     }
                     className="w-full sm:w-auto flex items-center justify-center"
                   >
@@ -129,7 +152,9 @@ const QuizManagementPage = () => {
               ) : (
                 <Button
                   onClick={() =>
-                    navigate(`/instructor/course/${courseId}/quiz/add`)
+                    navigate(
+                      `/instructor/course/${courseId}/modules/${moduleId}/quiz/add`
+                    )
                   }
                   className="w-full sm:w-auto flex items-center justify-center"
                 >
@@ -164,7 +189,7 @@ const QuizManagementPage = () => {
             ]}
             onEdit={(q) =>
               navigate(
-                `/instructor/course/${courseId}/quiz/edit/${q.quizId ?? ''}?questionId=${q._id ?? ''}`
+                `/instructor/course/${courseId}/modules/${moduleId}/quiz/edit/${q.quizId ?? ''}?questionId=${q._id ?? ''}`
               )
             }
             onDelete={(q) => {
@@ -180,7 +205,7 @@ const QuizManagementPage = () => {
           />
         ) : (
           <p className="text-sm text-gray-600">
-            No quiz or questions found yet.
+            No quiz or questions found for this module.
           </p>
         )}
       </Card>

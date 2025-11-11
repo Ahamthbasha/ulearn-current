@@ -17,6 +17,7 @@ import { StudentErrorMessages } from "../../utils/constants";
 import { formatDate } from "../../utils/dateFormat";
 import { appLogger } from "../../utils/logger";
 import { UserDTO } from "../../dto/userDTO/courseInfoDTO";
+import { BadRequestError, PaymentInProgressError } from "../../utils/error";
 
 export class StudentOrderService implements IStudentOrderService {
   private _orderRepo: IStudentOrderRepository;
@@ -254,8 +255,11 @@ export class StudentOrderService implements IStudentOrderService {
         }
 
         if (order.status !== "FAILED") {
-          throw new Error("Only failed orders can be retried");
-        }
+  if (order.status === "PENDING") {
+    throw new PaymentInProgressError();
+  }
+  throw new BadRequestError("Only failed orders can be retried");
+}
 
         try {
           const amountInPaise = Math.round(order.amount * 100);

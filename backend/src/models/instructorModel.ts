@@ -44,6 +44,10 @@ export interface IInstructor extends Document {
   updatedAt: Date;
 }
 
+export interface IInstructorPopulated extends IInstructor{
+  username:string;
+}
+
 const instructorSchema: Schema<IInstructor> = new Schema(
   {
     username: {

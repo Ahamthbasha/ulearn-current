@@ -19,6 +19,10 @@ export class InstructorModuleService implements IInstructorModuleService {
     return mapModuleToDTO(module);
   }
 
+  async updateModuleDuration(moduleId: string): Promise<void> {
+    await this._moduleRepo.updateModuleDuration(moduleId);
+  }
+
   async getModulesByCourse(courseId: string): Promise<ModuleDTO[]> {
     const modules = await this._moduleRepo.getModulesByCourse(courseId);
     return mapModulesToDTO(modules);

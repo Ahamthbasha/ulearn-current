@@ -11,6 +11,7 @@ import {
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
+import { PaymentInProgressError } from "../../utils/error";
 
 export class StudentOrderController implements IStudentOrderController {
   private _orderService: IStudentOrderService;
@@ -181,6 +182,16 @@ export class StudentOrderController implements IStudentOrderController {
       res.status(StatusCode.OK).json(result);
     } catch (err: unknown) {
       appLogger.error("Error initiating payment retry:", err);
+      
+      if (err instanceof PaymentInProgressError) {
+      res.status(StatusCode.CONFLICT).json({
+        success: false,
+        message: err.message,
+        orderId: req.params.orderId,
+      });
+      return
+    }
+      
       handleControllerError(err,res)
     }
   }

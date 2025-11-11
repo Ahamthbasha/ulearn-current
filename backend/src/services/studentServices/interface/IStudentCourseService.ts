@@ -1,5 +1,5 @@
 import { CourseDetailDTO } from "../../../dto/userDTO/courseDetailDTO";
-import { ICourse } from "../../../models/courseModel";
+import { ICoursePopulated } from "../../../models/courseModel";
 
 export interface IStudentCourseService {
   getAllCoursesWithDetails(): Promise<CourseDetailDTO[]>;
@@ -18,7 +18,7 @@ export interface IStudentCourseService {
   getCourseDetailsById(courseId: string): Promise<CourseDetailDTO | null>;
 
   getCourseRaw(courseId: string): Promise<{
-    course: ICourse | null;
+    course: ICoursePopulated | null;
     chapterCount: number;
     quizQuestionCount: number;
   }>;

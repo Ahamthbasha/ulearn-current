@@ -18,7 +18,7 @@ import type {
   RazorpayResponse,
   RazorpayErrorResponse,
   ApiError,
-} from "../../../types/interfaces/ICommon"; // Adjust path as needed
+} from "../../../types/interfaces/ICommon";
 
 const MembershipOrderDetail = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -44,7 +44,6 @@ const MembershipOrderDetail = () => {
     };
     fetchOrder();
 
-    // Cleanup Razorpay modal on unmount
     return () => {
       if (razorpayInstanceRef.current?.close) {
         try {
@@ -169,12 +168,13 @@ const MembershipOrderDetail = () => {
     setShowConfirmModal(true);
   };
 
+  // CORRECTED: Use order.orderId instead of razorpayOrderId
   const handleDownload = async () => {
-    if (!order?.razorpayOrderId) return;
+    if (!order?.orderId) return;
 
     setActionLoading("download");
     try {
-      await downloadReceiptForMembership(order.razorpayOrderId);
+      await downloadReceiptForMembership(order.orderId); // Use orderId
       toast.success("Receipt downloaded successfully!");
     } catch (err: unknown) {
       console.error(err);
@@ -228,7 +228,7 @@ const MembershipOrderDetail = () => {
 
   const plan = order.membershipPlan;
   const instructor = order.instructor;
-  const isWalletPayment = order.razorpayOrderId ? order.razorpayOrderId.startsWith("wallet_") : false;
+  const isWalletPayment = order.razorpayOrderId?.startsWith("wallet_") ?? false;
   const isPending = order.paymentStatus === "pending";
   const isFailed = order.paymentStatus === "failed";
   const isPaid = order.paymentStatus === "paid";
@@ -339,7 +339,7 @@ const MembershipOrderDetail = () => {
             >
               {order.paymentStatus.toUpperCase()}
             </p>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">Order ID: {order.razorpayOrderId}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">Order ID: {order.orderId}</p>
           </div>
         </div>
 

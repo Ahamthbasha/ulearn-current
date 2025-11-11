@@ -1,4 +1,5 @@
 import { CourseResponseDto, ICourseWithSignedUrls } from "../../dto/instructorDTO/courseDetailsDTO";
+import { formatDuration } from "../../utils/formatDuration";
 
 function formatDateTo12Hour(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
@@ -17,6 +18,7 @@ export function mapToCourseResponseDto(course: ICourseWithSignedUrls): CourseRes
     courseName: course.courseName,
     description: course.description,
     duration: course.duration,
+    durationFormatted:course.durationFormatted || formatDuration(course.duration),
     price: course.price,
     level: course.level,
    categoryName:

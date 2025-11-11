@@ -1,43 +1,34 @@
-import { ICourse } from "../../models/courseModel";
-import { CourseDetailDTO, IPopulatedCategory, IPopulatedInstructor } from "../../dto/userDTO/courseDetailDTO";
+import { ICourseFullyPopulated } from "../../models/courseModel";
+import { CourseDetailDTO, IModuleDTO } from "../../dto/userDTO/courseDetailDTO";
+import { parseDurationStringToSeconds } from "../../utils/parseDuration";
+import { formatDuration } from "../../utils/formatDuration";
 
 export const mapCourseToDetailDTO = (
-  course: ICourse,
-  chapterCount: number,
-  quizQuestionCount: number,
+  course: ICourseFullyPopulated,
+  modules: IModuleDTO[]
 ): CourseDetailDTO => {
-  let instructorName = "";
-  if (
-    typeof course.instructorId === "object" &&
-    course.instructorId !== null &&
-    "username" in course.instructorId
-  ) {
-    instructorName = (course.instructorId as IPopulatedInstructor).username || "";
-  }
+  const instructorName = course.instructorId.username;
+  const instructorId = course.instructorId._id.toString()
+  const categoryName = course.category.categoryName;
 
-  let categoryName = "";
-  if (
-    typeof course.category === "object" &&
-    course.category !== null &&
-    "categoryName" in course.category
-  ) {
-    categoryName = (course.category as IPopulatedCategory).categoryName || "";
-  }
+  const totalSeconds = modules.reduce((sum, m) => {
+    return sum + parseDurationStringToSeconds(m.duration);
+  }, 0);
 
   return {
     courseId: course._id.toString(),
     courseName: course.courseName,
     instructorName,
+    instructorId,
     categoryName,
     thumbnailUrl: course.thumbnailUrl,
-    demoVideoUrl: course.demoVideo?.url || "",
-    chapterCount,
-    quizQuestionCount,
-    duration: course.duration,
+    demoVideoUrl: course.demoVideo?.url ?? "",
     description: course.description,
     level: course.level,
     price: course.price,
-    originalPrice: course.originalPrice || course.price,
+    originalPrice: course.originalPrice ?? course.price,
     discountedPrice: course.discountedPrice,
+    duration: formatDuration(totalSeconds),
+    modules,
   };
 };

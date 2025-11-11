@@ -14,16 +14,23 @@ const QuestionSchema = new Schema<IQuestions>({
 
 export interface IQuiz extends Document {
   _id: Types.ObjectId;
-  courseId: Types.ObjectId;
+  moduleId: Types.ObjectId;
   questions: Types.DocumentArray<IQuestions>;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const QuizSchema = new Schema<IQuiz>(
   {
-    courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+    moduleId: {
+      type: Schema.Types.ObjectId,
+      ref: "Module",
+      required: true,
+      index: true,
+    },
     questions: [QuestionSchema],
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export const QuizModel = model<IQuiz>("Quiz", QuizSchema);

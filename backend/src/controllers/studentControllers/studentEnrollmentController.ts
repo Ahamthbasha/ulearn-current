@@ -10,8 +10,7 @@ import {
 } from "../../utils/constants";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
-import { IPopulatedCourse } from "../../models/courseModel";
-
+import { mapToCourseViewingResponse } from "../../mappers/userMapper/mapCourseViewing";
 
 export class StudentEnrollmentController implements IStudentEnrollmentController {
   private readonly _enrollmentService: IStudentEnrollmentService;
@@ -50,21 +49,11 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
         return;
       }
 
-      const course = enrollment.courseId as unknown as IPopulatedCourse;
-      if (course.thumbnailUrl) course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
-      if (course.demoVideo?.url) course.demoVideo.url = await getPresignedUrl(course.demoVideo.url);
-      // if (Array.isArray(course.chapters)) {
-      //   for (const chapter of course.chapters) {
-      //     if (chapter.videoUrl) chapter.videoUrl = await getPresignedUrl(chapter.videoUrl);
-      //   }
-      // }
+      const mappedResponse = await mapToCourseViewingResponse(enrollment,getPresignedUrl)
 
       res.status(StatusCode.OK).json({
         success: true,
-        enrollment: {
-          ...enrollment.toObject(),
-          completionPercentage: enrollment.completionPercentage,
-        },
+       mappedResponse
       });
     } catch (error: unknown) {
       handleControllerError(error, res);

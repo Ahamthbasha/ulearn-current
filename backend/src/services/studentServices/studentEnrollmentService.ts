@@ -5,7 +5,7 @@ import { IEnrollment } from "../../models/enrollmentModel";
 import { EnrolledCourseDTO } from "../../dto/userDTO/enrollmentCourseDTO";
 import { mapEnrollmentToDTO } from "../../mappers/userMapper/mapEnrollmentToDTO";
 import { ICourseRepository } from "../../repositories/interfaces/ICourseRepository";
-import { ICourse } from "../../models/courseModel";
+import { ICourse, ICourseFullyPopulated } from "../../models/courseModel";
 
 export class StudentEnrollmentService implements IStudentEnrollmentService {
   private readonly _enrollmentRepo: IStudentEnrollmentRepository;
@@ -43,12 +43,14 @@ export class StudentEnrollmentService implements IStudentEnrollmentService {
     return dtos.filter((dto): dto is EnrolledCourseDTO => dto !== null);
   }
 
+
   async getEnrollmentCourseWithDetails(
-    userId: Types.ObjectId,
-    courseId: Types.ObjectId,
-  ): Promise<IEnrollment | null> {
-    return this._enrollmentRepo.getEnrollmentByCourseDetails(userId, courseId);
-  }
+  userId: Types.ObjectId,
+  courseId: Types.ObjectId,
+): Promise<IEnrollment & { courseId: ICourseFullyPopulated } | null> {
+  return this._enrollmentRepo.getEnrollmentByCourseDetails(userId, courseId);
+}
+
 
   async completeChapter(
     userId: Types.ObjectId,

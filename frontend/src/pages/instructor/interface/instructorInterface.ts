@@ -7,6 +7,7 @@ export interface Module extends Record<string,unknown> {
   description: string;
   createdAt?: string;
   updatedAt?: string;
+  durationFormatted:string;
 }
 
 export interface ModuleFormValues {
@@ -64,7 +65,6 @@ export interface BankFormValues {
   bankName: string;
 }
 
-// src/pages/instructor/interface/instructorInterface.ts
 export interface Chapter {
   moduleId: string;
   chapterId: string;
@@ -72,6 +72,7 @@ export interface Chapter {
   videoUrl: string;
   chapterNumber: number;
   description?: string;
+  durationFormatted:string;
 }
 
 export interface Category {
@@ -92,7 +93,7 @@ export interface CourseManagement {
   courseName: string;
   categoryName: string;
   level: string;
-  duration: string;
+  durationFormatted: string;
   price: number;
   description: string;
   thumbnailSignedUrl?: string;

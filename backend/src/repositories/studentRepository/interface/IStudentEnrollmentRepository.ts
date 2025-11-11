@@ -6,15 +6,19 @@ export interface IStudentEnrollmentRepository {
   getAllEnrolledCourses(
     userId: Types.ObjectId,
   ): Promise<{ enrollment: IEnrollment; order?: IOrder }[]>;
+
+  // Returns populated enrollment (we'll cast safely)
   getEnrollmentByCourseDetails(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
-  ): Promise<IEnrollment | null>;
+  ): Promise<IEnrollment & { courseId: any } | null>;
+
   markChapterCompleted(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
     chapterId: Types.ObjectId,
-  ): Promise<IEnrollment | null>;
+  ): Promise<IEnrollment & { courseId: any } | null>;
+
   submitQuizResult(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
@@ -24,15 +28,18 @@ export interface IStudentEnrollmentRepository {
       totalQuestions: number;
       scorePercentage: number;
     },
-  ): Promise<IEnrollment | null>;
+  ): Promise<IEnrollment & { courseId: any } | null>;
+
   areAllChaptersCompleted(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
   ): Promise<boolean>;
+
   findByUserAndCourse(
     userId: string,
     courseId: string,
   ): Promise<IEnrollment | null>;
+
   findByUserAndCourseWithPopulate(
     userId: string,
     courseId: string,
@@ -41,6 +48,7 @@ export interface IStudentEnrollmentRepository {
       populate?: { path: string }[];
     }[],
   ): Promise<IEnrollment | null>;
+
   findOne(
     query: Partial<Record<keyof IEnrollment, unknown>>,
     populateOptions?: {

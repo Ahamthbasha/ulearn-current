@@ -10,4 +10,6 @@ export interface IAdminInstructorRepository {
   getInstructorData(email: string): Promise<IInstructor | null>;
 
   updateInstructorProfile(email: string, data: Partial<IInstructor>): Promise<IInstructor | null>;
+
+  findById(id: string): Promise<IInstructor | null>;
 }

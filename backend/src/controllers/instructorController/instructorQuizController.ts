@@ -3,11 +3,9 @@ import { IInstructorQuizController } from "./interfaces/IInstructorQuizControlle
 import { IInstructorQuizService } from "../../services/instructorServices/interface/IInstructorQuizService";
 import { StatusCode } from "../../utils/enums";
 import {
-  INSTRUCTOR_ERROR_MESSAGE,
   QuizErrorMessages,
   QuizSuccessMessages,
 } from "../../utils/constants";
-import { appLogger } from "../../utils/logger";
 
 const isError = (err: unknown): err is Error => {
   return err instanceof Error;
@@ -15,6 +13,7 @@ const isError = (err: unknown): err is Error => {
 
 export class InstructorQuizController implements IInstructorQuizController {
   private _quizService: IInstructorQuizService;
+
   constructor(quizService: IInstructorQuizService) {
     this._quizService = quizService;
   }
@@ -22,30 +21,29 @@ export class InstructorQuizController implements IInstructorQuizController {
   async createQuiz(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
-      const { courseId } = req.body;
-      if (!courseId) {
+      const { moduleId } = req.body;
+
+      if (!moduleId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: QuizErrorMessages.COURSE_ID_REQUIRED,
+          message: QuizErrorMessages.MODULE_ID_REQUIRED,
         });
         return;
       }
 
-      const existing = await this._quizService.getQuizByCourseId(courseId);
-
+      const existing = await this._quizService.getQuizByModuleId(moduleId);
       if (existing) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
-          message: QuizErrorMessages.QUIZ_ALREAD_CREATED,
+          message: QuizErrorMessages.QUIZ_ALREADY_CREATED,
         });
         return;
       }
 
-      const created = await this._quizService.createQuiz(req.body);
-
+      const created = await this._quizService.createQuiz({ moduleId });
       res.status(StatusCode.CREATED).json({
         success: true,
         message: QuizSuccessMessages.QUIZ_CREATED,
@@ -59,7 +57,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   async deleteQuiz(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
       const { quizId } = req.params;
@@ -83,7 +81,7 @@ export class InstructorQuizController implements IInstructorQuizController {
   async getQuizById(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
       const { quizId } = req.params;
@@ -91,7 +89,7 @@ export class InstructorQuizController implements IInstructorQuizController {
       if (!quiz) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: INSTRUCTOR_ERROR_MESSAGE.QUIZ_NOT_FOUND,
+          message: QuizErrorMessages.QUIZ_NOT_FOUND,
         });
         return;
       }
@@ -101,34 +99,33 @@ export class InstructorQuizController implements IInstructorQuizController {
     }
   }
 
-  async getQuizByCourseId(
+  async getQuizByModuleId(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
-      const { courseId } = req.params;
-      const quiz = await this._quizService.getQuizByCourseId(courseId); // returns IQuiz | null
+      const { moduleId } = req.params;
+      const quiz = await this._quizService.getQuizByModuleId(moduleId);
 
       if (!quiz) {
-        res.status(StatusCode.OK).json({
-          success: true,
-          message: "No quiz found",
-          data: { courseId, questions: [] },
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: QuizErrorMessages.QUIZ_NOT_FOUND_FOR_THIS_MODULE,
+          data: { moduleId, questions: [] },
         });
         return;
       }
 
-      const questions =
-        quiz.questions?.map((q) => ({
-          ...q.toObject?.(), // handle Mongoose subdocument
-          quizId: quiz._id,
-        })) || [];
+      const questions = quiz.questions.map((q) => ({
+        ...q.toObject(),
+        quizId: quiz._id,
+      }));
 
       res.status(StatusCode.OK).json({
         success: true,
         message: QuizSuccessMessages.QUIZ_FETCHED,
-        data: { courseId, questions },
+        data: { moduleId, questions },
       });
     } catch (err) {
       next(err);
@@ -138,14 +135,11 @@ export class InstructorQuizController implements IInstructorQuizController {
   async addQuestion(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
-      const { courseId } = req.params;
-      const added = await this._quizService.addQuestionToQuiz(
-        courseId,
-        req.body,
-      );
+      const { moduleId } = req.params;
+      const added = await this._quizService.addQuestionToQuiz(moduleId, req.body);
 
       res.status(StatusCode.CREATED).json({
         success: true,
@@ -153,7 +147,7 @@ export class InstructorQuizController implements IInstructorQuizController {
         data: added,
       });
     } catch (err) {
-      if (isError(err) && err.message?.includes("already exists")) {
+      if (isError(err) && err.message.includes("already exists")) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           message: err.message,
@@ -167,14 +161,14 @@ export class InstructorQuizController implements IInstructorQuizController {
   async updateQuestion(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
       const { quizId, questionId } = req.params;
       const updated = await this._quizService.updateQuestionInQuiz(
         quizId,
         questionId,
-        req.body,
+        req.body
       );
 
       if (!updated) {
@@ -191,8 +185,7 @@ export class InstructorQuizController implements IInstructorQuizController {
         data: updated,
       });
     } catch (err) {
-      appLogger.error("error in update question", err);
-      if (isError(err) && err.message?.includes("already exists")) {
+      if (isError(err) && err.message.includes("already exists")) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
           message: err.message,
@@ -206,13 +199,13 @@ export class InstructorQuizController implements IInstructorQuizController {
   async deleteQuestion(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
       const { quizId, questionId } = req.params;
       const deleted = await this._quizService.deleteQuestionFromQuiz(
         quizId,
-        questionId,
+        questionId
       );
 
       if (!deleted) {
@@ -233,24 +226,24 @@ export class InstructorQuizController implements IInstructorQuizController {
     }
   }
 
-  async getPaginatedQuestionsByCourseId(
+  async getPaginatedQuestionsByModuleId(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ): Promise<void> {
     try {
-      const { courseId } = req.params;
+      const { moduleId } = req.params;
       const { page = "1", limit = "10", search = "" } = req.query;
 
       const pageNum = Number(page);
       const limitNum = Number(limit);
 
       const { questions, total, quizId } =
-        await this._quizService.getPaginatedQuestionsByCourseId(
-          courseId,
+        await this._quizService.getPaginatedQuestionsByModuleId(
+          moduleId,
           String(search),
           pageNum,
-          limitNum,
+          limitNum
         );
 
       res.status(StatusCode.OK).json({
@@ -258,7 +251,7 @@ export class InstructorQuizController implements IInstructorQuizController {
         message: QuizSuccessMessages.QUIZ_FETCHED,
         data: {
           quizId,
-          courseId,
+          moduleId,
           questions,
           total,
           page: pageNum,

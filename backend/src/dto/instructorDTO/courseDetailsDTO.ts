@@ -6,6 +6,7 @@ export interface ICourseWithSignedUrls {
   courseName: string;
   description: string;
   duration: string;
+  durationFormatted:string;
   price: number;
   level: string;
   category?: { categoryName: string } | string;
@@ -25,6 +26,7 @@ export interface CourseResponseDto {
   courseName: string;
   description: string;
   duration: string;
+  durationFormatted:string;
   price: number;
   level: string;
   categoryName: string;

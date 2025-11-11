@@ -2,6 +2,7 @@ import { ICourse } from "../../../models/courseModel";
 
 export interface IInstructorCourseRepository {
   createCourse(courseData: ICourse): Promise<ICourse>;
+  updateCourseDuration(courseId: string): Promise<void> 
   updateCourse(
     courseId: string,
     courseData: Partial<ICourse>,

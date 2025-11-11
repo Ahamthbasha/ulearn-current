@@ -82,3 +82,16 @@ export interface IDetailedRevenueReport {
   data: IRevenueReportItem[];
   total: number;
 }
+
+
+export interface ModuleValidationError {
+  moduleId: string;
+  moduleTitle: string;
+  missingChapters: boolean;
+  missingQuiz: boolean;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors?: ModuleValidationError[];
+}

@@ -1,3 +1,13 @@
+// src/utils/constants.ts
+export const ReviewMessages = {
+  UNAUTHORIZED: "Unauthorized",
+  REVIEW_NOT_FOUND: "Review not found or not owned by student.",
+  REVIEW_DELETED: "Review deleted.",
+  BAD_REQUEST: "Bad request",
+  INTERNAL_ERROR: "Internal server error",
+};
+
+
 export const ModuleErrorMessages = {
   INVALID_ORDEREDIDS:"Invalid orderedIds",
   MODULE_NOT_FOUND: "Module not found",
@@ -49,7 +59,7 @@ export const INSTRUCTOR_MESSAGES = {
   USER_ALREADY_EXISTS: "User already exists",
   FAILED_TO_CREATE_OTP: "Failed to create OTP",
   INCORRECT_OTP: "Incorrect OTP",
-  INVALID_CREDENTIALS: "Invalid email or password",
+  INVALID_CREDENTIALS: "Invalid password",
   INSTRUCTOR_BLOCKED: "Instructor account is blocked",
   USER_NOT_FOUND: "User not found",
   TOKEN_INVALID: "Invalid or missing token",
@@ -520,28 +530,23 @@ export const CourseSuccessMessages = {
   CHAPTER_COMPLETED: "Chapter Completed",
   PLAY_DATA_RETRIEVED: "Retrieved play data",
 };
-export const QuizErrorMessages = {
-  NO_COURSE_FOUND: "No course found.",
-  NO_USER_FOUND: "No user found.",
-  QUIZ_ID_REQUIRED: "Quiz ID is required.",
-  COURSE_ID_REQUIRED: "Course ID is required.",
-  INVALID_QUIZ_DATA: "Invalid quiz data provided.",
-  INTERNAL_SERVER_ERROR: "Internal server error.",
-  QUIZ_OR_QUESTION_NOT_FOUND: "Quiz or question not found",
-  QUIZ_ALREAD_CREATED:
-    "Quiz already exists for this course. Please manage questions instead.",
-  QUIZ_NOT_FOUND: "Quiz is not found",
+export const QuizSuccessMessages = {
+  QUIZ_CREATED: "Quiz created successfully",
+  QUIZ_DELETED: "Quiz deleted successfully",
+  QUIZ_FETCHED: "Quiz fetched successfully",
+  QUESTION_ADDED: "Question added successfully",
+  QUESTION_UPDATED: "Question updated successfully",
+  QUESTION_DELETED: "Question deleted successfully",
 };
 
-export const QuizSuccessMessages = {
-  QUIZ_CREATED: "Quiz section for this course is created",
-  QUIZ_DELETED: "Quiz section for this course is deleted",
-  QUESTION_ADDED: "Question added successfully.",
-  QUESTION_UPDATED: "Question updated successfully.",
-  QUIZ_FETCHED: "Quiz fetched successfully.",
-  QUESTION_DELETED: "question deleted successfully",
-  COURSE_COMPLETED: "Course completed successfully!",
-  RETRY_QUIZ: "Retry quiz!",
+export const QuizErrorMessages = {
+  QUIZ_NOT_FOUND_FOR_THIS_MODULE:"No quiz found for this module",
+  MODULE_ID_REQUIRED : "moduleId is required",
+  QUIZ_ALREADY_CREATED : "Quiz already created for this module",
+  QUIZ_NOT_FOUND: "Quiz not found",
+  QUIZ_OR_QUESTION_NOT_FOUND: "Quiz or question not found",
+  QUESTION_ALREADY_EXISTS: "Question already exists in the quiz",
+  ANOTHER_QUESTION_SAME_TEXT: "Another question with the same text already exists",
 };
 
 export const ChapterErrorMessages = {
@@ -791,6 +796,8 @@ export const MESSAGES = {
   USER_ALREADY_EXISTS: "User already exists",
   FAILED_TO_CREATE_OTP: "Failed to create OTP",
   INCORRECT_OTP: "Incorrect OTP",
+  USER_NOT_EXIST_WITH_THIS_EMAIL: "user is not exist with this email",
+  INVALID_PASSWORD:"Invalid password",
   INVALID_CREDENTIALS: "Invalid email or password",
   ACCOUNT_BLOCKED: "Account is blocked",
   USER_NOT_FOUND: "User not found",

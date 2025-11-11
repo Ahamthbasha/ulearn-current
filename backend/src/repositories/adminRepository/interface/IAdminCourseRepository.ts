@@ -1,6 +1,6 @@
 import { ICourse } from "../../../models/courseModel";
-import { IChapter } from "../../../models/chapterModel";
-import { IQuiz } from "../../../models/quizModel";
+
+import { IModule } from "../../../models/moduleModel";
 export interface IAdminCourseRepository {
   getAllCourses(
     search?: string,
@@ -8,11 +8,10 @@ export interface IAdminCourseRepository {
     limit?: number,
   ): Promise<{ data: ICourse[]; total: number }>;
 
-  getCourseDetails(courseId: string): Promise<{
-    course: ICourse | null;
-    chapters: IChapter[];
-    quiz: IQuiz | null;
-  }>;
+ getCourseDetails(courseId: string): Promise<{
+  course: ICourse | null;
+  modules: IModule[];
+}>
 
   toggleListingStatus(courseId: string): Promise<ICourse | null>;
   verifyCourse(

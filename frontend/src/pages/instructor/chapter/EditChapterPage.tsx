@@ -1,4 +1,3 @@
-// pages/instructor/chapters/EditChapterPage.tsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -9,10 +8,7 @@ import { Loader2 } from "lucide-react";
 import Card from "../../../components/common/Card";
 import InputField from "../../../components/common/InputField";
 import { Button } from "../../../components/common/Button";
-import {
-  getChapterById,
-  updateChapter,
-} from "../../../api/action/InstructorActionApi";
+import { getChapterById, updateChapter } from "../../../api/action/InstructorActionApi";
 import { AxiosError } from "axios";
 
 const textOnlyRegex = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
@@ -31,31 +27,20 @@ const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
     .transform((value) => value?.trim())
     .required("Chapter title is required")
-    .test(
-      "valid-format",
-      "Chapter title must contain only letters and single spaces",
-      validateTextOnly
-    )
+    .test("valid-format", "Chapter title must contain only letters and single spaces", validateTextOnly)
     .min(5, "Chapter title must be at least 5 characters long")
     .max(50, "Chapter title should not exceed 50 characters"),
 
   description: Yup.string()
     .transform((value) => value?.trim())
     .required("Description is required")
-    .test(
-      "valid-format",
-      "Description must contain only letters and single spaces",
-      validateTextOnly
-    )
+    .test("valid-format", "Description must contain only letters and single spaces", validateTextOnly)
     .min(10, "Description must be at least 10 characters long")
     .max(100, "Description should not exceed 100 characters"),
 });
 
 const EditChapterPage = () => {
-  const { moduleId, chapterId } = useParams<{
-    moduleId: string;
-    chapterId: string;
-  }>();
+  const { moduleId, chapterId } = useParams<{ moduleId: string; chapterId: string }>();
   const navigate = useNavigate();
 
   const [initialValues, setInitialValues] = useState({
@@ -67,6 +52,7 @@ const EditChapterPage = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [existingVideoUrl, setExistingVideoUrl] = useState<string>("");
+  const [duration, setDuration] = useState<number>(0); // ← NEW: Duration from video
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -81,6 +67,7 @@ const EditChapterPage = () => {
           description: data.description || "",
         });
         setCurrentChapterNumber(data.chapterNumber || 0);
+        setDuration(data.duration || 0); // ← Load existing duration
 
         if (data.videoPresignedUrl) {
           setExistingVideoUrl(data.videoPresignedUrl);
@@ -101,15 +88,34 @@ const EditChapterPage = () => {
       e.target.value = "";
       setVideoFile(null);
       setVideoPreview(null);
+      setDuration(0);
       return;
     }
 
     setVideoFile(file);
-    setVideoPreview(URL.createObjectURL(file));
+    const url = URL.createObjectURL(file);
+    setVideoPreview(url);
+
+    // Extract duration
+    const video = document.createElement("video");
+    video.src = url;
+    video.onloadedmetadata = () => {
+      const dur = Math.ceil(video.duration);
+      setDuration(dur);
+      URL.revokeObjectURL(url);
+    };
+    video.onerror = () => {
+      toast.error("Failed to read video duration");
+      setDuration(0);
+    };
   };
 
   const handleSubmit = async (values: typeof initialValues) => {
-    if (!chapterId) return toast.error("Invalid request");
+    if (!chapterId || !moduleId) return toast.error("Invalid request");
+
+    if (videoFile && duration === 0) {
+      return toast.error("Failed to extract video duration");
+    }
 
     try {
       setLoading(true);
@@ -117,7 +123,11 @@ const EditChapterPage = () => {
       formData.append("chapterTitle", values.chapterTitle.trim());
       formData.append("description", values.description.trim());
       formData.append("chapterNumber", String(currentChapterNumber));
-      if (videoFile) formData.append("video", videoFile);
+
+      if (videoFile) {
+        formData.append("video", videoFile);
+        formData.append("duration", String(duration)); // ← SEND DURATION
+      }
 
       await updateChapter(chapterId, formData);
       toast.success("Chapter updated successfully");
@@ -144,55 +154,31 @@ const EditChapterPage = () => {
         >
           {() => (
             <Form className="space-y-4">
-              <InputField
-                name="chapterTitle"
-                label="Chapter Title"
-                useFormik
-                placeholder="e.g., Introduction to Programming"
-              />
-              <InputField
-                name="description"
-                label="Description"
-                useFormik
-                placeholder="e.g., Learn the basics of programming concepts"
-              />
+              <InputField name="chapterTitle" label="Chapter Title" useFormik />
+              <InputField name="description" label="Description" useFormik />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Chapter Number
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Chapter Number</label>
                 <div className="mt-1 px-4 py-2 bg-gray-100 border border-gray-300 rounded text-sm text-gray-700">
                   {currentChapterNumber}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Reorder in chapter list to change number
-                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Video File
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Video File</label>
 
                 {existingVideoUrl && !videoPreview && (
                   <div className="mb-3">
                     <p className="text-sm text-gray-600 mb-2">Current Video:</p>
-                    <video
-                      src={existingVideoUrl}
-                      controls
-                      className="w-full max-h-96 rounded shadow-md"
-                    />
+                    <video src={existingVideoUrl} controls className="w-full max-h-96 rounded shadow-md" />
                   </div>
                 )}
 
                 {videoPreview && (
                   <div className="mb-3">
                     <p className="text-sm text-gray-600 mb-2">New Video Preview:</p>
-                    <video
-                      src={videoPreview}
-                      controls
-                      className="w-full max-h-96 rounded shadow-md"
-                    />
+                    <video src={videoPreview} controls className="w-full max-h-96 rounded shadow-md" />
+                  
                   </div>
                 )}
 

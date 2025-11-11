@@ -2,17 +2,36 @@ import { FilterQuery } from "mongoose";
 import { CourseModel, ICourse } from "../../models/courseModel";
 import { GenericRepository } from "../genericRepository";
 import { IInstructorCourseRepository } from "./interface/IInstructorCourseRepository";
+import { IInstructorModuleRepository } from "./interface/IInstructorModuleRepository";
 
 export class InstructorCourseRepository
   extends GenericRepository<ICourse>
   implements IInstructorCourseRepository
 {
-  constructor() {
+  private _moduleRepository : IInstructorModuleRepository
+  constructor(
+    moduleRepository : IInstructorModuleRepository
+  ) {
     super(CourseModel);
+    this._moduleRepository = moduleRepository
   }
 
   async createCourse(courseData: ICourse): Promise<ICourse> {
     return await this.create(courseData);
+  }
+
+  async updateCourseDuration(courseId: string): Promise<void> {
+    
+    const modules = await this._moduleRepository.getModulesByCourse(courseId);
+
+    const totalDurationSeconds = modules.reduce((sum, module) => {
+      const dur = Number(module.duration) || 0;
+      return sum + dur;
+    }, 0);
+
+    const updatedDuration = totalDurationSeconds.toString();
+
+    await this.updateCourse(courseId, { duration: updatedDuration });
   }
 
   async updateCourse(

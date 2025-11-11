@@ -45,10 +45,10 @@ const CourseCreatePage = () => {
     courseName: Yup.string()
       .trim()
       .min(6, "Course name must be at least 6 characters")
-      .max(30, "Course name must not exceed 20 characters")
+      .max(30, "Course name must not exceed 30 characters")
       .matches(
         /^[A-Za-z ]{6,30}$/,
-        "Only letters and spaces allowed, 6-20 characters"
+        "Only letters and spaces allowed, 6-30 characters"
       )
       .test("not-only-spaces", "Course name cannot be just spaces", (value) =>
         Boolean(value && value.trim().replace(/\s/g, "").length >= 6)
@@ -88,15 +88,6 @@ const CourseCreatePage = () => {
       })
       .required("Price is required"),
 
-    duration: Yup.string()
-      .matches(/^[1-9][0-9]*$/, "Duration must be a positive number")
-      .test("duration-range", "Duration must be between 1-999 hours", (value) => {
-        if (!value) return false;
-        const num = parseInt(value);
-        return num >= 1 && num <= 999;
-      })
-      .required("Duration is required"),
-
     level: Yup.string()
       .oneOf(
         ["Beginner", "Intermediate", "Advanced"],
@@ -111,7 +102,6 @@ const CourseCreatePage = () => {
       description: "",
       category: "",
       price: "",
-      duration: "",
       level: "",
       thumbnail: null,
       demoVideo: null,
@@ -130,7 +120,6 @@ const CourseCreatePage = () => {
       formData.append("description", values.description);
       formData.append("category", values.category);
       formData.append("price", values.price.toString());
-      formData.append("duration", values.duration);
       formData.append("level", values.level);
       formData.append("thumbnail", values.thumbnail);
       formData.append("demoVideos", values.demoVideo);
@@ -140,8 +129,10 @@ const CourseCreatePage = () => {
         toast.success(res.data.message);
         navigate("/instructor/courses");
       } catch (err: unknown) {
-        if(err instanceof AxiosError){
-          toast.error(err?.response?.data?.message);
+        if (err instanceof AxiosError) {
+          toast.error(err?.response?.data?.message || "Failed to create course");
+        } else {
+          toast.error("An unexpected error occurred");
         }
       } finally {
         setSubmitting(false);
@@ -205,11 +196,6 @@ const CourseCreatePage = () => {
                 Design and publish your next course to inspire learners worldwide
               </p>
             </div>
-            <div className="hidden sm:flex items-center space-x-2 text-amber-600">
-              <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">📚</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -222,7 +208,7 @@ const CourseCreatePage = () => {
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center">
-                  <span className="mr-3">📖</span>
+                  <span className="mr-3">Book</span>
                   Course Information
                 </h2>
               </div>
@@ -234,7 +220,6 @@ const CourseCreatePage = () => {
                     <InputField 
                       name="courseName" 
                       label="Course Name"
-                 
                     />
                     
                     <div>
@@ -253,7 +238,7 @@ const CourseCreatePage = () => {
                       />
                       {formik.touched.description && formik.errors.description && (
                         <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="mr-1">⚠️</span>
+                          <span className="mr-1">Warning:</span>
                           {formik.errors.description}
                         </p>
                       )}
@@ -289,7 +274,7 @@ const CourseCreatePage = () => {
                       </div>
                       {formik.touched.category && formik.errors.category && (
                         <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="mr-1">⚠️</span>
+                          <span className="mr-1">Warning:</span>
                           {formik.errors.category}
                         </p>
                       )}
@@ -318,33 +303,8 @@ const CourseCreatePage = () => {
                         </div>
                         {formik.touched.price && formik.errors.price && (
                           <p className="mt-2 text-sm text-red-600 flex items-center">
-                            <span className="mr-1">⚠️</span>
+                            <span className="mr-1">Warning:</span>
                             {formik.errors.price}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label htmlFor="duration" className="block text-sm font-semibold text-gray-700 mb-2">
-                          Duration (Hours)
-                        </label>
-                        <div className="relative">
-                          <input
-                            id="duration"
-                            name="duration"
-                            type="text"
-                            value={formik.values.duration}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:outline-none focus:border-amber-500 focus:bg-white transition-all duration-200"
-                            placeholder="e.g., 10"
-                          />
-                          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">hrs</span>
-                        </div>
-                        {formik.touched.duration && formik.errors.duration && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center">
-                            <span className="mr-1">⚠️</span>
-                            {formik.errors.duration}
                           </p>
                         )}
                       </div>
@@ -378,7 +338,7 @@ const CourseCreatePage = () => {
                       </div>
                       {formik.touched.level && formik.errors.level && (
                         <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="mr-1">⚠️</span>
+                          <span className="mr-1">Warning:</span>
                           {formik.errors.level}
                         </p>
                       )}
@@ -392,7 +352,7 @@ const CourseCreatePage = () => {
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center">
-                  <span className="mr-3">🎬</span>
+                  <span className="mr-3">Video</span>
                   Course Media
                 </h2>
               </div>
@@ -402,7 +362,7 @@ const CourseCreatePage = () => {
                   {/* Thumbnail Upload */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                      <span className="mr-2">🖼️</span>
+                      <span className="mr-2">Image</span>
                       Course Thumbnail
                     </h3>
                     
@@ -416,7 +376,7 @@ const CourseCreatePage = () => {
                           />
                           <div className="flex justify-center">
                             <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-200">
-                              <span className="mr-2">🔄</span>
+                              <span className="mr-2">Refresh</span>
                               Change Image
                               <input
                                 type="file"
@@ -449,7 +409,7 @@ const CourseCreatePage = () => {
                     </div>
                     {thumbnailError && (
                       <p className="text-red-600 text-sm flex items-center">
-                        <span className="mr-1">⚠️</span>
+                        <span className="mr-1">Warning:</span>
                         {thumbnailError}
                       </p>
                     )}
@@ -458,7 +418,7 @@ const CourseCreatePage = () => {
                   {/* Video Upload */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                      <span className="mr-2">🎥</span>
+                      <span className="mr-2">Video</span>
                       Demo Video
                     </h3>
                     
@@ -472,7 +432,7 @@ const CourseCreatePage = () => {
                           />
                           <div className="flex justify-center">
                             <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200">
-                              <span className="mr-2">🔄</span>
+                              <span className="mr-2">Refresh</span>
                               Change Video
                               <input
                                 type="file"
@@ -505,7 +465,7 @@ const CourseCreatePage = () => {
                     </div>
                     {videoError && (
                       <p className="text-red-600 text-sm flex items-center">
-                        <span className="mr-1">⚠️</span>
+                        <span className="mr-1">Warning:</span>
                         {videoError}
                       </p>
                     )}
@@ -559,7 +519,6 @@ const CourseCreatePage = () => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center">
-                    <span className="mr-2">🚀</span>
                     Create Course
                   </div>
                 )}

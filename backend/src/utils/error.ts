@@ -1,5 +1,3 @@
-// utils/error.ts
-
 export class AppError extends Error {
   constructor(
     public statusCode: number,
@@ -70,3 +68,26 @@ export const isAppError = (error: unknown): error is AppError => {
 export const isError = (error: unknown): error is Error => {
   return error instanceof Error;
 };
+
+
+export interface ConflictErrorWithOrderId extends ConflictError {
+  orderId: string;
+}
+
+
+export const isConflictErrorWithOrderId = (
+  error: unknown
+): error is ConflictErrorWithOrderId => {
+  return (
+    error instanceof ConflictError &&
+    typeof (error as ConflictErrorWithOrderId).orderId === 'string'
+  );
+};
+
+
+export class PaymentInProgressError extends AppError {
+  constructor(message: string = "Payment is already in progress. Please complete it in the other tab.") {
+    super(409, message); // 409 Conflict
+    Object.setPrototypeOf(this, PaymentInProgressError.prototype);
+  }
+}

@@ -1,5 +1,4 @@
-// pages/instructor/chapters/AddChapterPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Formik, Form } from "formik";
@@ -10,7 +9,6 @@ import InputField from "../../../components/common/InputField";
 import { createChapter, getChaptersByModule } from "../../../api/action/InstructorActionApi";
 import { Button } from "../../../components/common/Button";
 import { Loader2 } from "lucide-react";
-import type { ChapterFormValues } from "../interface/instructorInterface";
 
 const textOnlyRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
@@ -19,30 +17,16 @@ const chapterSchema = Yup.object().shape({
     .transform((value) => value.trim())
     .min(5, "Chapter title must be at least 5 characters long")
     .max(50, "Title should not exceed 50 characters")
-    .matches(
-      textOnlyRegex,
-      "Chapter title must contain only letters and single spaces"
-    )
-    .test(
-      "not-blank",
-      "Chapter title cannot be only spaces",
-      (value) => !!value && value.trim().length >= 5
-    )
+    .matches(textOnlyRegex, "Chapter title must contain only letters and single spaces")
+    .test("not-blank", "Chapter title cannot be only spaces", (value) => !!value && value.trim().length >= 5)
     .required("Chapter title is required"),
 
   description: Yup.string()
     .transform((value) => value.trim())
     .min(10, "Description must be at least 10 characters long")
     .max(100, "chapter description should not exceed 100 characters")
-    .matches(
-      textOnlyRegex,
-      "Description must contain only letters and single spaces"
-    )
-    .test(
-      "not-blank",
-      "Description cannot be only spaces",
-      (value) => !!value && value.trim().length >= 10
-    )
+    .matches(textOnlyRegex, "Description must contain only letters and single spaces")
+    .test("not-blank", "Description cannot be only spaces", (value) => !!value && value.trim().length >= 10)
     .required("Description is required"),
 });
 
@@ -52,8 +36,10 @@ const AddChapterPage = () => {
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [duration, setDuration] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [nextChapterNumber, setNextChapterNumber] = useState<number>(1);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Fetch next chapter number
   useEffect(() => {
@@ -77,35 +63,58 @@ const AddChapterPage = () => {
     if (!file.type.startsWith("video/")) {
       toast.error("Only video files are allowed.");
       e.target.value = "";
-      setVideoFile(null);
-      setVideoPreview(null);
       return;
     }
 
     setVideoFile(file);
-    setVideoPreview(URL.createObjectURL(file));
+    const url = URL.createObjectURL(file);
+    setVideoPreview(url);
+
+    // Extract duration
+    const video = document.createElement("video");
+    video.src = url;
+    video.onloadedmetadata = () => {
+      const dur = Math.ceil(video.duration);
+      setDuration(dur);
+      URL.revokeObjectURL(url); // Clean up
+    };
+    video.onerror = () => {
+      toast.error("Failed to read video duration");
+      setDuration(0);
+    };
   };
 
-  const getErrorMessage = (error: unknown): string => {
-    if (
-      error &&
-      typeof error === "object" &&
-      "response" in error &&
-      error.response &&
-      typeof error.response === "object" &&
-      "data" in error.response &&
-      error.response.data &&
-      typeof error.response.data === "object" &&
-      "message" in error.response.data
-    ) {
-      return String((error.response.data as { message?: string }).message);
+ const getErrorMessage = (error: unknown): string => {
+  // 1. Check if it's an Axios-like error
+  if (
+    error &&
+    typeof error === "object" &&
+    "response" in error &&
+    error.response &&
+    typeof error.response === "object" &&
+    "data" in error.response
+  ) {
+    const data = error.response.data;
+
+    // 2. Check if data is object and has message
+    if (data && typeof data === "object" && "message" in data && typeof data.message === "string") {
+      return data.message;
     }
-    return error instanceof Error ? error.message : "Chapter creation failed";
-  };
 
-  const handleSubmit = async (values: Omit<ChapterFormValues, "chapterNumber">) => {
+    // 3. Fallback: data might be string
+    if (typeof data === "string") {
+      return data;
+    }
+  }
+
+  // 4. Fallback to Error.message
+  return error instanceof Error ? error.message : "Chapter creation failed";
+};
+
+  const handleSubmit = async (values: { chapterTitle: string; description: string }) => {
     if (!moduleId) return toast.error("Invalid module ID");
     if (!videoFile) return toast.error("Video file is required.");
+    if (duration === 0) return toast.error("Failed to extract video duration");
 
     try {
       setLoading(true);
@@ -115,6 +124,7 @@ const AddChapterPage = () => {
       formData.append("chapterNumber", String(nextChapterNumber));
       formData.append("moduleId", moduleId);
       formData.append("video", videoFile);
+      formData.append("duration", String(duration)); // ← SEND DURATION
 
       await createChapter(formData);
       toast.success("Chapter created successfully");
@@ -130,10 +140,7 @@ const AddChapterPage = () => {
     <div className="px-4 py-6">
       <Card title="Add Chapter" padded className="bg-white shadow-sm rounded-lg">
         <Formik
-          initialValues={{
-            chapterTitle: "",
-            description: "",
-          }}
+          initialValues={{ chapterTitle: "", description: "" }}
           validationSchema={chapterSchema}
           onSubmit={handleSubmit}
         >
@@ -143,21 +150,14 @@ const AddChapterPage = () => {
               <InputField name="description" label="Description" useFormik />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Chapter Number (Auto)
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Chapter Number (Auto)</label>
                 <div className="mt-1 px-4 py-2 bg-gray-100 border border-gray-300 rounded text-sm text-gray-700">
                   {nextChapterNumber}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Auto-incremented. Reorder later if needed.
-                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Video File *
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Video File *</label>
                 <input
                   type="file"
                   accept="video/*"
@@ -168,11 +168,7 @@ const AddChapterPage = () => {
 
               {videoPreview && (
                 <div className="mt-2">
-                  <video
-                    controls
-                    src={videoPreview}
-                    className="w-full max-h-96 rounded"
-                  />
+                  <video ref={videoRef} controls src={videoPreview} className="w-full max-h-96 rounded" />
                 </div>
               )}
 

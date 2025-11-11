@@ -2,6 +2,7 @@ import { CreateModuleDTO, IModule } from "../../../models/moduleModel";
 
 export interface IInstructorModuleRepository {
   createModule(data: CreateModuleDTO): Promise<IModule>;
+  updateModuleDuration(moduleId: string): Promise<void>
   getModulesByCourse(courseId: string): Promise<IModule[]>;
   getModuleById(moduleId: string): Promise<IModule | null>;
   updateModule(

@@ -1,143 +1,18 @@
-// import { Schema, model, Document, Types } from "mongoose";
-// import { IChapter } from "./chapterModel";
-// import { IQuiz } from "./quizModel";
-
-// export interface IDemoVideo {
-//   type: "video";
-//   url: string;
-// }
-
-// export interface IPopulatedCourse extends ICourse {
-//   chapters: IChapter[];
-//   quizzes: IQuiz[];
-// }
-
-// export interface ICourse extends Document {
-//   _id: Types.ObjectId & { toString(): string };
-//   courseName: string;
-//   instructorId: Types.ObjectId;
-//   category: Types.ObjectId;
-//   quizId: Types.ObjectId;
-//   description: string;
-//   demoVideo: IDemoVideo;
-//   price: number;
-//   level: string;
-//   duration: string;
-//   thumbnailUrl: string;
-//   isPublished: boolean;
-//   isVerified: boolean;
-//   isListed: boolean;
-//   isSubmitted: boolean;
-//   review: string;
-//   createdAt: Date;
-//   updatedAt: Date;
-//   originalPrice?: number;
-//   effectivePrice?: number;
-//   discountedPrice?: number;
-//   publishDate?: Date;
-//   Chapters?: IChapter[];
-//   quizzes?: IQuiz[];
-// }
-
-// const demoVideoSchema = new Schema<IDemoVideo>({
-//   type: { type: String, enum: ["video"], required: true },
-//   url: { type: String, required: true },
-// });
-
-// const CourseSchema = new Schema<ICourse>(
-//   {
-//     courseName: { type: String, required: true },
-//     instructorId: {
-//       type: Schema.Types.ObjectId,
-//       required: true,
-//       ref: "Instructor",
-//     },
-//     category: {
-//       type: Schema.Types.ObjectId,
-//       ref: "Category",
-//       required: true,
-//     },
-//     quizId: {
-//       type: Schema.Types.ObjectId,
-//       ref: "Quiz",
-//       required: false,
-//     },
-//     description: { type: String, required: true },
-//     demoVideo: demoVideoSchema,
-//     price: { type: Number, required: true },
-//     level: { type: String, required: true },
-//     duration: { type: String, required: true },
-//     thumbnailUrl: { type: String, required: true },
-//     isPublished: { type: Boolean, default: false },
-//     isListed: { type: Boolean, default: false },
-//     isVerified: { type: Boolean, default: false },
-//     isSubmitted: { type: Boolean, default: false },
-//     review: { type: String, default: "" },
-//     publishDate: { type: Date, required: false },
-//   },
-//   {
-//     timestamps: true,
-//     toJSON: { virtuals: true },
-//     toObject: { virtuals: true },
-//   },
-// );
-
-// CourseSchema.index({ courseName: "text" });
-
-// CourseSchema.virtual("chapters", {
-//   ref: "Chapter",
-//   localField: "_id",
-//   foreignField: "courseId",
-//   justOne: false,
-// });
-
-// CourseSchema.virtual("quizzes", {
-//   ref: "Quiz",
-//   localField: "_id",
-//   foreignField: "courseId",
-//   justOne: false,
-// });
-
-// export const CourseModel = model<ICourse>("Course", CourseSchema);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { Schema, model, Document, Types } from "mongoose";
-import { IModule } from "./moduleModel";
-import { IQuiz } from "./quizModel";
+import { IModulePopulated } from "./moduleModel";
+import { IInstructorPopulated } from "./instructorModel";
+import { ICategoryPopulated } from "./categoryModel";
 
 export interface IDemoVideo {
   type: "video";
   url: string;
 }
 
-export interface IPopulatedCourse extends ICourse {
-  modules: IModule[];
-  quizzes: IQuiz[];
-}
-
 export interface ICourse extends Document {
-  _id: Types.ObjectId & { toString(): string };
+  _id: Types.ObjectId;
   courseName: string;
   instructorId: Types.ObjectId;
   category: Types.ObjectId;
-  quizId: Types.ObjectId;
   description: string;
   demoVideo: IDemoVideo;
   price: number;
@@ -155,8 +30,13 @@ export interface ICourse extends Document {
   effectivePrice?: number;
   discountedPrice?: number;
   publishDate?: Date;
-  modules?: IModule[]; // Added
-  quizzes?: IQuiz[];
+  modules?: IModulePopulated[];
+}
+
+export interface ICourseFullyPopulated extends Omit<ICourse, "instructorId" | "category"> {
+  instructorId: IInstructorPopulated;
+  category: ICategoryPopulated;
+  modules: IModulePopulated[];
 }
 
 const demoVideoSchema = new Schema<IDemoVideo>({
@@ -167,53 +47,28 @@ const demoVideoSchema = new Schema<IDemoVideo>({
 const CourseSchema = new Schema<ICourse>(
   {
     courseName: { type: String, required: true },
-    instructorId: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: "Instructor",
-    },
-    category: {
-      type: Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
-    },
-    quizId: {
-      type: Schema.Types.ObjectId,
-      ref: "Quiz",
-      required: false,
-    },
+    instructorId: { type: Schema.Types.ObjectId, ref: "Instructor", required: true },
+    category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
     description: { type: String, required: true },
     demoVideo: demoVideoSchema,
     price: { type: Number, required: true },
     level: { type: String, required: true },
-    duration: { type: String, required: true },
+    duration: { type: String, default: "0" },
     thumbnailUrl: { type: String, required: true },
     isPublished: { type: Boolean, default: false },
     isListed: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
     isSubmitted: { type: Boolean, default: false },
     review: { type: String, default: "" },
-    publishDate: { type: Date, required: false },
+    publishDate: { type: Date },
   },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
 CourseSchema.index({ courseName: "text" });
 
-// Virtual to populate modules (instead of chapters directly)
 CourseSchema.virtual("modules", {
   ref: "Module",
-  localField: "_id",
-  foreignField: "courseId",
-  justOne: false,
-});
-
-CourseSchema.virtual("quizzes", {
-  ref: "Quiz",
   localField: "_id",
   foreignField: "courseId",
   justOne: false,

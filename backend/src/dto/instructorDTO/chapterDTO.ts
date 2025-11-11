@@ -4,4 +4,6 @@ export interface ChapterDTO {
   chapterTitle: string;
   videoUrl: string;
   chapterNumber?: number;
+  duration:number;
+  durationFormatted:string;
 }

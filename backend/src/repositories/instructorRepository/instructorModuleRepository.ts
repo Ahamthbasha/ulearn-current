@@ -4,14 +4,17 @@ import {
   IModule,
 } from "../../models/moduleModel";
 import { GenericRepository } from "../genericRepository";
+import { IInstructorChapterRepository } from "./interface/IInstructorChapterRepository";
 import { IInstructorModuleRepository } from "./interface/IInstructorModuleRepository";
 
 export class InstructorModuleRepository
   extends GenericRepository<IModule>
   implements IInstructorModuleRepository
 {
-  constructor() {
+  private _chapterRepository : IInstructorChapterRepository
+  constructor(chapterRepository:IInstructorChapterRepository) {
     super(ModuleModel);
+    this._chapterRepository = chapterRepository
   }
 
   async createModule(data: CreateModuleDTO): Promise<IModule> {
@@ -22,6 +25,19 @@ export class InstructorModuleRepository
       moduleNumber: position,
     };
     return this.create(moduleData);
+  }
+
+  async updateModuleDuration(moduleId: string): Promise<void> {
+    const chapters = await this._chapterRepository.getChaptersByModule(moduleId);
+
+    const totalDurationSeconds = chapters.reduce((sum, chapter) => {
+      const dur = Number(chapter.duration) || 0;
+      return sum + dur;
+    }, 0);
+
+    const updatedDuration = totalDurationSeconds.toString();
+
+    await this.updateModule(moduleId, { duration: updatedDuration });
   }
 
   async getModulesByCourse(courseId: string): Promise<IModule[]> {

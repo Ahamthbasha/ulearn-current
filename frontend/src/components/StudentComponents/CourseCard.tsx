@@ -149,7 +149,7 @@ finally {
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-gray-700">
           <span className="flex items-center gap-1">
-            <span className="text-gray-500">🕒</span> {duration} hrs
+            <span className="text-gray-500">🕒</span> {duration}
           </span>
           <span className="flex items-center gap-1">
             <span className="text-gray-500">🎯</span> {level}

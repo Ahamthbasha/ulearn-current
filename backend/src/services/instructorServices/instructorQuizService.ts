@@ -4,6 +4,7 @@ import { IQuiz } from "../../models/quizModel";
 
 export class InstructorQuizService implements IInstructorQuizService {
   private _quizRepo: IInstructorQuizRepository;
+
   constructor(quizRepo: IInstructorQuizRepository) {
     this._quizRepo = quizRepo;
   }
@@ -20,51 +21,47 @@ export class InstructorQuizService implements IInstructorQuizService {
     return await this._quizRepo.getQuizById(id);
   }
 
-  async getQuizByCourseId(courseId: string): Promise<IQuiz | null> {
-    return await this._quizRepo.getQuizByCourseId(courseId);
+  async getQuizByModuleId(moduleId: string): Promise<IQuiz | null> {
+    return await this._quizRepo.getQuizByModuleId(moduleId);
   }
 
   async addQuestionToQuiz(
-    courseId: string,
-    question: IQuiz["questions"][0],
+    moduleId: string,
+    question: IQuiz["questions"][0]
   ): Promise<IQuiz> {
-    return await this._quizRepo.addQuestionToQuiz(courseId, question);
+    return await this._quizRepo.addQuestionToQuiz(moduleId, question);
   }
 
   async updateQuestionInQuiz(
     quizId: string,
     questionId: string,
-    updatedData: Partial<IQuiz["questions"][0]>,
+    updatedData: Partial<IQuiz["questions"][0]>
   ): Promise<IQuiz | null> {
     return await this._quizRepo.updateQuestionInQuiz(
       quizId,
       questionId,
-      updatedData,
+      updatedData
     );
   }
 
   async deleteQuestionFromQuiz(
     quizId: string,
-    questionId: string,
+    questionId: string
   ): Promise<IQuiz | null> {
     return await this._quizRepo.deleteQuestionFromQuiz(quizId, questionId);
   }
 
-  async getPaginatedQuestionsByCourseId(
-    courseId: string,
+  async getPaginatedQuestionsByModuleId(
+    moduleId: string,
     search: string,
     page: number,
-    limit: number,
-  ): Promise<{
-    questions: IQuiz["questions"][0][];
-    total: number;
-    quizId: string | null;
-  }> {
-    return await this._quizRepo.getPaginatedQuestionsByCourseId(
-      courseId,
+    limit: number
+  ) {
+    return await this._quizRepo.getPaginatedQuestionsByModuleId(
+      moduleId,
       search,
       page,
-      limit,
+      limit
     );
   }
 }

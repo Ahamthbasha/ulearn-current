@@ -6,6 +6,10 @@ export interface ICategoryModel extends Document {
   isListed: boolean;
 }
 
+export interface ICategoryPopulated extends ICategoryModel{
+  categoryName : string;
+}
+
 const CategorySchema = new Schema<ICategoryModel>(
   {
     categoryName: {

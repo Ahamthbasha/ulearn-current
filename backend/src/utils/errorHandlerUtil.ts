@@ -28,6 +28,7 @@ export const throwAppError = (
 };
 
 export const handleControllerError = (error: unknown, res: Response): void => {
+  
   if (error instanceof BadRequestError) {
     res.status(StatusCode.BAD_REQUEST).json({ success: false, message: error.message });
     return;

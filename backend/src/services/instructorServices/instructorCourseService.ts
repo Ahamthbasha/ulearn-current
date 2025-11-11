@@ -9,6 +9,8 @@ import { mapCourseToInstructorDTO } from "../../mappers/instructorMapper/instruc
 import { mapToCourseResponseDto } from "../../mappers/instructorMapper/courseDetailMapper";
 import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { IInstructorModuleRepository } from "../../repositories/instructorRepository/interface/IInstructorModuleRepository";
+import { ModuleValidationError, ValidationResult } from "../../interface/instructorInterface/IInstructorInterface";
+
 
 export class InstructorCourseService implements IInstructorCourseService {
   private _courseRepository: IInstructorCourseRepository;
@@ -30,6 +32,10 @@ export class InstructorCourseService implements IInstructorCourseService {
 
   async createCourse(courseData: ICourse): Promise<ICourse> {
     return await this._courseRepository.createCourse(courseData);
+  }
+
+  async updateCourseDuration(courseId: string): Promise<void> {
+    await this._courseRepository.updateCourseDuration(courseId);
   }
 
   async updateCourse(
@@ -150,40 +156,70 @@ export class InstructorCourseService implements IInstructorCourseService {
     return !!existing;
   }
 
-  // async canPublishCourse(courseId: string): Promise<boolean> {
-  //   const modules =
-  //     await this._moduleRepository.getModulesByCourse(courseId);
-  //   const quiz = await this._quizRepository.getQuizByCourseId(courseId);
-  //   return (
-  //     chapters.length > 0 &&
-  //     !!quiz &&
-  //     Array.isArray(quiz.questions) &&
-  //     quiz.questions.length > 0
-  //   );
-  // }
+async canSubmitForVerification(courseId: string): Promise<ValidationResult> {
+  const modules = await this._moduleRepository.getModulesByCourse(courseId);
 
-    // async canSubmitForVerification(courseId: string): Promise<boolean> {
-  //   const chapters = await this._chapterRepository.getChaptersByCourse(courseId);
-  //   const quiz = await this._quizRepository.getQuizByCourseId(courseId);
-    
-  //   return (
-  //     chapters.length > 0 &&
-  //     !!quiz &&
-  //     Array.isArray(quiz.questions) &&
-  //     quiz.questions.length > 0
-  //   );
-  // }
+  if (modules.length === 0) {
+    return {
+      isValid: false,
+      errors: [
+        {
+          moduleId: "",
+          moduleTitle: "No modules created",
+          missingChapters: true,
+          missingQuiz: true,
+        },
+      ],
+    };
+  }
 
-  // async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
-  //   const canSubmit = await this.canSubmitForVerification(courseId);
-    
-  //   if (!canSubmit) {
-  //     throw new Error("Course must have at least one chapter and one quiz with questions to submit for verification");
-  //   }
-    
-  //   return await this._courseRepository.submitCourseForVerification(courseId);
-  // }
+  const errors: ModuleValidationError[] = [];
 
+  for (const module of modules) {
+    const [chapters, quiz] = await Promise.all([
+      this._chapterRepository.getChaptersByModule(module._id.toString()),
+      this._quizRepository?.getQuizByModuleId
+        ? this._quizRepository.getQuizByModuleId(module._id.toString())
+        : Promise.resolve(null),
+    ]);
+
+    const hasChapter = Array.isArray(chapters) && chapters.length > 0;
+    const hasQuiz = this.isValidQuiz(quiz);
+
+    if (!hasChapter || !hasQuiz) {
+      errors.push({
+        moduleId: module._id.toString(),
+        moduleTitle: module.moduleTitle,
+        missingChapters: !hasChapter,
+        missingQuiz: !hasQuiz,
+      });
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
+async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
+  const validation = await this.canSubmitForVerification(courseId);
+
+  if (!validation.isValid) {
+    const errorMessage = validation.errors
+      ? validation.errors
+          .map(
+            (err) =>
+              `Module "${err.moduleTitle}" is missing chapters: ${err.missingChapters}, missing quiz: ${err.missingQuiz}`
+          )
+          .join("; ")
+      : "Course validation failed.";
+
+    throw new Error(`Course cannot be submitted for verification: ${errorMessage}`);
+  }
+
+  return await this._courseRepository.submitCourseForVerification(courseId);
+}
 
 
   async publishCourse(
@@ -201,8 +237,7 @@ export class InstructorCourseService implements IInstructorCourseService {
     );
   }
 
-
-  async canPublishCourse(courseId: string): Promise<boolean> {
+async canPublishCourse(courseId: string): Promise<boolean> {
   // Check if course has at least one module
   const modules = await this._moduleRepository.getModulesByCourse(courseId);
   
@@ -210,63 +245,45 @@ export class InstructorCourseService implements IInstructorCourseService {
     return false;
   }
 
-  // Check if at least one module has chapters
-  let hasChapters = false;
+  // Check if ALL modules have chapters AND quizzes
   for (const module of modules) {
-    const chapters = await this._chapterRepository.getChaptersByModule(
-      module._id.toString()
-    );
-    if (chapters.length > 0) {
-      hasChapters = true;
-      break;
+    const [chapters, quiz] = await Promise.all([
+      this._chapterRepository.getChaptersByModule(module._id.toString()),
+      this._quizRepository?.getQuizByModuleId
+        ? this._quizRepository.getQuizByModuleId(module._id.toString())
+        : Promise.resolve(null),
+    ]);
+
+    // Check if module has at least one chapter
+    const hasChapter = Array.isArray(chapters) && chapters.length > 0;
+    
+    // Check if module has a valid quiz with questions
+    const hasQuiz = this.isValidQuiz(quiz);
+
+    // If ANY module is missing chapters or quiz, cannot publish
+    if (!hasChapter || !hasQuiz) {
+      return false;
     }
   }
 
-  // Check if course has quiz with questions
-  const quiz = await this._quizRepository.getQuizByCourseId(courseId);
-  const hasValidQuiz =
-    !!quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0;
-
-  return hasChapters && hasValidQuiz;
+  return true;
 }
 
-async canSubmitForVerification(courseId: string): Promise<boolean> {
-  // Check if course has at least one module
-  const modules = await this._moduleRepository.getModulesByCourse(courseId);
-  
-  if (modules.length === 0) {
+private isValidQuiz(quiz: unknown): boolean {
+  if (quiz === null || quiz === undefined) {
     return false;
   }
-
-  // Check if at least one module has chapters
-  let hasChapters = false;
-  for (const module of modules) {
-    const chapters = await this._chapterRepository.getChaptersByModule(
-      module._id.toString()
-    );
-    if (chapters.length > 0) {
-      hasChapters = true;
-      break;
-    }
-  }
-
-  // Check if course has quiz with questions
-  const quiz = await this._quizRepository.getQuizByCourseId(courseId);
-  const hasValidQuiz =
-    !!quiz && Array.isArray(quiz.questions) && quiz.questions.length > 0;
-
-  return hasChapters && hasValidQuiz;
-}
-
-async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
-  const canSubmit = await this.canSubmitForVerification(courseId);
   
-  if (!canSubmit) {
-    throw new Error(
-      "Course must have at least one module with chapters and one quiz with questions to submit for verification"
-    );
+  if (typeof quiz !== "object") {
+    return false;
   }
   
-  return await this._courseRepository.submitCourseForVerification(courseId);
+  const quizObj = quiz as Record<string, unknown>;
+  
+  if (!("questions" in quizObj)) {
+    return false;
+  }
+  
+  return Array.isArray(quizObj.questions) && quizObj.questions.length > 0;
 }
 }

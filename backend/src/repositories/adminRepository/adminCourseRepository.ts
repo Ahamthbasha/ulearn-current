@@ -1,25 +1,17 @@
 import { IAdminCourseRepository } from "./interface/IAdminCourseRepository";
 import { ICourse, CourseModel } from "../../models/courseModel";
 import { GenericRepository } from "../genericRepository";
-import { ChapterDetailRepository } from "../ChapterRepository";
-import { QuizDetailRepository } from "../QuizRepository";
-import { IChapter } from "../../models/chapterModel";
-import { IQuiz } from "../../models/quizModel";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { FilterQuery } from "mongoose";
+import { IModule } from "../../models/moduleModel";
+import { ModuleDetailRepository } from "../ModuleRepository";
 export class AdminCourseRepository
   extends GenericRepository<ICourse>
   implements IAdminCourseRepository
 {
-  private _chapterDetailRepo: ChapterDetailRepository;
-  private _quizDetailRepo: QuizDetailRepository;
-  constructor(
-    chapterDetailRepo: ChapterDetailRepository,
-    quizDetailRepo: QuizDetailRepository,
-  ) {
+  private _moduleRepo : ModuleDetailRepository
+  constructor(moduleRepo:ModuleDetailRepository) {
     super(CourseModel);
-    this._chapterDetailRepo = chapterDetailRepo;
-    this._quizDetailRepo = quizDetailRepo;
+    this._moduleRepo = moduleRepo
   }
 
   async getAllCourses(
@@ -37,32 +29,17 @@ export class AdminCourseRepository
   }
 
   async getCourseDetails(courseId: string): Promise<{
-    course: ICourse | null;
-    chapters: IChapter[];
-    quiz: IQuiz | null;
-  }> {
-    const course = await this.findById(courseId);
-    if (!course) return { course: null, chapters: [], quiz: null };
+  course: ICourse | null;
+  modules: IModule[];
+}> {
+  const course = await this.findById(courseId);
+  if (!course) return { course: null, modules: [] };
 
-    if (course.demoVideo?.url) {
-      course.demoVideo.url = await getPresignedUrl(course.demoVideo.url);
-    }
-
-    if (course.thumbnailUrl) {
-      course.thumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
-    }
-
-    const chapters = await this._chapterDetailRepo.find({ courseId });
-
-    for (const chapter of chapters) {
-      if (chapter.videoUrl) {
-        chapter.videoUrl = await getPresignedUrl(chapter.videoUrl);
-      }
-    }
-    const quiz = await this._quizDetailRepo.findOne({ courseId });
-
-    return { course, chapters, quiz };
-  }
+  // Fetch modules for the course
+  const modules = await this._moduleRepo.find({ courseId });
+  
+  return { course, modules };
+}
 
   async toggleListingStatus(courseId: string): Promise<ICourse | null> {
     const course = await this.findById(courseId);

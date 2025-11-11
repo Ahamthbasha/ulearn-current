@@ -4,12 +4,15 @@ import { IInstructorModuleService } from "../../services/instructorServices/inte
 import { StatusCode } from "../../utils/enums";
 import { ModuleErrorMessages, ModuleSuccessMessages } from "../../utils/constants";
 import { IModule } from "../../models/moduleModel";
+import { IInstructorCourseService } from "../../services/instructorServices/interface/IInstructorCourseService";
 
 export class InstructorModuleController implements IInstructorModuleController {
   private _moduleService: IInstructorModuleService;
+  private _courseService: IInstructorCourseService;
   
-  constructor(moduleService: IInstructorModuleService) {
+  constructor(moduleService: IInstructorModuleService,courseService:IInstructorCourseService) {
     this._moduleService = moduleService;
+    this._courseService = courseService;
   }
 
   async createModule(
@@ -170,27 +173,26 @@ async updateModule(
   }
 }
 
-  async deleteModule(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async deleteModule(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { moduleId } = req.params;
-      const deleted = await this._moduleService.deleteModule(moduleId);
-      
-      if (!deleted) {
-        res.status(StatusCode.NOT_FOUND).json({
-          success: false,
-          message: ModuleErrorMessages.MODULE_NOT_FOUND,
-        });
+
+      const module = await this._moduleService.getModuleById(moduleId);
+      if (!module) {
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: ModuleErrorMessages.MODULE_NOT_FOUND });
         return;
       }
-      
-      res.status(StatusCode.OK).json({
-        success: true,
-        message: ModuleSuccessMessages.MODULE_DELETED,
-      });
+
+      const deleted = await this._moduleService.deleteModule(moduleId);
+      if (!deleted) {
+        res.status(StatusCode.NOT_FOUND).json({ success: false, message: ModuleErrorMessages.MODULE_NOT_FOUND });
+        return;
+      }
+
+      // Sync course duration (module removed)
+      await this._courseService.updateCourseDuration(module.courseId.toString());
+
+      res.status(StatusCode.OK).json({ success: true, message: ModuleSuccessMessages.MODULE_DELETED });
     } catch (error) {
       next(error);
     }

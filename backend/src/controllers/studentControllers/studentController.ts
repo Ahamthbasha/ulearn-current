@@ -296,7 +296,7 @@ async login(req: Request, res: Response): Promise<void> {
     if (!student) {
       res.status(StatusCode.NOT_FOUND).json({
         success: false,
-        message: MESSAGES.INVALID_CREDENTIALS,
+        message: MESSAGES.USER_NOT_EXIST_WITH_THIS_EMAIL,
       });
       return;
     }
@@ -315,7 +315,7 @@ async login(req: Request, res: Response): Promise<void> {
     if (!passwordMatch) {
       res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
-        message: MESSAGES.INVALID_CREDENTIALS,
+        message: MESSAGES.INVALID_PASSWORD,
       });
       return;
     }

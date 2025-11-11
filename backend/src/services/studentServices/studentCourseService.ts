@@ -1,31 +1,35 @@
 import { IStudentCourseService } from "./interface/IStudentCourseService";
 import { IStudentCourseRepository } from "../../repositories/studentRepository/interface/IStudentCourseRepository";
-import { ICourse } from "../../models/courseModel";
+import { IStudentModuleRepository } from "../../repositories/studentRepository/interface/IStudentModuleRepository";
 import { CourseDetailDTO } from "../../dto/userDTO/courseDetailDTO";
 import { mapCourseToDetailDTO } from "../../mappers/userMapper/mapCourseToDetailDTO";
+import { ICourseFullyPopulated } from "../../models/courseModel";
 
 export class StudentCourseService implements IStudentCourseService {
   private _studentCourseRepo: IStudentCourseRepository;
+  private _studentModuleRepo: IStudentModuleRepository;
 
-  constructor(studentCourseRepo: IStudentCourseRepository) {
+  constructor(
+    studentCourseRepo: IStudentCourseRepository,
+    studentModuleRepo: IStudentModuleRepository,
+  ) {
     this._studentCourseRepo = studentCourseRepo;
+    this._studentModuleRepo = studentModuleRepo;
   }
 
+
   async getAllCoursesWithDetails(): Promise<CourseDetailDTO[]> {
-    const courses = await this._studentCourseRepo.getAllListedCourses();
+    const raw = await this._studentCourseRepo.getAllListedCourses();
 
-    const courseDTOs: CourseDetailDTO[] = [];
+    const dtos: CourseDetailDTO[] = [];
+    for (const { course} of raw) {
+      const populatedCourse = course as ICourseFullyPopulated
+      const modules = await this._studentModuleRepo.getModulesByCourseId(course._id.toString());
+      const dto = mapCourseToDetailDTO(populatedCourse, modules);
 
-    for (const courseData of courses) {
-      const dto = mapCourseToDetailDTO(
-        courseData.course,
-        courseData.chapterCount,
-        courseData.quizQuestionCount,
-      );
-      courseDTOs.push(dto);
+      dtos.push(dto);
     }
-
-    return courseDTOs;
+    return dtos;
   }
 
   async getFilteredCoursesWithDetails(
@@ -34,10 +38,7 @@ export class StudentCourseService implements IStudentCourseService {
     searchTerm = "",
     sort: "name-asc" | "name-desc" | "price-asc" | "price-desc" = "name-asc",
     categoryId?: string,
-  ): Promise<{
-    data: CourseDetailDTO[];
-    total: number;
-  }> {
+  ): Promise<{ data: CourseDetailDTO[]; total: number }> {
     const result = await this._studentCourseRepo.getFilteredCourses(
       page,
       limit,
@@ -46,51 +47,30 @@ export class StudentCourseService implements IStudentCourseService {
       categoryId,
     );
 
-    const courseDTOs: CourseDetailDTO[] = [];
-
-    for (const courseData of result.data) {
-      const dto = mapCourseToDetailDTO(
-        courseData.course,
-        courseData.chapterCount,
-        courseData.quizQuestionCount,
-      );
-      courseDTOs.push(dto);
+    const dtos: CourseDetailDTO[] = [];
+    for (const { course } of result.data) {
+      const modules = await this._studentModuleRepo.getModulesByCourseId(course._id.toString());
+      const dto = mapCourseToDetailDTO(course, modules);
+      dtos.push(dto);
     }
 
-    return {
-      data: courseDTOs,
-      total: result.total,
-    };
+    return { data: dtos, total: result.total };
   }
 
-  async getCourseDetailsById(
-    courseId: string,
-  ): Promise<CourseDetailDTO | null> {
-    const courseData = await this._studentCourseRepo.getCourseDetails(courseId);
+  async getCourseDetailsById(courseId: string): Promise<CourseDetailDTO | null> {
+    const raw = await this._studentCourseRepo.getCourseDetails(courseId);
+    if (!raw.course) return null;
 
-    if (!courseData.course) {
-      return null;
-    }
-
-    const dto = mapCourseToDetailDTO(
-      courseData.course,
-      courseData.chapterCount,
-      courseData.quizQuestionCount,
-    );
-
+    const modules = await this._studentModuleRepo.getModulesByCourseId(courseId);
+    const dto = mapCourseToDetailDTO(raw.course, modules);
     return dto;
   }
 
-  async getCourseRaw(courseId: string): Promise<{
-    course: ICourse | null;
-    chapterCount: number;
-    quizQuestionCount: number;
-  }> {
-    return await this._studentCourseRepo.getCourseDetails(courseId);
+  async getCourseRaw(courseId: string) {
+    return this._studentCourseRepo.getCourseDetails(courseId);
   }
 
-  async getCourses(categoryId?:string): Promise<Array<{ _id: string; courseName: string }>> {
-    const courses = await this._studentCourseRepo.getCourses(categoryId);
-    return courses;
+  async getCourses(categoryId?: string) {
+    return this._studentCourseRepo.getCourses(categoryId);
   }
 }

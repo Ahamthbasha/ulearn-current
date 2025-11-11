@@ -134,7 +134,11 @@ async initiateCheckout(
               "A pending order already exists for these items. Please complete or cancel it first.",
             ) as ConflictError & { orderId?: string };
             error.orderId = existingOrder._id.toString();
+
+            console.log("error object in initiate checkout",error)
+            
             throw error;
+
           }
           await this._checkoutRepo.updateOrderStatus(
             existingOrder._id,

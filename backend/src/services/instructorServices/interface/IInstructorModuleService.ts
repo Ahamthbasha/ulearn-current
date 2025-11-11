@@ -3,6 +3,7 @@ import { ModuleDTO } from "../../../dto/instructorDTO/moduleDTO";
 
 export interface IInstructorModuleService {
   createModule(data: CreateModuleDTO): Promise<ModuleDTO>;
+  updateModuleDuration(moduleId: string): Promise<void>
   getModulesByCourse(courseId: string): Promise<ModuleDTO[]>;
   getModuleById(moduleId: string): Promise<IModule | null>;
   updateModule(

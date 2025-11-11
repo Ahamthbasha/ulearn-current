@@ -346,75 +346,76 @@ router.post(
   instructorChapterController.reorderChapters.bind(instructorChapterController)
 )
 
-//quiz routes
+/////////////////quiz controller
 
 router.post(
-  "/quiz",
+  "/modules/:moduleId/quiz",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.createQuiz.bind(instructorQuizController),
-);
+  instructorQuizController.createQuiz.bind(instructorQuizController)
+)
+
+
+router.get(
+  "/modules/:moduleId/quiz",
+  authenticateToken,
+  restrictBlockedUser,
+  isInstructor,
+  instructorQuizController.getQuizByModuleId.bind(instructorQuizController)
+)
 
 router.delete(
-  "/quiz/:quizId",
+  "/quizzes/:quizId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.deleteQuiz.bind(instructorQuizController),
-);
+  instructorQuizController.deleteQuiz.bind(instructorQuizController)
+)
 
 router.get(
-  "/quiz/:quizId",
+  "/quizzes/:quizId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.getQuizById.bind(instructorQuizController),
-);
+  instructorQuizController.getQuizById.bind(instructorQuizController)
+)
 
-router.get(
-  "/quiz/course/:courseId",
-  authenticateToken,
-  restrictBlockedUser,
-  isInstructor,
-  instructorQuizController.getQuizByCourseId.bind(instructorQuizController),
-);
 
-//questions-level routes inside a quiz
+//question
 
 router.post(
-  "/quiz/:courseId/question",
+  "/modules/:moduleId/quiz/questions",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.addQuestion.bind(instructorQuizController),
-);
+  instructorQuizController.addQuestion.bind(instructorQuizController)
+)
 
-router.put(
-  "/quiz/:quizId/question/:questionId",
+router.patch(
+  "/quizzes/:quizId/questions/:questionId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.updateQuestion.bind(instructorQuizController),
-);
+  instructorQuizController.updateQuestion.bind(instructorQuizController)
+)
 
 router.delete(
-  "/quiz/:quizId/question/:questionId",
+  "/quizzes/:quizId/questions/:questionId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.deleteQuestion.bind(instructorQuizController),
-);
+  instructorQuizController.deleteQuestion.bind(instructorQuizController)
+)
+
 
 router.get(
-  "/quiz/course/:courseId/paginated",
+  "/modules/:moduleId/quiz/questions",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.getPaginatedQuestionsByCourseId.bind(
-    instructorQuizController,
-  ),
-);
+  instructorQuizController.getPaginatedQuestionsByModuleId.bind(instructorQuizController)
+)
 
 /////////////////////////instructor dashboard///////////////////////////////////
 

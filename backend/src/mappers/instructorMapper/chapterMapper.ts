@@ -1,5 +1,6 @@
 import { IChapter } from "../../models/chapterModel";
 import { ChapterDTO } from "../../dto/instructorDTO/chapterDTO";
+import { formatDuration } from "../../utils/formatDuration";
 
 export function mapChapterToDTO(chapter: IChapter): ChapterDTO {
   return {
@@ -8,6 +9,8 @@ export function mapChapterToDTO(chapter: IChapter): ChapterDTO {
     chapterTitle: chapter.chapterTitle,
     videoUrl: chapter.videoUrl,
     chapterNumber: chapter.chapterNumber,
+    duration:chapter.duration || 0,
+    durationFormatted:formatDuration(chapter.duration || 0)
   };
 }
 

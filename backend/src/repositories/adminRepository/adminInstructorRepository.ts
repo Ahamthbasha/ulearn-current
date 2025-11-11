@@ -59,4 +59,12 @@ export class AdminInstructorRespository
       throw error;
     }
   }
+
+  async findById(id: string): Promise<IInstructor | null> {
+    try {
+      return await this.model.findById(id).exec();
+    } catch (error) {
+      throw error;
+    }
+  }
 }

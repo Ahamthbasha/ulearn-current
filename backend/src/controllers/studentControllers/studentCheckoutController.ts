@@ -11,6 +11,7 @@ import { Types } from "mongoose";
 import { appLogger } from "../../utils/logger";
 import mongoose from "mongoose";
 import { handleControllerError, BadRequestError } from "../../utils/errorHandlerUtil";
+import { isConflictErrorWithOrderId } from "../../utils/error";
 
 export class StudentCheckoutController implements IStudentCheckoutController {
   private _checkoutService: IStudentCheckoutService;
@@ -69,6 +70,16 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       });
     } catch (error: unknown) {
       appLogger.error("Initiate checkout error:", error);
+      
+      if (isConflictErrorWithOrderId(error)) {
+      res.status(StatusCode.CONFLICT).json({
+        success: false,
+        message: error.message,
+        orderId: error.orderId, // Type-safe access
+      });
+      return
+    }
+      
       handleControllerError(error, res);
     }
   }

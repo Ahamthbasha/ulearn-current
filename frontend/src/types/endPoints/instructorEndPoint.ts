@@ -45,14 +45,15 @@ const InstructorRouterEndPoints = {
 
   //instructor quiz routes
 
-  instructorCreateQuiz : "/api/instructor/quiz",
-  instructorDeleteQuiz : "/api/instructor/quiz",
-  instructorGetQuizById : "/api/instructor/quiz",
-  instructorGetQuizByCourseId : "/api/instructor/quiz/course",
+  instructorCreateQuiz : "/api/instructor/modules",
+  instructorGetQuizByModuleId : "/api/instructor/modules",
+  instructorDeleteQuiz : "/api/instructor/quizzes",
+  instructorGetQuizById : "/api/instructor/quizzes",
 
-  instructorAddQuestion: "/api/instructor/quiz",
-  instructorUpdateQuestion: "/api/instructor/quiz",
-  instructorDeleteQuestion: "/api/instructor/quiz",
+  instructorAddQuestion: "/api/instructor/modules",
+  instructorUpdateQuestion: "/api/instructor/quizzes",
+  instructorDeleteQuestion: "/api/instructor/quizzes",
+  instructorGetPaginatedQuestions:"/api/instructor/modules",
 
 
   //instructorDashboard

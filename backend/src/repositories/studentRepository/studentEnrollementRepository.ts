@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types, FilterQuery, PopulateOptions } from "mongoose";
 import { GenericRepository } from "../genericRepository";
 import { IStudentEnrollmentRepository } from "./interface/IStudentEnrollmentRepository";
 import { EnrollmentModel, IEnrollment } from "../../models/enrollmentModel";
@@ -7,140 +7,98 @@ import { IStudentRepository } from "./interface/IStudentRepository";
 import IInstructorRepository from "../instructorRepository/interface/IInstructorRepository";
 import { IOrderRepository } from "../interfaces/IOrderRepository";
 import { IOrder } from "../../models/orderModel";
-import { appLogger } from "../../utils/logger";
-import { ICourse } from "../../models/courseModel";
+import { ICourseFullyPopulated } from "../../models/courseModel";
+
+/** Populated enrollment with full course + modules + chapters */
+type IPopulatedEnrollment = IEnrollment & {
+  courseId: ICourseFullyPopulated;
+};
 
 export class StudentEnrollmentRepository
   extends GenericRepository<IEnrollment>
   implements IStudentEnrollmentRepository
 {
-  private readonly _studentRepository: IStudentRepository;
-  private readonly _instructorRepository: IInstructorRepository;
-  private readonly _orderRepository: IOrderRepository;
+  private readonly _studentRepo: IStudentRepository;
+  private readonly _instructorRepo: IInstructorRepository;
+  private readonly _orderRepo: IOrderRepository;
 
   constructor(
-    studentRepository: IStudentRepository,
-    instructorRepository: IInstructorRepository,
-    orderRepository: IOrderRepository,
+    studentRepo: IStudentRepository,
+    instructorRepo: IInstructorRepository,
+    orderRepo: IOrderRepository
   ) {
     super(EnrollmentModel);
-    this._studentRepository = studentRepository;
-    this._instructorRepository = instructorRepository;
-    this._orderRepository = orderRepository;
+    this._studentRepo = studentRepo;
+    this._instructorRepo = instructorRepo;
+    this._orderRepo = orderRepo;
   }
 
-  async getAllEnrolledCourses(
-    userId: Types.ObjectId,
-  ): Promise<{ enrollment: IEnrollment; order?: IOrder }[]> {
+  async getAllEnrolledCourses(userId: Types.ObjectId) {
     const enrollments = await this.findAll(
       { userId, learningPathId: { $exists: false } },
-      [],
+      []
     );
 
-    if (!enrollments || enrollments.length === 0) return [];
+    if (!enrollments.length) return [];
 
-    const orders = await this._orderRepository.findByUser(userId);
+    const orders = await this._orderRepo.findByUser(userId);
     const orderMap = new Map<string, IOrder>();
-    orders.forEach((order) => {
-      order.courses.forEach((course) => {
-        orderMap.set(course.courseId.toString(), order);
-      });
-    });
+    orders.forEach(o =>
+      o.courses.forEach(c => orderMap.set(c.courseId.toString(), o))
+    );
 
-    return enrollments.map((enrollment) => ({
-      enrollment,
-      order: orderMap.get(enrollment.courseId.toString()),
+    return enrollments.map(e => ({
+      enrollment: e,
+      order: orderMap.get(e.courseId.toString())
     }));
   }
 
   async getEnrollmentByCourseDetails(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
-  ): Promise<IEnrollment | null> {
-    return this.findOne(
-      { userId, courseId },
-      [
-        {
-          path: "courseId",
-          populate: [{ path: "chapters" }, { path: "quizzes" }],
-        },
-      ],
+    courseId: Types.ObjectId
+  ): Promise<IPopulatedEnrollment | null> {
+    const populateOptions: PopulateOptions[] = [
+      {
+        path: "courseId",
+        populate: {
+          path: "modules",
+          populate: [
+            { path: "chapters", select: "chapterTitle videoUrl duration position _id" },
+            { path: "quiz", select: "questions _id" }
+          ]
+        }
+      }
+    ];
+
+    const result = await this.findOne(
+      { userId, courseId } as FilterQuery<IEnrollment>,
+      populateOptions
     );
+
+    return result as IPopulatedEnrollment | null;
   }
 
   async markChapterCompleted(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,
-    chapterId: Types.ObjectId,
-  ): Promise<IEnrollment | null> {
-    try {
-      const enrollment = await this.findOne(
-        { userId, courseId },
-        [
-          {
-            path: "courseId",
-            populate: { path: "chapters" },
-          },
-        ],
-      );
+    chapterId: Types.ObjectId
+  ): Promise<IEnrollment & { courseId: any } | null> {
+    const enrollment = await this.findOne({ userId, courseId } as FilterQuery<IEnrollment>);
+    if (!enrollment) return null;
 
-      if (!enrollment || !enrollment.courseId) return null;
+    const already = enrollment.completedChapters.some(
+      c => c.chapterId.equals(chapterId) && c.isCompleted
+    );
+    if (already) return this.getEnrollmentByCourseDetails(userId, courseId);
 
-      const isChapterCompleted = enrollment.completedChapters.some(
-        (ch) => ch.chapterId.equals(chapterId) && ch.isCompleted,
-      );
+    enrollment.completedChapters.push({
+      chapterId,
+      isCompleted: true,
+      completedAt: new Date()
+    });
 
-      if (isChapterCompleted) return enrollment;
-
-      const course = enrollment.courseId as unknown as ICourse & { chapters: { length: number } };
-      const totalChapters = Array.isArray(course.chapters) ? course.chapters.length : 0;
-      const completedChaptersCount = enrollment.completedChapters.filter((ch) => ch.isCompleted).length + 1;
-      const completionPercentage = totalChapters > 0 ? Math.round((completedChaptersCount / totalChapters) * 100) : 0;
-
-      const updatedEnrollment = await this.updateOne(
-        {
-          userId,
-          courseId,
-          "completedChapters.chapterId": { $ne: chapterId },
-        },
-        {
-          $addToSet: {
-            completedChapters: {
-              chapterId,
-              isCompleted: true,
-              completedAt: new Date(),
-            },
-          },
-          $set: { completionPercentage },
-        },
-      );
-
-      if (!updatedEnrollment) {
-        const existing = await this.findOne(
-          { userId, courseId, "completedChapters.chapterId": chapterId, "completedChapters.isCompleted": true },
-          [
-            {
-              path: "courseId",
-              populate: [{ path: "chapters" }, { path: "quizzes" }],
-            },
-          ],
-        );
-        return existing || null;
-      }
-
-      return this.findOne(
-        { userId, courseId },
-        [
-          {
-            path: "courseId",
-            populate: [{ path: "chapters" }, { path: "quizzes" }],
-          },
-        ],
-      );
-    } catch (error) {
-      appLogger.error("Error marking chapter completed:", error);
-      throw error;
-    }
+    await enrollment.save();
+    return this.getEnrollmentByCourseDetails(userId, courseId);
   }
 
   async submitQuizResult(
@@ -151,110 +109,100 @@ export class StudentEnrollmentRepository
       correctAnswers: number;
       totalQuestions: number;
       scorePercentage: number;
-    },
-  ): Promise<IEnrollment | null> {
-    const enrollment = await this.findOne({ userId, courseId });
+    }
+  ): Promise<IEnrollment & { courseId: any } | null> {
+    const enrollment = await this.findOne({ userId, courseId } as FilterQuery<IEnrollment>);
     if (!enrollment) return null;
 
-    const quizIndex = enrollment.completedQuizzes.findIndex(
-      (q) => q.quizId.toString() === quizData.quizId.toString(),
-    );
+    const { quizId, correctAnswers, totalQuestions, scorePercentage } = quizData;
+    const isPassed = scorePercentage >= 50;
 
-    const updatedQuiz = { ...quizData, attemptedAt: new Date() };
+    const idx = enrollment.completedQuizzes.findIndex(q => q.quizId.equals(quizId));
+    const result = {
+      quizId,
+      correctAnswers,
+      totalQuestions,
+      scorePercentage,
+      isPassed,
+      attemptedAt: new Date()
+    };
 
-    if (quizIndex !== -1) {
-      enrollment.completedQuizzes[quizIndex] = updatedQuiz;
+    if (idx >= 0) {
+      enrollment.completedQuizzes[idx] = result;
     } else {
-      enrollment.completedQuizzes.push(updatedQuiz);
+      enrollment.completedQuizzes.push(result);
     }
 
     await enrollment.save();
 
-    if (quizData.scorePercentage < 50) return enrollment;
+    if (enrollment.completionPercentage === 100 && !enrollment.certificateGenerated) {
+      const populated = await this.getEnrollmentByCourseDetails(userId, courseId);
+      if (!populated?.courseId) return enrollment;
 
-    const fullEnrollment = await this.findOne(
-      { userId, courseId },
-      [
-        {
-          path: "courseId",
-          populate: { path: "chapters" },
-        },
-      ],
-    );
+      const student = await this._studentRepo.findById(userId);
+      const instructor = await this._instructorRepo.findById(populated.courseId.instructorId.toString());
 
-    if (!fullEnrollment || !fullEnrollment.courseId) return enrollment;
+      const certificateUrl = await generateCertificate({
+        studentName: student?.username ?? "Student",
+        courseName: populated.courseId.courseName,
+        instructorName: instructor?.username ?? "Instructor",
+        userId: userId.toString(),
+        courseId: courseId.toString()
+      });
 
-    const course = fullEnrollment.courseId as unknown as ICourse & { chapters: { length: number } };
-    const totalChapters = Array.isArray(course.chapters) ? course.chapters.length : 0;
-    const completedChaptersCount = fullEnrollment.completedChapters.filter((ch) => ch.isCompleted).length;
+      await this.updateOne(
+        { userId, courseId } as FilterQuery<IEnrollment>,
+        { certificateGenerated: true, certificateUrl }
+      );
+    }
 
-    if (totalChapters > 0 && completedChaptersCount !== totalChapters) return enrollment;
-    if (fullEnrollment.certificateGenerated) return enrollment;
-
-    const student = await this._studentRepository.findById(userId);
-    if (!student || !student.username) return enrollment;
-
-    const instructor = await this._instructorRepository.findById(course.instructorId.toString());
-    const instructorName = instructor?.username || "Course Instructor";
-
-    const certificateUrl = await generateCertificate({
-      studentName: student.username,
-      courseName: course.courseName,
-      instructorName,
-      userId: userId.toString(),
-      courseId: courseId.toString(),
-    });
-
-    await this.updateOne(
-      { userId, courseId },
-      {
-        certificateGenerated: true,
-        certificateUrl,
-        completionStatus: "COMPLETED",
-      },
-    );
-
-    return this.findOne({ userId, courseId });
+    return this.getEnrollmentByCourseDetails(userId, courseId);
   }
 
   async areAllChaptersCompleted(
     userId: Types.ObjectId,
-    courseId: Types.ObjectId,
+    courseId: Types.ObjectId
   ): Promise<boolean> {
-    const enrollment = await this.findOne(
-      { userId, courseId },
-      [
-        {
-          path: "courseId",
-          populate: { path: "chapters" },
-        },
-      ],
-    );
+    const enrollment = await this.getEnrollmentByCourseDetails(userId, courseId);
+    if (!enrollment?.courseId?.modules) return false;
 
-    if (!enrollment || !enrollment.courseId) return false;
+    const allChapterIds = enrollment.courseId.modules
+      .flatMap(m => m.chapters.map((c: any) => c._id.toString()));
 
-    const course = enrollment.courseId as unknown as ICourse & { chapters: { length: number } };
-    const totalChapters = Array.isArray(course.chapters) ? course.chapters.length : 0;
-    const completedCount = enrollment.completedChapters.filter((ch) => ch.isCompleted).length;
+    const completedIds = enrollment.completedChapters
+      .filter(c => c.isCompleted)
+      .map(c => c.chapterId.toString());
 
-    return totalChapters > 0 && completedCount === totalChapters;
+    return allChapterIds.every(id => completedIds.includes(id));
   }
 
-  async findByUserAndCourse(
-    userId: string,
-    courseId: string,
-  ): Promise<IEnrollment | null> {
-    return this.findOne({ userId, courseId });
+  async findByUserAndCourse(userId: string, courseId: string) {
+    return this.findOne({ userId, courseId } as FilterQuery<IEnrollment>);
   }
 
   async findByUserAndCourseWithPopulate(
     userId: string,
     courseId: string,
-    populateOptions: {
-      path: string;
-      populate?: { path: string }[];
-    }[],
+    populateOptions: PopulateOptions[]
+  ) {
+    return this.findOne({ userId, courseId } as FilterQuery<IEnrollment>, populateOptions);
+  }
+
+  // Override findOne to ensure correct typing
+  async findOne(
+    filter: FilterQuery<IEnrollment>,
+    populate?: PopulateOptions | PopulateOptions[],
+    session?: import("mongodb").ClientSession
   ): Promise<IEnrollment | null> {
-    return this.findOne({ userId, courseId }, populateOptions);
+    let query = this.model.findOne(filter);
+    if (populate) {
+      if (Array.isArray(populate)) {
+        query = query.populate(populate);
+      } else {
+        query = query.populate(populate);
+      }
+    }
+    if (session) query = query.session(session);
+    return await query.exec();
   }
 }

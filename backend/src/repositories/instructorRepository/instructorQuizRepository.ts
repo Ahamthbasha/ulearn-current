@@ -23,70 +23,74 @@ export class InstructorQuizRepository
     return await this.findById(id);
   }
 
-  async getQuizByCourseId(courseId: string): Promise<IQuiz | null> {
+  async getQuizByModuleId(moduleId: string): Promise<IQuiz | null> {
     return await this.findOne({
-      courseId: new mongoose.Types.ObjectId(courseId),
+      moduleId: new mongoose.Types.ObjectId(moduleId),
     });
   }
 
   async addQuestionToQuiz(
-    courseId: string,
-    question: IQuiz["questions"][0],
-  ): Promise<IQuiz> {
-    const quiz = await this.findOne({
-      courseId: new mongoose.Types.ObjectId(courseId),
-    });
-    if (!quiz) throw new Error("Quiz not found for this course");
+  moduleId: string,
+  question: IQuiz["questions"][0]
+): Promise<IQuiz> {
+  const quiz = await this.getQuizByModuleId(moduleId);
+  if (!quiz) {
+    throw new Error("Quiz not found for this module");
+  }
 
-    const isDuplicate = quiz.questions.some(
-      (q) =>
-        q.questionText.trim().toLowerCase() ===
-        question.questionText.trim().toLowerCase(),
-    );
+  question.options = question.options.map((opt) => opt.toLowerCase());
+
+  const isDuplicate = quiz.questions.some(
+    (q) =>
+      q.questionText.trim().toLowerCase() ===
+      question.questionText.trim().toLowerCase()
+  );
+
+  if (isDuplicate) {
+    throw new Error("Question already exists in the quiz");
+  }
+
+  quiz.questions.push(question);
+  return await quiz.save();
+}
+
+async updateQuestionInQuiz(
+  quizId: string,
+  questionId: string,
+  updatedData: Partial<IQuiz["questions"][0]>
+): Promise<IQuiz | null> {
+  const quiz = await this.findById(quizId);
+  if (!quiz) return null;
+
+  const question = quiz.questions.id(questionId);
+  if (!question) return null;
+
+  if (updatedData.options) {
+    updatedData.options = updatedData.options.map((opt) => opt.toLowerCase());
+  }
+
+  const newText = updatedData.questionText?.trim().toLowerCase();
+  if (newText) {
+    const isDuplicate = quiz.questions.some((q: any) => {
+      return (
+        q._id.toString() !== questionId &&
+        q.questionText.trim().toLowerCase() === newText
+      );
+    });
 
     if (isDuplicate) {
-      throw new Error("Question already exists in the quiz");
+      throw new Error("Another question with the same text already exists");
     }
-
-    quiz.questions.push(question);
-    return await quiz.save();
   }
 
-  async updateQuestionInQuiz(
-    quizId: string,
-    questionId: string,
-    updatedData: Partial<IQuiz["questions"][0]>,
-  ): Promise<IQuiz | null> {
-    const quiz = await this.findById(quizId);
-    if (!quiz) return null;
+  question.set(updatedData);
+  return await quiz.save();
+}
 
-    const currentQuestion = quiz.questions.id(questionId);
-    if (!currentQuestion) return null;
-
-    const newText = updatedData.questionText?.trim().toLowerCase();
-    if (newText) {
-      const isDuplicate = quiz.questions.some((q) => {
-        const question = q as (typeof quiz.questions)[0] & {
-          _id: mongoose.Types.ObjectId;
-        };
-        return (
-          question._id.toString() !== questionId &&
-          question.questionText.trim().toLowerCase() === newText
-        );
-      });
-
-      if (isDuplicate) {
-        throw new Error("Another question with the same text already exists");
-      }
-    }
-
-    currentQuestion.set(updatedData);
-    return await quiz.save();
-  }
 
   async deleteQuestionFromQuiz(
     quizId: string,
-    questionId: string,
+    questionId: string
   ): Promise<IQuiz | null> {
     const quiz = await this.findById(quizId);
     if (!quiz) return null;
@@ -95,23 +99,23 @@ export class InstructorQuizRepository
     return await quiz.save();
   }
 
-  async getPaginatedQuestionsByCourseId(
-    courseId: string,
+  async getPaginatedQuestionsByModuleId(
+    moduleId: string,
     search: string,
     page: number,
-    limit: number,
+    limit: number
   ): Promise<{
     questions: IQuiz["questions"][0][];
     total: number;
     quizId: string | null;
   }> {
-    const quiz = await this.findOne({
-      courseId: new mongoose.Types.ObjectId(courseId),
-    });
-    if (!quiz) return { questions: [], total: 0, quizId: null };
+    const quiz = await this.getQuizByModuleId(moduleId);
+    if (!quiz) {
+      return { questions: [], total: 0, quizId: null };
+    }
 
     const filtered = quiz.questions.filter((q) =>
-      q.questionText.toLowerCase().includes(search.toLowerCase()),
+      q.questionText.toLowerCase().includes(search.toLowerCase())
     );
 
     const total = filtered.length;
@@ -121,7 +125,7 @@ export class InstructorQuizRepository
     return {
       questions: paginated,
       total,
-      quizId: (quiz._id as mongoose.Types.ObjectId).toString(),
+      quizId: quiz._id.toString(),
     };
   }
 }

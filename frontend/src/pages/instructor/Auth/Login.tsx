@@ -13,6 +13,7 @@ import { getVerificationRequestByemail } from "../../../api/action/InstructorAct
 
 import { GoogleOAuthProvider, GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import {jwtDecode}from "jwt-decode";
+import { AxiosError } from "axios";
 
 const loginSchema = Yup.object().shape({
   email: Yup.string()
@@ -39,51 +40,102 @@ const LoginPage = () => {
   };
 
   const onSubmit = async (data: Login) => {
-    try {
-      const response = await login({
-        email: data.email,
-        password: data.password,
-        role: data.role,
-      });
+  try {
+    const response = await login({
+      email: data.email,
+      password: data.password,
+      role: data.role,
+    });
+
+    if (response.success && response.user) {
       const user = response.user;
 
-      console.log(user);
+      localStorage.setItem("instructor", JSON.stringify(user));
+      toast.success(response.message || "Login successful!");
 
-      if (user) {
-        localStorage.setItem("instructor", JSON.stringify(user));
-        toast.success(response?.message);
+      dispatch(
+        setInstructor({
+          userId: user._id,
+          name: user.username,
+          email: user.email,
+          role: user.role,
+          isBlocked: user.isBlocked,
+          isVerified: user.isVerified,
+          profilePicture: user.profilePicture,
+        })
+      );
 
-        dispatch(
-          setInstructor({
-            userId: user._id,
-            name: user.username,
-            email: user.email,
-            role: user.role,
-            isBlocked: user.isBlocked,
-            isVerified: user.isVerified,
-            profilePicture: user.profilePicture,
-          })
-        );
-
-        if (user.isVerified) {
-          navigate("/instructor/dashboard");
-        } else {
-          const verifyStatus = await getVerificationRequestByemail(user.email);
-
-          if (verifyStatus?.data?.status) {
-            navigate(`/instructor/verificationStatus/${user.email}`);
-          } else {
-            navigate("/instructor/verification");
-          }
-        }
+      if (user.isVerified) {
+        navigate("/instructor/dashboard");
       } else {
-        toast.error(response?.message || "Login failed");
+        const verifyStatus = await getVerificationRequestByemail(user.email);
+        if (verifyStatus?.data?.status) {
+          navigate(`/instructor/verificationStatus/${user.email}`);
+        } else {
+          navigate("/instructor/verification");
+        }
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Login failed. Please try again.");
+    } else {
+      toast.error(response.message || "Login failed");
     }
-  };
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      const msg = error.response?.data?.message || error.message;
+      toast.error(msg || "Login failed. Please try again.");
+    } else {
+      toast.error("An unexpected error occurred");
+    }
+  }
+};
+
+
+
+  // const onSubmit = async (data: Login) => {
+  //   try {
+  //     const response = await login({
+  //       email: data.email,
+  //       password: data.password,
+  //       role: data.role,
+  //     });
+  //     const user = response.user;
+
+  //     console.log(user);
+
+  //     if (user) {
+  //       localStorage.setItem("instructor", JSON.stringify(user));
+  //       toast.success(response?.message);
+
+  //       dispatch(
+  //         setInstructor({
+  //           userId: user._id,
+  //           name: user.username,
+  //           email: user.email,
+  //           role: user.role,
+  //           isBlocked: user.isBlocked,
+  //           isVerified: user.isVerified,
+  //           profilePicture: user.profilePicture,
+  //         })
+  //       );
+
+  //       if (user.isVerified) {
+  //         navigate("/instructor/dashboard");
+  //       } else {
+  //         const verifyStatus = await getVerificationRequestByemail(user.email);
+
+  //         if (verifyStatus?.data?.status) {
+  //           navigate(`/instructor/verificationStatus/${user.email}`);
+  //         } else {
+  //           navigate("/instructor/verification");
+  //         }
+  //       }
+  //     } else {
+  //       toast.error(response?.message || "Login failed");
+  //     }
+  //   } catch (error) {
+  //     const errorMsg = error instanceof AxiosError
+  //     toast.error(errorMsg);
+  //   }
+  // };
 
   const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
     try {

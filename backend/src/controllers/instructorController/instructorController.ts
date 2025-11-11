@@ -228,6 +228,7 @@ async login(req: Request, res: Response): Promise<void> {
     if (!email || !password) throwAppError(BadRequestError, INSTRUCTOR_MESSAGES.EMAIL_PASSWORD_USERNAME_REQUIRED);
 
     const instructor = await this._instructorService.findByEmail(email);
+    
     if (!instructor){
       throwAppError(NotFoundError, INSTRUCTOR_MESSAGES.USER_NOT_FOUND);
       return;
