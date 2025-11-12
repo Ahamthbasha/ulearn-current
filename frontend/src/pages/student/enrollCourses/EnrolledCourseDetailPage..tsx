@@ -3,48 +3,55 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   getSpecificCourse,
   markChapterAsCompleted,
-  checkChapterCompletedOrNot,
   submitQuiz,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
-import { type Enrollment } from "../interface/studentInterface";
 import {
   Play,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight,
   Loader2,
+  X,
+  Unlock,
+  Clock,
+  Award,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
+import defaultAvatar from "../../../assets/defaultAvatar.jpg"
+import type { EnrollmentResponse,Module } from "../interface/enrollmentDetailInterface";
 
 const EnrolledCourseDetailPage = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
+
+  const [enrollment, setEnrollment] = useState<EnrollmentResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [completedChapterIds, setCompletedChapterIds] = useState<string[]>([]);
-  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [expandedModules, setExpandedModules] = useState<Set<number>>(new Set([0]));
+  const [selectedModuleIdx, setSelectedModuleIdx] = useState(0);
+  const [selectedChapterIdx, setSelectedChapterIdx] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const markTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const username = (user?.name || "Guest").toUpperCase();
   const learningPathId = location.state?.learningPathId;
 
   const fetchEnrollment = useCallback(async () => {
     try {
-      const response = await getSpecificCourse(courseId!);
-      setEnrollment(response.enrollment);
-      setCompletedChapterIds(
-        response.enrollment.completedChapters.map(
-          (c: { chapterId: string }) => c.chapterId
-        )
-      );
-      return response.enrollment;
+      const res = await getSpecificCourse(courseId!);
+      setEnrollment(res.mappedResponse);
+      return res.mappedResponse;
     } catch (err) {
-      toast.error("Failed to load course details");
+      toast.error("Failed to load course");
       throw err;
     }
   }, [courseId]);
@@ -61,366 +68,454 @@ const EnrolledCourseDetailPage = () => {
     init();
   }, [fetchEnrollment]);
 
-  const handleMarkCompleted = async (chapterId: string) => {
-    try {
-      await markChapterAsCompleted(courseId!, chapterId);
-      await fetchEnrollment(); // Refetch to update both completed chapters and completionPercentage from backend
-      toast.success("Chapter marked as completed!");
-    } catch (err) {
-      toast.error("Failed to mark chapter as completed");
-    }
-  };
+  const currentModule = enrollment?.course.modules[selectedModuleIdx];
+  const currentChapter = currentModule?.chapters[selectedChapterIdx];
+  const currentQuiz = currentModule?.quiz;
 
-  // Auto-mark completion based on video progress (90% threshold)
-  const handleTimeUpdate = useCallback(() => {
-    const video = videoRef.current;
-    if (
-      video &&
-      video.duration &&
-      !isNaN(video.duration) &&
-      video.readyState > 0 &&
-      !completedChapterIds.includes(currentChapter._id)
-    ) {
-      const progress = (video.currentTime / video.duration) * 100;
-      if (progress >= 90) { // Adjust threshold as needed (e.g., 80% or 100%)
-        handleMarkCompleted(currentChapter._id);
+const handleTimeUpdate = useCallback(() => {
+  const video = videoRef.current;
+  if (!video || showQuiz || !currentChapter || currentChapter.isCompleted) return;
+
+  // ---- CHANGE #1 ----
+  const progress = (video.currentTime / video.duration) * 100;
+
+  // ---- CHANGE #2 ----
+  if (progress >= 100) {               // <-- 100 instead of 90
+    if (markTimeoutRef.current) return;
+
+    markTimeoutRef.current = setTimeout(async () => {
+      try {
+        await markChapterAsCompleted(courseId!, currentChapter.id);
+        await fetchEnrollment();
+        toast.success("Chapter completed!");
+      } catch (err) {
+        toast.error("Failed to mark chapter");
+      } finally {
+        markTimeoutRef.current = null;
       }
-    }
-  }, [completedChapterIds, currentChapterIndex, handleMarkCompleted]); // Note: completedChapterIds is array; effect will re-run on changes
-
+    }, 800);                        
+  }
+}, [showQuiz, currentChapter, courseId, fetchEnrollment]);
   useEffect(() => {
     const video = videoRef.current;
     if (!video || showQuiz) return;
 
     video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("ended", () => {
-      // Ensure completion if video fully watched
-      if (!completedChapterIds.includes(currentChapter._id)) {
-        handleMarkCompleted(currentChapter._id);
-      }
-    });
-
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("ended", () => {});
+      if (markTimeoutRef.current) clearTimeout(markTimeoutRef.current);
     };
-  }, [handleTimeUpdate, showQuiz, completedChapterIds, currentChapterIndex]);
+  }, [handleTimeUpdate, showQuiz]);
 
-  const handleStartQuiz = async () => {
-    try {
-      const res = await checkChapterCompletedOrNot(courseId!);
-      if (res?.allCompleted) {
-        setShowQuiz(true);
-      } else {
-        toast.warning("Please complete all chapters before attempting the quiz.");
-      }
-    } catch {
-      toast.error("Unable to check chapter completion status.");
-    }
-  };
-
-  const handleOptionChange = (qIndex: number, option: string) => {
-    setAnswers((prev) => ({ ...prev, [qIndex]: option }));
+  const handleQuizAnswer = (qIndex: number, answer: string) => {
+    setQuizAnswers(prev => ({ ...prev, [qIndex]: answer }));
   };
 
   const handleQuizSubmit = async () => {
-    if (!enrollment || !enrollment.courseId.quizzes[0]) return;
+    if (!currentQuiz || !enrollment) return;
 
-    const quiz = enrollment.courseId.quizzes[0];
-    const unanswered = quiz.questions
-      .map((_, idx) => idx)
-      .filter((i) => !answers[i]);
+    const unanswered = currentQuiz.questions
+      .map((_, i) => i)
+      .filter(i => !quizAnswers[i]);
 
     if (unanswered.length > 0) {
-      const missed = unanswered.map((i) => `Q${i + 1}`).join(", ");
-      toast.error(`Please answer the following question(s): ${missed}`);
+      toast.error(`Please answer question ${unanswered.map(i => i + 1).join(", ")}`);
       return;
     }
 
-    const total = quiz.questions.length;
     let correct = 0;
-
-    quiz.questions.forEach((q, i) => {
-      if (answers[i] === q.correctAnswer) {
-        correct += 1;
-      }
+    currentQuiz.questions.forEach((q, i) => {
+      if (quizAnswers[i] === q.correctAnswer) correct++;
     });
 
-    const percentage = Math.round((correct / total) * 100);
+    const percentage = Math.round((correct / currentQuiz.questions.length) * 100);
 
     try {
       setSubmitting(true);
       await submitQuiz({
         courseId: courseId!,
-        quizId: quiz._id,
-        totalQuestions: total,
+        quizId: currentQuiz.id,
         correctAnswers: correct,
+        totalQuestions: currentQuiz.questions.length,
         percentage,
       });
 
-      toast.success(`Submitted! You scored ${percentage}%`);
-      navigate(learningPathId ? `/user/enrolledLms/${learningPathId}` : `/user/enrolled`);
+      toast.success(`Quiz submitted! Score: ${percentage}%`);
+      setShowQuiz(false);
+      setQuizAnswers({});
+      await fetchEnrollment();
     } catch (err) {
-      toast.error("Submission failed");
+      toast.error("Quiz submission failed");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleBackNavigation = () => {
-    if (learningPathId) {
-      navigate(`/user/enrolledLms/${learningPathId}`);
-    } else {
-      navigate("/user/enrolled");
+  const toggleModule = (idx: number) => {
+    setExpandedModules(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(idx)) newSet.delete(idx);
+      else newSet.add(idx);
+      return newSet;
+    });
+  };
+
+  const goToChapter = (modIdx: number, chapIdx: number) => {
+    setSelectedModuleIdx(modIdx);
+    setSelectedChapterIdx(chapIdx);
+    setShowQuiz(false);
+    setSidebarOpen(false);
+  };
+
+  const goToNext = () => {
+    if (!enrollment) return;
+    const mod = enrollment.course.modules[selectedModuleIdx];
+    if (!mod) return;
+
+    if (selectedChapterIdx < mod.chapters.length - 1) {
+      setSelectedChapterIdx(prev => prev + 1);
+    } else if (selectedModuleIdx < enrollment.course.modules.length - 1) {
+      const nextIdx = selectedModuleIdx + 1;
+      setSelectedModuleIdx(nextIdx);
+      setSelectedChapterIdx(0);
+      setExpandedModules(prev => new Set(prev).add(nextIdx));
     }
+    setShowQuiz(false);
+  };
+
+  const goToPrev = () => {
+    if (selectedChapterIdx > 0) {
+      setSelectedChapterIdx(prev => prev - 1);
+    } else if (selectedModuleIdx > 0) {
+      const prevIdx = selectedModuleIdx - 1;
+      setSelectedModuleIdx(prevIdx);
+      const prevMod = enrollment?.course.modules[prevIdx];
+      setSelectedChapterIdx(prevMod?.chapters.length ? prevMod.chapters.length - 1 : 0);
+      setExpandedModules(prev => new Set(prev).add(prevIdx));
+    }
+    setShowQuiz(false);
+  };
+
+  const areAllChaptersCompletedInModule = (module: Module) => {
+    return module.chapters.every(ch => ch.isCompleted);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin" /> Loading course details...
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex flex-col items-center space-y-3">
+          <Loader2 className="w-10 h-10 animate-spin text-purple-600" />
+          <p className="text-gray-600">Loading your course...</p>
+        </div>
       </div>
     );
   }
 
   if (!enrollment) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <p>No course found.</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <p className="text-xl text-gray-700 mb-4">Course not found</p>
         <button
-          onClick={handleBackNavigation}
-          className="text-blue-600 hover:underline"
+          onClick={() => navigate(learningPathId ? `/user/enrolledLms/${learningPathId}` : "/user/enrolled")}
+          className="text-purple-600 hover:underline"
         >
-          {learningPathId ? "Back to Learning Path" : "Back to Courses"}
+          Back to Courses
         </button>
       </div>
     );
   }
 
-  const course = enrollment.courseId;
-  const currentChapter = course.chapters[currentChapterIndex];
-  const quiz = course.quizzes[0];
-  const isChapterCompleted = completedChapterIds.includes(currentChapter._id);
+  const { course } = enrollment;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      {/* Top Navbar */}
-      <nav className="bg-white shadow-md p-4 flex justify-between items-center">
-        <button onClick={() => navigate("/")} className="text-2xl font-bold">
-          Ulearn
-        </button>
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={handleBackNavigation}
-            className="text-blue-600 hover:underline"
-          >
-            {learningPathId ? "Back to Learning Path" : "Back to Courses"}
-          </button>
-          <span>{username}</span>
-          <span className="text-gray-500">Student</span>
-          {user?.profilePicture ? (
-            <img
-              src={user.profilePicture}
-              alt="Profile"
-              className="w-8 h-8 rounded-full"
-            />
-          ) : (
-            <span className="text-2xl">👤</span>
-          )}
-        </div>
-      </nav>
-
-      {/* Main Layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div
-          className={`bg-white shadow-md p-4 transition-all duration-300 ${
-            sidebarCollapsed ? "w-16" : "w-64"
-          } overflow-y-auto`}
-        >
-          <div className="flex items-center justify-between mb-4">
-            {!sidebarCollapsed && <h2 className="text-lg font-semibold">{course.courseName}</h2>}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Top Bar */}
+      <header className="bg-white shadow-sm border-b border-gray-200 z-10">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
             <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              {sidebarCollapsed ? <ChevronRight /> : <ChevronLeft />}
+              {sidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
             </button>
+            <h1 className="text-xl font-bold text-gray-900 truncate max-w-xs lg:max-w-none">
+              {course.title}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-3">
+            <span className="hidden sm:block text-sm text-gray-600">
+              {enrollment.completionPercentage}% Complete
+            </span>
+            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
+                style={{ width: `${enrollment.completionPercentage}%` }}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+  <span className="text-sm font-medium">{username}</span>
+  <img
+    src={defaultAvatar}
+    alt="Profile"
+    className="w-8 h-8 rounded-full object-cover"
+  />
+</div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        <aside
+          className={`${
+            sidebarOpen ? "w-80" : "w-0"
+          } bg-white shadow-lg transition-all duration-300 ease-in-out overflow-hidden flex flex-col`}
+        >
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Course Content</h2>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="mt-3 space-y-1 text-sm text-gray-600">
+              <p>{course.totalLectures} lectures • {course.totalQuizzes} quizzes</p>
+              <p>{course.duration} total length</p>
+            </div>
           </div>
 
-          {!sidebarCollapsed && (
-            <>
-              <div className="mb-4">
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full"
-                    style={{ width: `${enrollment.completionPercentage}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm mt-1">
-                  {enrollment.completionPercentage}% Complete
-                </p>
-                <p className="text-xs text-gray-500">
-                  {completedChapterIds.length} of {course.chapters.length} chapters
-                  completed
-                </p>
-              </div>
-            </>
-          )}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {course.modules.map((module, modIdx) => {
+              const isExpanded = expandedModules.has(modIdx);
+              const allChaptersCompleted = areAllChaptersCompletedInModule(module);
+              const quizPassed = module.quiz?.isPassed;
 
-          {!sidebarCollapsed && <h3 className="text-sm font-medium mb-2">Chapters</h3>}
-          {course.chapters.map((chapter, index) => {
-            const isCompleted = completedChapterIds.includes(chapter._id);
-            const isCurrent = index === currentChapterIndex;
+              return (
+                <div key={module.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                  <button
+                    onClick={() => toggleModule(modIdx)}
+                    className={`w-full px-4 py-3 flex items-center justify-between transition-all ${
+                      selectedModuleIdx === modIdx
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                        : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900 hover:from-gray-100 hover:to-gray-200"
+                    } font-medium`}
+                  >
+                    <span className="flex items-center space-x-2">
+                      <span>{module.position}. {module.title}</span>
+                      {allChaptersCompleted && <CheckCircle className="w-4 h-4" />}
+                      {quizPassed && <Award className="w-4 h-4" />}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs opacity-75">{module.duration}</span>
+                      {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
+                  </button>
 
-            return (
-              <div
-                key={chapter._id}
-                onClick={() => {
-                  setCurrentChapterIndex(index);
-                  setShowQuiz(false); // Reset to chapter view when clicking a chapter
-                }}
-                className={`group cursor-pointer rounded-lg p-2 transition-all duration-200 ${
-                  isCurrent && !showQuiz
-                    ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
-                    : "hover:bg-gray-50 text-gray-700"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  {isCompleted ? (
-                    <CheckCircle className="w-5 h-5" />
-                  ) : (
-                    <Play className="w-5 h-5" />
-                  )}
-                  {!sidebarCollapsed && (
-                    <div>
-                      <p className="text-sm font-medium">{chapter.chapterTitle}</p>
-                      <p className="text-xs">
-                        {isCompleted ? "Completed" : "Not completed"}
-                      </p>
+                  {isExpanded && (
+                    <div className="bg-white">
+                      {module.chapters.map((chapter, chapIdx) => (
+                        <div
+                          key={chapter.id}
+                          onClick={() => goToChapter(modIdx, chapIdx)}
+                          className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-all hover:bg-purple-50 border-b border-gray-100 ${
+                            selectedModuleIdx === modIdx && selectedChapterIdx === chapIdx && !showQuiz
+                              ? "bg-purple-100"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            {chapter.isCompleted ? (
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Play className="w-4 h-4 text-gray-500" />
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {chapter.position}. {chapter.title}
+                              </p>
+                              <p className="text-xs text-gray-500 flex items-center">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {chapter.duration}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {module.quiz && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!allChaptersCompleted) {
+                              toast.warning("Complete all chapters in this module to unlock the quiz!");
+                              return;
+                            }
+                            setShowQuiz(true);
+                            setSidebarOpen(false);
+                          }}
+                          className={`w-full px-4 py-3 text-left flex items-center justify-between transition-all ${
+                            allChaptersCompleted
+                              ? quizPassed
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+                                : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
+                          disabled={!allChaptersCompleted}
+                        >
+                          <span className="flex items-center space-x-2">
+                            {quizPassed ? (
+                              <Award className="w-4 h-4" />
+                            ) : (
+                              <Unlock className="w-4 h-4" />
+                            )}
+                            <span className="text-sm font-medium">Quiz: {module.title}</span>
+                          </span>
+                          {quizPassed && <span className="text-xs">{module.quiz.scorePercentage}%</span>}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
-            );
-          })}
-
-          {/* Start Quiz Button at Bottom */}
-          {course.quizzes.length > 0 && (
-            <button
-              onClick={handleStartQuiz}
-              className={`w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 ${
-                sidebarCollapsed
-                  ? "justify-center text-[0px] p-2"
-                  : "text-sm sm:text-base font-medium"
-              } text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-md transition duration-300`}
-              title="Start Quiz"
-            >
-              {!sidebarCollapsed && "Start Quiz"}
-              {sidebarCollapsed && <Play />}
-            </button>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        </aside>
 
         {/* Main Content */}
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
-          {showQuiz && quiz ? (
-            <>
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">Quiz</h2>
-              <p className="text-sm text-gray-500 mb-4">
-                {quiz.questions.length} Question{quiz.questions.length > 1 ? "s" : ""}
-              </p>
-              <div className="space-y-6 sm:space-y-8">
-                {quiz.questions.map((q, index) => (
-                  <div
-                    key={index}
-                    className="p-4 sm:p-6 border rounded-lg shadow-md hover:shadow-lg bg-white transition duration-300"
+        <main className="flex-1 overflow-y-auto bg-gray-50">
+          <div className="max-w-5xl mx-auto p-4 lg:p-8">
+            {showQuiz && currentQuiz ? (
+              <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Module Quiz</h2>
+                  <button
+                    onClick={() => setShowQuiz(false)}
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    <p className="font-semibold text-gray-700 mb-3 text-base sm:text-lg">
-                      {index + 1}. {q.questionText}
-                    </p>
-                    <div className="space-y-2">
-                      {q.options.map((opt, optIdx) => (
-                        <label
-                          key={optIdx}
-                          className="flex items-center space-x-3 text-gray-600 text-sm sm:text-base"
-                        >
-                          <input
-                            type="radio"
-                            name={`q-${index}`}
-                            value={opt}
-                            checked={answers[index] === opt}
-                            onChange={() => handleOptionChange(index, opt)}
-                            className="form-radio h-4 w-4 sm:h-5 sm:w-5 text-purple-600 focus:ring-purple-500"
-                          />
-                          <span>{opt}</span>
-                        </label>
-                      ))}
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-8">
+                  {currentQuiz.questions.map((q, idx) => (
+                    <div key={idx} className="border-b pb-6 last:border-0">
+                      <p className="text-lg font-semibold text-gray-800 mb-4">
+                        {idx + 1}. {q.questionText}
+                      </p>
+                      <div className="space-y-3">
+                        {q.options.map((opt, optIdx) => (
+                          <label
+                            key={optIdx}
+                            className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:border-purple-400 hover:bg-purple-50 cursor-pointer transition-all"
+                          >
+                            <input
+                              type="radio"
+                              name={`q-${idx}`}
+                              value={opt}
+                              checked={quizAnswers[idx] === opt}
+                              onChange={() => handleQuizAnswer(idx, opt)}
+                              className="w-5 h-5 text-purple-600 focus:ring-purple-500"
+                            />
+                            <span className="text-gray-700">{opt}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 flex justify-end">
+                  <button
+                    onClick={handleQuizSubmit}
+                    disabled={submitting}
+                    className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-md flex items-center space-x-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <span>Submit Quiz</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Video Player */}
+                <div className="bg-black rounded-xl overflow-hidden shadow-xl mb-6">
+                  <video
+                    ref={videoRef}
+                    controls
+                    className="w-full aspect-video"
+                    src={currentChapter?.videoUrl}
+                    poster={course.thumbnail}
+                    key={currentChapter?.id} // Force re-mount on chapter change
+                  >
+                    Your browser does not support video.
+                  </video>
+                </div>
+
+                {/* Chapter Info */}
+                <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    {currentChapter?.title}
+                  </h1>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Module {selectedModuleIdx + 1} • Chapter {selectedChapterIdx + 1} of{" "}
+                    {currentModule?.chapters.length}
+                  </p>
+
+                  {currentChapter?.isCompleted ? (
+                    <p className="text-green-600 font-medium flex items-center">
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Chapter Completed
+                    </p>
+                  ) : (
+                    <p className="text-purple-600 text-sm flex items-center">
+                      <Play className="w-4 h-4 mr-1" />
+                      Watch 100% to auto-complete
+                    </p>
+                  )}
+                </div>
+
+                {/* Navigation */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={goToPrev}
+                    disabled={selectedModuleIdx === 0 && selectedChapterIdx === 0}
+                    className="flex items-center space-x-2 px-5 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                    <span>Previous</span>
+                  </button>
+
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      {enrollment.completionPercentage}% Course Complete
+                    </p>
                   </div>
-                ))}
-              </div>
-              <div className="mt-8 sm:mt-10 text-right">
-                <button
-                  disabled={submitting}
-                  onClick={handleQuizSubmit}
-                  className="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md disabled:opacity-75 disabled:cursor-not-allowed"
-                >
-                  {submitting ? "Submitting..." : "Submit Quiz"}
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">
-                {currentChapter.chapterTitle}
-              </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Chapter {currentChapterIndex + 1} of {course.chapters.length}
-              </p>
-              <div className="mb-6">
-                <video
-                  ref={videoRef}
-                  controls
-                  className="w-full rounded-lg shadow-lg"
-                  src={currentChapter.videoUrl}
-                >
-                  Your browser does not support the video tag.
-                </video>
-                {isChapterCompleted ? (
-                  <p className="text-sm text-green-600 mt-2 flex items-center">
-                    <CheckCircle className="w-4 h-4 mr-1" /> Chapter completed!
-                  </p>
-                ) : (
-                  <p className="text-sm text-blue-600 mt-2 flex items-center">
-                    <Play className="w-4 h-4 mr-1" /> Watch the video to automatically complete this chapter (90% progress required).
-                  </p>
-                )}
-                {/* Manual button removed to avoid manual marking; auto-detection handles it */}
-              </div>
-              <div className="flex justify-between items-center">
-                <button
-                  disabled={currentChapterIndex === 0}
-                  onClick={() => setCurrentChapterIndex((prev) => prev - 1)}
-                  className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition duration-300 flex items-center justify-center"
-                >
-                  <ChevronLeft className="mr-2" /> Previous Chapter
-                </button>
-                <p className="text-sm text-gray-500">
-                  Chapter {currentChapterIndex + 1} of {course.chapters.length} —{" "}
-                  {enrollment.completionPercentage}% Complete
-                </p>
-                <button
-                  disabled={currentChapterIndex === course.chapters.length - 1}
-                  onClick={() => setCurrentChapterIndex((prev) => prev + 1)}
-                  className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition duration-300 flex items-center justify-center"
-                >
-                  Next Chapter <ChevronRight className="ml-2" />
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+
+                  <button
+                    onClick={goToNext}
+                    disabled={
+                      selectedModuleIdx === course.modules.length - 1 &&
+                      selectedChapterIdx === currentModule!.chapters.length - 1
+                    }
+                    className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

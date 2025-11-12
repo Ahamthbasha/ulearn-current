@@ -80,9 +80,6 @@ const AddQuizPage = () => {
     <div className="p-4 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Add Quiz Question</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Module ID: {moduleId || "Loading..."}
-        </p>
       </div>
 
       <SingleQuestionForm

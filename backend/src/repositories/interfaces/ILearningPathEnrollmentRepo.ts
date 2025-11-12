@@ -1,6 +1,6 @@
 import { IGenericRepository } from "../genericRepository";
 import { ILearningPathEnrollment } from "../../models/learningPathEnrollmentModel";
-import mongoose from "mongoose";
+import mongoose, { FilterQuery, PopulateOptions, UpdateQuery } from "mongoose";
 
 export interface ILearningPathEnrollmentRepo
   extends IGenericRepository<ILearningPathEnrollment> {
@@ -11,4 +11,16 @@ export interface ILearningPathEnrollmentRepo
     enrollments: Partial<ILearningPathEnrollment>[],
     session: mongoose.ClientSession,
   ): Promise<ILearningPathEnrollment[]>;
+
+
+  findOneWithPopulate(
+    filter: FilterQuery<ILearningPathEnrollment>,
+    populate?: PopulateOptions | PopulateOptions[],
+  ): Promise<ILearningPathEnrollment | null>;
+
+  findByIdAndUpdateWithPopulate(
+    id: string,
+    data: UpdateQuery<ILearningPathEnrollment>,
+    populate?: PopulateOptions | PopulateOptions[],
+  ): Promise<ILearningPathEnrollment | null>;
 }

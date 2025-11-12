@@ -8,6 +8,12 @@ export interface ChapterViewingDTO {
   isCompleted: boolean;
 }
 
+export interface QuizQuestionDTO {
+  questionText: string;
+  options: string[];
+  correctAnswer?: string; // optional: hide from frontend if needed
+}
+
 export interface ModuleViewingDTO {
   id: string;
   title: string;
@@ -17,11 +23,11 @@ export interface ModuleViewingDTO {
   quiz: {
     id: string;
     questionsCount: number;
+    questions: QuizQuestionDTO[];
     isPassed?: boolean;
     scorePercentage?: number;
   } | null;
 }
-
 export interface CourseViewingDTO {
   id: string;
   title: string;

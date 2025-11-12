@@ -242,6 +242,7 @@ export interface EnrolledCourse {
   thumbnailUrl: string;
   courseName: string;
   description: string;
+  duration:string;
   completionStatus: string;
   certificateGenerated: boolean;
   completionPercentage: number;
@@ -553,12 +554,13 @@ export interface Course {
   order: number;
   courseName: string;
   description: string;
+  duration:string;
   price: number;
   effectivePrice:number;
   thumbnailUrl: string;
   isCompleted: boolean;
   certificateUrl?: string;
-  completionPercentage: number; // Added to include completion percentage
+  completionPercentage: number;
 }
 
 export interface ILearningPathCompletedCourse {

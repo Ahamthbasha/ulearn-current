@@ -3,32 +3,32 @@ import * as Yup from "yup";
 import { Button } from "../common/Button";
 import { type Props } from "./interface/instructorComponentInterface";
 
-const strongTextRegex = /^(?!.*(.)\1{9,})(?=.*[a-zA-Z])(?=.*[\s\d]).{10,}$/;
+const meaningfulTextRegex = /^(?!.*(.)\1{4,})(?=.*[a-zA-Z]).{2,80}$/;
 
 const validationSchema = Yup.object().shape({
   questionText: Yup.string()
     .trim()
-    .min(10, "Question must be at least 10 characters long")
-    .max(100,"Question length dont exceed 70 characters")
-    .matches(strongTextRegex, "Question must be meaningful (not just repeated letters)")
+    .min(10, "Question must be at least 10 characters")
+    .max(100, "Question must not exceed 100 characters")
+    .matches(meaningfulTextRegex, "Question must be meaningful")
     .required("Question text is required"),
 
   options: Yup.array()
     .of(
       Yup.string()
         .trim()
-        .min(5, "Option must be at least 10 characters long")
-        .max(80,"Option must not exceed 70 characters")
-        .matches(strongTextRegex, "Option must be meaningful")
+        .min(2, "Option must be at least 2 characters")
+        .max(80, "Option must not exceed 80 characters")
+        .matches(meaningfulTextRegex, "Option must be meaningful")
         .required("Option is required")
     )
     .min(2, "At least 2 options are required"),
 
   correctAnswer: Yup.string()
     .trim()
-    .min(5, "Correct answer must be at least 10 characters long")
-    .max(80,"Option must not exceed 70 characters")
-    .matches(strongTextRegex, "Correct answer must be meaningful")
+    .min(2, "Correct answer must be at least 2 characters")
+    .max(80, "Correct answer must not exceed 80 characters")
+    .matches(meaningfulTextRegex, "Correct answer must be meaningful")
     .required("Correct answer is required"),
 });
 

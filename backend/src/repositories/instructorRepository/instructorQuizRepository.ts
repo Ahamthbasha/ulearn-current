@@ -38,8 +38,6 @@ export class InstructorQuizRepository
     throw new Error("Quiz not found for this module");
   }
 
-  question.options = question.options.map((opt) => opt.toLowerCase());
-
   const isDuplicate = quiz.questions.some(
     (q) =>
       q.questionText.trim().toLowerCase() ===
@@ -64,10 +62,6 @@ async updateQuestionInQuiz(
 
   const question = quiz.questions.id(questionId);
   if (!question) return null;
-
-  if (updatedData.options) {
-    updatedData.options = updatedData.options.map((opt) => opt.toLowerCase());
-  }
 
   const newText = updatedData.questionText?.trim().toLowerCase();
   if (newText) {

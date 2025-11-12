@@ -52,25 +52,29 @@ export const mapToCourseViewingResponse = async (
       });
     }
 
-    // === Quiz (Safe Handling) ===
-    let quizDto: ModuleViewingDTO["quiz"] = null;
+// === Quiz (Safe Handling) ===
+let quizDto: ModuleViewingDTO["quiz"] = null;
 
-    if (module.quiz) {
-      totalQuizzes++;
+if (module.quiz) {
+  totalQuizzes++;
 
-      const quizResult = enrollment.completedQuizzes.find(
-        (q) => q.quizId.toString() === module.quiz!._id.toString()
-      );
+  const quizResult = enrollment.completedQuizzes.find(
+    (q) => q.quizId.toString() === module.quiz!._id.toString()
+  );
 
-      quizDto = {
-        id: module.quiz._id.toString(),
-        questionsCount: module.quiz.questions.length,
-        isPassed: quizResult?.isPassed,
-        scorePercentage: quizResult?.scorePercentage,
-      };
-    }
+  quizDto = {
+    id: module.quiz._id.toString(),
+    questionsCount: module.quiz.questions.length,
+    questions: module.quiz.questions.map(q => ({
+      questionText: q.questionText,
+      options: q.options,
+      correctAnswer: q.correctAnswer, // optional: hide if you don't want to expose
+    })),
+    isPassed: quizResult?.isPassed,
+    scorePercentage: quizResult?.scorePercentage,
+  };
+}
 
-    // === Push Module ===
     modules.push({
       id: module._id.toString(),
       title: module.moduleTitle,

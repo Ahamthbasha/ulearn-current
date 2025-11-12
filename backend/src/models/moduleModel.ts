@@ -78,7 +78,6 @@
 
 
 
-// src/models/moduleModel.ts
 import { Schema, Types, model, Document } from "mongoose";
 import { IChapter } from "./chapterModel";
 import { IQuiz } from "./quizModel";

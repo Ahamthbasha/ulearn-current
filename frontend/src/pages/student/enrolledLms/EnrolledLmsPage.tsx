@@ -62,7 +62,7 @@ const EnrolledLmsPage = () => {
             Start your learning journey by enrolling in a learning path today!
           </p>
           <button
-            onClick={() => navigate("/user/lms")}
+            onClick={() => navigate("/user/createdLms")}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 text-base sm:text-lg"
           >
             <BookOpen className="inline mr-2 h-5 w-5" /> Browse Learning Paths

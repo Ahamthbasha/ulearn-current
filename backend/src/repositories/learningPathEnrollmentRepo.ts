@@ -4,7 +4,8 @@ import {
 } from "../models/learningPathEnrollmentModel";
 import { ILearningPathEnrollmentRepo } from "./interfaces/ILearningPathEnrollmentRepo";
 import { GenericRepository } from "./genericRepository";
-import mongoose from "mongoose";
+import mongoose, { FilterQuery, UpdateQuery } from "mongoose";
+import { PopulateOptions } from "mongoose";
 
 export class LearningPathEnrollmentRepo
   extends GenericRepository<ILearningPathEnrollment>
@@ -46,5 +47,24 @@ export class LearningPathEnrollmentRepo
       ordered: true,
     });
     return docs as ILearningPathEnrollment[];
+  }
+
+  async findOneWithPopulate(
+    filter: FilterQuery<ILearningPathEnrollment>,
+    populate?: PopulateOptions | PopulateOptions[],
+  ): Promise<ILearningPathEnrollment | null> {
+    let query = this.model.findOne(filter);
+    if (populate) query = query.populate(populate);
+    return await query.exec();
+  }
+
+  async findByIdAndUpdateWithPopulate(
+    id: string,
+    data: UpdateQuery<ILearningPathEnrollment>,
+    populate?: PopulateOptions | PopulateOptions[],
+  ): Promise<ILearningPathEnrollment | null> {
+    let query = this.model.findByIdAndUpdate(id, data, { new: true });
+    if (populate) query = query.populate(populate);
+    return await query.exec();
   }
 }

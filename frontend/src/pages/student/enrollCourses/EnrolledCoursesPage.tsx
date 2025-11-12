@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -6,9 +5,8 @@ import {
   getCertificate,
 } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
-import { Loader2, BookOpen, CheckCircle, Clock, Download } from "lucide-react";
-import {type EnrolledCourse } from "../interface/studentInterface";
-
+import { Loader2, BookOpen, CheckCircle, Clock, Download, Timer } from "lucide-react";
+import { type EnrolledCourse } from "../interface/studentInterface";
 
 const EnrolledCoursesPage = () => {
   const [enrollments, setEnrollments] = useState<EnrolledCourse[]>([]);
@@ -71,7 +69,7 @@ const EnrolledCoursesPage = () => {
       <div className="p-6 sm:p-8 max-w-7xl mx-auto text-center bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
         <div>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            🎓 No Enrolled Courses
+            No Enrolled Courses
           </h2>
           <p className="text-gray-600 italic mb-6 text-base sm:text-lg">
             Start your learning journey by enrolling in a course today!
@@ -90,7 +88,7 @@ const EnrolledCoursesPage = () => {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 flex items-center">
-        <BookOpen className="mr-2 text-blue-600" /> 🎓 Your Enrolled Courses
+        <BookOpen className="mr-2 text-blue-600" /> Your Enrolled Courses
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -107,7 +105,7 @@ const EnrolledCoursesPage = () => {
                 alt={enroll.courseName}
                 className="h-44 sm:h-48 md:h-56 w-full object-cover rounded-t-xl"
                 onError={(e) => {
-                  e.currentTarget.src = "/placeholder-image.jpg"; // Fallback image
+                  e.currentTarget.src = "/placeholder-image.jpg";
                 }}
               />
 
@@ -122,6 +120,14 @@ const EnrolledCoursesPage = () => {
                   <p className="text-sm sm:text-base text-gray-600 mb-2 line-clamp-3">
                     {enroll.description}
                   </p>
+
+                  {/* Duration */}
+                  <p className="text-sm text-gray-600 mb-2 flex items-center">
+                    <Timer className="mr-1 h-4 w-4 text-indigo-600" />
+                    Duration: <span className="font-medium ml-1">{enroll.duration}</span>
+                  </p>
+
+                  {/* Status */}
                   <p className="text-sm sm:text-base text-gray-600 mb-2 flex items-center">
                     Status:{" "}
                     <span
@@ -133,7 +139,11 @@ const EnrolledCoursesPage = () => {
                           : "text-gray-500"
                       }`}
                     >
-                      {enroll.completionStatus.toLowerCase()}
+                      {isCompleted
+                        ? "Completed"
+                        : enroll.completionStatus === "IN_PROGRESS"
+                        ? "In Progress"
+                        : "Not Started"}
                     </span>
                     {isCompleted ? (
                       <CheckCircle className="ml-2 h-4 w-4 text-green-600" />
@@ -141,10 +151,12 @@ const EnrolledCoursesPage = () => {
                       <Clock className="ml-2 h-4 w-4 text-yellow-600" />
                     ) : null}
                   </p>
+
+                  {/* Progress Bar */}
                   <div className="mb-3">
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div
-                        className="bg-blue-600 h-2.5 rounded-full"
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
                         style={{ width: `${enroll.completionPercentage}%` }}
                       ></div>
                     </div>
@@ -152,17 +164,23 @@ const EnrolledCoursesPage = () => {
                       {enroll.completionPercentage}% Complete
                     </p>
                   </div>
+
+                  {/* Price */}
                   <p className="text-right font-bold text-blue-600 text-lg sm:text-xl mb-4">
-                    ₹{enroll.price}
+                    {enroll.price === 0 ? "Free" : `₹${enroll.price}`}
                   </p>
                 </div>
 
+                {/* Certificate Button */}
                 {enroll.certificateGenerated ? (
                   <button
-                    onClick={() => handleDownloadCertificate(enroll.courseId)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadCertificate(enroll.courseId);
+                    }}
                     className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white text-sm sm:text-base px-4 py-2 rounded-lg shadow-md transition duration-300 flex items-center justify-center w-full"
                   >
-                    <Download className="mr-2 h-4 w-4" /> 🎓 Download Certificate
+                    <Download className="mr-2 h-4 w-4" /> Download Certificate
                   </button>
                 ) : (
                   <button

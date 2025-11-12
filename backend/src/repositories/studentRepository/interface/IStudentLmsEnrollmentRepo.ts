@@ -1,7 +1,8 @@
 import { Types } from "mongoose";
 import { ILearningPath } from "../../../models/learningPathModel";
 import { ILearningPathEnrollment } from "../../../models/learningPathEnrollmentModel";
-import { ICourse } from "../../../models/courseModel";
+import { EnrichedCourse } from "../../../interface/studentInterface/ILmsDetailInterface";
+
 
 export interface IStudentLmsEnrollmentRepo {
   getEnrolledLearningPaths(userId: Types.ObjectId): Promise<
@@ -15,15 +16,10 @@ export interface IStudentLmsEnrollmentRepo {
     userId: Types.ObjectId,
     learningPathId: Types.ObjectId,
   ): Promise<{
-    learningPath: ILearningPath;
+    learningPath: ILearningPath & { thumbnailUrl: string; totalPrice: number };
     enrollment: ILearningPathEnrollment;
-    courses: ICourse[];
-  }>;
-
-  updateUnlockedOrder(
-    enrollmentId: Types.ObjectId,
-    unlockedOrder: number,
-  ): Promise<ILearningPathEnrollment>;
+    courses: EnrichedCourse[];
+  }>
 
   markCourseCompleted(
     enrollmentId: Types.ObjectId,

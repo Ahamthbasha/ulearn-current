@@ -1,6 +1,5 @@
 import { Types } from "mongoose";
 import { ILearningPathEnrollment } from "../../models/learningPathEnrollmentModel";
-import { ICourse } from "../../models/courseModel";
 import { IStudentLmsEnrollmentRepo } from "../../repositories/studentRepository/interface/IStudentLmsEnrollmentRepo";
 import { IStudentLmsEnrollmentService } from "./interface/IStudentLmsEnrollmentService";
 import { IStudentEnrollmentRepository } from "../../repositories/studentRepository/interface/IStudentEnrollmentRepository";
@@ -12,7 +11,6 @@ import {
   mapToLearningPathDTO,
   mapToLearningPathDetailsDTO,
 } from "../../mappers/userMapper/lmsEnrollMapper";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { IOrderRepository } from "../../repositories/interfaces/IOrderRepository";
 
 export class StudentLmsEnrollmentService
@@ -74,80 +72,57 @@ export class StudentLmsEnrollmentService
         courses,
         this._orderRepository,
         userObjectId,
-        getPresignedUrl,
       );
     } catch (error) {
-      throw new Error(`Service error: ${(error as Error).message}`);
+      throw new Error(`${(error as Error).message}`);
     }
   }
 
-  async completeCourseAndUnlockNext(
-    userId: string,
-    learningPathId: string,
-    courseId: string,
-  ): Promise<ILearningPathEnrollment> {
-    try {
-      const userObjectId = new Types.ObjectId(userId);
-      const learningPathObjectId = new Types.ObjectId(learningPathId);
-      const courseObjectId = new Types.ObjectId(courseId);
+async completeCourseAndUnlockNext(
+  userId: string,
+  learningPathId: string,
+  courseId: string,
+): Promise<ILearningPathEnrollment> {
+  try {
+    const userObjId = new Types.ObjectId(userId);
+    const lpObjId = new Types.ObjectId(learningPathId);
+    const courseObjId = new Types.ObjectId(courseId);
 
-      const enrollment = await this._enrollmentRepo.findOne({
-        userId: userObjectId,
-        courseId: courseObjectId,
-        learningPathId: learningPathObjectId,
-      });
-
-      if (!enrollment) {
-        throw new Error("Course enrollment not found");
-      }
-
-      const courseDetails =
-        await this._studentLmsEnrollmentRepo.getLearningPathDetails(
-          userObjectId,
-          learningPathObjectId,
-        );
-      const targetCourse = courseDetails.courses.find((c) =>
-        c._id.equals(courseObjectId),
-      );
-      if (!targetCourse) {
-        throw new Error("Course not found in learning path");
-      }
-
-      const learningPathEnrollment =
-        await this._studentLmsEnrollmentRepo.markCourseCompleted(
-          courseDetails.enrollment._id as Types.ObjectId,
-          courseObjectId,
-        );
-
-      const learningPath = courseDetails.learningPath;
-      const currentItem = learningPath.items.find((item) =>
-        item.courseId instanceof Types.ObjectId
-          ? item.courseId.equals(courseObjectId)
-          : (item.courseId as ICourse)._id.equals(courseObjectId),
-      );
-
-      if (!currentItem) {
-        throw new Error("Course not found in learning path items");
-      }
-
-      const nextOrder = currentItem.order + 1;
-      const nextItem = learningPath.items.find(
-        (item) => item.order === nextOrder,
-      );
-
-      if (nextItem && learningPathEnrollment.unlockedOrder < nextOrder) {
-        await this._studentLmsEnrollmentRepo.updateUnlockedOrder(
-          learningPathEnrollment._id as Types.ObjectId,
-          nextOrder,
-        );
-        learningPathEnrollment.unlockedOrder = nextOrder;
-      }
-
-      return learningPathEnrollment;
-    } catch (error) {
-      throw new Error(`Service error: ${(error as Error).message}`);
+    // 1. Ensure course enrollment exists
+    const courseEnrollment = await this._enrollmentRepo.findOne({
+      userId: userObjId,
+      courseId: courseObjId,
+      learningPathId: lpObjId,
+    });
+    if (!courseEnrollment) {
+      throw new Error("Course enrollment not found for this learning path");
     }
+
+    // 2. Get LP enrollment ID
+    const { enrollment: lpEnrollment } =
+      await this._studentLmsEnrollmentRepo.getLearningPathDetails(
+        userObjId,
+        lpObjId,
+      );
+
+    // 3. Mark course completed → **Unlocking happens automatically via sync**
+    const updatedLpEnrollment =
+      await this._studentLmsEnrollmentRepo.markCourseCompleted(
+        lpEnrollment._id as Types.ObjectId,
+        courseObjId,
+      );
+
+    // 4. Trigger runtime sync to ensure next course is unlocked
+    await this._studentLmsEnrollmentRepo.getLearningPathDetails(
+      userObjId,
+      lpObjId,
+    );
+
+    return updatedLpEnrollment;
+  } catch (error) {
+    throw new Error(`${(error as Error).message}`);
   }
+}
 
   async generateLearningPathCertificate(
     userId: string,
@@ -176,7 +151,7 @@ export class StudentLmsEnrollmentService
         );
       return certificateUrl;
     } catch (error) {
-      throw new Error(`Service error: ${(error as Error).message}`);
+      throw new Error(`${(error as Error).message}`);
     }
   }
 }

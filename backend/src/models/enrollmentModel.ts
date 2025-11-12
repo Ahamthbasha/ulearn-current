@@ -1,7 +1,6 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { ChapterModel } from "./chapterModel";
-import { ModuleModel } from "./moduleModel";
 import { appLogger } from "../utils/logger";
+import { CourseModel } from "./courseModel";
 
 export interface ICompletedChapter {
   chapterId: Types.ObjectId;
@@ -75,7 +74,7 @@ const enrollmentSchema = new Schema<IEnrollment>(
   { timestamps: true }
 );
 
-// Udemy-Exact Progress
+// Udemy-Exact Progress — FIXED
 enrollmentSchema.pre("save", async function (next) {
   if (
     this.isModified("completedChapters") ||
@@ -85,11 +84,28 @@ enrollmentSchema.pre("save", async function (next) {
     try {
       const courseId = this.courseId;
 
-      const totalLectures = await ChapterModel.countDocuments({ courseId });
-      const totalQuizzes = await ModuleModel.countDocuments({
-        courseId,
-        quizId: { $exists: true, $ne: null },
-      });
+      // Populate course with modules → chapters & quizzes
+      const course = await CourseModel.findById(courseId)
+        .populate({
+          path: "modules",
+          populate: [
+            { path: "chapters", select: "_id" },
+            { path: "quiz", select: "_id" }
+          ]
+        });
+
+      if (!course || !course.modules) {
+        this.completionPercentage = 0;
+        this.completionStatus = "NOT_STARTED";
+        return next();
+      }
+
+      const totalLectures = course.modules.reduce(
+        (sum, m) => sum + (m.chapters?.length || 0),
+        0
+      );
+
+      const totalQuizzes = course.modules.filter(m => m.quiz).length;
 
       const completedLectures = this.completedChapters.filter(c => c.isCompleted).length;
       const passedQuizzes = this.completedQuizzes.filter(q => q.isPassed).length;
@@ -97,14 +113,17 @@ enrollmentSchema.pre("save", async function (next) {
       const totalItems = totalLectures + totalQuizzes;
       const completedItems = completedLectures + passedQuizzes;
 
-      this.completionPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+      this.completionPercentage = totalItems > 0
+        ? Math.round((completedItems / totalItems) * 100)
+        : 0;
 
       this.completionStatus =
         this.completionPercentage === 100
           ? "COMPLETED"
           : this.completionPercentage > 0
-          ? "IN_PROGRESS"
-          : "NOT_STARTED";
+            ? "IN_PROGRESS"
+            : "NOT_STARTED";
+
     } catch (err) {
       appLogger.error("Enrollment pre-save error:", err);
       return next(err as Error);

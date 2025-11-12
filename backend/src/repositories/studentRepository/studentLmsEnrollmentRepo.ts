@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { ILearningPath } from "../../models/learningPathModel";
-import { ILearningPathEnrollment } from "../../models/learningPathEnrollmentModel";
+import { ILearningPath, ILearningPathItem,  } from "../../models/learningPathModel";
+import {  ILearningPathCompletedCourse, ILearningPathEnrollment } from "../../models/learningPathEnrollmentModel";
 import { ICourse } from "../../models/courseModel";
 import { IStudentLmsEnrollmentRepo } from "./interface/IStudentLmsEnrollmentRepo";
 import { ILearningPathRepository } from "../interfaces/ILearningPathRepository";
@@ -10,36 +10,40 @@ import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { isPresignedUrl } from "../../utils/isPresignedUrl";
 import { IStudentRepository } from "../studentRepository/interface/IStudentRepository";
 import { generateCertificate } from "../../utils/certificateGenerator";
-// import {
-//   ICompletedChapter,
-//   ICompletedQuiz,
-// } from "../../models/enrollmentModel";
-// import { IChapter } from "../../models/chapterModel";
-// import { IQuiz } from "../../models/quizModel";
+import { IChapter } from "../../models/chapterModel";
+import { IQuiz } from "../../models/quizModel";
 import { IOrderRepository } from "../interfaces/IOrderRepository";
+import IInstructorRepository from "../instructorRepository/interface/IInstructorRepository";
+import { ICourseRepository } from "../interfaces/ICourseRepository";
+import { ICompletedChapter, ICompletedQuiz } from "../../models/enrollmentModel";
+import { appLogger } from "../../utils/logger";
+import { EnrichedCourse,PopulatedItem } from "../../interface/studentInterface/ILmsDetailInterface";
 
 export class StudentLmsEnrollmentRepo implements IStudentLmsEnrollmentRepo {
   private _learningPathRepo: ILearningPathRepository;
   private _learningPathEnrollmentRepo: ILearningPathEnrollmentRepo;
   private _studentRepository: IStudentRepository;
-  // private _instructorRepository: IInstructorRepository;
+  private _instructorRepository: IInstructorRepository;
   private _enrollmentRepository: IStudentEnrollmentRepository;
   private _orderRepository: IOrderRepository;
+  private _courseRepository:ICourseRepository;
 
   constructor(
     learningPathRepo: ILearningPathRepository,
     learningPathEnrollmentRepo: ILearningPathEnrollmentRepo,
     studentRepository: IStudentRepository,
-    // instructorRepository: IInstructorRepository,
+    instructorRepository: IInstructorRepository,
     enrollmentRepository: IStudentEnrollmentRepository,
     orderRepository: IOrderRepository,
+    courseRepository:ICourseRepository
   ) {
     this._learningPathRepo = learningPathRepo;
     this._learningPathEnrollmentRepo = learningPathEnrollmentRepo;
     this._studentRepository = studentRepository;
-    // this._instructorRepository = instructorRepository;
+    this._instructorRepository = instructorRepository;
     this._enrollmentRepository = enrollmentRepository;
     this._orderRepository = orderRepository;
+    this._courseRepository = courseRepository
   }
 
   async getEnrolledLearningPaths(userId: Types.ObjectId): Promise<
@@ -157,283 +161,321 @@ export class StudentLmsEnrollmentRepo implements IStudentLmsEnrollmentRepo {
     }
   }
 
-  async getLearningPathDetails(
-    userId: Types.ObjectId,
-    learningPathId: Types.ObjectId,
-  ): Promise<{
-    learningPath: ILearningPath;
-    enrollment: ILearningPathEnrollment;
-    courses: Array<
-      ICourse & { certificateUrl?: string; completionPercentage?: number }
-    >;
-  }> {
-    try {
-      const enrollment = await this._learningPathEnrollmentRepo.findOne({
-        userId,
-        learningPathId,
-      });
-      if (!enrollment) {
-        throw new Error("Enrollment not found");
-      }
-      const learningPath = await this._learningPathRepo.findByIdWithPopulate(
-        learningPathId.toString(),
-        [
-          {
-            path: "courses",
-            select: "courseName description thumbnailUrl chapters quizzes",
-          },
-          { path: "categoryDetails", select: "name" },
-        ],
-      );
-      if (!learningPath) {
-        throw new Error("Learning path not found");
-      }
+async getLearningPathDetails(
+  userId: Types.ObjectId,
+  learningPathId: Types.ObjectId,
+): Promise<{
+  learningPath: ILearningPath & { thumbnailUrl: string; totalPrice: number };
+  enrollment: ILearningPathEnrollment;
+  courses: EnrichedCourse[];
+}> {
+  try {
+    // 1. Validate IDs
+    if (!Types.ObjectId.isValid(userId)) throw new Error("Invalid user ID");
+    if (!Types.ObjectId.isValid(learningPathId)) throw new Error("Invalid learning path ID");
 
-      // Fetch totalPrice from OrderModel
-      const order = await this._orderRepository.findByUserAndLearningPath(
-        userId,
-        learningPathId,
-      );
-      const learningPathOrder = order?.learningPaths.find((lp) =>
-        lp.learningPathId.equals(learningPathId),
-      );
-      const totalPrice = learningPathOrder?.totalPrice ?? 0;
+    // 2. Fetch enrollment
+    const enrollmentDoc = await this._learningPathEnrollmentRepo.findOne({
+      userId,
+      learningPathId,
+    });
+    if (!enrollmentDoc) throw new Error("Enrollment not found");
+    const enrollment = enrollmentDoc as ILearningPathEnrollment & { _id: Types.ObjectId };
 
-      const coursesWithPresignedUrls = await Promise.all(
-        (learningPath.courses || []).map(async (course) => {
-          const presignedThumbnailUrl =
-            course.thumbnailUrl && !isPresignedUrl(course.thumbnailUrl)
-              ? await getPresignedUrl(course.thumbnailUrl)
-              : (course.thumbnailUrl ?? "");
-
-          const courseEnrollment =
-            await this._enrollmentRepository.findByUserAndCourse(
-              userId.toString(),
-              course._id.toString(),
-            );
-          let certificateUrl: string | undefined;
-          let completionPercentage: number | undefined;
-          if (courseEnrollment) {
-            if (
-              courseEnrollment.certificateGenerated &&
-              courseEnrollment.certificateUrl
-            ) {
-              certificateUrl = await getPresignedUrl(
-                courseEnrollment.certificateUrl,
-              );
-            }
-            completionPercentage = courseEnrollment.completionPercentage ?? 0;
-          }
-
-          // Fetch coursePrice from OrderModel
-          const courseOrder = learningPathOrder?.courses.find((c) =>
-            c.courseId.equals(course._id),
-          );
-          const coursePrice = courseOrder?.coursePrice ?? course.price;
-
-          return {
-            ...course.toObject(),
-            thumbnailUrl: presignedThumbnailUrl,
-            price: coursePrice,
-            effectivePrice:
-              courseOrder?.offerPrice ?? course.effectivePrice ?? coursePrice,
-            certificateUrl,
-            completionPercentage,
-          };
-        }),
-      );
-
-      const learningPathThumbnailUrl =
-        learningPath.thumbnailUrl && !isPresignedUrl(learningPath.thumbnailUrl)
-          ? await getPresignedUrl(learningPath.thumbnailUrl)
-          : (learningPath.thumbnailUrl ?? "");
-
-      return {
-        learningPath: {
-          ...learningPath.toObject(),
-          thumbnailUrl: learningPathThumbnailUrl,
-          totalPrice,
+    // 3. Fetch populated learning path
+    const lpDoc = await this._learningPathRepo.findByIdPopulated(
+      learningPathId.toString(),
+      [
+        {
+          path: "items.courseId",
+          select: "courseName description thumbnailUrl instructorId price effectivePrice duration",
         },
-        enrollment,
-        courses: coursesWithPresignedUrls as Array<
-          ICourse & { certificateUrl?: string; completionPercentage?: number }
-        >,
-      };
-    } catch (error) {
-      throw new Error(
-        `Failed to fetch learning path details: ${(error as Error).message}`,
-      );
+        { path: "category", select: "name" },
+      ],
+    );
+    if (!lpDoc) throw new Error("Learning path not found");
+
+    // 4. Build clean item list
+    const itemWithCourse: PopulatedItem[] = (lpDoc.items ?? [])
+      .filter(
+        (it): it is ILearningPathItem & { courseId: ICourse } =>
+          !!it.courseId && "courseName" in (it.courseId as any),
+      )
+      .map((it) => ({
+        order: it.order,
+        course: it.courseId as ICourse,
+      }));
+
+    if (itemWithCourse.length === 0) {
+      throw new Error("No valid courses in learning path");
     }
-  }
 
-  async updateUnlockedOrder(
-    enrollmentId: Types.ObjectId,
-    unlockedOrder: number,
-  ): Promise<ILearningPathEnrollment> {
-    try {
-      const enrollment = await this._learningPathEnrollmentRepo.updateOne(
-        { _id: enrollmentId },
-        { unlockedOrder },
-        { new: true },
-      );
-      if (!enrollment) {
-        throw new Error("Enrollment not found");
-      }
-      return enrollment;
-    } catch (error) {
-      throw new Error(
-        `Failed to update unlocked order: ${(error as Error).message}`,
-      );
+    // 5. Sync unlocked courses
+    const completedSet = new Set(
+      enrollment.completedCourses
+        .filter((c): c is ILearningPathCompletedCourse & { isCompleted: true } => c.isCompleted)
+        .map((c) => c.courseId.toString()),
+    );
+
+    const unlockedSet = new Set(enrollment.unlockedCourses.map((id) => id.toString()));
+    let maxOrder = enrollment.unlockedOrder;
+    let needsUpdate = false;
+
+    const first = itemWithCourse[0];
+    if (first && !unlockedSet.has(first.course._id.toString())) {
+      unlockedSet.add(first.course._id.toString());
+      needsUpdate = true;
     }
-  }
 
-  async markCourseCompleted(
-    enrollmentId: Types.ObjectId,
-    courseId: Types.ObjectId,
-  ): Promise<ILearningPathEnrollment> {
-    try {
-      const enrollment = await this._learningPathEnrollmentRepo.findById(
-        enrollmentId.toString(),
-      );
-      if (!enrollment) {
-        throw new Error("Enrollment not found");
-      }
-      const learningPath = await this._learningPathRepo.findById(
-        enrollment.learningPathId.toString(),
-      );
-      if (!learningPath) {
-        throw new Error("Learning path not found");
-      }
-      // Check if the course is part of the learning path
-      const courseItem = learningPath.items.find((item) => {
-        if (item.courseId instanceof Types.ObjectId) {
-          return item.courseId.equals(courseId);
+    for (const { order, course } of itemWithCourse) {
+      const cid = course._id.toString();
+      if (completedSet.has(cid)) {
+        if (!unlockedSet.has(cid)) {
+          unlockedSet.add(cid);
+          needsUpdate = true;
         }
-        return (item.courseId as ICourse)._id.equals(courseId);
-      });
-      if (!courseItem) {
-        throw new Error("Course not found in learning path");
+        const next = itemWithCourse.find((i) => i.order === order + 1);
+        if (next && maxOrder < next.order) {
+          maxOrder = next.order;
+          const nextId = next.course._id.toString();
+          if (!unlockedSet.has(nextId)) {
+            unlockedSet.add(nextId);
+            needsUpdate = true;
+          }
+        }
       }
-      // Verify course completion using EnrollmentRepository
-      const courseEnrollment =
-        await this._enrollmentRepository.findByUserAndCourse(
-          (enrollment.userId as Types.ObjectId).toString(),
-          (courseId as Types.ObjectId).toString(),
-        );
-      if (!courseEnrollment || !courseEnrollment.courseId) {
-        throw new Error("Course enrollment not found");
-      }
-      // Populate to check chapters and quizzes
-      const populatedEnrollment =
-        await this._enrollmentRepository.findByUserAndCourseWithPopulate(
-          (enrollment.userId as Types.ObjectId).toString(),
-          (courseId as Types.ObjectId).toString(),
-          [
-  {
-    path: "courseId",
-    populate: [
-      { path: "chapters" },
-      { path: "quizzes" },
-    ],
-  },
-]
-        );
-      if (!populatedEnrollment || !populatedEnrollment.courseId) {
-        throw new Error("Populated course enrollment not found");
-      }
-      // const course =
-      //   populatedEnrollment.courseId as unknown as IPopulatedCourse;
-      // const allChaptersCompleted =
-      //   course.chapters?.length > 0 &&
-      //   course.chapters.every((chapter: IChapter) =>
-      //     populatedEnrollment.completedChapters.some(
-      //       (cc: ICompletedChapter) =>
-      //         cc.chapterId.equals(chapter._id) && cc.isCompleted,
-      //     ),
-      //   );
-      // const allQuizzesCompleted =
-      //   course.quizzes?.length > 0
-      //     ? course.quizzes.every((quiz: IQuiz) =>
-      //         populatedEnrollment.completedQuizzes.some(
-      //           (cq: ICompletedQuiz) =>
-      //             cq.quizId.equals(quiz._id) && cq.scorePercentage >= 50,
-      //         ),
-      //       )
-      //     : true;
-      // if (!allChaptersCompleted || !allQuizzesCompleted) {
-      //   throw new Error(
-      //     "Not all chapters or quizzes are completed for this course",
-      //   );
-      // }
-      // Mark course as completed in LearningPathEnrollment
-      const completedCourse = enrollment.completedCourses.find((cc) =>
-        cc.courseId.equals(courseId),
-      );
-      if (completedCourse) {
-        completedCourse.isCompleted = true;
-        completedCourse.completedAt = new Date();
-      } else {
-        enrollment.completedCourses.push({
-          courseId,
-          isCompleted: true,
-          completedAt: new Date(),
-        });
-      }
+    }
 
-      const totalCourses = learningPath.items.length;
-      const completedCourses = enrollment.completedCourses.filter(
-        (cc) => cc.isCompleted,
-      ).length;
-      if (completedCourses === totalCourses) {
-        enrollment.completionStatus = "COMPLETED";
-      } else if (completedCourses > 0) {
-        enrollment.completionStatus = "IN_PROGRESS";
-      }
-      if (
-        enrollment.completionStatus === "COMPLETED" &&
-        !enrollment.certificateGenerated
-      ) {
-        const student = await this._studentRepository.findById(
-          enrollment.userId,
-        );
-        if (!student || !student.username) {
-          throw new Error("Student or student username not found");
-        }
-        // const instructor = await this._instructorRepository.findById(
-        //   learningPath.instructorId.toString(),
-        // );
-        // const instructorName = instructor?.username || "Course Instructor";
-        const certificateUrl = await this.generateLearningPathCertificate(
-          enrollment._id as Types.ObjectId,
-          student.username,
-          learningPath.title,
-          "tempo"
-          // instructorName,
-        );
-        enrollment.certificateGenerated = true;
-        enrollment.certificateUrl = certificateUrl;
-      }
-      const updatedEnrollment =
-        await this._learningPathEnrollmentRepo.updateOne(
-          { _id: enrollmentId },
-          {
-            completedCourses: enrollment.completedCourses,
-            completionStatus: enrollment.completionStatus,
-            certificateGenerated: enrollment.certificateGenerated,
-            certificateUrl: enrollment.certificateUrl,
+    if (needsUpdate) {
+      enrollment.unlockedOrder = maxOrder;
+      enrollment.unlockedCourses = Array.from(unlockedSet).map((id) => new Types.ObjectId(id));
+
+      await this._learningPathEnrollmentRepo.updateOne(
+        { _id: enrollment._id },
+        {
+          $set: {
+            unlockedOrder: maxOrder,
+            unlockedCourses: enrollment.unlockedCourses,
           },
-          { new: true },
-        );
-      if (!updatedEnrollment) {
-        throw new Error("Failed to update enrollment");
-      }
-      return updatedEnrollment;
-    } catch (error) {
-      throw new Error(
-        `Failed to mark course as completed: ${(error as Error).message}`,
+        },
       );
     }
+
+    // 6. Get total price
+    const order = await this._orderRepository.findByUserAndLearningPath(userId, learningPathId);
+    const lpOrder = order?.learningPaths.find((lp) => lp.learningPathId.equals(learningPathId));
+    const totalPrice = lpOrder?.totalPrice ?? 0;
+
+    // 7. Enrich courses → convert to plain object
+    const courses: EnrichedCourse[] = await Promise.all(
+      itemWithCourse.map(async ({ order, course }) => {
+        const plainCourse = course.toObject(); // ← CRITICAL: removes Mongoose methods
+
+        const thumbnailUrl =
+          plainCourse.thumbnailUrl && !isPresignedUrl(plainCourse.thumbnailUrl)
+            ? await getPresignedUrl(plainCourse.thumbnailUrl)
+            : plainCourse.thumbnailUrl ?? "";
+
+        const courseEnroll = await this._enrollmentRepository.findByUserAndCourse(
+          userId.toString(),
+          course._id.toString(),
+        );
+
+        let certificateUrl: string | undefined;
+        let completionPercentage = 0;
+
+        if (courseEnroll) {
+          if (courseEnroll.certificateGenerated && courseEnroll.certificateUrl) {
+            certificateUrl = await getPresignedUrl(courseEnroll.certificateUrl);
+          }
+          completionPercentage = courseEnroll.completionPercentage ?? 0;
+        }
+
+        const orderItem = lpOrder?.courses.find((c) => c.courseId.equals(course._id));
+        const price = orderItem?.coursePrice ?? plainCourse.price;
+        const effectivePrice = orderItem?.offerPrice ?? plainCourse.effectivePrice ?? price;
+
+        return {
+          ...plainCourse,
+          order,
+          thumbnailUrl,
+          price,
+          effectivePrice,
+          certificateUrl,
+          completionPercentage,
+        } as EnrichedCourse;
+      }),
+    );
+
+    // 8. Presign LP thumbnail
+    const lpThumbnail =
+      lpDoc.thumbnailUrl && !isPresignedUrl(lpDoc.thumbnailUrl)
+        ? await getPresignedUrl(lpDoc.thumbnailUrl)
+        : lpDoc.thumbnailUrl ?? "";
+
+    // 9. Return
+    return {
+      learningPath: {
+        ...lpDoc.toObject(),
+        thumbnailUrl: lpThumbnail,
+        totalPrice,
+        courses: undefined,
+        categoryDetails: lpDoc.category,
+      },
+      enrollment,
+      courses,
+    };
+  } catch (err: any) {
+    appLogger.error("getLearningPathDetails error", err);
+    throw new Error(`Failed to fetch learning path details: ${err.message}`);
   }
+}
+
+async markCourseCompleted(
+  enrollmentId: Types.ObjectId,
+  courseId: Types.ObjectId,
+): Promise<ILearningPathEnrollment> {
+  try {
+    const lpEnrollment = await this._learningPathEnrollmentRepo.findById(
+      enrollmentId.toString(),
+    );
+    if (!lpEnrollment) throw new Error("Learning-path enrollment not found");
+
+    const learningPath = await this._learningPathRepo.findById(
+      lpEnrollment.learningPathId.toString(),
+    );
+    if (!learningPath) throw new Error("Learning path not found");
+
+    const courseItem = learningPath.items.find((i) => {
+      const id =
+        i.courseId instanceof Types.ObjectId ? i.courseId : (i.courseId as ICourse)._id;
+      return id.equals(courseId);
+    });
+    if (!courseItem) throw new Error("Course not part of this learning path");
+
+    const courseEnrollment = await this._enrollmentRepository.findByUserAndCourse(
+      lpEnrollment.userId.toString(),
+      courseId.toString(),
+    );
+    if (!courseEnrollment) throw new Error("Course enrollment not found");
+
+    const courseDoc = await this._courseRepository.findById(courseId.toString());
+    if (!courseDoc) throw new Error("Course document not found");
+
+    const populatedCourse = await courseDoc
+      .populate<{
+        modules: Array<{
+          chapters: IChapter[];
+          quiz?: IQuiz | null;
+        }>;
+      }>({
+        path: "modules",
+        populate: [
+          { path: "chapters", select: "_id" },
+          { path: "quiz", select: "_id" },
+        ],
+      })
+      .then((doc) => doc?.toObject());
+
+    if (!populatedCourse?.modules) {
+      throw new Error("Course structure could not be loaded");
+    }
+
+    const totalLectures = populatedCourse.modules.reduce(
+      (sum: number, m: { chapters?: IChapter[] }) => sum + (m.chapters?.length ?? 0),
+      0,
+    );
+
+    const totalQuizzes = populatedCourse.modules.filter(
+      (m: { quiz?: IQuiz | null }): boolean => m.quiz !== undefined && m.quiz !== null
+    ).length;
+
+    const totalItems = totalLectures + totalQuizzes;
+
+    const completedLectures = courseEnrollment.completedChapters.filter(
+      (c): c is ICompletedChapter & { isCompleted: true } => c.isCompleted,
+    ).length;
+
+    const passedQuizzes = courseEnrollment.completedQuizzes.filter(
+      (q): q is ICompletedQuiz & { isPassed: true } => q.isPassed,
+    ).length;
+
+    const completedItems = completedLectures + passedQuizzes;
+
+    const isFullyCompleted = totalItems > 0 && completedItems === totalItems;
+    if (!isFullyCompleted) {
+      throw new Error(
+        "All chapters and quizzes must be completed before marking the course as finished in the learning path",
+      );
+    }
+
+    const existing = lpEnrollment.completedCourses.find((c) =>
+      c.courseId.equals(courseId),
+    );
+    if (existing) {
+      existing.isCompleted = true;
+      existing.completedAt = new Date();
+    } else {
+      lpEnrollment.completedCourses.push({
+        courseId,
+        isCompleted: true,
+        completedAt: new Date(),
+      });
+    }
+
+    const totalCourses = learningPath.items.length;
+    const completedCoursesCount = lpEnrollment.completedCourses.filter(
+      (c): c is ILearningPathCompletedCourse & { isCompleted: true } => c.isCompleted,
+    ).length;
+
+    lpEnrollment.completionStatus =
+      completedCoursesCount === totalCourses
+        ? "COMPLETED"
+        : completedCoursesCount > 0
+          ? "IN_PROGRESS"
+          : "NOT_STARTED";
+
+    if (
+      lpEnrollment.completionStatus === "COMPLETED" &&
+      !lpEnrollment.certificateGenerated
+    ) {
+      const student = await this._studentRepository.findById(lpEnrollment.userId);
+      if (!student?.username) throw new Error("Student username missing");
+
+      const instructor = await this._instructorRepository.findById(
+        populatedCourse.instructorId.toString(),
+      );
+      const instructorName = instructor?.username ?? "Course Instructor";
+
+      const certUrl = await this.generateLearningPathCertificate(
+        lpEnrollment._id as Types.ObjectId,
+        student.username,
+        learningPath.title,
+        instructorName,
+      );
+      lpEnrollment.certificateGenerated = true;
+      lpEnrollment.certificateUrl = certUrl;
+    }
+
+    const updated = await this._learningPathEnrollmentRepo.updateOne(
+      { _id: enrollmentId },
+      {
+        completedCourses: lpEnrollment.completedCourses,
+        completionStatus: lpEnrollment.completionStatus,
+        certificateGenerated: lpEnrollment.certificateGenerated,
+        certificateUrl: lpEnrollment.certificateUrl,
+      },
+      { new: true },
+    );
+
+    if (!updated) throw new Error("Failed to persist learning-path enrollment");
+    return updated;
+  } catch (error) {
+    throw new Error(
+      `Failed to mark course as completed: ${(error as Error).message}`,
+    );
+  }
+}
 
   async generateLearningPathCertificate(
     enrollmentId: Types.ObjectId,

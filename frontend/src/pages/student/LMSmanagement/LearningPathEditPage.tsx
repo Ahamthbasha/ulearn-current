@@ -4,17 +4,24 @@ import { Formik, Form, ErrorMessage, Field, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import InputField from "../../../components/common/InputField";
 import CourseSelector from "../../../components/StudentComponents/CourseSelector";
-import { getLearningPathById, updateLearningPath, getAllCategories } from "../../../api/action/StudentAction";
-import type { UpdateLearningPathRequest,FormValues,CourseItem  } from "../../../types/interfaces/IStudentInterface";
+import {
+  getLearningPathById,
+  updateLearningPath,
+  getAllCategories,
+} from "../../../api/action/StudentAction";
+
+import type {
+  UpdateLearningPathRequest,
+  FormValues,
+  CourseItem,
+} from "../../../types/interfaces/IStudentInterface";
 import type { ApiError } from "../../../types/interfaces/ICommon";
 
-
-const isValidObjectId = (id: string): boolean => {
-  return /^[0-9a-fA-F]{24}$/.test(id);
-};
-
+const isValidObjectId = (id: string): boolean =>
+  /^[0-9a-fA-F]{24}$/.test(id);
 
 const validationSchema = Yup.object({
   title: Yup.string()
@@ -22,203 +29,157 @@ const validationSchema = Yup.object({
     .trim()
     .min(5, "Title must be at least 5 characters")
     .max(100, "Title cannot exceed 100 characters")
-    .matches(/^[a-zA-Z0-9\s,.!?-]+$/, "Title can only contain letters, numbers, spaces, and basic punctuation")
+    .matches(
+      /^[a-zA-Z0-9\s,.!?-]+$/,
+      "Title can only contain letters, numbers, spaces, and basic punctuation"
+    )
     .test(
       "min-letters",
       "Title must contain at least 10 letters",
-      (value) => {
-        if (!value) return false;
-        const letterCount = (value.match(/[a-zA-Z]/g) || []).length;
-        return letterCount >= 10;
-      }
+      (v) => (v?.match(/[a-zA-Z]/g) || []).length >= 10
     ),
+
   description: Yup.string()
     .required("Description is required")
     .trim()
     .min(10, "Description must be at least 10 characters")
     .max(500, "Description cannot exceed 500 characters")
-    .matches(/^[a-zA-Z0-9\s,.!?-]+$/, "Description can only contain letters, numbers, spaces, and basic punctuation")
+    .matches(
+      /^[a-zA-Z0-9\s,.!?-]+$/,
+      "Description can only contain letters, numbers, spaces, and basic punctuation"
+    )
     .test(
       "min-letters",
       "Description must contain at least 10 letters",
-      (value) => {
-        if (!value) return false;
-        const letterCount = (value.match(/[a-zA-Z]/g) || []).length;
-        return letterCount >= 10;
-      }
+      (v) => (v?.match(/[a-zA-Z]/g) || []).length >= 10
     ),
+
   category: Yup.string()
     .required("Category is required")
-    .test("is-valid-objectid", "Invalid category ID format", (value) => isValidObjectId(value || "")),
+    .test("is-valid-objectid", "Invalid category ID format", (v) =>
+      isValidObjectId(v || "")
+    ),
+
   items: Yup.array()
     .of(
       Yup.object({
         courseId: Yup.string()
           .required("Course is required")
-          .test("is-valid-objectid", "Invalid course ID format", (value) => isValidObjectId(value || "")),
-        order: Yup.number()
-          .min(1, "Order must be at least 1")
-          .required("Order is required")
-          .integer("Order must be an integer"),
+          .test("is-valid-objectid", "Invalid course ID format", (v) =>
+            isValidObjectId(v || "")
+          ),
+        order: Yup.number().min(1).required().integer(),
       })
     )
     .min(1, "At least one course is required")
     .test(
       "unique-course-ids",
       "Duplicate courses are not allowed",
-      (items) => {
-        if (!items) return true;
-        const courseIds = items.map((item: CourseItem) => item.courseId);
-        const uniqueCourseIds = new Set(courseIds);
-        return uniqueCourseIds.size === courseIds.length;
-      }
-    )
-    .test(
-      "unique-orders",
-      "Duplicate order numbers are not allowed",
-      (items) => {
-        if (!items) return true;
-        const orders = items.map((item: CourseItem) => item.order);
-        const uniqueOrders = new Set(orders);
-        return uniqueOrders.size === orders.length;
+      (arr) => {
+        if (!arr) return true;
+        const ids = arr.map((i) => (i as CourseItem).courseId);
+        return new Set(ids).size === ids.length;
       }
     ),
+
   thumbnail: Yup.mixed()
-    .test(
-      "file-type",
-      "Thumbnail must be an image (JPEG, PNG, or GIF)",
-      (value: unknown) => {
-        if (!value) return true; // Thumbnail is optional for edit
-        if (!(value instanceof File)) return false;
-        return ["image/jpeg", "image/png", "image/gif"].includes(value.type);
-      }
-    )
-    .test(
-      "file-size",
-      "Thumbnail must be less than 5MB",
-      (value: unknown) => {
-        if (!value || !(value instanceof File)) return true; // Optional
-        return value.size <= 5 * 1024 * 1024; // 5MB
-      }
-    ),
+    .test("file-type", "Thumbnail must be an image (JPEG, PNG, or GIF)", (v: unknown) => {
+      if (!v) return true;
+      if (!(v instanceof File)) return false;
+      return ["image/jpeg", "image/png", "image/gif"].includes(v.type);
+    })
+    .test("file-size", "Thumbnail must be less than 5MB", (v: unknown) => {
+      if (!v || !(v instanceof File)) return true;
+      return v.size <= 5 * 1024 * 1024;
+    }),
 });
 
 const LearningPathEditPage: React.FC = () => {
   const { learningPathId } = useParams<{ learningPathId: string }>();
   const navigate = useNavigate();
+
   const [initialValues, setInitialValues] = useState<FormValues | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [existingThumbnail, setExistingThumbnail] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Array<{ _id: string; categoryName: string }>>([]);
+  const [categories, setCategories] = useState<
+    Array<{ _id: string; categoryName: string }>
+  >([]);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!learningPathId || !isValidObjectId(learningPathId)) {
-        toast.error("Invalid learning path ID", {
-          position: "top-right",
-          autoClose: 5000,
-        });
+        toast.error("Invalid learning path ID");
         navigate("/user/createdLms");
         return;
       }
-      try {
-        const categoriesData = await getAllCategories();
-        console.log("Fetched categories:", categoriesData);
-        setCategories(categoriesData);
 
-        const learningPath = await getLearningPathById(learningPathId);
+      try {
+        const [cats, lp] = await Promise.all([
+          getAllCategories(),
+          getLearningPathById(learningPathId),
+        ]);
+
+        setCategories(cats);
+
+        const renumbered = (lp.items || []).map((it: any, i: number) => ({
+          courseId: it.courseId,
+          order: i + 1,
+        }));
+
         setInitialValues({
-          title: learningPath.title || "",
-          description: learningPath.description || "",
-          category: learningPath.category || "",
-          items: learningPath.items || [{ courseId: "", order: 1 }],
+          title: lp.title || "",
+          description: lp.description || "",
+          category: lp.category || "",
+          items: renumbered,
           thumbnail: undefined,
         });
-        setExistingThumbnail(learningPath.thumbnailUrl || null);
-      } catch (err: unknown) {
-        const apiError = err as ApiError;
-        const errorMessage = apiError.response?.data?.message || apiError.message || "Failed to load learning path or categories";
-        toast.error(errorMessage, {
-          position: "top-right",
-          autoClose: 5000,
-        });
+
+        setExistingThumbnail(lp.thumbnailUrl || null);
+      } catch (e: unknown) {
+        const err = e as ApiError;
+        toast.error(
+          err.response?.data?.message || err.message || "Failed to load data"
+        );
         navigate("/user/createdLms");
       }
     };
+
     fetchData();
   }, [learningPathId, navigate]);
 
   useEffect(() => {
     return () => {
-      if (thumbnailPreview) {
-        URL.revokeObjectURL(thumbnailPreview);
-      }
+      if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
     };
   }, [thumbnailPreview]);
 
   const handleSubmit = async (
     values: FormValues,
-    { setSubmitting, setFieldError }: FormikHelpers<FormValues>
+    { setSubmitting, validateForm }: FormikHelpers<FormValues>
   ) => {
-    if (!learningPathId || !isValidObjectId(learningPathId)) {
-      toast.error("Invalid learning path ID", {
-        position: "top-right",
-        autoClose: 5000,
-      });
+    const errors = await validateForm(values);
+    if (Object.keys(errors).length) {
       setSubmitting(false);
       return;
     }
+
     try {
-      if (!values.items || values.items.length === 0 || values.items.some(item => !item.courseId || !isValidObjectId(item.courseId))) {
-        setFieldError("items", "At least one valid course is required");
-        toast.error("Please select at least one valid course", {
-          position: "top-right",
-          autoClose: 5000,
-        });
-        setSubmitting(false);
-        return;
-      }
-
-      if (!values.category || !isValidObjectId(values.category)) {
-        setFieldError("category", "Please select a valid category");
-        toast.error("Please select a valid category", {
-          position: "top-right",
-          autoClose: 5000,
-        });
-        setSubmitting(false);
-        return;
-      }
-
-      if (!values.title || !values.description) {
-        throw new Error("Title and description are required");
-      }
-
       const payload: UpdateLearningPathRequest = {
         title: values.title.trim(),
         description: values.description.trim(),
         category: values.category,
-        items: values.items.map((item) => ({
-          courseId: item.courseId,
-          order: item.order,
+        items: values.items.map((i) => ({
+          courseId: i.courseId,
+          order: i.order,
         })),
       };
 
-      console.log("Frontend payload:", payload);
-      console.log("Frontend thumbnail:", values.thumbnail);
-      await updateLearningPath(learningPathId, payload, values.thumbnail);
-      toast.success("Learning path updated successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      await updateLearningPath(learningPathId!, payload, values.thumbnail);
+      toast.success("Learning path updated successfully!");
       navigate("/user/createdLms");
-    } catch (err: unknown) {
-      const apiError = err as ApiError;
-      const errorMessage = apiError.response?.data?.message || apiError.message || "Failed to update learning path";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 5000,
-      });
-      console.error("Update learning path error:", apiError.response?.data || apiError);
+    } catch (e: unknown) {
+        const err = e as ApiError;
+        toast.error(err.response?.data?.message || err.message || "Update failed");
     } finally {
       setSubmitting(false);
     }
@@ -237,96 +198,100 @@ const LearningPathEditPage: React.FC = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Edit Learning Path</h1>
       <ToastContainer />
+
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ isSubmitting, setFieldValue, values, errors, touched }) => (
-          <Form className="space-y-4">
-            <InputField
-              name="title"
-              label="Title"
-              placeholder="Enter title (5-100 characters, at least 10 letters)"
-            />
-            <InputField
-              name="description"
-              label="Description"
-              placeholder="Enter description (10-500 characters, at least 10 letters)"
-            />
-            <div>
-              <label htmlFor="category" className="block font-medium mb-1">
-                Category
-              </label>
-              <Field
-                as="select"
-                name="category"
-                id="category"
-                className="block w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                  const selectedCategory = e.target.value;
-                  setFieldValue("category", selectedCategory);
-                  console.log("Category selected:", selectedCategory, "Form state category:", values.category);
-                }}
-              >
-                <option value="">Select a category</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.categoryName}
-                  </option>
-                ))}
-              </Field>
-              <ErrorMessage name="category" component="p" className="text-red-500 text-sm mt-1" />
-            </div>
-            <CourseSelector name="items" label="Courses" categoryId={values.category} /> {/* Pass the selected category */}
-            {errors.items && touched.items && (
-              <div className="text-red-500 text-sm mt-1">
-                {typeof errors.items === "string" ? (
-                  <p>{errors.items}</p>
-                ) : Array.isArray(errors.items) ? (
-                  (errors.items as Array<{ courseId?: string; order?: string } | undefined>).map((itemError, index: number) => (
-                    itemError ? (
-                      <p key={index}>
-                        Course {index + 1}:{" "}
-                        {itemError.courseId || itemError.order || "Invalid course or order"}
-                      </p>
-                    ) : null
-                  ))
-                ) : null}
+        {({ isSubmitting, setFieldValue, values, errors, touched }) => {
+          // Reset items when category changes
+          useEffect(() => {
+            if (values.category && initialValues?.category !== values.category) {
+              setFieldValue("items", []); // Clear all courses
+            }
+          }, [values.category, setFieldValue]);
+
+          return (
+            <Form className="space-y-4">
+              <InputField name="title" label="Title" placeholder="Enter title..." />
+              <InputField name="description" label="Description" placeholder="Enter description..." />
+
+              <div>
+                <label htmlFor="category" className="block font-medium mb-1">
+                  Category
+                </label>
+                <Field
+                  as="select"
+                  name="category"
+                  id="category"
+                  className="block w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.categoryName}
+                    </option>
+                  ))}
+                </Field>
+                <ErrorMessage
+                  name="category"
+                  component="p"
+                  className="text-red-500 text-sm mt-1"
+                />
               </div>
-            )}
-            <div>
-              <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">
-                Thumbnail Image (Optional, max 5MB)
-              </label>
-              <input
-                id="thumbnail"
-                name="thumbnail"
-                type="file"
-                accept="image/jpeg,image/png,image/gif"
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  setFieldValue("thumbnail", file);
-                  if (file) {
-                    const previewUrl = URL.createObjectURL(file);
-                    setThumbnailPreview(previewUrl);
-                  } else {
-                    setThumbnailPreview(null);
-                  }
-                  console.log("Selected thumbnail:", file);
-                }}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+
+              <CourseSelector
+                name="items"
+                label="Courses"
+                categoryId={values.category}
               />
-              <ErrorMessage name="thumbnail" component="p" className="text-red-500 text-sm mt-1" />
-              {(thumbnailPreview || existingThumbnail) && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Thumbnail Preview:</p>
-                  <img
-                    src={thumbnailPreview || existingThumbnail || ""}
-                    alt="Thumbnail preview"
-                    className="max-w-xs h-auto rounded-lg border border-gray-200"
-                  />
-                  {(thumbnailPreview || existingThumbnail) && (
+
+              {errors.items && touched.items && (
+                <div className="text-red-500 text-sm mt-1">
+                  {typeof errors.items === "string" ? (
+                    <p>{errors.items}</p>
+                  ) : Array.isArray(errors.items) ? (
+                    (errors.items as any[]).map((err, i) =>
+                      err ? (
+                        <p key={i}>
+                          Course {i + 1}: {err.courseId || err.order || "Invalid"}
+                        </p>
+                      ) : null
+                    )
+                  ) : null}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">
+                  Thumbnail Image (Optional, max 5MB)
+                </label>
+                <input
+                  id="thumbnail"
+                  name="thumbnail"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif"
+                  onChange={(e) => {
+                    const file = e.currentTarget.files?.[0];
+                    setFieldValue("thumbnail", file);
+                    if (file) {
+                      setThumbnailPreview(URL.createObjectURL(file));
+                    } else {
+                      setThumbnailPreview(null);
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                <ErrorMessage name="thumbnail" component="p" className="text-red-500 text-sm mt-1" />
+                {(thumbnailPreview || existingThumbnail) && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Thumbnail Preview:</p>
+                    <img
+                      src={thumbnailPreview || existingThumbnail!}
+                      alt="Preview"
+                      className="max-w-xs h-auto rounded-lg border"
+                    />
                     <button
                       type="button"
                       onClick={() => {
@@ -337,54 +302,41 @@ const LearningPathEditPage: React.FC = () => {
                     >
                       Remove Thumbnail
                     </button>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="relative bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg
-                      className="animate-spin h-5 w-5 mr-2 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Updating...
-                  </>
-                ) : (
-                  "Update"
+                  </div>
                 )}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/user/createdLms")}
-                className="bg-gray-200 px-4 py-2 rounded-lg"
-              >
-                Cancel
-              </button>
-            </div>
-          </Form>
-        )}
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Updating...
+                    </>
+                  ) : (
+                    "Update"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/user/createdLms")}
+                  className="bg-gray-200 px-4 py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
+              </
+
+div>
+            </Form>
+          );
+        }}
       </Formik>
     </div>
   );

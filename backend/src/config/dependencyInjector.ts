@@ -641,9 +641,10 @@ const studentLmsEnrollmentRepo: IStudentLmsEnrollmentRepo =
     learningPathRepo,
     learningPathEnrollmentRepo,
     studentRepository,
-    // instructorRepository,
+    instructorRepository,
     studentEnrollmentRepository,
     orderRepo,
+    courseRepo
   );
 
 const studentLmsEnrollmentService: IStudentLmsEnrollmentService =

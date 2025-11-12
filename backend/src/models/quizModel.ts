@@ -7,9 +7,9 @@ export interface IQuestions extends Document {
 }
 
 const QuestionSchema = new Schema<IQuestions>({
-  questionText: { type: String, required: true },
-  options: [{ type: String, required: true }],
-  correctAnswer: { type: String, required: true },
+  questionText: { type: String, required: true,lowercase:true,trim:true },
+  options: [{ type: String, required: true,lowercase:true,trim:true }],
+  correctAnswer: { type: String, required: true,lowercase:true,trim:true},
 });
 
 export interface IQuiz extends Document {

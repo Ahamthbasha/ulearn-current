@@ -53,30 +53,55 @@ export class StudentEnrollmentRepository
     }));
   }
 
+  // async getEnrollmentByCourseDetails(
+  //   userId: Types.ObjectId,
+  //   courseId: Types.ObjectId
+  // ): Promise<IPopulatedEnrollment | null> {
+  //   const populateOptions: PopulateOptions[] = [
+  //     {
+  //       path: "courseId",
+  //       populate: {
+  //         path: "modules",
+  //         populate: [
+  //           { path: "chapters", select: "chapterTitle videoUrl duration position _id" },
+  //           { path: "quiz", select: "questions" }
+  //         ]
+  //       }
+  //     }
+  //   ];
+
+  //   const result = await this.findOne(
+  //     { userId, courseId } as FilterQuery<IEnrollment>,
+  //     populateOptions
+  //   );
+
+  //   return result as IPopulatedEnrollment | null;
+  // }
+
   async getEnrollmentByCourseDetails(
-    userId: Types.ObjectId,
-    courseId: Types.ObjectId
-  ): Promise<IPopulatedEnrollment | null> {
-    const populateOptions: PopulateOptions[] = [
-      {
-        path: "courseId",
-        populate: {
-          path: "modules",
-          populate: [
-            { path: "chapters", select: "chapterTitle videoUrl duration position _id" },
-            { path: "quiz", select: "questions _id" }
-          ]
-        }
+  userId: Types.ObjectId,
+  courseId: Types.ObjectId
+): Promise<IPopulatedEnrollment | null> {
+  const populateOptions: PopulateOptions[] = [
+    {
+      path: "courseId",
+      populate: {
+        path: "modules",
+        populate: [
+          { path: "chapters", select: "chapterTitle videoUrl duration position _id" },
+          { path: "quiz", select: "questions _id" }
+        ]
       }
-    ];
+    }
+  ];
 
-    const result = await this.findOne(
-      { userId, courseId } as FilterQuery<IEnrollment>,
-      populateOptions
-    );
+  const result = await this.findOne(
+    { userId, courseId } as FilterQuery<IEnrollment>,
+    populateOptions
+  );
 
-    return result as IPopulatedEnrollment | null;
-  }
+  return result as IPopulatedEnrollment | null;
+}
 
   async markChapterCompleted(
     userId: Types.ObjectId,

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getLearningPathDetails, completeCourseAndUnlockNext } from "../../../api/action/StudentAction";
 import { toast } from "react-toastify";
-import { Loader2, BookOpen, CheckCircle, Clock, Lock, Award } from "lucide-react";
-import {type LearningPathDetails } from "../interface/studentInterface";
+import { Loader2, BookOpen, CheckCircle, Clock, Lock, Award, Timer } from "lucide-react";
+import { type LearningPathDetails } from "../interface/studentInterface";
 import type { ApiError } from "../../../types/interfaces/ICommon";
 
 const LmsCourseListPage = () => {
@@ -40,19 +40,18 @@ const LmsCourseListPage = () => {
       toast.success("Course completed and next course unlocked!");
       const response = await getLearningPathDetails(learningPathId);
       setLearningPath(response);
-    } 
-    catch (error) {
-  const apiError = error as ApiError;
-  const errorMessage = apiError.response?.data?.message || "Failed to complete course";
-  toast.error(errorMessage);
-}
+    } catch (error) {
+      const apiError = error as ApiError;
+      const errorMessage = apiError.response?.data?.message || "Failed to complete course";
+      toast.error(errorMessage);
+    }
   };
 
   const handleViewCertificate = (certificateUrl: string) => {
     try {
       const link = document.createElement("a");
       link.href = certificateUrl;
-      link.download = `certificate-${Date.now()}.pdf`; // Suggest a filename for the download
+      link.download = `certificate-${Date.now()}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -77,7 +76,7 @@ const LmsCourseListPage = () => {
       <div className="p-6 sm:p-8 max-w-7xl mx-auto text-center bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center">
         <div>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            🎓 No Courses Available
+            No Courses Available
           </h2>
           <p className="text-gray-600 italic mb-6 text-base sm:text-lg">
             This learning path has no courses or could not be loaded.
@@ -95,7 +94,7 @@ const LmsCourseListPage = () => {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 flex items-center">
-        <BookOpen className="mr-2 text-blue-600" /> 🎓 Learning Path Courses
+        <BookOpen className="mr-2 text-blue-600" /> Learning Path Courses
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -129,6 +128,14 @@ const LmsCourseListPage = () => {
                       {course.courseName}
                     </h3>
                     <p className="text-sm text-gray-600 mb-2 italic">{course.description}</p>
+
+                    {/* Duration */}
+                    <p className="text-sm text-gray-600 mb-2 flex items-center">
+                      <Timer className="mr-1 h-4 w-4 text-indigo-600" />
+                      Duration: <span className="font-medium ml-1">{course.duration}</span>
+                    </p>
+
+                    {/* Status */}
                     <p className="text-sm sm:text-base text-gray-600 mb-2 flex items-center">
                       Status:{" "}
                       <span
@@ -140,7 +147,7 @@ const LmsCourseListPage = () => {
                             : "text-gray-500"
                         }`}
                       >
-                        {isCompleted ? "completed" : isUnlocked ? "in_progress" : "locked"}
+                        {isCompleted ? "Completed" : isUnlocked ? "In Progress" : "Locked"}
                       </span>
                       {isCompleted ? (
                         <CheckCircle className="ml-2 h-4 w-4 text-green-600" />
@@ -150,10 +157,12 @@ const LmsCourseListPage = () => {
                         <Lock className="ml-2 h-4 w-4 text-gray-500" />
                       )}
                     </p>
+
+                    {/* Progress Bar */}
                     <div className="mb-3">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
                         <div
-                          className="bg-blue-600 h-2.5 rounded-full"
+                          className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
                           style={{ width: `${course.completionPercentage}%` }}
                         ></div>
                       </div>
@@ -161,11 +170,14 @@ const LmsCourseListPage = () => {
                         {course.completionPercentage}% Complete
                       </p>
                     </div>
+
+                    {/* Price */}
                     <p className="text-right font-bold text-blue-600 text-lg sm:text-xl mb-4">
-                      ₹{course.effectivePrice}
+                      {course.effectivePrice === 0 ? "Free" : `₹${course.effectivePrice}`}
                     </p>
                   </div>
 
+                  {/* Action Buttons */}
                   {isUnlocked && !isCompleted ? (
                     <button
                       onClick={() => handleCompleteCourse(course.courseId)}

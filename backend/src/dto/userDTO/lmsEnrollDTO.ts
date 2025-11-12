@@ -6,7 +6,7 @@ export interface LearningPathDTO {
   totalPrice: number;
   description: string;
   noOfCourses: number;
-  noOfHours: number;
+  noOfHours: number | string;
   presignedThumbnailUrl: string;
   learningPathCompleted: boolean;
   totalCompletionPercentageOfLearningPath: number;
@@ -17,6 +17,7 @@ export interface CourseDetailsDTO {
   order: number;
   courseName: string;
   description: string;
+  duration:string;
   price: number;
   effectivePrice: number; // Added to include effectivePrice
   thumbnailUrl: string;

@@ -1,3 +1,4 @@
+// src/repositories/learningPathRepo.ts
 import { ClientSession, PopulateOptions } from "mongoose";
 import { ILearningPath, LearningPathModel } from "../models/learningPathModel";
 import { ILearningPathRepository } from "./interfaces/ILearningPathRepository";
@@ -13,9 +14,7 @@ export class LearningPathRepo
 
   async findAll(filter: object, populate?: PopulateOptions[]): Promise<ILearningPath[]> {
     let query = LearningPathModel.find(filter);
-    if (populate) {
-      query = query.populate(populate);
-    }
+    if (populate?.length) query = query.populate(populate);
     return query.exec();
   }
 
@@ -25,9 +24,16 @@ export class LearningPathRepo
     populate?: PopulateOptions[],
   ): Promise<ILearningPath[]> {
     let query = LearningPathModel.find(filter).session(session);
-    if (populate) {
-      query = query.populate(populate);
-    }
+    if (populate?.length) query = query.populate(populate);
     return query.exec();
+  }
+
+  async findByIdPopulated(
+    id: string,
+    populate: PopulateOptions[],
+  ): Promise<ILearningPath | null> {
+    let query = this.model.findById(id);
+    if (populate.length) query = query.populate(populate);
+    return query.exec(); // returns hydrated ILearningPath
   }
 }

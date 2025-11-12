@@ -131,9 +131,9 @@ export interface CreateLearningPathRequest {
 }
 
 export interface UpdateLearningPathRequest {
-  title?: string;
-  description?: string;
-  items?: Array<{ courseId: string; order: number }>;
+  title: string;
+  description: string;
+  items: Array<{ courseId: string; order: number }>;
   category:string
   thumbnailUrl?: string;
 }
