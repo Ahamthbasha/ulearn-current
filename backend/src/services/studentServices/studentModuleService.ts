@@ -1,7 +1,7 @@
 
 import { IStudentModuleService } from "./interface/IStudentModuleService";
 import { IStudentModuleRepository } from "../../repositories/studentRepository/interface/IStudentModuleRepository";
-import { IModuleDTO } from "../../dto/userDTO/moduleDetailDTO";
+import { IModuleDTO } from "../../dto/userDTO/courseDetailDTO";
 
 export class StudentModuleService implements IStudentModuleService {
     private _moduleRepo: IStudentModuleRepository
