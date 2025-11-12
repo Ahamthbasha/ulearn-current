@@ -1,8 +1,8 @@
-import { ICoursePopulated } from "../../../models/courseModel";
+import { ICourseFullyPopulated } from "../../../models/courseModel";
 
 export interface IStudentCourseRepository {
   getAllListedCourses(): Promise<
-    { course: ICoursePopulated }[]
+    { course: ICourseFullyPopulated }[]
   >
 
   getFilteredCourses(
@@ -13,7 +13,7 @@ export interface IStudentCourseRepository {
     categoryId?: string,
   ): Promise<{
     data: {
-      course: ICoursePopulated;
+      course: ICourseFullyPopulated;
       chapterCount: number;
       quizQuestionCount: number;
     }[];
@@ -21,7 +21,7 @@ export interface IStudentCourseRepository {
   }>;
 
   getCourseDetails(courseId: string): Promise<{
-    course: ICoursePopulated | null;
+    course: ICourseFullyPopulated | null;
     chapterCount: number;
     quizQuestionCount: number;
   }>;
