@@ -1,4 +1,12 @@
-// src/utils/constants.ts
+export const InstructorReviewMessages = {
+    FETCH_SUCCESS: "Reviews fetched successfully",
+    FLAG_SUCCESS: "Review flagged successfully",
+    FLAG_FAIL: "Review not found or you are not authorized to flag it",
+    UNAUTHORIZED: "Unauthorized access",
+    INTERNAL_ERROR: "Failed to process request",
+}
+
+
 export const ReviewMessages = {
   UNAUTHORIZED: "Unauthorized",
   REVIEW_NOT_FOUND: "Review not found or not owned by student.",

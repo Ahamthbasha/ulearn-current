@@ -1,4 +1,3 @@
-// models/courseReviewModel.ts
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface ICourseReview extends Document {
@@ -10,7 +9,6 @@ export interface ICourseReview extends Document {
   updatedAt: Date;
   approved: boolean;
   flaggedByInstructor: boolean;
-  instructorResponse?: string;
   isDeleted?: boolean; // soft delete
 }
 
@@ -22,7 +20,6 @@ const CourseReviewSchema = new Schema<ICourseReview>(
     reviewText: { type: String, required: true, minlength: 10, maxlength: 1000 },
     approved: { type: Boolean, default: true }, // auto-approved
     flaggedByInstructor: { type: Boolean, default: false },
-    instructorResponse: { type: String },
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }

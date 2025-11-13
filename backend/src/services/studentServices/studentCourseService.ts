@@ -140,39 +140,54 @@ async getCourseDetailsById(
     studentId: { _id: Types.ObjectId; username: string; profilePicUrl?: string };
   };
 
-  const reviewsData = (await this._studentCourseReviewRepo.getReviewsByCourse(
+  // 1. Get ALL public reviews (approved + not deleted)
+  const allReviewsData = (await this._studentCourseReviewRepo.getReviewsByCourse(
     courseId
   )) as PopulatedReview[];
 
-  const reviews: IReviewDTO[] = reviewsData.map((r) => ({
-    reviewId: String(r._id),
-    username: r.studentId?.username ?? "Anonymous",
-    rating: r.rating,
-    reviewText: r.reviewText,
-    profilePicUrl: r.studentId?.profilePicUrl,
-  }));
+  let reviews: IReviewDTO[] = [];
+  let userReviewed = false;
+
+  if (studentId) {
+    // 2. Check if current student has reviewed
+    const existingReview = await this._studentCourseReviewRepo.findOne({
+      courseId: new Types.ObjectId(courseId),
+      studentId: new Types.ObjectId(studentId),
+    });
+    userReviewed = !!existingReview;
+
+    // 3. Filter out current student's review from public list
+    const studentObjId = new Types.ObjectId(studentId);
+    reviews = allReviewsData
+      .filter((r) => !r.studentId._id.equals(studentObjId))
+      .map((r) => ({
+        reviewId: String(r._id),
+        username: r.studentId?.username ?? "Anonymous",
+        rating: r.rating,
+        reviewText: r.reviewText,
+        profilePicUrl: r.studentId?.profilePicUrl,
+      }));
+  } else {
+    // 4. No student → return all reviews
+    reviews = allReviewsData.map((r) => ({
+      reviewId: String(r._id),
+      username: r.studentId?.username ?? "Anonymous",
+      rating: r.rating,
+      reviewText: r.reviewText,
+      profilePicUrl: r.studentId?.profilePicUrl,
+    }));
+  }
 
   const modules = await this._studentModuleRepo.getModulesByCourseId(courseId);
   const totalEnrollments = await this._enrollmentRepo.countByCourseId(courseId);
 
   let isEnrolled = false;
   let completionPercentage: number | undefined;
-  let userReviewed = false;
 
   if (studentId) {
-    // Check if enrolled
     isEnrolled = await this._enrollmentRepo.isCourseEnrolledByStudent(courseId, studentId);
-
-    // Get enrollment details (for completion %)
     const enrollment = await this._enrollmentRepo.findByUserAndCourse(studentId, courseId);
     completionPercentage = enrollment?.completionPercentage;
-
-    // ✅ Check if the user already reviewed this course
-    const existingReview = await this._studentCourseReviewRepo.findOne({
-      courseId : new Types.ObjectId(courseId),
-      studentId : new Types.ObjectId(studentId),
-    });
-    userReviewed = !!existingReview;
   }
 
   const dto = mapCourseToDetailDTO(
@@ -182,14 +197,11 @@ async getCourseDetailsById(
     totalEnrollments,
     completionPercentage,
     isEnrolled,
-    userReviewed // 👈 include this
+    userReviewed
   );
 
   return dto;
 }
-
-
-
 
   async getCourseRaw(courseId: string) {
     return this._studentCourseRepo.getCourseDetails(courseId);

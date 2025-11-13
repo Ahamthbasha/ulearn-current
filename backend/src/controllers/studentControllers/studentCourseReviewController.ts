@@ -39,7 +39,7 @@ export class StudentCourseReviewController implements IStudentCourseReviewContro
         res.status(StatusCode.UNAUTHORIZED).json({ message: ReviewMessages.UNAUTHORIZED });
         return;
       }
-      const reviewId = req.params.id;
+      const reviewId = req.params.reviewId;
       const updates = req.body;
       const updatedReview = await this._studentCourseReviewService.updateReview(studentId, reviewId, updates);
       if (!updatedReview) {
@@ -59,7 +59,7 @@ export class StudentCourseReviewController implements IStudentCourseReviewContro
         res.status(StatusCode.UNAUTHORIZED).json({ message: ReviewMessages.UNAUTHORIZED });
         return;
       }
-      const reviewId = req.params.id;
+      const reviewId = req.params.reviewId;
       const deletedReview = await this._studentCourseReviewService.deleteReview(studentId, reviewId);
       if (!deletedReview) {
         res.status(StatusCode.NOT_FOUND).json({ error: ReviewMessages.REVIEW_NOT_FOUND });

@@ -1082,7 +1082,9 @@ export const updateReview = async (reviewId: string, updates: {
 
 export const deleteReview = async (reviewId: string) => {
   try {
-    const response = await API.delete(`${UserRouterEndpoints.userDeleteReview}/${reviewId}`);
+
+    const response =
+     await API.delete(`${UserRouterEndpoints.userDeleteReview}/${reviewId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1101,6 +1103,7 @@ export const getMyReviews = async () => {
 export const getMyReviewForCourse = async (courseId: string) => {
   try {
     const response = await API.get(`${UserRouterEndpoints.userGetMyReviewForCourse}/${courseId}`);
+    console.log(response.data)
     return response.data;
   } catch (error) {
     throw error;

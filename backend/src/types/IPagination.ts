@@ -1,3 +1,10 @@
+export interface IPaginationResultReview<T>{
+  data:T[];
+  total:number;
+  page?:number;
+  limit?:number;
+}
+
 export interface IPaginationResult<T> {
   data: T[];
   total: number;

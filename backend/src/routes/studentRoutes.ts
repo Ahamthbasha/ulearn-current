@@ -677,14 +677,14 @@ router.post(
 )
 
 router.put(
-  "/reviews/:id",
+  "/reviews/:reviewId",
   authenticateToken,
   isStudent,
   studentCourseReviewController.updateReview.bind(studentCourseReviewController)
 )
 
 router.delete(
-  "/reviews/:id",
+  "/reviews/:reviewId",
   authenticateToken,
   isStudent,
   studentCourseReviewController.deleteReview.bind(studentCourseReviewController)

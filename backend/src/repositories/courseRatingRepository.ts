@@ -1,4 +1,3 @@
-// repositories/courseRatingRepository.ts
 import { ICourseRatingRepository } from './interfaces/ICourseRatingRepository';
 import { CourseReviewModel } from '../models/courseReviewModel';
 import { Types } from 'mongoose';

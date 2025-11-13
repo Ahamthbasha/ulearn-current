@@ -72,7 +72,7 @@ export class StudentCourseReviewService implements IStudentCourseReviewService {
     const existing = await this._studentCourseReviewRepo.findOne({ _id: reviewId, studentId: new Types.ObjectId(studentId) });
     if (!existing|| existing.isDeleted) throw new Error("Review not found or not owned by student.");
 
-    const deleted = await this._studentCourseReviewRepo.softDelete(reviewId); // soft delete
+    const deleted = await this._studentCourseReviewRepo.deleteReview(reviewId); // soft delete
     await this._courseRatingService.updateCourseRating(existing.courseId);
     return deleted;
   }
