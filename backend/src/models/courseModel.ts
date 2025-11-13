@@ -31,6 +31,8 @@ export interface ICourse extends Document {
   discountedPrice?: number;
   publishDate?: Date;
   modules?: IModulePopulated[];
+  averageRating:number;
+  totalRatings:number;
 }
 
 export interface ICourseFullyPopulated extends Omit<ICourse, "instructorId" | "category"> {
@@ -61,6 +63,8 @@ const CourseSchema = new Schema<ICourse>(
     isSubmitted: { type: Boolean, default: false },
     review: { type: String, default: "" },
     publishDate: { type: Date },
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+    totalRatings: { type: Number, default: 0 },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

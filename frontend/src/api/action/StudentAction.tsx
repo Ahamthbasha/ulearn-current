@@ -918,26 +918,6 @@ export const getLearningPathCertificate = async(learningPathId:string)=>{
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // learning path
 
 export const getAllCourses = async(categoryId?:string|null)=>{
@@ -1071,3 +1051,58 @@ export const deleteLearningPath = async (
   }
 };
 
+
+
+// review actions
+export const createReview = async (reviewData: {
+  courseId: string;
+  rating: number;
+  reviewText: string;
+  completionPercentage: number;
+}) => {
+  try {
+    const response = await API.post(`${UserRouterEndpoints.userCreateReview}`, reviewData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateReview = async (reviewId: string, updates: {
+  rating?: number;
+  reviewText?: string;
+}) => {
+  try {
+    const response = await API.put(`${UserRouterEndpoints.userUpdateReview}/${reviewId}`, updates);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteReview = async (reviewId: string) => {
+  try {
+    const response = await API.delete(`${UserRouterEndpoints.userDeleteReview}/${reviewId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getMyReviews = async () => {
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetMyReviews}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getMyReviewForCourse = async (courseId: string) => {
+  try {
+    const response = await API.get(`${UserRouterEndpoints.userGetMyReviewForCourse}/${courseId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

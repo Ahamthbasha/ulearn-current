@@ -17,9 +17,9 @@ export const getPresignedUrl = async (key: string): Promise<string> => {
   const s3 = new AWS.S3();
 
   const params = {
-    Bucket: BUCKET_NAME!, //Non - null assertion operator
+    Bucket: BUCKET_NAME!, 
     Key: key,
-    Expires: 60 * 5, // 5 minutes //30 sec
+    Expires: 60 * 5,
     ResponseContentDisposition: `attachment; filename="${key.split("/").pop()}"`,
   };
 

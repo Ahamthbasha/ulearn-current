@@ -86,4 +86,19 @@ export class EnrollmentRepository
       .session(session)
       .exec();
   }
+
+  async countByCourseId(courseId: string): Promise<number> {
+    return await this.countDocuments({
+      courseId: new Types.ObjectId(courseId),
+    });
+  }
+
+  async isCourseEnrolledByStudent(courseId: string, studentId: string): Promise<boolean> {
+  const enrollment = await this.findOne({
+    courseId : new Types.ObjectId(courseId),
+    userId : new Types.ObjectId(studentId), 
+  });
+  return !!enrollment;
+}
+
 }

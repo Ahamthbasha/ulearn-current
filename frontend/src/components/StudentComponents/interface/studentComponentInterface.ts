@@ -1,3 +1,23 @@
+export interface Review {
+  id: string;
+  courseId: string;
+  studentId: string;
+  rating: number;
+  reviewText: string;
+  completionPercentage: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+export interface ReviewModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  courseId: string;
+  courseTitle: string;
+  completionPercentage: number;
+  onReviewSubmitted?: () => void;
+  existingReview?: Review;
+}
+
 export interface CourseCardProps {
   id: string;
   title: string;

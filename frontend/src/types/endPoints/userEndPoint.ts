@@ -110,6 +110,12 @@ const UserRouterEndpoints = {
   userUpdateLearningPath: "/api/student/learningPath",
   userDeleteLearningPath: "/api/student/learningPath",
   
+  // Add to UserRouterEndpoints object
+  userCreateReview: "/api/student/reviews",
+  userUpdateReview: "/api/student/reviews",
+  userDeleteReview: "/api/student/reviews",
+  userGetMyReviews: "/api/student/reviews",
+  userGetMyReviewForCourse: "/api/student/reviews/course",
 };
 
 export default UserRouterEndpoints;

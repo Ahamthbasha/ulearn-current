@@ -1,4 +1,10 @@
-// src/dto/userDTO/courseDetailDTO.ts
+export interface IReviewDTO{
+  reviewId:string;
+  username:string;
+  rating:number;
+  reviewText:string;
+  profilePicUrl?:string;
+}
 export interface IChapterDTO {
   chapterId: string;
   chapterTitle: string;
@@ -44,4 +50,10 @@ export interface CourseDetailDTO {
   discountedPrice?: number;
   duration: string;         
   modules: IModuleDTO[];
+  reviews:IReviewDTO[];
+  averageRating:number;
+  totalEnrollments:number;
+  completionPercentage?:number;
+  isEnrolled:boolean;
+  userReviewed:boolean;
 }

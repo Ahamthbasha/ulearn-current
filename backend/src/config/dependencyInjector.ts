@@ -340,6 +340,37 @@ import { StudentCourseOfferRepository } from "../repositories/studentRepository/
 import { IStudentModuleRepository } from "../repositories/studentRepository/interface/IStudentModuleRepository";
 import { StudentModuleRepository } from "../repositories/studentRepository/studentModuleRepository";
 
+//review
+
+import { ICourseRatingRepository } from "../repositories/interfaces/ICourseRatingRepository";
+import { CourseRatingRepository } from "../repositories/courseRatingRepository";
+import { ICourseRatingService } from "../services/interface/ICourseRatingService";
+import { CourseRatingService } from "../services/courseRatingService";
+import { CourseRepository } from "../repositories/CourseRepository";
+
+import { IEnrollmentRepository } from "../repositories/interfaces/IEnrollmentRepository";
+import { EnrollmentRepository } from "../repositories/EnrollmentRepository";
+
+const courseRatingRepo : ICourseRatingRepository = new CourseRatingRepository(new CourseRepository())
+
+const courseRatingService : ICourseRatingService = new CourseRatingService(courseRatingRepo)
+
+
+import { IStudentCourseReviewRepo } from "../repositories/studentRepository/interface/IStudentCourseReviewRepo";
+import { StudentCourseReviewRepo } from "../repositories/studentRepository/studentCourseReviewRepo";
+import { IStudentCourseReviewService } from "../services/studentServices/interface/IStudentCourseReviewService";
+import { StudentCourseReviewService } from "../services/studentServices/studentCourseReviewService";
+import { IStudentCourseReviewController } from "../controllers/studentControllers/interfaces/IStudentCourseReviewController";
+import { StudentCourseReviewController } from "../controllers/studentControllers/studentCourseReviewController";
+
+
+const studentCourseReviewRepo : IStudentCourseReviewRepo = new StudentCourseReviewRepo()
+
+const studentCourseReviewService : IStudentCourseReviewService = new StudentCourseReviewService(studentCourseReviewRepo,courseRatingService)
+
+const studentCourseReviewController : IStudentCourseReviewController = new StudentCourseReviewController(studentCourseReviewService)
+
+
 const studentModuleRepo : IStudentModuleRepository = new StudentModuleRepository()
 
 const studentCourseOfferRepo: IStudentCourseOfferRepository =
@@ -359,7 +390,9 @@ const studentCourseRepository: IStudentCourseRepository =
 
 const studentCourseService: IStudentCourseService = new StudentCourseService(
   studentCourseRepository,
-  studentModuleRepo
+  studentModuleRepo,
+  studentCourseReviewRepo,
+  new EnrollmentRepository()
 );
 
 const studentCourseController: IStudentCourseController =
@@ -394,10 +427,6 @@ import { StudentLmsService } from "../services/studentServices/studentLmsService
 import { IStudentLmsController } from "../controllers/studentControllers/interfaces/IStudentLmsController";
 import { StudentLmsController } from "../controllers/studentControllers/studentLmsController";
 
-// import { ILearningPath, LearningPathModel } from "../models/learningPathModel";
-
-import { IEnrollmentRepository } from "../repositories/interfaces/IEnrollmentRepository";
-import { EnrollmentRepository } from "../repositories/EnrollmentRepository";
 
 const enrollmentRepo: IEnrollmentRepository = new EnrollmentRepository();
 
@@ -506,7 +535,6 @@ import { StudentCheckoutService } from "../services/studentServices/studentCheck
 import { IStudentCheckoutController } from "../controllers/studentControllers/interfaces/IStudentCheckoutController";
 import { StudentCheckoutController } from "../controllers/studentControllers/studentCheckoutController";
 import { OrderRepository } from "../repositories/OrderRepository";
-import { CourseRepository } from "../repositories/CourseRepository";
 
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
 import { WalletRepository } from "../repositories/WalletRepository";
@@ -1109,6 +1137,8 @@ const studentLearningPathService : IStudentLearningPathService = new StudentLear
 
 const studentLearningPathController : IStudentLearningPathController = new StudentLearningPathController(studentLearningPathService)
 
+
+
 export {
   studentController,
   instructorController,
@@ -1213,4 +1243,8 @@ export {
 
   //instructorModule controller
   instructorModuleController,
+
+  //student courseReviewController
+
+  studentCourseReviewController,
 };

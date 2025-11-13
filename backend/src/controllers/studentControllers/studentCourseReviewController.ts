@@ -24,8 +24,8 @@ export class StudentCourseReviewController implements IStudentCourseReviewContro
         res.status(StatusCode.UNAUTHORIZED).json({ message: ReviewMessages.UNAUTHORIZED });
         return;
       }
-      const { courseId, rating, reviewText } = req.body;
-      const review = await this._studentCourseReviewService.createReview(studentId, { courseId, rating, reviewText });
+      const { courseId, rating, reviewText,completionPercentage } = req.body;
+      const review = await this._studentCourseReviewService.createReview(studentId, { courseId, rating, reviewText },{completionPercentage});
       res.status(StatusCode.CREATED).json(review);
     } catch (err) {
       res.status(StatusCode.BAD_REQUEST).json({ error: getErrorMessage(err) || ReviewMessages.BAD_REQUEST });

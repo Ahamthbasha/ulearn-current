@@ -1,3 +1,11 @@
+export interface Review {
+  reviewId: string;
+  username: string;
+  rating: number;
+  reviewText: string;
+  profilePicUrl?: string;
+}
+
 export interface Quiz {
   quizId: string;
   questions: QuizQuestion[];
@@ -46,4 +54,6 @@ export interface CourseDetail {
   modules: Module[];
   chapterCount?: number;
   quizQuestionCount?: number;
+  averageRating:number;
+  totalEnrollments:number;
 }

@@ -7,6 +7,7 @@ import {
   StudentSuccessMessages,
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 
 export class StudentCourseController implements IStudentCourseController {
   private _studentCourseService: IStudentCourseService;
@@ -97,10 +98,9 @@ export class StudentCourseController implements IStudentCourseController {
     }
   }
 
-  async getCourseDetails(req: Request, res: Response): Promise<void> {
+  async getCourseDetails(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { courseId } = req.params;
-
       if (!courseId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
@@ -109,9 +109,13 @@ export class StudentCourseController implements IStudentCourseController {
         return;
       }
 
-      const courseDTO =
-        await this._studentCourseService.getCourseDetailsById(courseId);
+      const userId = req.user?.id
 
+      const courseDTO = userId
+        ? await this._studentCourseService.getCourseDetailsById(courseId, userId)
+        : await this._studentCourseService.getCourseDetailsById(courseId);
+
+        
       if (!courseDTO) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,

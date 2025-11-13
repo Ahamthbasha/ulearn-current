@@ -9,13 +9,16 @@ export interface IStudentCourseService {
     limit: number,
     searchTerm?: string,
     sort?: "name-asc" | "name-desc" | "price-asc" | "price-desc",
-    categoryId?: string,
+    categoryId?: string
   ): Promise<{
     data: CourseDetailDTO[];
     total: number;
   }>;
 
-  getCourseDetailsById(courseId: string): Promise<CourseDetailDTO | null>;
+  getCourseDetailsById(
+    courseId: string,
+    studentId?: string
+  ): Promise<CourseDetailDTO | null>;
 
   getCourseRaw(courseId: string): Promise<{
     course: ICourseFullyPopulated | null;
@@ -23,5 +26,8 @@ export interface IStudentCourseService {
     quizQuestionCount: number;
   }>;
 
-  getCourses(categoryId?:string): Promise<Array<{ _id: string; courseName: string }>>;
+  getCourses(
+    categoryId?: string
+  ): Promise<Array<{ _id: string; courseName: string }>>;
+
 }

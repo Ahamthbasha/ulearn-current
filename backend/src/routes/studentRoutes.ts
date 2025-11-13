@@ -18,11 +18,13 @@ import {
   studentCouponController,
   studentLmsEnrollmentController,
   studentLearningPathController,
+  studentCourseReviewController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 import { isStudent } from "../middlewares/roleAuth";
 import { restrictBlockedUser } from "../middlewares/blockCheck";
+import { optionalAuthenticateToken } from "../middlewares/optionalAuthenticateToken";
 
 const router = Router();
 
@@ -105,6 +107,7 @@ router.get(
 
 router.get(
   "/courses/:courseId",
+  optionalAuthenticateToken,
   studentCourseController.getCourseDetails.bind(studentCourseController),
 );
 
@@ -663,5 +666,44 @@ router.delete(
     studentLearningPathController,
   ),
 );
+
+//review
+
+router.post(
+  "/reviews",
+  authenticateToken,
+  isStudent,
+  studentCourseReviewController.createReview.bind(studentCourseReviewController)
+)
+
+router.put(
+  "/reviews/:id",
+  authenticateToken,
+  isStudent,
+  studentCourseReviewController.updateReview.bind(studentCourseReviewController)
+)
+
+router.delete(
+  "/reviews/:id",
+  authenticateToken,
+  isStudent,
+  studentCourseReviewController.deleteReview.bind(studentCourseReviewController)
+)
+
+
+router.get(
+  "/reviews",
+  authenticateToken,
+  isStudent,
+  studentCourseReviewController.getMyReviews.bind(studentCourseReviewController)
+)
+
+
+router.get(
+  "/reviews/course/:courseId",
+  authenticateToken,
+  isStudent,
+  studentCourseReviewController.getMyReviewForCourse.bind(studentCourseReviewController)
+)
 
 export default router;

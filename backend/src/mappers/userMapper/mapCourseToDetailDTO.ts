@@ -1,11 +1,16 @@
 import { ICourseFullyPopulated } from "../../models/courseModel";
-import { CourseDetailDTO, IModuleDTO } from "../../dto/userDTO/courseDetailDTO";
+import { CourseDetailDTO, IModuleDTO, IReviewDTO } from "../../dto/userDTO/courseDetailDTO";
 import { parseDurationStringToSeconds } from "../../utils/parseDuration";
 import { formatDuration } from "../../utils/formatDuration";
 
 export const mapCourseToDetailDTO = (
   course: ICourseFullyPopulated,
-  modules: IModuleDTO[]
+  modules: IModuleDTO[],
+  reviews:IReviewDTO[],
+  totalEnrollments:number=0,
+  completionPercentage?:number,
+  isEnrolled:boolean = false,
+  userReviewed:boolean = false
 ): CourseDetailDTO => {
   const instructorName = course.instructorId.username;
   const instructorId = course.instructorId._id.toString()
@@ -30,5 +35,11 @@ export const mapCourseToDetailDTO = (
     discountedPrice: course.discountedPrice,
     duration: formatDuration(totalSeconds),
     modules,
+    reviews,
+    averageRating:course.averageRating ?? 0,
+    totalEnrollments,
+    completionPercentage,
+    isEnrolled,
+    userReviewed
   };
 };

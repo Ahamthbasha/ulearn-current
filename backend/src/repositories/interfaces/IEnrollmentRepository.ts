@@ -29,4 +29,7 @@ export interface IEnrollmentRepository extends IGenericRepository<IEnrollment> {
     updates: Partial<IEnrollment>,
     session: mongoose.ClientSession,
   ): Promise<IEnrollment | null>;
+  countByCourseId(courseId:string):Promise<number>
+
+  isCourseEnrolledByStudent(courseId:string,studentId:string):Promise<boolean>
 }
