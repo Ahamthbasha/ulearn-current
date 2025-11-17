@@ -338,10 +338,8 @@
 
 
 
-// src/components/InstructorComponents/SlotModal.tsx
-// SlotModal.tsx — FINAL FIXED VERSION (Nov 2025)
 import { Dialog } from "@headlessui/react";
-import { format, isBefore, isSameDay } from "date-fns";
+import { format, parseISO, isBefore } from "date-fns";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { createSlot, updateSlot } from "../../api/action/InstructorActionApi";
@@ -379,7 +377,7 @@ const SlotModal = ({
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // CRITICAL FIX: Use UTC field for editing
+  // Use UTC field for editing
   useEffect(() => {
     if (mode === "edit" && initialData) {
       // Use startTimeUTC (ISO string) → convert to IST → extract time
@@ -423,37 +421,53 @@ const SlotModal = ({
       return;
     }
 
+    // Create ISO strings in IST timezone
     const startDateTimeStr = createISTDateTime(startDate, startTime);
     const endDateTimeStr = createISTDateTime(startDate, endTime);
 
-    const startDateTime = new Date(startDateTimeStr);
-    const endDateTime = new Date(endDateTimeStr);
+    // Parse to Date objects for validation
+    const startDateTime = parseISO(startDateTimeStr);
+    const endDateTime = parseISO(endDateTimeStr);
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startDateObj = new Date(startDate);
+    // Get current time in IST for validation
+    const nowIST = formatInTimeZone(new Date(), IST, "yyyy-MM-dd'T'HH:mm:ss");
+    const nowISTDate = parseISO(nowIST);
+    
+    // Get today's date in IST (date only, no time)
+    const todayISTStr = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
+    const [todayYear, todayMonth, todayDay] = todayISTStr.split('-').map(Number);
+    const todayIST = new Date(todayYear, todayMonth - 1, todayDay);
+    
+    // Parse start date (date only)
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const startDateObj = new Date(startYear, startMonth - 1, startDay);
 
+    // Validation: End time after start time
     if (endDateTime <= startDateTime) {
       toast.error("End time must be after start time");
       return;
     }
 
+    // Validation: Recurrence fields
     if (recurrence && (!endDate || selectedDays.length === 0)) {
       toast.error("End date and days of week are required for recurring slots");
       return;
     }
 
-    if (!recurrence && isBefore(startDateTime, now)) {
+    // Validation: Single slot - cannot be in the past
+    if (!recurrence && isBefore(startDateTime, nowISTDate)) {
       toast.error("Cannot select a start time in the past");
       return;
     }
 
-    if (recurrence && startDateObj < today) {
+    // Validation: Recurrence start date must be today or future
+    if (recurrence && startDateObj < todayIST) {
       toast.error("Recurrence start date must be today or in the future");
       return;
     }
 
-    if (recurrence && isSameDay(startDateObj, today) && isBefore(startDateTime, now)) {
+    // Warning: If today's slot time is in the past
+    if (recurrence && startDateObj.getTime() === todayIST.getTime() && isBefore(startDateTime, nowISTDate)) {
       toast.warn("Today's slot will be skipped as the start time is in the past.");
     }
 
