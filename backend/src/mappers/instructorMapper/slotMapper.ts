@@ -28,7 +28,6 @@
 
 
 
-// src/mappers/instructorMapper/slotMapper.ts
 import { ISlot } from "../../models/slotModel";
 import { SlotDTO } from "../../dto/instructorDTO/slotDTO";
 import { formatInTimeZone } from "date-fns-tz";
