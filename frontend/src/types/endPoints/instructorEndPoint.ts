@@ -131,7 +131,12 @@ const InstructorRouterEndPoints = {
   instructorResubmitCourseOffer : "/api/instructor/resubmitOffer",
   instructorGetCourseOffers : "/api/instructor/myOffers",
   instructorGetSpecificOfferById:"/api/instructor/courseOffer",
-  instructorDeleteSpecificOffer : "/api/instructor/courseOffer"
+  instructorDeleteSpecificOffer : "/api/instructor/courseOffer",
+
+  //instructorReview
+  instructorGetReviews : "/api/instructor/courses",
+  instructorFlagReview : "/api/instructor/review",
+  instructorGetReviewStats : "/api/instructor/courses"
 }
 
 export default InstructorRouterEndPoints

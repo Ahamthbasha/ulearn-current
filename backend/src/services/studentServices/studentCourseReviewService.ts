@@ -31,12 +31,35 @@ export class StudentCourseReviewService implements IStudentCourseReviewService {
       throw new Error("You have already reviewed this course.");
     }
 
+     if (existing && existing.isDeleted) {
+      const updated = await this._studentCourseReviewRepo.updateReview(
+        existing.id.toString(),
+        {
+          rating: reviewData.rating,
+          reviewText: reviewData.reviewText,
+          flaggedByInstructor: false,
+          isDeleted: false,
+          status: "approved",
+          rejectionReason: null, 
+        }
+      );
+
+      if (updated) {
+        await this._courseRatingService.updateCourseRating(updated.courseId);
+        return updated;
+      }
+      
+      throw new Error("Failed to restore review.");
+    }
+
     const toCreate: Partial<ICourseReview> = {
       ...reviewData,
       studentId: new Types.ObjectId(studentId),
       courseId: new Types.ObjectId(reviewData.courseId),
-      approved: true, // default to pending approval
       flaggedByInstructor: false,
+      status:"approved",
+      isDeleted:false,
+      rejectionReason:null
     };
     
     const review = await this._studentCourseReviewRepo.createReview(toCreate);
@@ -59,8 +82,8 @@ export class StudentCourseReviewService implements IStudentCourseReviewService {
 
     const updated = await this._studentCourseReviewRepo.updateReview(reviewId, {
       ...updates,
-      approved: true, // re-approve after edit
       flaggedByInstructor: false,
+      status:"approved"
     });
 
     await this._courseRatingService.updateCourseRating(existing.courseId);
@@ -68,7 +91,6 @@ export class StudentCourseReviewService implements IStudentCourseReviewService {
   }
 
   async deleteReview(studentId: string, reviewId: string): Promise<ICourseReview | null> {
-    // Ensure student owns the review
     const existing = await this._studentCourseReviewRepo.findOne({ _id: reviewId, studentId: new Types.ObjectId(studentId) });
     if (!existing|| existing.isDeleted) throw new Error("Review not found or not owned by student.");
 

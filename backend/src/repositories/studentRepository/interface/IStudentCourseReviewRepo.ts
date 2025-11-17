@@ -13,7 +13,6 @@ export interface IStudentCourseReviewRepo {
     courseId: string
   ): Promise<ICourseReview | null>;
   findOne(filter: Partial<ICourseReview>): Promise<ICourseReview | null>;
-  softDelete(reviewId: string): Promise<ICourseReview | null>;
   getReviewsByCourse(courseId: string): Promise<PopulatedCourseReview[]>;
   getStudentReviewForCourse(
     courseId: string,

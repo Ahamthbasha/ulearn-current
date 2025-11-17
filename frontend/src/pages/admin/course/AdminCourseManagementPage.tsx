@@ -8,7 +8,7 @@ import {
   getAllCourses,
   listUnListCourse,
 } from "../../../api/action/AdminActionApi";
-import { Eye, EyeOff, Info } from "lucide-react";
+import { Eye, EyeOff, Info, MessageSquare } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { useDebounce } from "../../../hooks/UseDebounce";
@@ -172,6 +172,13 @@ const AdminCourseManagementPage = () => {
       icon: () => <Info size={18} />,
       onClick: (record) => navigate(`/admin/courses/${record.courseId}`),
       className: "bg-blue-500 hover:bg-blue-600 text-white",
+    },
+    {
+      key: "viewReviews",
+      label: "Reviews",
+      icon: () => <MessageSquare size={18} />,
+      onClick: (record) => navigate(`/admin/course/reviews/${record.courseId}`),
+      className: "bg-purple-500 hover:bg-purple-600 text-white",
     },
   ];
 

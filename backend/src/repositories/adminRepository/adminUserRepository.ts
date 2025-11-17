@@ -1,7 +1,7 @@
 import UserModel, { IUser } from "../../models/userModel";
 import { GenericRepository } from "../genericRepository";
 import { IAdminUserRepository } from "./interface/IAdminUserRepository";
-
+import {Types} from "mongoose"
 export class AdmiUserRespository
   extends GenericRepository<IUser>
   implements IAdminUserRepository
@@ -71,4 +71,24 @@ export class AdmiUserRespository
       throw error;
     }
   }
+
+  async getUserById(userId: string | Types.ObjectId): Promise<IUser | null> {
+    try {
+      return await this.findById(userId.toString());
+    } catch (error) {
+      console.error("Error fetching user by ID:", error);
+      return null;
+    }
+  }
+
+async getUsersByIds(ids: (string | Types.ObjectId)[]): Promise<IUser[]> {
+  try {
+    const objectIds = ids.map(id => new Types.ObjectId(id));
+    return await this.find({ _id: { $in: objectIds } });
+  } catch (error) {
+    console.error("Error fetching users by IDs:", error);
+    return [];
+  }
+}
+
 }

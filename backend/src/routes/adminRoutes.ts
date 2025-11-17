@@ -12,6 +12,7 @@ import {
   adminWithdrawalController,
   adminCouponController,
   adminCourseOfferController,
+  adminCourseReviewController,
 } from "../config/dependencyInjector";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 
@@ -398,6 +399,44 @@ router.get(
   isAdmin,
   adminCourseOfferController.getOfferById.bind(adminCourseOfferController),
 );
+
+//course review management
+
+router.get(
+  "/reviews",
+  authenticateToken,
+  isAdmin,
+  adminCourseReviewController.getAllReviews.bind(adminCourseReviewController)
+)
+
+router.get(
+  "/reviews/:reviewId",
+  authenticateToken,
+  isAdmin,
+  adminCourseReviewController.getReviewById.bind(adminCourseReviewController)
+)
+
+router.delete(
+  "/reviews/:reviewId",
+  authenticateToken,
+  isAdmin,
+  adminCourseReviewController.deleteReview.bind(adminCourseReviewController)
+)
+
+router.post(
+  "/reviews/:reviewId/reject",
+  authenticateToken,
+  isAdmin,
+  adminCourseReviewController.rejectReview.bind(adminCourseReviewController)
+)
+
+router.patch(
+  "/reviews/:reviewId/approve",
+  authenticateToken,
+  isAdmin,
+  adminCourseReviewController.approveReview.bind(adminCourseReviewController)
+)
+
 
 
 const adminRoutes = router;

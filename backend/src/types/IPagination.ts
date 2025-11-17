@@ -1,4 +1,6 @@
-export interface IPaginationResultReview<T>{
+import { ReviewDTO } from "../dto/instructorDTO/reviewDTO";
+
+export interface IPaginationResultReview<T = ReviewDTO>{
   data:T[];
   total:number;
   page?:number;

@@ -10,6 +10,7 @@ import Card from "../../../components/common/Card";
 import Modal from "react-modal";
 import type { CourseManagement } from "../interface/instructorInterface";
 import { AxiosError } from "axios";
+import { Star } from "lucide-react";
 
 Modal.setAppElement("#root");
 
@@ -284,12 +285,25 @@ const CourseManagementPage = () => {
           </button>
         )}
         {course.isPublished ? (
+          <>
           <button
             disabled
             className="bg-green-600 text-white px-5 py-2 rounded-md text-sm font-medium shadow opacity-70 cursor-not-allowed"
           >
             Course Published
           </button>
+          
+           <button
+             onClick={() => navigate(`/instructor/courses/${courseId}/reviews`)}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow flex items-center gap-2"
+          >
+            <Star className="w-4 h-4" />
+            View Reviews
+          </button>
+          
+          </>
+          
+
         ) : course.publishDate ? (
           <button
             onClick={handleOpenPublishModal}

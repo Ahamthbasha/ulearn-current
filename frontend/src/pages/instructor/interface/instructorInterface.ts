@@ -1,4 +1,13 @@
-
+export interface ReviewItem {
+  id: string;
+  rating: number;
+  comment: string;
+  studentName: string;
+  createdAt: string;
+  flagged: boolean;
+  status: "pending" | "approved" | "rejected" | "deleted";
+  rejectionReason: string | null;
+}
 export interface Module extends Record<string,unknown> {
   _id?: string;
   moduleTitle: string;

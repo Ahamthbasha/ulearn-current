@@ -18,6 +18,7 @@ import {
   instructorWithdrawalController,
   instructorCourseOfferController,
   instructorModuleController,
+  instructorCourseReviewController,
 } from "../config/dependencyInjector";
 import upload from "../utils/multer";
 
@@ -826,6 +827,29 @@ router.delete(
     instructorCourseOfferController,
   ),
 );
+
+//review management
+
+router.get(
+  "/courses/:courseId/reviews",
+  authenticateToken,
+  isInstructor,
+  instructorCourseReviewController.getReviews.bind(instructorCourseReviewController)
+)
+
+router.get(
+  "/courses/:courseId/reviewStat",
+  authenticateToken,
+  isInstructor,
+  instructorCourseReviewController.getReviewStats.bind(instructorCourseReviewController)
+)
+
+router.patch(
+  "/review/:reviewId/flag",
+  authenticateToken,
+  isInstructor,
+  instructorCourseReviewController.flagReview.bind(instructorCourseReviewController)
+)
 
 const instructorRoutes = router;
 

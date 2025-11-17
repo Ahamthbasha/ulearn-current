@@ -3,12 +3,12 @@ import fileDownload from "js-file-download";
 import { API } from "../../service/axios";
 import {
   type IQuestionPayload,
-  // type ICreateQuizPayload,
 } from "../../types/interfaces/IQuiz";
 
 import { type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesParam";
 import type { IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
 import { AxiosError } from "axios";
+import type { FlagReviewResponse, GetReviewsParams, PaginatedReviews } from "../../pages/instructor/interface/instructorReviewInterface";
 
 
 export const sendVerification = async (formData: FormData) => {
@@ -1162,5 +1162,52 @@ export const deleteInstructorCourseOffer = async (offerId: string) => {
     return response.data
   } catch (error) {
     throw error
+  }
+};
+
+//instructor review
+
+export const getInstructorCourseReviews = async (
+  params: GetReviewsParams
+): Promise<PaginatedReviews> => {
+  try {
+    const { courseId, page = 1, limit = 10, status, search } = params;
+
+    const response = await API.get<PaginatedReviews>(
+      `${InstructorRouterEndPoints.instructorGetReviews}/${courseId}/reviews`,
+      {
+        params: {
+          page,
+          limit,
+          status: status && status !== "all" ? status : undefined,
+          search: search?.trim() || undefined,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error
+  }
+};
+
+
+export const flagReview = async(reviewId:string):Promise<FlagReviewResponse>=>{
+  try {
+    const response = await API.patch<FlagReviewResponse>(`${InstructorRouterEndPoints.instructorFlagReview}/${reviewId}/flag`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+
+export const getCourseReviewStats = async (courseId: string)=> {
+  try {
+    const response = await API.get(`${InstructorRouterEndPoints.instructorGetReviewStats}/${courseId}/reviewStat`);
+    // Fix: return response.data.data, not response.data
+    return response.data.data;
+  } catch (error) {
+    throw error;
   }
 };

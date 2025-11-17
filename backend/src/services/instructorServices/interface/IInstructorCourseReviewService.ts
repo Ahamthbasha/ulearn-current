@@ -1,4 +1,5 @@
-import { ICourseReview } from "../../../models/courseReviewModel";
+import { IFormattedReview } from "../../../dto/instructorDTO/reviewDTO";
+
 import { IPaginationResultReview } from "../../../types/IPagination"; 
 
 export interface IInstructorCourseReviewService {
@@ -7,11 +8,18 @@ export interface IInstructorCourseReviewService {
     courseId: string,
     page: number,
     limit: number,
-    filter?: { flagged?: boolean; approved?: boolean }
-  ): Promise<IPaginationResultReview<ICourseReview>>;
+    filter?: { status?: "all" | "pending" | "approved" | "rejected" | "deleted" },
+    search?: string
+  ): Promise<IPaginationResultReview<IFormattedReview>>;
 
   flagReview(
     instructorId: string,
     reviewId: string
   ): Promise<{ success: boolean; message: string }>;
+
+  getCourseReviewStats(
+    instructorId: string,
+    courseId: string
+  ): Promise<{ ratingCounts: Record<string, number>; averageRating: number }>;
+
 }

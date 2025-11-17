@@ -92,6 +92,15 @@ const AdminRoutersEndPoints = {
   adminGetLearningPathById: "/api/admin/learningPaths",
   adminVerifyLearningPath: "/api/admin/learningPaths",
 
+  //adminReview management
+
+  adminGetAllReviews:"/api/admin/reviews",
+  adminDeleteReview:"/api/admin/reviews",
+  adminUnDeleteReview:"/api/admin/reviews",
+  adminRejectReview:"/api/admin/reviews",
+  adminApproveReview: "/api/admin/reviews",
+  adminGetSpecificReview:"/api/admin/reviews",
+
 
 };
 

@@ -3,7 +3,7 @@ import { IInstructorCourseReviewService } from "../../services/instructorService
 import { IInstructorCourseReviewController } from "./interfaces/IInstructorCourseReviewController"; 
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
-import { InstructorReviewMessages } from "src/utils/constants";
+import { InstructorReviewMessages } from "../../utils/constants";
 
 export class InstructorCourseReviewController
   implements IInstructorCourseReviewController
@@ -13,57 +13,53 @@ export class InstructorCourseReviewController
     this._reviewService = reviewService
   }
 
+// controllers/InstructorCourseReviewController.ts
 async getReviews(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const instructorId = req.user?.id;
-
-    if (!instructorId) {
-      res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: InstructorReviewMessages.UNAUTHORIZED,
-      });
-      return;
-    }
-
-    const { courseId } = req.params;
-    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
-    const limit = Math.min(Math.max(1, parseInt(req.query.limit as string, 10) || 10), 50);
-
-    const filter: { flagged?: boolean; approved?: boolean } = {};
-    if (req.query.flagged === "true") filter.flagged = true;
-    if (req.query.approved === "false") filter.approved = false;
-
-    try {
-      const result = await this._reviewService.getCourseReviews(
-        instructorId,
-        courseId,
-        page,
-        limit,
-        filter
-      );
-
-      res.status(StatusCode.OK).json({
-        success: true,
-        message: InstructorReviewMessages.FETCH_SUCCESS,
-        data: result.data,
-        pagination: {
-          page: result.page ?? page,
-          limit: result.limit ?? limit,
-          total: result.total,
-          totalPages: Math.ceil(result.total / limit),
-        },
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : InstructorReviewMessages.INTERNAL_ERROR;
-
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message,
-      });
-    }
+  const instructorId = req.user?.id;
+  if (!instructorId) {
+    res.status(StatusCode.UNAUTHORIZED).json({
+      success: false,
+      message: InstructorReviewMessages.UNAUTHORIZED,
+    });
+    return;
   }
+
+  const { courseId } = req.params;
+  const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+  const limit = Math.min(Math.max(1, parseInt(req.query.limit as string, 10) || 10), 50);
+
+  const statusFilter = req.query.status as "all" | "pending" | "approved" | "rejected" | "deleted" | undefined;
+  const filter: { status?: typeof statusFilter } = {};
+  if (statusFilter) filter.status = statusFilter;
+
+  const search = req.query.search as string | undefined;
+
+  try {
+    const result = await this._reviewService.getCourseReviews(
+      instructorId,
+      courseId,
+      page,
+      limit,
+      filter,
+      search
+    );
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: InstructorReviewMessages.FETCH_SUCCESS,
+      data: result.data,
+      pagination: {
+        page: result.page ?? page,
+        limit: result.limit ?? limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / limit),
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : InstructorReviewMessages.INTERNAL_ERROR;
+    res.status(StatusCode.BAD_REQUEST).json({ success: false, message });
+  }
+}
 
   async flagReview(req: AuthenticatedRequest, res: Response): Promise<void> {
     const instructorId = req.user?.id;
@@ -97,4 +93,28 @@ async getReviews(req: AuthenticatedRequest, res: Response): Promise<void> {
       });
     }
   }
+
+  async getReviewStats(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const instructorId = req.user?.id;
+  const { courseId } = req.params;
+
+  if (!instructorId) {
+    res.status(StatusCode.UNAUTHORIZED).json({ success: false, message: InstructorReviewMessages.UNAUTHORIZED });
+    return;
+  }
+
+  try {
+    const data = await this._reviewService.getCourseReviewStats(instructorId, courseId);
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Course review stats fetched successfully",
+      data,
+    });
+  } catch (error) {
+    res.status(StatusCode.BAD_REQUEST).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to fetch review stats",
+    });
+  }
+}
 }

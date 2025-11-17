@@ -1137,7 +1137,37 @@ const studentLearningPathService : IStudentLearningPathService = new StudentLear
 
 const studentLearningPathController : IStudentLearningPathController = new StudentLearningPathController(studentLearningPathService)
 
+//instructor course review management //
 
+import { IInstructorCourseReviewRepo } from "../repositories/instructorRepository/interface/IInstructorCourseReviewRepo";
+import { InstructorCourseReviewRepo } from "../repositories/instructorRepository/instructorCourseReviewRepo";
+import { IInstructorCourseReviewService } from "../services/instructorServices/interface/IInstructorCourseReviewService";
+import { InstructorCourseReviewService } from "../services/instructorServices/instructorCourseReviewService";
+import { IInstructorCourseReviewController } from "../controllers/instructorController/interfaces/IInstructorCourseReviewController";
+import { InstructorCourseReviewController } from "../controllers/instructorController/instructorCourseReviewController";
+
+
+const instructorCourseReviewRepo : IInstructorCourseReviewRepo = new InstructorCourseReviewRepo(new CourseRepository())
+
+const instructorCourseReviewService : IInstructorCourseReviewService = new InstructorCourseReviewService(instructorCourseReviewRepo,courseRatingRepo)
+
+const instructorCourseReviewController : IInstructorCourseReviewController = new InstructorCourseReviewController(instructorCourseReviewService)
+
+// admin review management //
+
+import { IAdminCourseReviewRepo } from "../repositories/adminRepository/interface/IAdminCourseReviewRepo";
+import { AdminCourseReviewRepo } from "../repositories/adminRepository/adminCourseReviewRepo";
+import { IAdminCourseReviewService } from "../services/adminServices/interface/IAdminCourseReviewService";
+import { AdminCourseReviewService } from "../services/adminServices/adminCourseReviewService";
+import { IAdminCourseReviewController } from "../controllers/adminControllers/interface/IAdminCourseReviewController";
+import { AdminCourseReviewController } from "../controllers/adminControllers/adminCourseReviewController";
+
+
+const adminCourseReviewRepo:IAdminCourseReviewRepo = new AdminCourseReviewRepo(adminUserRepository)
+
+const adminCourseReviewService : IAdminCourseReviewService = new AdminCourseReviewService(adminCourseReviewRepo,courseRatingRepo)
+
+const adminCourseReviewController : IAdminCourseReviewController = new AdminCourseReviewController(adminCourseReviewService)
 
 export {
   studentController,
@@ -1245,6 +1275,11 @@ export {
   instructorModuleController,
 
   //student courseReviewController
-
   studentCourseReviewController,
+
+  //instructor courseReviewController
+  instructorCourseReviewController,
+
+  //admin courseReviewController
+  adminCourseReviewController,
 };

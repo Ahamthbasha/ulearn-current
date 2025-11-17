@@ -1,81 +1,157 @@
-// src/repositories/instructorRepository/instructorCourseReviewRepo.ts
 import { Types, PipelineStage } from "mongoose";
-import { CourseModel } from "../../models/courseModel";
 import { CourseReviewModel, ICourseReview } from "../../models/courseReviewModel";
 import { IInstructorCourseReviewRepo } from "./interface/IInstructorCourseReviewRepo";
 import { GenericRepository } from "../genericRepository";
 import { IPaginationResultReview } from "../../types/IPagination";
+import { ICourseRepository } from "../interfaces/ICourseRepository";
+import { format } from "date-fns";
+import { IFormattedReview } from "../../dto/instructorDTO/reviewDTO";
 
 export class InstructorCourseReviewRepo
   extends GenericRepository<ICourseReview>
   implements IInstructorCourseReviewRepo
 {
-  constructor() {
+  private _courseRepo: ICourseRepository;
+  constructor(courseRepo: ICourseRepository) {
     super(CourseReviewModel);
+    this._courseRepo = courseRepo;
   }
 
-  async getReviewsByCourseId(
-    instructorId: Types.ObjectId,
-    courseId: Types.ObjectId,
-    page: number,
-    limit: number,
-    filter: { flagged?: boolean; approved?: boolean } = {}
-  ): Promise<IPaginationResultReview<ICourseReview>> {
-    // Ensure course belongs to instructor
-    const isOwner = await this.isCourseOwnedByInstructor(courseId, instructorId);
-    if (!isOwner) {
-      throw new Error("Unauthorized: You do not own this course");
-    }
+  // async getReviewsByCourseId(
+  //   instructorId: Types.ObjectId,
+  //   courseId: Types.ObjectId,
+  //   page: number,
+  //   limit: number,
+  //   filter: { flagged?: boolean; status?: string } = {},
+  //   search?: string
+  // ): Promise<IPaginationResultReview<IFormattedReview>> {
+  //   const isOwner = await this.isCourseOwnedByInstructor(courseId, instructorId);
+  //   if (!isOwner) throw new Error("Unauthorized: You do not own this course");
 
-    const matchStage: PipelineStage.Match = {
-      $match: {
-        courseId,
-        isDeleted: false,
-        ...filter,
-      },
-    };
+  //   const match: any = { courseId };
+  //   if (filter.flagged !== undefined) match.flaggedByInstructor = filter.flagged;
 
-    const lookupStage: PipelineStage.Lookup = {
+
+  //   const pipeline: PipelineStage[] = [
+  //     { $match: match },
+  //     {
+  //       $lookup: {
+  //         from: "users",
+  //         localField: "studentId",
+  //         foreignField: "_id",
+  //         as: "student",
+  //       },
+  //     },
+  //     { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+  //   ];
+
+  //   if (search?.trim()) {
+  //     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  //     pipeline.push({
+  //       $match: {
+  //         $or: [
+  //           { "student.username": { $regex: escaped, $options: "i" } },
+  //           { reviewText: { $regex: escaped, $options: "i" } },
+  //         ],
+  //       },
+  //     });
+  //   }
+
+  //   pipeline.push(
+  //     {
+  //       $project: {
+  //         rating: 1,
+  //         reviewText: 1,
+  //         createdAt: 1,
+  //         flaggedByInstructor: 1,
+  //         rejectionReason: 1,
+  //         status: 1,
+  //         "student.username": 1,
+  //         _id: 1,
+  //       },
+  //     },
+  //     { $sort: { createdAt: -1 } }
+  //   );
+
+  //   const { data, total } = await this.paginateWithAggregation(pipeline, page, limit);
+
+  //   const formatted: IFormattedReview[] = data.map((d: any) => ({
+  //     ...d,
+  //     _id: d._id.toString(),
+  //     createdAt: format(new Date(d.createdAt), "dd-MM-yyyy hh:mm a"),
+  //     rejectionReason: d.rejectionReason ?? null,
+  //   }));
+
+  //   return { data: formatted, total, page, limit };
+  // }
+
+
+  // repositories/instructorRepository/InstructorCourseReviewRepo.ts
+async getReviewsByCourseId(
+  instructorId: Types.ObjectId,
+  courseId: Types.ObjectId,
+  page: number,
+  limit: number,
+  filter: { status?: "all" | "pending" | "approved" | "rejected" | "deleted" } = {},
+  search?: string
+): Promise<IPaginationResultReview<IFormattedReview>> {
+  const isOwner = await this.isCourseOwnedByInstructor(courseId, instructorId);
+  if (!isOwner) throw new Error("Unauthorized: You do not own this course");
+
+  const match: any = { courseId };
+  if (filter.status && filter.status !== "all") {
+    match.status = filter.status;
+  }
+
+  const pipeline: PipelineStage[] = [
+    { $match: match },
+    {
       $lookup: {
         from: "users",
         localField: "studentId",
         foreignField: "_id",
         as: "student",
       },
-    };
+    },
+    { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+  ];
 
-    const unwindStage: PipelineStage.Unwind = {
-      $unwind: { path: "$student", preserveNullAndEmptyArrays: true },
-    };
+  if (search?.trim()) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    pipeline.push({
+      $match: {
+           reviewText: { $regex: escaped, $options: "i" } 
+      },
+    });
+  }
 
-    const projectStage: PipelineStage.Project = {
+  pipeline.push(
+    {
       $project: {
         rating: 1,
         reviewText: 1,
         createdAt: 1,
-        approved: 1,
         flaggedByInstructor: 1,
-        "student.name": 1,
-        "student.profileImage": 1,
+        rejectionReason: 1,
+        status: 1,
+        "student.username": 1,
+        _id: 1,
       },
-    };
+    },
+    { $sort: { createdAt: -1 } }
+  );
 
-    const sortStage: PipelineStage.Sort = {
-      $sort: { createdAt: -1 },
-    };
+  const { data, total } = await this.paginateWithAggregation(pipeline, page, limit);
 
-    const pipeline: PipelineStage[] = [
-      matchStage,
-      lookupStage,
-      unwindStage,
-      projectStage,
-      sortStage,
-    ];
+  const formatted: IFormattedReview[] = data.map((d: any) => ({
+    ...d,
+    _id: d._id.toString(),
+    createdAt: format(new Date(d.createdAt), "dd-MM-yyyy hh:mm a"),
+    rejectionReason: d.rejectionReason ?? null,
+  }));
 
-    const { data, total } = await this.paginateWithAggregation(pipeline, page, limit);
-
-    return { data, total, page, limit };
-  }
+  return { data: formatted, total, page, limit };
+}
 
   async flagReview(
     reviewId: Types.ObjectId,
@@ -89,6 +165,7 @@ export class InstructorCourseReviewRepo
 
     return this.update(reviewId.toHexString(), {
       flaggedByInstructor: true,
+      status:"pending"
     } as Partial<ICourseReview>);
   }
 
@@ -96,10 +173,23 @@ export class InstructorCourseReviewRepo
     courseId: Types.ObjectId,
     instructorId: Types.ObjectId
   ): Promise<boolean> {
-    const count = await CourseModel.countDocuments({
-      _id: courseId,
-      instructorId,
-    }).exec();
-    return count > 0;
+    return (await this._courseRepo.countDocuments({ _id: courseId, instructorId })) > 0;
+  }
+
+  async getCourseRatingStats(courseId: string) {
+    const objId = new Types.ObjectId(courseId);
+    const stats = await CourseReviewModel.aggregate([
+      { $match: { courseId: objId, isDeleted: false, status: "approved" } },
+      { $group: { _id: "$rating", count: { $sum: 1 } } },
+    ]);
+
+    const counts = [0, 0, 0, 0, 0];
+    stats.forEach((s) => (counts[s._id - 1] = s.count));
+
+    const course = await this._courseRepo.findById(courseId);
+    return {
+      ratingCounts: { "1": counts[0], "2": counts[1], "3": counts[2], "4": counts[3], "5": counts[4] },
+      averageRating: course?.averageRating ?? 0,
+    };
   }
 }

@@ -770,3 +770,67 @@ export const verifyCourseOfferRequest = async (payload: { offerId: string; statu
     throw error
   }
 };
+
+//course review management
+export const getAdminCourseReviews = async (
+  params: {
+    courseId: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  }
+) => {
+  try {
+    const response = await API.get(AdminRoutersEndPoints.adminGetAllReviews, { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteAdminCourseReview = async (reviewId: string) => {
+  try {
+    const response = await API.delete(`${AdminRoutersEndPoints.adminDeleteReview}/${reviewId}`);
+  return response.data; 
+  } catch (error) {
+    throw error
+  }
+};
+
+export const undeleteAdminCourseReview = async (reviewId: string) => {
+  try {    
+    const response = await API.patch(`${AdminRoutersEndPoints.adminUnDeleteReview}/${reviewId}/undelete`);
+    return response.data;
+  } catch (error) {
+    throw error
+  }
+};
+
+export const rejectAdminCourseReview = async (reviewId: string, reason: string) => {
+  try {
+    const response = await API.post(`${AdminRoutersEndPoints.adminRejectReview}/${reviewId}/reject`,{ reason });
+    return response.data;
+  } catch (error) {
+    throw error
+  }
+};
+
+
+export const approveAdminCourseReview = async (reviewId: string) => {
+  try {
+    const response = await API.patch(`${AdminRoutersEndPoints.adminApproveReview}/${reviewId}/approve`,);
+    return response.data;
+  } catch (error) {
+    throw error
+  }
+};
+
+export const getSpecificReviewById = async(reviewId:string)=>{
+  try {
+    const response = await API.get(`${AdminRoutersEndPoints.adminGetSpecificReview}/${reviewId}`)
+    return response.data.data
+  } catch (error) {
+    throw error
+  }
+}

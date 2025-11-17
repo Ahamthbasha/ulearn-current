@@ -31,6 +31,8 @@ import AddCouponPage from "../pages/admin/Coupon/AddCoupon";
 import EditCouponPage from "../pages/admin/Coupon/EditCoupon";
 import AdminCourseOfferDetailPage from "../pages/admin/courseOffer/AdminCourseOfferDetailPage";
 import AdminCourseOfferListPage from "../pages/admin/courseOffer/CourseOffersPage";
+import AdminReviewManagementPage from "../pages/admin/ReviewManagement/AdminReviewManagementPage";
+import ReviewDetailPage from "../pages/admin/ReviewManagement/ReviewDetailPage";
 
 //wallet
 
@@ -69,7 +71,9 @@ const AdminRouter = () => {
           {/* Course Routes */}
           <Route path="courses" element={<AdminCourseManagementPage />} />
           <Route path="courses/:courseId" element={<AdminCourseDetailPage/>}/>
-
+          {/* review management */}
+          <Route path="course/reviews/:courseId" element={<AdminReviewManagementPage/>}/>
+          <Route path="reviews/:reviewId" element={<ReviewDetailPage/>}/>
           {/* wallet  */}
           <Route path="wallet" element={<AdminWalletPage />} />
 

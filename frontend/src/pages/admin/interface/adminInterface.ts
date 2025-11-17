@@ -1,4 +1,31 @@
+export interface IAdminReviewDTO extends Record<string, unknown> {
+  _id: string;
+  courseId: string;
+  courseTitle?: string;
+  studentId: string;
+  studentName: string;
+  rating: number;
+  reviewText: string;
+  createdAt: string;
+  flaggedByInstructor: boolean;
+  isDeleted: boolean;
+  rejectionReason?: string | null;
+  status: "pending" | "approved" | "rejected" | "deleted";
+}
 
+export interface IReviewDetail {
+  _id: string;
+  courseId: string;
+  studentId?: string;
+  studentName?: string;
+  rating: number;
+  reviewText: string;
+  createdAt: string;
+  flaggedByInstructor: boolean;
+  isDeleted: boolean;
+  rejectionReason?: string | null;
+  status: string;
+}
 
 export interface WithdrawalRequestRecord extends Record<string, unknown> {
   requestId: string;

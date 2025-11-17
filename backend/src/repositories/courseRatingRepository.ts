@@ -27,8 +27,7 @@ export class CourseRatingRepository
       {
         $match: {
           courseId,
-          approved: true,
-          isDeleted: { $ne: true },
+          status:"approved"
         },
       },
       {

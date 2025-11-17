@@ -47,6 +47,7 @@ import OfferDetailsPage from "../pages/instructor/courseOffer/CourseOfferDetailP
 import ModuleManagementPage from "../pages/instructor/Module/ModuleManagementPage";
 import AddModulePage from "../pages/instructor/Module/AddModulePage";
 import EditModulePage from "../pages/instructor/Module/EditModulePage";
+import ReviewManagementPage from "../pages/instructor/Review/ReviewManagementPage";
 
 const InstructorRouter = () => {
   return (
@@ -80,14 +81,17 @@ const InstructorRouter = () => {
           <Route path="courses" element={<CourseListPage />} />
           <Route path="createCourse" element={<CourseCreatePage />} />
           <Route path="editCourse/:courseId" element={<CourseEditPage />} />
+          
           <Route
             path="course/manage/:courseId"
             element={<CourseManagementPage />}
           />
+
           <Route
             path="courseDashboard/:courseId"
             element={<SpecificDashboardPage />}
           />
+          <Route path="courses/:courseId/reviews" element={<ReviewManagementPage/>} />
 
           {/* moduleManage */}
           <Route

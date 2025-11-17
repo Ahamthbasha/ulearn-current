@@ -5,7 +5,6 @@ import {
 } from "../../models/courseReviewModel";
 import { IStudentCourseReviewRepo } from "./interface/IStudentCourseReviewRepo";
 import { FilterQuery, Types } from "mongoose";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { PopulatedCourseReview } from "../../interface/studentInterface/IPopulatedCourseReview";
 export class StudentCourseReviewRepo
   extends GenericRepository<ICourseReview>
@@ -31,7 +30,7 @@ export class StudentCourseReviewRepo
   }
 
   async getReviewsByStudent(studentId: string): Promise<ICourseReview[]> {
-    return await this.find({ studentId: new Types.ObjectId(studentId) }); // convert here
+    return await this.find({ studentId: new Types.ObjectId(studentId) , status:"approved",isDeleted:false}); 
   }
 
   async getReviewByStudentForCourse(
@@ -41,7 +40,9 @@ export class StudentCourseReviewRepo
     return await this.findOne({
       studentId: new Types.ObjectId(studentId),
       courseId: new Types.ObjectId(courseId),
-    }); // convert here
+      status:"approved",
+      isDeleted:false
+    });
   }
 
   async findOne(filter: Partial<ICourseReview>): Promise<ICourseReview | null> {
@@ -68,36 +69,33 @@ export class StudentCourseReviewRepo
           : filter._id;
     }
 
-    // Optionally add other fields that are safe to filter on, e.g. rating, approved, flaggedByInstructor, etc.
     if (typeof filter.rating === "number") {
       filterQuery.rating = filter.rating;
-    }
-
-    if (typeof filter.approved === "boolean") {
-      filterQuery.approved = filter.approved;
     }
 
     if (typeof filter.flaggedByInstructor === "boolean") {
       filterQuery.flaggedByInstructor = filter.flaggedByInstructor;
     }
-    return this.model.findOne(filterQuery).exec();
-  }
 
-  async softDelete(reviewId: string): Promise<ICourseReview | null> {
-    const objectId = new Types.ObjectId(reviewId);
-    return await this.model
-      .findByIdAndUpdate(objectId, { $set: { isDeleted: true } }, { new: true })
-      .exec();
+    if (!filter.status) {
+      filterQuery.status = "approved";
+    }
+    
+    if (filter.isDeleted === undefined) {
+      filterQuery.isDeleted = false;
+    }
+
+    return this.model.findOne(filterQuery).exec();
   }
 
   async getReviewsByCourse(courseId: string): Promise<PopulatedCourseReview[]> {
     const reviews = await this.model
       .find({
         courseId: new Types.ObjectId(courseId),
-        isDeleted: false,
-        approved: true,
+        status:"approved",
+        isDeleted:false
       })
-      .populate("studentId", "username profilePicUrl")
+      .populate("studentId", "username ")
       .sort({ createdAt: -1 })
       .lean()
       .exec();
@@ -107,26 +105,13 @@ export class StudentCourseReviewRepo
         const student = r.studentId as {
           _id: Types.ObjectId;
           username?: string;
-          profilePicUrl?: string;
         };
-
-        let profileUrl: string | undefined;
-
-        if (student?.profilePicUrl) {
-          try {
-            profileUrl = await getPresignedUrl(student.profilePicUrl);
-          } catch {
-            // leave undefined if presigned URL fails
-            profileUrl = undefined;
-          }
-        }
 
         return {
           ...r,
           studentId: {
             _id: student._id,
             username: student.username || "Anonymous",
-            profilePicUrl: profileUrl,
           },
         };
       })
@@ -144,8 +129,9 @@ export class StudentCourseReviewRepo
         courseId: new Types.ObjectId(courseId),
         studentId: new Types.ObjectId(studentId),
         isDeleted: false,
+        status:"approved"
       })
-      .populate("studentId", "username profilePicUrl")
+      .populate("studentId", "username")
       .lean()
       .exec();
 
@@ -154,25 +140,13 @@ export class StudentCourseReviewRepo
     const student = review.studentId as {
       _id: Types.ObjectId;
       username?: string;
-      profilePicUrl?: string;
     };
-
-    let profileUrl: string | undefined;
-
-    if (student?.profilePicUrl) {
-      try {
-        profileUrl = await getPresignedUrl(student.profilePicUrl);
-      } catch {
-        profileUrl = undefined;
-      }
-    }
 
     return {
       ...review,
       studentId: {
         _id: student._id,
         username: student.username || "Anonymous",
-        profilePicUrl: profileUrl,
       },
     };
   }
