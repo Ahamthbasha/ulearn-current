@@ -8,7 +8,6 @@ import { IBooking } from "../../models/bookingModel";
 import { IInstructor, isInstructor } from "../../models/instructorModel";
 import { PopulatedSlot } from "../../types/PopulatedSlot";
 import { PopulatedBooking } from "../../types/PopulatedBooking";
-import { format } from "date-fns";
 import { toStudentSlotBookingHistoryDTO } from "../../mappers/userMapper/studentSlotBookingMapper";
 import { toStudentBookingDetailDTO } from "../../mappers/userMapper/studentBookingDetailMapper";
 import { StudentSlotBookingHistoryDTO } from "../../dto/userDTO/StudentSlotBookingHistoryDTO";
@@ -18,6 +17,9 @@ import { ISlot } from "../../models/slotModel";
 import mongoose from "mongoose";
 import { SlotAvailabilityResult } from "../../types/ISlotAvailabilityResult";
 import { IRazorpayOrder } from "../../types/razorpay";
+import { formatInTimeZone } from "date-fns-tz";
+
+const IST = "Asia/Kolkata";
 
 export class StudentSlotBookingService implements IStudentSlotBookingService {
   private _emailService: IEmail;
@@ -226,9 +228,9 @@ return {
           populated.studentId.username,
           populated.studentId.email,
           populated.instructorId.username,
-          format(new Date(populated.slotId.startTime), "dd/MM/yyyy"),
-          format(new Date(populated.slotId.startTime), "hh:mm a"),
-          format(new Date(populated.slotId.endTime), "hh:mm a"),
+          formatInTimeZone(populated.slotId.startTime, IST, "dd/MM/yyyy"),
+          formatInTimeZone(populated.slotId.startTime, IST, "h:mm a"),
+          formatInTimeZone(populated.slotId.endTime, IST, "h:mm a"),
         );
 
         return populated;
@@ -344,9 +346,9 @@ return {
           finalPopulated.studentId.username,
           finalPopulated.studentId.email,
           finalPopulated.instructorId.username,
-          format(new Date(finalPopulated.slotId.startTime), "dd/MM/yyyy"),
-          format(new Date(finalPopulated.slotId.startTime), "hh:mm a"),
-          format(new Date(finalPopulated.slotId.endTime), "hh:mm a"),
+          formatInTimeZone(populated.slotId.startTime, IST, "dd/MM/yyyy"),
+  formatInTimeZone(populated.slotId.startTime, IST, "h:mm a"),
+  formatInTimeZone(populated.slotId.endTime, IST, "h:mm a"),
         );
 
         return finalPopulated;
@@ -453,9 +455,9 @@ return {
           populated.studentId.username,
           populated.studentId.email,
           populated.instructorId.username,
-          format(new Date(populated.slotId.startTime), "dd/MM/yyyy"),
-          format(new Date(populated.slotId.startTime), "hh:mm a"),
-          format(new Date(populated.slotId.endTime), "hh:mm a"),
+          formatInTimeZone(populated.slotId.startTime, IST, "dd/MM/yyyy"),
+  formatInTimeZone(populated.slotId.startTime, IST, "h:mm a"),
+  formatInTimeZone(populated.slotId.endTime, IST, "h:mm a"),
         );
 
         return populated;

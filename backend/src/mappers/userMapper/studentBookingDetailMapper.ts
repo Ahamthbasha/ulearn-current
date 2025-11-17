@@ -1,46 +1,87 @@
-import { format } from "date-fns";
+// import { format } from "date-fns";
+// import { PopulatedBooking } from "../../types/PopulatedBooking";
+// import { StudentBookingDetailDTO } from "../../dto/userDTO/studentBookingDetailDTO";
+
+// export const toStudentBookingDetailDTO = (
+//   booking: PopulatedBooking,
+// ): StudentBookingDetailDTO => {
+//   const student =
+//     typeof booking.studentId === "object" ? booking.studentId : null;
+//   const instructor =
+//     typeof booking.instructorId === "object" ? booking.instructorId : null;
+//   const slot = typeof booking.slotId === "object" ? booking.slotId : null;
+
+//   return {
+//     studentName: student?.username || "N/A",
+//     studentEmail: student?.email || "N/A",
+
+//     instructorName: instructor?.username || "N/A",
+//     instructorEmail: instructor?.email || "N/A",
+
+//     bookingStatus: booking.status || "unknown",
+//     bookingId: booking._id.toString(),
+//     bookedDateTime: format(
+//       new Date(booking.createdAt),
+//       "dd-MM-yyyy 'at' hh:mm a",
+//     ),
+
+//     slotId: slot?._id?.toString() || "N/A",
+//     slotDate: slot?.startTime
+//       ? format(new Date(slot.startTime), "dd-MM-yyyy")
+//       : "N/A",
+//     startTime: slot?.startTime
+//       ? format(new Date(slot.startTime), "hh:mm a")
+//       : "N/A",
+//     endTime: slot?.endTime ? format(new Date(slot.endTime), "hh:mm a") : "N/A",
+
+//     // Payment Information
+//     price: slot?.price || 0,
+//     txnId: booking.txnId || "N/A",
+//   };
+// };
+
+
+
+
+
+
+
+
+
 import { PopulatedBooking } from "../../types/PopulatedBooking";
 import { StudentBookingDetailDTO } from "../../dto/userDTO/studentBookingDetailDTO";
+import { formatInTimeZone } from "date-fns-tz";
+
+const IST = "Asia/Kolkata";
+
 
 export const toStudentBookingDetailDTO = (
-  booking: PopulatedBooking,
+  booking: PopulatedBooking
 ): StudentBookingDetailDTO => {
-  // Safely access nested properties with type guards
-  const student =
-    typeof booking.studentId === "object" ? booking.studentId : null;
-  const instructor =
-    typeof booking.instructorId === "object" ? booking.instructorId : null;
+  const student = typeof booking.studentId === "object" ? booking.studentId : null;
+  const instructor = typeof booking.instructorId === "object" ? booking.instructorId : null;
   const slot = typeof booking.slotId === "object" ? booking.slotId : null;
 
+  if (!slot || !slot.startTime || !slot.endTime) {
+    throw new Error("Slot not properly populated");
+  }
+
   return {
-    // Student Information
     studentName: student?.username || "N/A",
     studentEmail: student?.email || "N/A",
-
-    // Instructor Information
     instructorName: instructor?.username || "N/A",
     instructorEmail: instructor?.email || "N/A",
 
-    // Booking Information
     bookingStatus: booking.status || "unknown",
     bookingId: booking._id.toString(),
-    bookedDateTime: format(
-      new Date(booking.createdAt),
-      "dd-MM-yyyy 'at' hh:mm a",
-    ),
+    bookedDateTime: formatInTimeZone(booking.createdAt, IST, "dd-MM-yyyy 'at' h:mm a"),
 
-    // Slot Information
-    slotId: slot?._id?.toString() || "N/A",
-    slotDate: slot?.startTime
-      ? format(new Date(slot.startTime), "dd-MM-yyyy")
-      : "N/A",
-    startTime: slot?.startTime
-      ? format(new Date(slot.startTime), "hh:mm a")
-      : "N/A",
-    endTime: slot?.endTime ? format(new Date(slot.endTime), "hh:mm a") : "N/A",
+    slotId: slot._id?.toString() || "N/A",
+    slotDate: formatInTimeZone(slot.startTime, IST, "dd-MM-yyyy"),
+    startTime: formatInTimeZone(slot.startTime, IST, "h:mm a"),
+    endTime: formatInTimeZone(slot.endTime, IST, "h:mm a"),
 
-    // Payment Information
-    price: slot?.price || 0,
+    price: slot.price || 0,
     txnId: booking.txnId || "N/A",
   };
 };
