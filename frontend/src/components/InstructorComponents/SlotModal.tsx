@@ -339,6 +339,7 @@
 
 
 // src/components/InstructorComponents/SlotModal.tsx
+// SlotModal.tsx — FINAL FIXED VERSION (Nov 2025)
 import { Dialog } from "@headlessui/react";
 import { format, isBefore, isSameDay } from "date-fns";
 import { useEffect, useState } from "react";
@@ -347,15 +348,9 @@ import { createSlot, updateSlot } from "../../api/action/InstructorActionApi";
 import type { SlotModalProps, RecurrenceRule } from "./interface/instructorComponentInterface";
 import type { AxiosError } from "axios";
 import { createISTDateTime, createISTDateOnly } from "../../utils/timezone";
+import { formatInTimeZone } from "date-fns-tz";
 
-const convertTo24Hour = (time12h: string): string => {
-  const [time, modifier] = time12h.split(" ");
-  const [hours, minutes] = time.split(":");
-  let hoursNum = parseInt(hours, 10);
-  if (modifier === "PM" && hoursNum !== 12) hoursNum += 12;
-  if (modifier === "AM" && hoursNum === 12) hoursNum = 0;
-  return `${hoursNum.toString().padStart(2, "0")}:${minutes}`;
-};
+const IST = "Asia/Kolkata";
 
 const weekDays = [
   { value: 0, label: "Sunday" },
@@ -375,7 +370,7 @@ const SlotModal = ({
   onSuccess,
   initialData,
 }: SlotModalProps) => {
-  const [startTime, setStartTime] = useState("");
+  const [startTime, setStartTime] = useState(""); // "14:30" (24h)
   const [endTime, setEndTime] = useState("");
   const [price, setPrice] = useState("");
   const [recurrence, setRecurrence] = useState(false);
@@ -384,16 +379,22 @@ const SlotModal = ({
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // CRITICAL FIX: Use UTC field for editing
   useEffect(() => {
     if (mode === "edit" && initialData) {
-      setStartTime(convertTo24Hour(initialData.startTime));
-      setEndTime(convertTo24Hour(initialData.endTime));
+      // Use startTimeUTC (ISO string) → convert to IST → extract time
+      const startIST = formatInTimeZone(initialData.startTimeUTC, IST, "HH:mm");
+      const endIST = formatInTimeZone(initialData.endTimeUTC, IST, "HH:mm");
+
+      setStartTime(startIST); // e.g. "15:00"
+      setEndTime(endIST);     // e.g. "16:00"
       setPrice(initialData.price.toString());
       setRecurrence(false);
       setSelectedDays([]);
       setStartDate(format(selectedDate, "yyyy-MM-dd"));
       setEndDate("");
     } else {
+      // Add mode: reset
       setStartTime("");
       setEndTime("");
       setPrice("");
@@ -431,7 +432,6 @@ const SlotModal = ({
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startDateObj = new Date(startDate);
-    const startDateOnly = new Date(startDateObj.getFullYear(), startDateObj.getMonth(), startDateObj.getDate());
 
     if (endDateTime <= startDateTime) {
       toast.error("End time must be after start time");
@@ -448,7 +448,7 @@ const SlotModal = ({
       return;
     }
 
-    if (recurrence && startDateOnly < today) {
+    if (recurrence && startDateObj < today) {
       toast.error("Recurrence start date must be today or in the future");
       return;
     }
@@ -488,6 +488,7 @@ const SlotModal = ({
         toast.success("Slot updated");
       }
       onSuccess();
+      onClose();
     } catch (err: unknown) {
       let message = "Failed to save slot(s)";
       if (err && typeof err === "object" && "response" in err) {
@@ -512,62 +513,46 @@ const SlotModal = ({
             <Dialog.Title className="text-base font-bold text-white sm:text-lg md:text-xl">
               {mode === "add" ? "Create New Slot" : "Edit Slot"}
             </Dialog.Title>
-            <p className="text-blue-100 text-xs sm:text-sm md:text-base mt-1">
-              {mode === "add" ? "Add a new time slot for bookings" : "Update your existing slot"}
-            </p>
           </div>
 
-          <div className="px-3 py-4 sm:px-5 sm:py-6 space-y-3 sm:space-y-4">
+          <div className="px-3 py-4 sm:px-5 sm:py-6 space-y-4">
             {mode === "add" && (
-              <div className="group">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Recurring Slots</label>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={recurrence}
-                    onChange={(e) => setRecurrence(e.target.checked)}
-                    className="mr-2 h-4 w-4 sm:h-5 sm:w-5"
-                  />
-                  <span className="text-sm sm:text-base">Create recurring slots</span>
-                </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={recurrence}
+                  onChange={(e) => setRecurrence(e.target.checked)}
+                  className="mr-3 h-5 w-5"
+                />
+                <label className="font-semibold">Create recurring slots</label>
               </div>
             )}
 
             {recurrence && mode === "add" && (
               <>
-                <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
+                <div>
+                  <label className="block font-semibold mb-1">Start Date</label>
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full border rounded px-3 py-2" />
                 </div>
-                <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
+                <div>
+                  <label className="block font-semibold mb-1">End Date</label>
+                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border rounded px-3 py-2" />
                 </div>
-                <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Days of Week</label>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-1 sm:gap-2">
+                <div>
+                  <label className="block font-semibold mb-2">Days of Week</label>
+                  <div className="grid grid-cols-7 gap-2">
                     {weekDays.map((day) => (
                       <button
                         key={day.value}
                         type="button"
                         onClick={() => handleDayToggle(day.value)}
-                        className={`px-1 py-1 rounded-full border text-xs sm:text-sm ${
+                        className={`py-2 rounded text-sm font-medium ${
                           selectedDays.includes(day.value)
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "bg-gray-100 text-gray-800 border-gray-300"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 text-gray-700"
                         }`}
                       >
-                        {day.label}
+                        {day.label.slice(0, 3)}
                       </button>
                     ))}
                   </div>
@@ -575,57 +560,57 @@ const SlotModal = ({
               </>
             )}
 
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
+            <div>
+              <label className="block font-semibold mb-1">Start Time</label>
               <input
                 type="time"
-                className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
+                className="w-full border rounded px-3 py-2"
               />
             </div>
 
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
+            <div>
+              <label className="block font-semibold mb-1">End Time</label>
               <input
                 type="time"
-                className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
+                className="w-full border rounded px-3 py-2"
               />
             </div>
 
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Price (₹)</label>
+            <div>
+              <label className="block font-semibold mb-1">Price (₹)</label>
               <div className="relative">
+                <span className="absolute left-3 top-2.5 text-gray-600 font-bold">₹</span>
                 <input
                   type="number"
-                  min={0}
+                  min="0"
                   step="0.01"
-                  placeholder="Enter price..."
-                  className="w-full border-2 border-gray-200 pl-6 pr-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2 md:pl-8"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
+                  className="w-full border rounded pl-10 pr-3 py-2"
+                  placeholder="500"
                 />
-                <span className="absolute inset-y-0 left-0 flex items-center pl-1 sm:pl-2 text-gray-500 font-medium text-sm sm:text-base">₹</span>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 px-3 py-3 sm:px-5 sm:py-4 sm:gap-3 border-t">
+          <div className="flex justify-end gap-3 px-5 py-4 border-t">
             <button
               onClick={onClose}
               disabled={loading}
-              className="px-3 py-1 rounded-md border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-medium text-sm sm:text-base disabled:opacity-50"
+              className="px-5 py-2 border rounded font-medium disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-3 py-1 rounded-md bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 font-medium text-sm sm:text-base shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-1"
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded font-medium disabled:opacity-50"
             >
-              {loading ? <>Saving...</> : <>{mode === "add" ? "Create Slot(s)" : "Update Slot"}</>}
+              {loading ? "Saving..." : mode === "add" ? "Create Slot(s)" : "Update Slot"}
             </button>
           </div>
         </Dialog.Panel>

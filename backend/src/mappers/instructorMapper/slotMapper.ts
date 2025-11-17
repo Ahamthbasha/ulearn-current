@@ -28,23 +28,33 @@
 
 
 
+// src/mappers/instructorMapper/slotMapper.ts
 import { ISlot } from "../../models/slotModel";
-import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
 import { SlotDTO } from "../../dto/instructorDTO/slotDTO";
+import { formatInTimeZone } from "date-fns-tz";
 
 const IST_TIMEZONE = "Asia/Kolkata";
 
+/**
+ * BEST PRACTICE: Send UTC ISO + display string separately
+ * This prevents all timezone bugs forever
+ */
 export const mapSlotToDTO = (slot: ISlot): SlotDTO => {
-  // Convert UTC times to IST
-  const startTimeIST = toZonedTime(slot.startTime, IST_TIMEZONE);
-  const endTimeIST = toZonedTime(slot.endTime, IST_TIMEZONE);
+  const startUTC = slot.startTime;
+  const endUTC = slot.endTime;
 
   return {
     slotId: slot._id.toString(),
     instructorId: slot.instructorId.toString(),
-    startTime: format(startTimeIST, "h:mm a"), // 12-hour format with AM/PM
-    endTime: format(endTimeIST, "h:mm a"),
+
+    // 1. Send raw UTC ISO (for accurate parsing)
+    startTimeUTC: startUTC.toISOString(), // e.g. "2025-11-17T09:30:00.000Z"
+    endTimeUTC: endUTC.toISOString(),
+
+    // 2. Send human-readable IST time (safe to display directly)
+    startTime: formatInTimeZone(startUTC, IST_TIMEZONE, "h:mm a"), // "3:00 PM"
+    endTime: formatInTimeZone(endUTC, IST_TIMEZONE, "h:mm a"),     // "4:00 PM"
+
     price: slot.price,
     isBooked: slot.isBooked,
   };
