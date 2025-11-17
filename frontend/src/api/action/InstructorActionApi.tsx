@@ -1039,7 +1039,6 @@ export const slotHistory = async (
   }
 ) => {
   try {
-    // Build an object with string values only for URLSearchParams
     const queryObject: Record<string, string> = { mode };
     if (params.month !== undefined) queryObject.month = params.month.toString();
     if (params.year !== undefined) queryObject.year = params.year.toString();
