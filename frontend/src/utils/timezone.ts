@@ -31,7 +31,6 @@ export const createISTDateOnly = (dateStr: string, time: 'start' | 'end' = 'star
   const seconds = time === 'start' ? 0 : 59;
   const ms = time === 'start' ? 0 : 999;
   
-  // Create the datetime string in IST timezone
   const istDateTimeStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
   
   return formatInTimeZone(istDateTimeStr, IST_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
