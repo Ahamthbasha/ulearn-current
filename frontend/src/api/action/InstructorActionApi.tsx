@@ -957,11 +957,6 @@ export const downloadReceiptForMembership = async (orderId: string) => {
 // slots managment //
 export const createSlot = async (data: SlotCreatePayload) => {
   try {
-    console.log("Sending to backend:", {
-      startTime: data.startTime,
-      endTime: data.endTime,
-      recurrenceRule: data.recurrenceRule,
-    });
 
     const response = await API.post(
       InstructorRouterEndPoints.instructorCreateSlot,
@@ -969,13 +964,9 @@ export const createSlot = async (data: SlotCreatePayload) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Create slot error:", error);
     throw error;
   }
 };
-
-
-
 
 export const updateSlot = async (slotId: string, payload: SlotUpdatePayload) => {
   try {
@@ -985,7 +976,6 @@ export const updateSlot = async (slotId: string, payload: SlotUpdatePayload) => 
     );
     return response.data;
   } catch (error) {
-    console.error("Update slot error:", error);
     throw error;
   }
 };

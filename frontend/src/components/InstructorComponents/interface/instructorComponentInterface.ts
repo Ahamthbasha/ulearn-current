@@ -1,7 +1,7 @@
 export interface RecurrenceRule {
   daysOfWeek: number[];
-  startDate: string;  // ← CHANGE TO string
-  endDate: string;    // ← CHANGE TO string
+  startDate: string;
+  endDate: string;
 }
 
 export interface SlotModalProps {
@@ -14,18 +14,11 @@ export interface SlotModalProps {
     slotId: string;
     startTimeUTC:string;
     endTimeUTC:string;
-    startTime: string;  // e.g., "3:00 PM"
-    endTime: string;    // e.g., "4:00 PM"
+    startTime: string; 
+    endTime: string;
     price: number;
   };
 }
-
-
-// export interface RecurrenceRule {
-//   daysOfWeek: number[];
-//   startDate: Date;
-//   endDate: Date;
-// }
 
 export interface Slot {
   _id: string;
@@ -40,20 +33,12 @@ export interface SlotDTO {
   instructorId: string;
   startTimeUTC:string;
   endTimeUTC:string;
-  startTime: string; // e.g., "6:30 PM"
-  endTime: string;   // e.g., "7:30 PM"
+  startTime: string; 
+  endTime: string;
   price: number;
   isBooked: boolean;
 }
 
-// export interface SlotModalProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   mode: "add" | "edit";
-//   selectedDate: Date;
-//   onSuccess: () => void;
-//   initialData?: SlotDTO | null;
-// }
 
 export interface SingleQuestionFormValues {
   questionText: string;
