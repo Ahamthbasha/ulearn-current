@@ -203,6 +203,7 @@ import SlotModel, { ISlot } from "../../models/slotModel";
 import { FilterQuery, Types } from "mongoose";
 import { GenericRepository } from "../genericRepository";
 import { fromZonedTime } from "date-fns-tz";
+import { getISTDayRangeUTC } from "../../utils/timezone";
 
 const IST_TIMEZONE = "Asia/Kolkata";
 
@@ -222,10 +223,7 @@ export class InstructorSlotRepository
     return await this.create(data);
   }
 
-  async updateSlot(
-    slotId: Types.ObjectId,
-    data: Partial<ISlot>,
-  ): Promise<ISlot | null> {
+  async updateSlot(slotId: Types.ObjectId, data: Partial<ISlot>): Promise<ISlot | null> {
     return await this.update(slotId.toString(), data);
   }
 
@@ -237,23 +235,15 @@ export class InstructorSlotRepository
     return await this.findById(slotId.toString());
   }
 
-  async getSlotsByInstructor(
-    instructorId: Types.ObjectId,
-    date?: string,
-  ): Promise<ISlot[]> {
+  async getSlotsByInstructor(instructorId: Types.ObjectId, date?: string): Promise<ISlot[]> {
     const query: FilterQuery<ISlot> = { instructorId };
+
     if (date) {
-      // Parse the date as IST and convert to UTC for MongoDB query
-      const startOfDayIST = new Date(`${date}T00:00:00`);
-      const endOfDayIST = new Date(`${date}T23:59:59.999`);
-      
-      const startOfDayUTC = fromZonedTime(startOfDayIST, IST_TIMEZONE);
-      const endOfDayUTC = fromZonedTime(endOfDayIST, IST_TIMEZONE);
-      
-      query.startTime = { $gte: startOfDayUTC, $lte: endOfDayUTC };
+      const { startUTC, endUTC } = getISTDayRangeUTC(date);
+      query.startTime = { $gte: startUTC, $lte: endUTC };
     }
-    const slots = await this.find(query, undefined, { startTime: 1 });
-    return slots;
+
+    return await this.find(query, undefined, { startTime: 1 });
   }
 
   async checkOverlap(
@@ -264,12 +254,7 @@ export class InstructorSlotRepository
   ): Promise<boolean> {
     const filter: FilterQuery<ISlot> = {
       instructorId,
-      $or: [
-        {
-          startTime: { $lt: endTime },
-          endTime: { $gt: startTime },
-        },
-      ],
+      $or: [{ startTime: { $lt: endTime }, endTime: { $gt: startTime } }],
     };
 
     if (excludeSlotId) {
@@ -280,6 +265,7 @@ export class InstructorSlotRepository
     return !!overlappingSlot;
   }
 
+  // FULLY CORRECT & TYPE-SAFE
   async getSlotStats(
     instructorId: Types.ObjectId,
     mode: "monthly" | "yearly" | "custom",
@@ -289,31 +275,25 @@ export class InstructorSlotRepository
       startDate?: Date;
       endDate?: Date;
     },
-  ) {
+  ): Promise<{ date: string; totalSlots: number; bookedSlots: number }[]> {
     let startDate: Date;
     let endDate: Date;
 
     if (mode === "monthly") {
-      if (!options.month || !options.year)
-        throw new Error("Month and Year are required for monthly mode");
-      
-      // Create dates in IST and convert to UTC
+      if (!options.month || !options.year) throw new Error("Month and Year required");
       const startIST = new Date(options.year, options.month - 1, 1, 0, 0, 0);
       const endIST = new Date(options.year, options.month, 1, 0, 0, 0);
-      
       startDate = fromZonedTime(startIST, IST_TIMEZONE);
       endDate = fromZonedTime(endIST, IST_TIMEZONE);
     } else if (mode === "yearly") {
-      if (!options.year) throw new Error("Year is required for yearly mode");
-      
+      if (!options.year) throw new Error("Year required");
       const startIST = new Date(options.year, 0, 1, 0, 0, 0);
       const endIST = new Date(options.year + 1, 0, 1, 0, 0, 0);
-      
       startDate = fromZonedTime(startIST, IST_TIMEZONE);
       endDate = fromZonedTime(endIST, IST_TIMEZONE);
     } else if (mode === "custom") {
       if (!options.startDate || !options.endDate)
-        throw new Error("Start and end date are required for custom mode");
+        throw new Error("startDate and endDate required for custom mode");
       startDate = options.startDate;
       endDate = options.endDate;
     } else {
@@ -334,13 +314,13 @@ export class InstructorSlotRepository
       {
         $group: {
           _id: {
-            date: { $dateToString: { format: "%Y-%m-%d", date: "$startTime", timezone: IST_TIMEZONE } },
+            date: {
+              $dateToString: { format: "%Y-%m-%d", date: "$startTime", timezone: IST_TIMEZONE },
+            },
           },
           totalSlots: { $sum: 1 },
           bookedSlots: {
-            $sum: {
-              $cond: [{ $eq: ["$isBooked", true] }, 1, 0],
-            },
+            $sum: { $cond: [{ $eq: ["$isBooked", true] }, 1, 0] },
           },
         },
       },
@@ -358,20 +338,12 @@ export class InstructorSlotRepository
     return result;
   }
 
-  async deleteUnbookedSlotsForDate(
-    instructorId: Types.ObjectId,
-    date: string,
-  ): Promise<void> {
-    // Parse the date as IST and convert to UTC for MongoDB query
-    const startOfDayIST = new Date(`${date}T00:00:00`);
-    const endOfDayIST = new Date(`${date}T23:59:59.999`);
-    
-    const startOfDayUTC = fromZonedTime(startOfDayIST, IST_TIMEZONE);
-    const endOfDayUTC = fromZonedTime(endOfDayIST, IST_TIMEZONE);
-    
+  async deleteUnbookedSlotsForDate(instructorId: Types.ObjectId, date: string): Promise<void> {
+    const { startUTC, endUTC } = getISTDayRangeUTC(date);
+
     await this.deleteMany({
       instructorId,
-      startTime: { $gte: startOfDayUTC, $lte: endOfDayUTC },
+      startTime: { $gte: startUTC, $lte: endUTC },
       isBooked: false,
     });
   }
