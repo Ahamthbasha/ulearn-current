@@ -338,6 +338,7 @@
 
 
 
+// src/components/InstructorComponents/SlotModal.tsx
 import { Dialog } from "@headlessui/react";
 import { format, isBefore, isSameDay } from "date-fns";
 import { useEffect, useState } from "react";
@@ -345,6 +346,7 @@ import { toast } from "react-toastify";
 import { createSlot, updateSlot } from "../../api/action/InstructorActionApi";
 import type { SlotModalProps, RecurrenceRule } from "./interface/instructorComponentInterface";
 import type { AxiosError } from "axios";
+import { createISTDateTime, createISTDateOnly } from "../../utils/timezone";
 
 const convertTo24Hour = (time12h: string): string => {
   const [time, modifier] = time12h.split(" ");
@@ -353,22 +355,6 @@ const convertTo24Hour = (time12h: string): string => {
   if (modifier === "PM" && hoursNum !== 12) hoursNum += 12;
   if (modifier === "AM" && hoursNum === 12) hoursNum = 0;
   return `${hoursNum.toString().padStart(2, "0")}:${minutes}`;
-};
-
-// Helper function to create a date in IST timezone
-const createISTDate = (dateStr: string, timeStr: string): Date => {
-  // Parse the time
-  const [hours, minutes] = timeStr.split(":").map(Number);
-  
-  // Create a date object from the date string
-  const date = new Date(dateStr);
-  
-  // Set the hours and minutes (this creates the date in local timezone)
-  date.setHours(hours, minutes, 0, 0);
-  
-  // Return the date - it will be sent as ISO string to backend
-  // Backend will treat this as IST time
-  return date;
 };
 
 const weekDays = [
@@ -436,18 +422,16 @@ const SlotModal = ({
       return;
     }
 
-    // Create dates using the helper function that ensures IST interpretation
-    const startDateTime = createISTDate(startDate, startTime);
-    const endDateTime = createISTDate(startDate, endTime);
+    const startDateTimeStr = createISTDateTime(startDate, startTime);
+    const endDateTimeStr = createISTDateTime(startDate, endTime);
+
+    const startDateTime = new Date(startDateTimeStr);
+    const endDateTime = new Date(endDateTimeStr);
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startDateObj = new Date(startDate);
-    const startDateOnly = new Date(
-      startDateObj.getFullYear(),
-      startDateObj.getMonth(),
-      startDateObj.getDate()
-    );
+    const startDateOnly = new Date(startDateObj.getFullYear(), startDateObj.getMonth(), startDateObj.getDate());
 
     if (endDateTime <= startDateTime) {
       toast.error("End time must be after start time");
@@ -476,32 +460,18 @@ const SlotModal = ({
     setLoading(true);
     try {
       if (mode === "add") {
-        const slotData: {
-          startTime: Date;
-          endTime: Date;
-          price: number;
-          recurrenceRule?: RecurrenceRule;
-        } = {
-          // Send as Date objects - backend will interpret as IST
-          startTime: startDateTime,
-          endTime: endDateTime,
+        const slotData = {
+          startTime: startDateTimeStr,
+          endTime: endDateTimeStr,
           price: priceNum,
+          ...(recurrence && {
+            recurrenceRule: {
+              daysOfWeek: selectedDays,
+              startDate: createISTDateOnly(startDate, "start"),
+              endDate: createISTDateOnly(endDate, "end"),
+            } satisfies RecurrenceRule,
+          }),
         };
-
-        if (recurrence) {
-          // For recurrence dates, also ensure they're created properly
-          const recStartDate = new Date(startDate);
-          recStartDate.setHours(0, 0, 0, 0);
-          
-          const recEndDate = new Date(endDate);
-          recEndDate.setHours(23, 59, 59, 999);
-          
-          slotData.recurrenceRule = {
-            daysOfWeek: selectedDays,
-            startDate: recStartDate,
-            endDate: recEndDate,
-          };
-        }
 
         const response = await createSlot(slotData);
         if (response.success && (!response.slots || response.slots.length === 0)) {
@@ -511,8 +481,8 @@ const SlotModal = ({
         }
       } else if (mode === "edit" && initialData) {
         await updateSlot(initialData.slotId, {
-          startTime: startDateTime,
-          endTime: endDateTime,
+          startTime: startDateTimeStr,
+          endTime: endDateTimeStr,
           price: priceNum,
         });
         toast.success("Slot updated");
@@ -520,24 +490,14 @@ const SlotModal = ({
       onSuccess();
     } catch (err: unknown) {
       let message = "Failed to save slot(s)";
-
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as AxiosError<{ message?: string }>;
         const backendMessage = axiosErr.response?.data?.message;
-
-        if (typeof backendMessage === "string") {
-          message = backendMessage;
-        }
+        if (typeof backendMessage === "string") message = backendMessage;
       }
-
       toast.error(message);
-
-      if (message.includes("overlaps")) {
-        toast.warn("Try a different time or date.");
-      }
-      if (message.includes("No valid slots")) {
-        toast.error("No future slots could be created.");
-      }
+      if (message.includes("overlaps")) toast.warn("Try a different time or date.");
+      if (message.includes("No valid slots")) toast.error("No future slots could be created.");
     } finally {
       setLoading(false);
     }
@@ -558,12 +518,9 @@ const SlotModal = ({
           </div>
 
           <div className="px-3 py-4 sm:px-5 sm:py-6 space-y-3 sm:space-y-4">
-            {/* Recurrence Toggle */}
             {mode === "add" && (
               <div className="group">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Recurring Slots
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Recurring Slots</label>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -576,13 +533,10 @@ const SlotModal = ({
               </div>
             )}
 
-            {/* Recurrence Fields */}
             {recurrence && mode === "add" && (
               <>
                 <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Start Date
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
                   <input
                     type="date"
                     className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
@@ -591,9 +545,7 @@ const SlotModal = ({
                   />
                 </div>
                 <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    End Date
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
                   <input
                     type="date"
                     className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
@@ -602,9 +554,7 @@ const SlotModal = ({
                   />
                 </div>
                 <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Days of Week
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Days of Week</label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-1 sm:gap-2">
                     {weekDays.map((day) => (
                       <button
@@ -625,11 +575,8 @@ const SlotModal = ({
               </>
             )}
 
-            {/* Time & Price */}
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Start Time
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
               <input
                 type="time"
                 className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
@@ -639,9 +586,7 @@ const SlotModal = ({
             </div>
 
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                End Time
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
               <input
                 type="time"
                 className="w-full border-2 border-gray-200 px-2 py-1 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white text-sm sm:text-base sm:px-3 sm:py-2"
@@ -651,9 +596,7 @@ const SlotModal = ({
             </div>
 
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Price (₹)
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Price (₹)</label>
               <div className="relative">
                 <input
                   type="number"
@@ -664,9 +607,7 @@ const SlotModal = ({
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                 />
-                <span className="absolute inset-y-0 left-0 flex items-center pl-1 sm:pl-2 text-gray-500 font-medium text-sm sm:text-base">
-                  ₹
-                </span>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-1 sm:pl-2 text-gray-500 font-medium text-sm sm:text-base">₹</span>
               </div>
             </div>
           </div>

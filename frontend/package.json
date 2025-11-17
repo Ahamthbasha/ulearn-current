@@ -21,7 +21,8 @@
     "@tailwindcss/vite": "^4.1.7",
     "axios": "^1.9.0",
     "classnames": "^2.5.1",
-    "date-fns": "^2.30.0",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^16.5.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.9",
@@ -48,6 +49,7 @@
   "devDependencies": {
     "@eslint/js": "^9.25.0",
     "@tailwindcss/postcss": "^4.1.7",
+    "@types/date-fns": "^2.6.3",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/lodash": "^4.17.20",
     "@types/node": "^22.15.21",

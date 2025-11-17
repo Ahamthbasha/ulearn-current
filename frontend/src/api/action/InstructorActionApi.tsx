@@ -9,6 +9,7 @@ import { type FetchCoursesParams } from "../../types/interfaces/IFetchCoursesPar
 import type { IWithdrawalRequest } from "../../types/interfaces/IWithdrawalRequest";
 import { AxiosError } from "axios";
 import type { FlagReviewResponse, GetReviewsParams, PaginatedReviews } from "../../pages/instructor/interface/instructorReviewInterface";
+import type { SlotCreatePayload, SlotUpdatePayload } from "../../types/interfaces/ISlotInterface";
 
 
 export const sendVerification = async (formData: FormData) => {
@@ -954,33 +955,37 @@ export const downloadReceiptForMembership = async (orderId: string) => {
 };
 
 // slots managment //
-
-export const createSlot = async (data: {
-  startTime?: Date | string;
-  endTime?: Date | string;
-  price?: number;
-  recurrenceRule?: {
-    daysOfWeek: number[];
-    startDate: Date | string;
-    endDate: Date | string;
-  };
-}) => {
+export const createSlot = async (data: SlotCreatePayload) => {
   try {
-
-     // Debug: Log what we're sending
-    console.log("Creating slot with data:", {
+    console.log("Sending to backend:", {
       startTime: data.startTime,
-      startTimeISO: data.startTime instanceof Date ? data.startTime.toISOString() : data.startTime,
       endTime: data.endTime,
-      endTimeISO: data.endTime instanceof Date ? data.endTime.toISOString() : data.endTime,
+      recurrenceRule: data.recurrenceRule,
     });
-    
+
     const response = await API.post(
       InstructorRouterEndPoints.instructorCreateSlot,
       data
     );
     return response.data;
   } catch (error) {
+    console.error("Create slot error:", error);
+    throw error;
+  }
+};
+
+
+
+
+export const updateSlot = async (slotId: string, payload: SlotUpdatePayload) => {
+  try {
+    const response = await API.put(
+      `${InstructorRouterEndPoints.instructorUpdateSlot}/${slotId}`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Update slot error:", error);
     throw error;
   }
 };
@@ -989,25 +994,6 @@ export const listSlots = async (date?: string) => {
   try {
     const response = await API.get(
       `${InstructorRouterEndPoints.instructorListSlots}${date ? `?date=${date}` : ""}`
-    );
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const updateSlot = async (
-  slotId: string,
-  payload: {
-    startTime?: Date | string;
-    endTime?: Date | string;
-    price?: number;
-  }
-) => {
-  try {
-    const response = await API.put(
-      `${InstructorRouterEndPoints.instructorUpdateSlot}/${slotId}`,
-      payload
     );
     return response.data;
   } catch (error) {
