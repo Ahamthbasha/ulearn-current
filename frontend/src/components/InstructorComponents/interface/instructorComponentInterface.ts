@@ -12,6 +12,8 @@ export interface SlotModalProps {
   onSuccess: () => void;
   initialData?: {
     slotId: string;
+    startTimeUTC:string;
+    endTimeUTC:string;
     startTime: string;  // e.g., "3:00 PM"
     endTime: string;    // e.g., "4:00 PM"
     price: number;
@@ -36,6 +38,8 @@ export interface Slot {
 export interface SlotDTO {
   slotId: string;
   instructorId: string;
+  startTimeUTC:string;
+  endTimeUTC:string;
   startTime: string; // e.g., "6:30 PM"
   endTime: string;   // e.g., "7:30 PM"
   price: number;

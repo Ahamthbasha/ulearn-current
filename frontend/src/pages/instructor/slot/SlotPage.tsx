@@ -249,21 +249,19 @@
 
 
 // src/pages/instructor/slot/SlotPage.tsx
+// src/pages/instructor/slot/SlotPage.tsx
 import { useEffect, useState } from "react";
 import {
   listSlots,
   deleteSlot,
   deleteUnbookedSlotsForDate,
 } from "../../../api/action/InstructorActionApi";
-import { format, isSameDay, startOfWeek, addDays } from "date-fns";
+import { format, startOfWeek, addDays } from "date-fns";
 import { toast } from "react-toastify";
 import { PlusCircle, Trash2, Pencil } from "lucide-react";
 import SlotModal from "../../../components/InstructorComponents/SlotModal";
 import { useNavigate } from "react-router-dom";
 import type { SlotDTO } from "../../../components/InstructorComponents/interface/instructorComponentInterface";
-import type { ApiError } from "../../../types/interfaces/ICommon";
-
-const daysToRender = 7;
 
 const SlotPage = () => {
   const [slots, setSlots] = useState<SlotDTO[]>([]);
@@ -274,9 +272,10 @@ const SlotPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
 
-  // Use undefined, NOT null
   const [editingSlot, setEditingSlot] = useState<{
     slotId: string;
+    startTimeUTC: string;
+    endTimeUTC: string;
     startTime: string;
     endTime: string;
     price: number;
@@ -291,10 +290,8 @@ const SlotPage = () => {
         : format(selectedDate, "yyyy-MM-dd");
       const response = await listSlots(formattedDate);
       setSlots(response.slots || []);
-    } catch (err) {
-      const apiError = err as ApiError;
-      const message = apiError.response?.data?.message || "Failed to fetch slots";
-      toast.error(message);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to fetch slots");
     }
   };
 
@@ -307,10 +304,8 @@ const SlotPage = () => {
       await deleteSlot(slotId);
       toast.success("Slot deleted");
       fetchSlots(selectedDate);
-    } catch (err) {
-      const apiError = err as ApiError;
-      const message = apiError.response?.data?.message || "Failed to delete slot";
-      toast.error(message);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to delete slot");
     }
   };
 
@@ -320,19 +315,14 @@ const SlotPage = () => {
       await deleteUnbookedSlotsForDate(formattedDate);
       toast.success("All unbooked slots deleted for the date");
       fetchSlots(selectedDate);
-    } catch (err) {
-      const apiError = err as ApiError;
-      const message =
-        apiError.response?.data?.message || "Failed to delete unbooked slots";
-      toast.error(message);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to delete unbooked slots");
     }
   };
 
-  const getSlotsForDate = () => slots;
-
   const handleOpenAddModal = () => {
     setModalMode("add");
-    setEditingSlot(undefined); // ← Clear
+    setEditingSlot(undefined);
     setIsModalOpen(true);
   };
 
@@ -340,6 +330,8 @@ const SlotPage = () => {
     setModalMode("edit");
     setEditingSlot({
       slotId: slot.slotId,
+      startTimeUTC: slot.startTimeUTC,
+      endTimeUTC: slot.endTimeUTC,
       startTime: slot.startTime,
       endTime: slot.endTime,
       price: slot.price,
@@ -364,126 +356,136 @@ const SlotPage = () => {
   const handleModalSuccess = () => {
     fetchSlots(selectedDate);
     setIsModalOpen(false);
-    setEditingSlot(undefined); // ← Reset after save
+    setEditingSlot(undefined);
   };
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Select Time Slot</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Manage Time Slots</h2>
         <button
           onClick={() => navigate("/instructor/slotsHistory")}
-          className="text-sm text-blue-600 border border-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white transition"
+          className="text-sm text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition"
         >
-          See Slot History
+          View Slot History
         </button>
       </div>
 
-      <div className="flex justify-between items-center mb-4">
+      {/* Week Navigation */}
+      <div className="flex justify-between items-center mb-6">
         <button
-          className="text-sm text-blue-600 hover:underline"
           onClick={goToPreviousWeek}
+          className="text-blue-600 hover:underline font-medium"
         >
-          Previous Week
+          ← Previous Week
         </button>
-        <span className="text-sm font-medium">
-          {format(weekStartDate, "MMM d")} - {format(weekEndDate, "MMM d")}
+        <span className="text-lg font-semibold text-gray-700">
+          {format(weekStartDate, "MMM d")} - {format(weekEndDate, "MMM d, yyyy")}
         </span>
         <button
-          className="text-sm text-blue-600 hover:underline"
           onClick={goToNextWeek}
+          className="text-blue-600 hover:underline font-medium"
         >
-          Next Week
+          Next Week →
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-3 mb-6">
-        {[...Array(daysToRender)].map((_, index) => {
-          const day = addDays(weekStartDate, index);
-          const isSelected = isSameDay(selectedDate, day);
+      {/* Day Selector */}
+      <div className="grid grid-cols-7 gap-3 mb-8">
+        {[...Array(7)].map((_, i) => {
+          const day = addDays(weekStartDate, i);
+          const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+          const isSelected = format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
 
           return (
             <button
-              key={index}
+              key={i}
               onClick={() => setSelectedDate(day)}
-              className={`flex flex-col justify-center items-center px-3 py-2 rounded-md text-sm font-medium border transition
-                ${isSelected
-                  ? "bg-blue-600 text-white border-blue-700"
-                  : "bg-gray-100 text-gray-800 border-transparent hover:bg-gray-200"
-                }`}
+              className={`p-4 rounded-xl text-center transition-all border-2 ${
+                isSelected
+                  ? "bg-blue-600 text-white border-blue-700 shadow-lg"
+                  : isToday
+                  ? "bg-indigo-100 border-indigo-400 text-indigo-800 font-bold"
+                  : "bg-white border-gray-300 hover:bg-gray-50"
+              }`}
             >
-              <span className="text-base font-bold">{format(day, "d")}</span>
-              <span className="text-xs font-medium">{format(day, "EEE")}</span>
+              <div className="text-2xl font-bold">{format(day, "d")}</div>
+              <div className="text-sm">{format(day, "EEE")}</div>
             </button>
           );
         })}
       </div>
 
-      <div className="text-sm font-semibold mb-2">
-        {format(selectedDate, "EEEE, MMM d")}
-      </div>
+      {/* Selected Date Header */}
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        {format(selectedDate, "EEEE, MMMM d, yyyy")}
+      </h3>
 
-      <div className="flex flex-wrap gap-3 items-start min-h-[40px]">
-        {getSlotsForDate().length > 0 ? (
-          getSlotsForDate().map((slot) => (
+      {/* Slots Display */}
+      <div className="flex flex-wrap gap-3 mb-8 min-h-[60px]">
+        {slots.length > 0 ? (
+          slots.map((slot) => (
             <div
               key={slot.slotId}
-              onClick={() =>
-                slot.isBooked && navigate(`/instructor/slots/${slot.slotId}`)
-              }
-              className={`flex items-center gap-2 px-3 py-2 rounded-full border text-sm cursor-pointer
+              className={`flex items-center gap-3 px-5 py-3 rounded-full text-sm font-medium border transition-all
                 ${slot.isBooked
-                  ? "bg-red-100 text-red-700 border-red-300 hover:bg-red-200"
-                  : "bg-blue-50 text-blue-700 border-blue-300"
+                  ? "bg-red-100 text-red-700 border-red-300 cursor-pointer hover:bg-red-200"
+                  : "bg-emerald-100 text-emerald-700 border-emerald-300"
                 }`}
+              onClick={() => slot.isBooked && navigate(`/instructor/slots/${slot.slotId}`)}
             >
-              <span>{slot.startTime} - {slot.endTime}</span>
+              <span className="font-semibold">
+                {slot.startTime} - {slot.endTime}
+              </span>
+              <span className="text-xs">• ₹{slot.price}</span>
+
               {!slot.isBooked && (
-                <>
+                <div className="flex gap-2 ml-2" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenEditModal(slot);
-                    }}
-                    className="hover:bg-blue-100 rounded p-1 transition"
+                    onClick={() => handleOpenEditModal(slot)}
+                    className="p-1.5 hover:bg-blue-200 rounded transition"
+                    title="Edit slot"
                   >
-                    <Pencil className="w-4 h-4 text-blue-500" />
+                    <Pencil className="w-4 h-4 text-blue-600" />
                   </button>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteSlot(slot.slotId);
-                    }}
-                    className="hover:bg-red-100 rounded p-1 transition"
+                    onClick={() => handleDeleteSlot(slot.slotId)}
+                    className="p-1.5 hover:bg-red-200 rounded transition"
+                    title="Delete slot"
                   >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4 text-red-600" />
                   </button>
-                </>
+                </div>
               )}
             </div>
           ))
         ) : (
-          <div className="text-gray-500 italic">No Slots Allotted</div>
+          <p className="text-gray-500 italic">No slots available for this date</p>
         )}
       </div>
 
-      <div className="mt-4 flex gap-4">
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-4">
         <button
           onClick={handleOpenAddModal}
-          className="flex items-center gap-2 text-blue-600 hover:underline text-sm"
+          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-lg font-medium hover:bg-blue-700 transition shadow-md"
         >
-          <PlusCircle className="w-4 h-4" /> Add Slots
+          <PlusCircle className="w-5 h-5" />
+          Add New Slot
         </button>
+
         {slots.length > 0 && (
           <button
             onClick={handleDeleteUnbookedSlots}
-            className="flex items-center gap-2 text-red-600 hover:underline text-sm"
+            className="flex items-center gap-2 bg-red-600 text-white px-5 py-3 rounded-lg font-medium hover:bg-red-700 transition shadow-md"
           >
-            <Trash2 className="w-4 h-4" /> Delete All Unbooked Slots
+            <Trash2 className="w-5 h-5" />
+            Delete All Unbooked Slots
           </button>
         )}
       </div>
 
+      {/* Modal */}
       <SlotModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -493,7 +495,7 @@ const SlotPage = () => {
         mode={modalMode}
         selectedDate={selectedDate}
         onSuccess={handleModalSuccess}
-        initialData={editingSlot} // ← Safe: undefined or correct shape
+        initialData={editingSlot}
       />
     </div>
   );
