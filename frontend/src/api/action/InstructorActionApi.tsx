@@ -966,6 +966,15 @@ export const createSlot = async (data: {
   };
 }) => {
   try {
+
+     // Debug: Log what we're sending
+    console.log("Creating slot with data:", {
+      startTime: data.startTime,
+      startTimeISO: data.startTime instanceof Date ? data.startTime.toISOString() : data.startTime,
+      endTime: data.endTime,
+      endTimeISO: data.endTime instanceof Date ? data.endTime.toISOString() : data.endTime,
+    });
+    
     const response = await API.post(
       InstructorRouterEndPoints.instructorCreateSlot,
       data
