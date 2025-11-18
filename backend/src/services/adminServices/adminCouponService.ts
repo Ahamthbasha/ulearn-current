@@ -1,5 +1,3 @@
-// AdminCouponService - CORRECTED VERSION
-
 import { Types } from "mongoose";
 import { IAdminCouponRepo } from "../../repositories/adminRepository/interface/IAdminCouponRepo";
 import { IAdminCouponService } from "./interface/IAdminCouponService";
@@ -9,9 +7,6 @@ import {
   mapToCouponDto,
   mapToCouponListDto,
 } from "../../mappers/adminMapper/adminCouponMapper";
-
-// CORRECTED: This function is NOT needed anymore since frontend sends YYYY-MM-DD
-// Remove this or update it to handle YYYY-MM-DD format
 
 export class AdminCouponService implements IAdminCouponService {
   private _couponRepo: IAdminCouponRepo;
@@ -36,10 +31,8 @@ export class AdminCouponService implements IAdminCouponService {
       throw new Error("Discount must be between 0 and 100");
     }
 
-    // CORRECTED: Frontend sends YYYY-MM-DD format, so just use new Date()
     const expiryDate = new Date(couponData.expiryDate);
 
-    // Set time to end of day for comparison
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -50,7 +43,6 @@ export class AdminCouponService implements IAdminCouponService {
       throw new Error("Expiry date must be in the future");
     }
 
-    // Store the parsed date
     const dataToSave = {
       ...couponData,
       expiryDate
@@ -109,28 +101,19 @@ export class AdminCouponService implements IAdminCouponService {
     ) {
       throw new Error("Discount must be between 0 and 100");
     }
-
-    // Get existing coupon to compare dates
     const existingCoupon = await this._couponRepo.getCouponById(new Types.ObjectId(id));
     if (!existingCoupon) {
       throw new Error("Coupon not found");
     }
 
-    // CORRECTED: Parse the new expiry date if provided
     let newExpiryDate: Date | undefined;
     if (couponData.expiryDate) {
-      // Frontend sends YYYY-MM-DD, so just use new Date()
       newExpiryDate = new Date(couponData.expiryDate);
-
-      // Only validate future date if the date has actually changed
       const existingDate = new Date(existingCoupon.expiryDate);
       existingDate.setHours(0, 0, 0, 0);
       newExpiryDate.setHours(0, 0, 0, 0);
-
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
-      // If date has changed and new date is in the past, reject it
       if (newExpiryDate.getTime() !== existingDate.getTime() && newExpiryDate < today) {
         throw new Error("Expiry date must be in the future");
       }
@@ -145,7 +128,6 @@ export class AdminCouponService implements IAdminCouponService {
       }
     }
 
-    // Prepare update data with parsed date
     const updateData = {
       ...couponData,
       ...(newExpiryDate && { expiryDate: newExpiryDate })

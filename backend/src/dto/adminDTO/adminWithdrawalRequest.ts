@@ -5,6 +5,6 @@ export interface AdminWithdrawalRequestDTO {
   amount: number;
   status: "pending" | "approved" | "rejected";
   bankAccount: "Linked" | "Not Linked";
-  createdAt: string; // formatted date
+  createdAt: string;
   reason?: string;
 }

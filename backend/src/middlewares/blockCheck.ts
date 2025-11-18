@@ -21,7 +21,6 @@ export const restrictBlockedUser = async (
       return;
     }
 
-    // Select repository based on role
     let user;
     if (req.user.role === Roles.STUDENT) {
       const studentRepo = new StudentRepository();
@@ -30,7 +29,6 @@ export const restrictBlockedUser = async (
       const instructorRepo = new InstructorRepository();
       user = await instructorRepo.findById(req.user.id);
     } else if (req.user.role === Roles.ADMIN) {
-      // Admins may not have block checks, or handle differently
       return next();
     } else {
       res
@@ -39,7 +37,6 @@ export const restrictBlockedUser = async (
       return;
     }
 
-    // Check if user exists
     if (!user) {
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");
@@ -49,7 +46,6 @@ export const restrictBlockedUser = async (
       return;
     }
 
-    // Check if user is blocked
     if (user.isBlocked) {
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");

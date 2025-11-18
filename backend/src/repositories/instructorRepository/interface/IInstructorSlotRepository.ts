@@ -21,7 +21,6 @@ export interface IInstructorSlotRepository {
     excludeSlotId?: Types.ObjectId,
   ): Promise<boolean>;
 
-  // ← FIXED: Correct return type
   getSlotStats(
     instructorId: Types.ObjectId,
     mode: "monthly" | "yearly" | "custom",

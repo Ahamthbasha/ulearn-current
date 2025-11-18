@@ -280,11 +280,7 @@ router.post(
   instructorModuleController.reorderModules.bind(instructorModuleController)
 )
 
-// ============================================
-// CHAPTER ROUTES (UPDATED - now scoped to modules)
-// ============================================
-
-// Get Chapters by Module (with pagination & search)
+// chapter
 router.get(
   "/modules/:moduleId/chapters",
   authenticateToken,

@@ -14,7 +14,10 @@ import {
 import { MembershipOrderValidator } from "../../utils/adminUtilities/membershipOrderValidator";
 
 export class AdminMembershipOrderController implements IAdminMembershipOrderController {
-  constructor(private readonly service: IAdminMembershipOrderService) {}
+  private  _adminMembershipOrderService: IAdminMembershipOrderService
+  constructor(adminMembershipOrderService: IAdminMembershipOrderService) {
+    this._adminMembershipOrderService = adminMembershipOrderService
+  }
 
   private parseQuery(req: Request) {
   const rawStatus = req.query.status as string | undefined;
@@ -45,7 +48,7 @@ export class AdminMembershipOrderController implements IAdminMembershipOrderCont
         return;
       }
 
-      const { data, total } = await this.service.getAllOrders(page, limit, search, status);
+      const { data, total } = await this._adminMembershipOrderService.getAllOrders(page, limit, search, status);
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -77,7 +80,7 @@ export class AdminMembershipOrderController implements IAdminMembershipOrderCont
         return;
       }
 
-      const order = await this.service.getOrderDetail(razorpayOrderId);
+      const order = await this._adminMembershipOrderService.getOrderDetail(razorpayOrderId);
       res.status(StatusCode.OK).json({
         success: true,
         message: MEMBERSHIP_ORDER_SUCCESS_MESSAGE.FETCH_ORDER_DETAIL_SUCCESS,

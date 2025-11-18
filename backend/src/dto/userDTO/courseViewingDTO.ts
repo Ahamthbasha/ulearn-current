@@ -1,4 +1,4 @@
-// src/dto/userDTO/courseViewingDTO.ts
+
 export interface ChapterViewingDTO {
   id: string;
   title: string;
@@ -11,7 +11,7 @@ export interface ChapterViewingDTO {
 export interface QuizQuestionDTO {
   questionText: string;
   options: string[];
-  correctAnswer?: string; // optional: hide from frontend if needed
+  correctAnswer?: string; 
 }
 
 export interface ModuleViewingDTO {

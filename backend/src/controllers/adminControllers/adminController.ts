@@ -57,15 +57,14 @@ async login(req: Request, res: Response): Promise<void> {
       id: admin?._id,
     });
 
-    // Production-ready cookie settings
-    // const isProduction = process.env.NODE_ENV === "production";
+    const isProduction = process.env.NODE_ENV === "production";
     
     const cookieOptions = {
       httpOnly: true,
-      secure: true,
-      sameSite: "none" as const,
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
       path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
     res

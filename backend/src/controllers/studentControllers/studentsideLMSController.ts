@@ -5,6 +5,7 @@ import { StatusCode } from "../../utils/enums";
 import {
   LearningPathSuccessMessages,
   LearningPathErrorMessages,
+  StudentLMSMessages,
 } from "../../utils/constants";
 import { Types } from "mongoose";
 import { IMulterFile } from "../../utils/s3Bucket";
@@ -34,12 +35,11 @@ export class StudentLearningPathController
       if (!studentId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          message: "Unauthorized: Student ID not found",
+          message: StudentLMSMessages.UNAUTHORIZED,
         });
         return;
       }
 
-      // Validate inputs
       if (
         !title ||
         typeof title !== "string" ||
@@ -48,7 +48,7 @@ export class StudentLearningPathController
       ) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Title must be a string between 3 and 100 characters",
+          message: StudentLMSMessages.TITLE_VALIDATION,
         });
         return;
       }
@@ -61,14 +61,14 @@ export class StudentLearningPathController
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message:
-            "Description must be a string between 10 and 1000 characters",
+            StudentLMSMessages.DESCRIPTION_VALIDATION,
         });
         return;
       }
       if (!category || !Types.ObjectId.isValid(category)) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid category ID",
+          message: StudentLMSMessages.INVALID_CATEGORY_ID,
         });
         return;
       }
@@ -80,7 +80,7 @@ export class StudentLearningPathController
         appLogger.error("create learning path error", error);
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Invalid items format",
+          message: StudentLMSMessages.INVALID_FORMAT,
         });
         return;
       }
@@ -88,7 +88,7 @@ export class StudentLearningPathController
       if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Items must be a non-empty array",
+          message:StudentLMSMessages.ITEMS_VALIDATION,
         });
         return;
       }
@@ -102,7 +102,7 @@ export class StudentLearningPathController
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
             message:
-              "Each item must have a valid courseId and a positive order number",
+              StudentLMSMessages.COURSEID_ORDER_VALIDATION,
           });
           return;
         }
@@ -111,7 +111,7 @@ export class StudentLearningPathController
       if (!thumbnail) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Thumbnail is required",
+          message: StudentLMSMessages.THUMBNAIL_REQUIRED,
         });
         return;
       }
@@ -121,7 +121,7 @@ export class StudentLearningPathController
       ) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Thumbnail must be an image (JPEG, PNG, or GIF)",
+          message: StudentLMSMessages.THUMBNAIL_VALIDATION
         });
         return;
       }
@@ -183,7 +183,7 @@ export class StudentLearningPathController
       if (!studentId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          message: "Unauthorized: Student ID not found",
+          message: StudentLMSMessages.UNAUTHORIZED,
         });
         return;
       }
@@ -201,7 +201,7 @@ export class StudentLearningPathController
       if (learningPath.studentId.toString() !== studentId) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
-          message: "Unauthorized: You do not own this learning path",
+          message: StudentLMSMessages.UNAUTHORIZED_LMS,
         });
         return;
       }
@@ -215,7 +215,7 @@ export class StudentLearningPathController
         ) {
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: "Title must be a string between 3 and 100 characters",
+            message: StudentLMSMessages.TITLE_VALIDATION,
           });
           return;
         }
@@ -245,7 +245,7 @@ export class StudentLearningPathController
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
             message:
-              "Description must be a string between 10 and 1000 characters",
+             StudentLMSMessages.DESCRIPTION_VALIDATION,
           });
           return;
         }
@@ -256,7 +256,7 @@ export class StudentLearningPathController
         if (!Types.ObjectId.isValid(category)) {
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: "Invalid category ID",
+            message: StudentLMSMessages.INVALID_CATEGORY_ID,
           });
           return;
         }
@@ -271,7 +271,7 @@ export class StudentLearningPathController
           appLogger.error("update learning path error", error);
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: "Invalid items format",
+            message: StudentLMSMessages.INVALID_FORMAT
           });
           return;
         }
@@ -279,7 +279,7 @@ export class StudentLearningPathController
         if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: "Items must be a non-empty array",
+            message:StudentLMSMessages.ITEMS_VALIDATION,
           });
           return;
         }
@@ -293,7 +293,7 @@ export class StudentLearningPathController
             res.status(StatusCode.BAD_REQUEST).json({
               success: false,
               message:
-                "Each item must have a valid courseId and a positive order number",
+                StudentLMSMessages.COURSEID_ORDER_VALIDATION,
             });
             return;
           }
@@ -311,7 +311,7 @@ export class StudentLearningPathController
         ) {
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: "Thumbnail must be an image (JPEG, PNG, or GIF)",
+            message: StudentLMSMessages.THUMBNAIL_VALIDATION
           });
           return;
         }
@@ -353,7 +353,7 @@ export class StudentLearningPathController
       if (!studentId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          message: "Unauthorized: Student ID not found",
+          message: StudentLMSMessages.UNAUTHORIZED,
         });
         return;
       }
@@ -371,7 +371,7 @@ export class StudentLearningPathController
       if (learningPath.studentId.toString() !== studentId) {
         res.status(StatusCode.FORBIDDEN).json({
           success: false,
-          message: "Unauthorized: You do not own this learning path",
+          message: StudentLMSMessages.UNAUTHORIZED_LMS,
         });
         return;
       }
@@ -427,7 +427,7 @@ export class StudentLearningPathController
       if (!studentId) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          message: "Unauthorized: Student ID not found",
+          message:StudentLMSMessages.UNAUTHORIZED,
         });
         return;
       }

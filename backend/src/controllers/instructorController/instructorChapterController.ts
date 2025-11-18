@@ -36,7 +36,7 @@ export class InstructorChapterController
     if (isNaN(parsedDuration) || parsedDuration <= 0) {
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: "Invalid video duration",
+        message: ChapterErrorMessages.CHAPTER_INVALID_VIDEO_DURATION,
       });
       return
     }
@@ -44,7 +44,7 @@ export class InstructorChapterController
 
       const existing =
         await this._chapterService.findByTitleOrNumberAndModuleId(
-          moduleId, // Changed
+          moduleId,
           chapterTitle,
           Number(chapterNumber)
         );
@@ -108,14 +108,14 @@ export class InstructorChapterController
     next: NextFunction
   ): Promise<void> {
     try {
-      const { moduleId } = req.params; // Changed from courseId
+      const { moduleId } = req.params;
       const { page = "1", limit = "10", search = "" } = req.query;
 
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
 
       const filter: Record<string, unknown> = {
-        moduleId, // Changed from courseId
+        moduleId,
       };
 
       if (search) {
@@ -154,7 +154,7 @@ async updateChapter(
       chapterTitle?: string;
       chapterNumber?: string;
       description?: string;
-      duration?: string; // ← From frontend
+      duration?: string;
     };
 
     const originalChapter = await this._chapterService.getChapterById(chapterId);
@@ -168,7 +168,6 @@ async updateChapter(
 
     const moduleId = originalChapter.moduleId.toString();
 
-    // === 1. Validate title & number conflict ===
     if (chapterTitle || chapterNumber) {
       const titleToCheck = chapterTitle?.trim();
       const numberToCheck = chapterNumber ? Number(chapterNumber) : undefined;
@@ -205,7 +204,6 @@ async updateChapter(
       }
     }
 
-    // === 2. Handle video upload & duration ===
     const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
     const videoFile = files?.["video"]?.[0];
 
@@ -213,7 +211,6 @@ async updateChapter(
     let finalDuration: number = originalChapter.duration;
 
     if (videoFile) {
-      // Upload new video
       videoUrl = await uploadToS3Bucket(
         {
           originalname: videoFile.originalname,
@@ -223,7 +220,6 @@ async updateChapter(
         "chapters/videos"
       );
 
-      // Use duration from frontend
       if (duration) {
         const parsed = parseInt(duration, 10);
         if (!isNaN(parsed) && parsed > 0) {
@@ -231,20 +227,19 @@ async updateChapter(
         } else {
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: "Invalid duration provided",
+            message: ChapterErrorMessages.INVALID_DURATION_PROVIDED,
           });
           return
         }
       } else {
         res.status(StatusCode.BAD_REQUEST).json({
-          success:            false,
-          message: "Duration is required when uploading new video",
+          success:  false,
+          message: ChapterErrorMessages.DURATION_REQUIRED,
         });
         return
       }
     }
 
-    // === 3. Build update payload ===
     const updatedChapterData: Partial<IChapter> = {};
 
     if (chapterTitle !== undefined) updatedChapterData.chapterTitle = chapterTitle.trim();
@@ -259,12 +254,11 @@ async updateChapter(
     if (Object.keys(updatedChapterData).length === 0) {
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: "No valid fields provided to update",
+        message: ChapterErrorMessages.NO_VALID_FIELDS_PROVIDED_TO_UPDATE,
       });
       return
     }
 
-    // === 4. Save chapter ===
     const updated = await this._chapterService.updateChapter(chapterId, updatedChapterData);
     if (!updated) {
       res.status(StatusCode.NOT_FOUND).json({
@@ -273,11 +267,8 @@ async updateChapter(
       });
       return
     }
-
-    // === 5. Sync durations ===
     await syncDurations(this._moduleService, this._courseService, moduleId);
 
-    // === 6. Respond ===
     res.status(StatusCode.OK).json({
       success: true,
       data: updated,
@@ -296,7 +287,6 @@ async updateChapter(
     try {
       const { chapterId } = req.params;
 
-      // Fetch chapter to get moduleId before deletion
       const chapter = await this._chapterService.getChapterById(chapterId);
       if (!chapter) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -320,7 +310,6 @@ async updateChapter(
         return;
       }
 
-      // Sync module duration after chapter deletion
       await this._moduleService.updateModuleDuration(moduleId);
 
       res.status(StatusCode.OK).json({
@@ -344,12 +333,10 @@ async updateChapter(
       if (!chapter) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
-          message: ChapterErrorMessages.CHAPTER_NOT_FOUND, // Fixed: was using success message
+          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
         });
         return;
       }
-
-      // Generate pre-signed URLs if files exist
       let videoPresignedUrl = null;
 
       if (chapter.videoUrl) {

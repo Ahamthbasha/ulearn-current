@@ -84,7 +84,6 @@ export class AdminCourseService implements IAdminCourseService {
       detailedModules.push(mappedModule);
     }
 
-    // Return DTO including instructorName and categoryName
     return {
       ...mapCourseDetailsToDTO(course, detailedModules),
       instructorName,

@@ -1,3 +1,23 @@
+export interface AdminCourse extends Record<string, unknown> {
+  _id: string;
+  courseId: string;
+  courseName: string;
+  isListed: boolean;
+}
+
+export interface CourseApiResponse {
+  courseId: string;
+  courseName: string;
+  isListed: boolean;
+}
+
+export interface GetCoursesResult {
+  data: CourseApiResponse[];
+  total: number;
+}
+
+
+
 export interface IAdminReviewDTO extends Record<string, unknown> {
   _id: string;
   courseId: string;
@@ -395,4 +415,27 @@ export interface IWithdrawalRequestDetail {
   requestDate: string;
   bankAccountLinked: "Linked" | "Not Linked";
   remarks?: string;
+}
+
+export interface MembershipOrderRecord extends Record<string, unknown> {
+  orderId: string;
+  instructorName: string;
+  membershipName: string;
+  price: number;
+  status: string;
+}
+
+
+export interface GetMembershipPlansResult {
+  plans: IMembershipPlan[];
+  total: number;
+  success?: boolean;
+}
+
+export interface AdminApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
 }

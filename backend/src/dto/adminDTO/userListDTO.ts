@@ -3,5 +3,5 @@ export interface UserListDTO {
   name: string;
   email: string;
   status: boolean;
-  createdAt: string; // formatted date (dd-mm-yyyy)
+  createdAt: string;
 }

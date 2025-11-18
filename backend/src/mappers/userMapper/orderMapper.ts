@@ -26,7 +26,7 @@ export async function mapCourses(
         courseOriginalPrice: course.coursePrice,
         courseOfferDiscount: course.courseOfferPercentage,
         courseOfferPrice: course.offerPrice ?? course.coursePrice,
-        isAlreadyEnrolled: course.isAlreadyEnrolled ?? false, // Include isAlreadyEnrolled
+        isAlreadyEnrolled: course.isAlreadyEnrolled ?? false,
       };
 
       if (includeThumbnail && course.thumbnailUrl) {
@@ -37,7 +37,7 @@ export async function mapCourses(
             `Failed to generate pre-signed URL for course ${course.courseId}:`,
             error,
           );
-          courseInfo.thumbnailUrl = course.thumbnailUrl; // Fallback to original URL
+          courseInfo.thumbnailUrl = course.thumbnailUrl;
         }
       }
 
@@ -76,7 +76,7 @@ export async function mapLearningPaths(
             `Failed to generate pre-signed URL for learning path ${learningPath.learningPathId}:`,
             error,
           );
-          learningPathInfo.thumbnailUrl = learningPath.thumbnailUrl; // Fallback to original URL
+          learningPathInfo.thumbnailUrl = learningPath.thumbnailUrl;
         }
       }
 
@@ -85,7 +85,6 @@ export async function mapLearningPaths(
   );
 }
 
-// Maps coupon details to CouponInfoDTO
 export function mapCoupon(coupon: ICouponDetails): CouponInfoDTO {
   return {
     couponId: coupon.couponId,
@@ -95,7 +94,6 @@ export function mapCoupon(coupon: ICouponDetails): CouponInfoDTO {
   };
 }
 
-// Maps user details to UserInfoDTO
 export function mapUserInfo(user: UserDTO): UserInfoDTO {
   return {
     username: user.username,

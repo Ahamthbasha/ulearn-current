@@ -13,7 +13,6 @@ export class InstructorCourseReviewController
     this._reviewService = reviewService
   }
 
-// controllers/InstructorCourseReviewController.ts
 async getReviews(req: AuthenticatedRequest, res: Response): Promise<void> {
   const instructorId = req.user?.id;
   if (!instructorId) {
@@ -107,13 +106,13 @@ async getReviews(req: AuthenticatedRequest, res: Response): Promise<void> {
     const data = await this._reviewService.getCourseReviewStats(instructorId, courseId);
     res.status(StatusCode.OK).json({
       success: true,
-      message: "Course review stats fetched successfully",
+      message: InstructorReviewMessages.COURSE_REVIEW_FETCHED,
       data,
     });
   } catch (error) {
     res.status(StatusCode.BAD_REQUEST).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to fetch review stats",
+      message: error instanceof Error ? error.message : InstructorReviewMessages.FAILED_TO_FETCH_REVIEW_STATS,
     });
   }
 }

@@ -64,8 +64,6 @@ export class InstructorSlotRepository
     const overlappingSlot = await this.findOne(filter);
     return !!overlappingSlot;
   }
-
-  // FULLY CORRECT & TYPE-SAFE
   async getSlotStats(
     instructorId: Types.ObjectId,
     mode: "monthly" | "yearly" | "custom",

@@ -19,7 +19,7 @@ export interface CourseDetailsDTO {
   description: string;
   duration:string;
   price: number;
-  effectivePrice: number; // Added to include effectivePrice
+  effectivePrice: number;
   thumbnailUrl: string;
   isCompleted: boolean;
   certificateUrl?: string;

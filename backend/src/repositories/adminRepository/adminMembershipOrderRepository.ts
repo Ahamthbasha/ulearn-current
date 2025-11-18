@@ -18,27 +18,23 @@ export class AdminMembershipOrderRepository
   ): Promise<{ data: InstructorMembershipOrderDTO[]; total: number }> {
     const skip = (page - 1) * limit;
 
-    // Use aggregation pipeline for advanced search
     const pipeline: PipelineStage[] = [
-      // Lookup instructor details
       {
         $lookup: {
-          from: "instructors", // Make sure this matches your instructor collection name
+          from: "instructors",
           localField: "instructorId",
           foreignField: "_id",
           as: "instructorData",
         },
       },
-      // Lookup membership plan details
       {
         $lookup: {
-          from: "membershipplans", // Make sure this matches your membership plan collection name
+          from: "membershipplans",
           localField: "membershipPlanId",
           foreignField: "_id",
           as: "membershipPlanData",
         },
       },
-      // Unwind the arrays
       {
         $unwind: { path: "$instructorData", preserveNullAndEmptyArrays: true },
       },
@@ -49,19 +45,13 @@ export class AdminMembershipOrderRepository
         },
       },
     ];
-
-    // Build match conditions
     const matchConditions:{
       paymentStatus?: "paid" | "failed" | "cancelled";
       $or?: Array<Record<string, unknown>>;
     } = {};
-
-    // Status filter
     if (status) {
       matchConditions.paymentStatus = status;
     }
-
-    // Enhanced search - search by txnId OR instructor name
     if (search?.trim()) {
       const searchRegex = { $regex: search.trim(), $options: "i" };
       matchConditions.$or = [
@@ -71,24 +61,18 @@ export class AdminMembershipOrderRepository
       ];
     }
 
-    // Add match stage if we have conditions
     if (Object.keys(matchConditions).length > 0) {
       pipeline.push({ $match: matchConditions });
     }
 
-    // Add sorting
     pipeline.push({ $sort: { createdAt: -1 } });
 
-    // Get total count first
     const countPipeline = [...pipeline, { $count: "total" }];
     const countResult =
       await InstructorMembershipOrderModel.aggregate(countPipeline);
     const total = countResult[0]?.total || 0;
 
-    // Add pagination to main pipeline
     pipeline.push({ $skip: skip }, { $limit: limit });
-
-    // Execute main aggregation
     const orders = await InstructorMembershipOrderModel.aggregate(pipeline);
 
     const data: InstructorMembershipOrderDTO[] = orders.map((order) => ({

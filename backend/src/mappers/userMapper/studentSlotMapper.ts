@@ -8,7 +8,7 @@ export const mapToSlotDTO = (slot: ISlot): StudentSlotDTO => {
   return {
     slotId: slot._id.toString(),
     instructorId: slot.instructorId.toString(),
-    startTime: formatInTimeZone(slot.startTime, IST, "h:mm a"), // e.g., 3:00 pm
+    startTime: formatInTimeZone(slot.startTime, IST, "h:mm a"),
     endTime: formatInTimeZone(slot.endTime, IST, "h:mm a"),
     price: slot.price,
     isBooked: slot.isBooked,

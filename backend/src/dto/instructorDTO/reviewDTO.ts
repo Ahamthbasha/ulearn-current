@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 export interface ReviewDTO {
   id: string;
   rating: number;
@@ -24,8 +25,6 @@ export interface IFormattedReview {
 }
 
 
-// src/types/aggregationTypes.ts
-import { Types } from "mongoose";
 
 interface StudentInfo {
   username: string;

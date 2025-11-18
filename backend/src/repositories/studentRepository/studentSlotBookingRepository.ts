@@ -117,7 +117,6 @@ export class StudentSlotBookingRepository
       ];
 
       const countPipeline = [...pipeline, { $count: "total" }];
-      // Use a generic type for the count result
       const totalResult = await this.aggregate<{ total: number }>(countPipeline);
       const total = totalResult.length > 0 ? totalResult[0].total : 0;
 

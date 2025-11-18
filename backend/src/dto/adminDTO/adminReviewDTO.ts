@@ -8,7 +8,7 @@ export interface IAdminReviewDTO {
   studentName: string;
   rating: number;
   reviewText: string;
-  createdAt: string; // formatted
+  createdAt: string;
   flaggedByInstructor: boolean;
   isDeleted: boolean;
   rejectionReason?: string | null;

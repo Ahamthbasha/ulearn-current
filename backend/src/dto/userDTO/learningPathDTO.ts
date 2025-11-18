@@ -9,7 +9,7 @@ export interface LearningPathDTO {
   _id: string;
   title: string;
   description: string;
-  studentId: string; // Changed from instructorId
+  studentId: string;
   items: Array<{
     courseId: string;
     order: number;

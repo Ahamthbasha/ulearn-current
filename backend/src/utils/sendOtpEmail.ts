@@ -11,8 +11,6 @@ export class SendEmail implements IEmail {
     if (!sendgridApiKey) {
       throw new Error("SENDGRID_API_KEY is not set in environment variables");
     }
-
-    // Initialize SendGrid with API key (uses HTTPS, not SMTP)
     sgMail.setApiKey(sendgridApiKey);
     console.log('✅ Email service initialized with SendGrid HTTP API');
   }

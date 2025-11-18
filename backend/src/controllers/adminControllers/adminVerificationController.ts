@@ -13,10 +13,12 @@ import { handleControllerError } from "../../utils/errorHandlerUtil";
 import IAdminVerificationController from "./interface/IAdminVerificationController";
 
 export class AdminVerificationController implements IAdminVerificationController {
-  constructor(
-    private readonly verificationService: IAdminVerificationService,
-    private readonly emailService: IEmail
-  ) {}
+    private _verificationService: IAdminVerificationService
+    private _emailService: IEmail
+  constructor(verificationService:IAdminVerificationService,emailService:IEmail) {
+    this._verificationService = verificationService
+    this._emailService = emailService
+  }
 
   async getAllRequests(req: Request, res: Response): Promise<void> {
     try {
@@ -27,7 +29,7 @@ export class AdminVerificationController implements IAdminVerificationController
       );
       const search = (req.query.search as string) || "";
 
-      const { data, total } = await this.verificationService.getAllRequests(
+      const { data, total } = await this._verificationService.getAllRequests(
         page,
         limit,
         search
@@ -56,7 +58,7 @@ export class AdminVerificationController implements IAdminVerificationController
       }
 
       const requestData =
-        await this.verificationService.getRequestDataByEmail(email);
+        await this._verificationService.getRequestDataByEmail(email);
 
       if (!requestData) {
         throw new NotFoundError(
@@ -95,7 +97,7 @@ export class AdminVerificationController implements IAdminVerificationController
         );
       }
 
-      const approvedRequest = await this.verificationService.approveRequest(
+      const approvedRequest = await this._verificationService.approveRequest(
         email,
         status,
         reason
@@ -108,14 +110,14 @@ export class AdminVerificationController implements IAdminVerificationController
       const name = approvedRequest.username;
 
       if (status === "approved") {
-        await this.emailService.sendVerificationSuccessEmail(name, email);
+        await this._emailService.sendVerificationSuccessEmail(name, email);
         res.status(StatusCode.OK).json({
           success: true,
           message: ResponseError.APPROVE_INSTRUCTOR,
           data: approvedRequest,
         });
       } else {
-        await this.emailService.sendRejectionEmail(name, email, reason);
+        await this._emailService.sendRejectionEmail(name, email, reason);
         res.status(StatusCode.OK).json({
           success: true,
           message: ResponseError.REJECT_INSTRUCTOR,

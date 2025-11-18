@@ -11,7 +11,7 @@ const NotFound: React.FC = () => {
     if (path.startsWith("/user")) return "/user/dashboard";         // student
     if (path.startsWith("/instructor")) return "/instructor/dashboard"; // instructor
     if (path.startsWith("/admin")) return "/admin/dashboard";            // admin
-    return "/"; // default (landing)
+    return "/";
   };
 
   const handleRedirect = () => {

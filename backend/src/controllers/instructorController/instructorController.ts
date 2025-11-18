@@ -176,14 +176,12 @@ async createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Create new user from token data
-    // isVerified: false - will be verified by admin later
     const userData = {
       email: decoded.email,
-      password: decoded.password, // Already hashed from signup
+      password: decoded.password,
       username: decoded.username,
       role: decoded.role || Roles.INSTRUCTOR,
-      isVerified: false, // ✅ Admin needs to verify instructor
+      isVerified: false,
       isBlocked: false,
     };
 
@@ -249,14 +247,13 @@ async login(req: Request, res: Response): Promise<void> {
       id: instructor._id,
     });
 
-    // Production-ready cookie settings
     const isProduction = process.env.NODE_ENV === "production";
     
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
     };
 
@@ -332,14 +329,13 @@ async verifyResetOtp(req: Request, res: Response): Promise<void> {
 
     const token = await this._jwt.createToken({ email });
 
-    // Production-ready cookie settings for forgot password token
     const isProduction = process.env.NODE_ENV === "production";
     
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-      maxAge: 15 * 60 * 1000, // 15 minutes (shorter for security)
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      maxAge: 15 * 60 * 1000,
     };
 
     res
@@ -444,14 +440,13 @@ async doGoogleLogin(req: Request, res: Response): Promise<void> {
       role: instructor.role,
     });
 
-    // Production-ready cookie settings
     const isProduction = process.env.NODE_ENV === "production";
     
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
     };
 

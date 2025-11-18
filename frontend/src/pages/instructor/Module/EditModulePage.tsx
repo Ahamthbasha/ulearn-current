@@ -4,14 +4,12 @@ import { toast } from "react-toastify";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Loader2 } from "lucide-react";
-
 import Card from "../../../components/common/Card";
 import InputField from "../../../components/common/InputField";
 import { Button } from "../../../components/common/Button";
 import { getModuleById, updateModule } from "../../../api/action/InstructorActionApi";
 import { AxiosError } from "axios";
 
-// Enhanced regex: allows letters, numbers, and limited special characters
 const meaningfulTextRegex = /^[A-Za-z0-9]+([\s\-,.!?'()&][A-Za-z0-9]+)*$/;
 
 const moduleSchema = Yup.object().shape({

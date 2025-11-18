@@ -2,6 +2,7 @@ import { Response } from "express";
 import { IInstructorCourseOfferService } from "../../services/instructorServices/interface/IInstructorCourseOfferService";
 import { StatusCode } from "../../utils/enums";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
+import { InstructorCourseOfferMessages } from "../../utils/constants";
 
 export class InstructorCourseOfferController {
   private _courseOfferService: IInstructorCourseOfferService;
@@ -27,7 +28,7 @@ export class InstructorCourseOfferController {
       res.status(StatusCode.CREATED).json({
         success: true,
         data: offer,
-        message: "Offer submitted for admin approval.",
+        message: InstructorCourseOfferMessages.OFFER_SUBMITTED_TO_ADMIN,
       });
     } catch (err) {
       res
@@ -53,7 +54,7 @@ export class InstructorCourseOfferController {
       res.status(StatusCode.OK).json({
         success: true,
         data: offer,
-        message: "Offer updated and resubmitted for approval.",
+        message: InstructorCourseOfferMessages.OFFER_UPDATED_AND_RESUBMITTED_FOR_APPROVAL,
       });
     } catch (err) {
       res
@@ -76,7 +77,7 @@ export class InstructorCourseOfferController {
       res.status(StatusCode.OK).json({
         success: true,
         data: offer,
-        message: "Offer resubmitted for approval.",
+        message: InstructorCourseOfferMessages.OFFER_RESUBMITTED,
       });
     } catch (err) {
       res
@@ -132,7 +133,7 @@ export class InstructorCourseOfferController {
       await this._courseOfferService.deleteCourseOffer(instructorId, offerId);
       res
         .status(StatusCode.OK)
-        .json({ success: true, message: "Offer deleted successfully." });
+        .json({ success: true, message: InstructorCourseOfferMessages.OFFER_DELETED_SUCCESSFULLY });
     } catch (err) {
       res
         .status(StatusCode.BAD_REQUEST)

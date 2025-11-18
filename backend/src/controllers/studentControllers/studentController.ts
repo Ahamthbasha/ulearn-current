@@ -113,7 +113,6 @@ export class StudentController implements IStudentController {
         return
       }
 
-      // Check if there's an existing OTP
       const existingOtp = await this._otpService.otpExists(email);
       if (existingOtp) {
         const remainingTime = await this._otpService.getOtpRemainingTime(email);
@@ -192,7 +191,6 @@ async createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Verify OTP
     const isOtpValid = await this._otpService.verifyOtp(decode.email, otp);
 
     if (!isOtpValid) {
@@ -203,7 +201,6 @@ async createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Check if user already exists (shouldn't happen, but safety check)
     const existingUser = await this._studentService.findByEmail(decode.email);
     if (existingUser) {
       res.status(StatusCode.CONFLICT).json({
@@ -213,10 +210,9 @@ async createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Create new user from token data
     const userData = {
       email: decode.email,
-      password: decode.password, // Already hashed from signup
+      password: decode.password,
       username: decode.username,
       role: decode.role || Roles.STUDENT,
     };
@@ -224,7 +220,6 @@ async createUser(req: Request, res: Response): Promise<void> {
     const user = await this._studentService.createUser(userData as any);
 
     if (user) {
-      // Generate access and refresh tokens
       const accessToken = await this._JWT.accessToken({
         id: user._id,
         email: user.email,
@@ -236,14 +231,13 @@ async createUser(req: Request, res: Response): Promise<void> {
         role: user.role,
       });
 
-      // Production-ready cookie settings
       const isProduction = process.env.NODE_ENV === "production";
       
       const cookieOptions = {
         httpOnly: true,
-        secure: isProduction, // HTTPS only in production
-        sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        secure: isProduction,
+        sameSite: isProduction ? ("none" as const) : ("lax" as const),
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       };
 
       res
@@ -301,7 +295,6 @@ async login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Block check
     if (student.isBlocked) {
       res.status(StatusCode.FORBIDDEN).json({
         success: false,
@@ -326,14 +319,13 @@ async login(req: Request, res: Response): Promise<void> {
     const accessToken = await this._JWT.accessToken({ id, role, email });
     const refreshToken = await this._JWT.refreshToken({ id, role, email });
 
-    // Production-ready cookie settings
     const isProduction = process.env.NODE_ENV === "production";
     
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/"
     };
 
@@ -453,14 +445,13 @@ async verifyResetOtp(req: Request, res: Response): Promise<void> {
     if (isOtpValid) {
       let token = await this._JWT.createToken({ email });
 
-      // Production-ready cookie settings for forgot password token
       const isProduction = process.env.NODE_ENV === "production";
       
       const cookieOptions = {
         httpOnly: true,
-        secure: isProduction, // HTTPS only in production
-        sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-        maxAge: 15 * 60 * 1000, // 15 minutes (shorter for security)
+        secure: isProduction,
+        sameSite: isProduction ? ("none" as const) : ("lax" as const),
+        maxAge: 15 * 60 * 1000,
       };
 
       res
@@ -548,14 +539,13 @@ async verifyResetOtp(req: Request, res: Response): Promise<void> {
 
       let data = await this._JWT.verifyToken(token);
 if (typeof data === "string") {
-  // handle string case, e.g., invalid format or token string
   res.status(StatusCode.UNAUTHORIZED).json({
     success: false,
     message: StudentErrorMessages.TOKEN_INVALID,
   });
   return;
 }
-// Else decode is JwtPayload
+
 if (!data.email) {
   res.status(StatusCode.UNAUTHORIZED).json({
     success: false,
@@ -606,14 +596,13 @@ if (!data.email) {
 
     const existingUser = await this._studentService.findByEmail(email);
 
-    // Production-ready cookie settings
     const isProduction = process.env.NODE_ENV === "production";
     
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path:"/"
     };
 
@@ -689,5 +678,4 @@ if (!data.email) {
     });
   }
 }
-
 }

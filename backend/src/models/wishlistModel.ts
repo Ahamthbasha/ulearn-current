@@ -2,7 +2,6 @@ import { Schema, model, Document, Types } from "mongoose";
 import { ICourse } from "./courseModel";
 import { ILearningPath } from "./learningPathModel";
 
-// Updated Wishlist Interface and Schema
 export interface IWishlist extends Document {
   userId: Types.ObjectId;
   courseId?: Types.ObjectId | ICourse;
@@ -31,7 +30,6 @@ const wishlistSchema = new Schema<IWishlist>(
   { timestamps: true },
 );
 
-// Ensure only one of courseId or learningPathId is set
 wishlistSchema.pre("save", function (next) {
   if (this.courseId && this.learningPathId) {
     return next(

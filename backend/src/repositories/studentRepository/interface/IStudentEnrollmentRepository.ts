@@ -7,7 +7,6 @@ export interface IStudentEnrollmentRepository {
     userId: Types.ObjectId,
   ): Promise<{ enrollment: IEnrollment; order?: IOrder }[]>;
 
-  // Returns populated enrollment (we'll cast safely)
   getEnrollmentByCourseDetails(
     userId: Types.ObjectId,
     courseId: Types.ObjectId,

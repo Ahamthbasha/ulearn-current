@@ -75,7 +75,7 @@ export class StudentCheckoutController implements IStudentCheckoutController {
       res.status(StatusCode.CONFLICT).json({
         success: false,
         message: error.message,
-        orderId: error.orderId, // Type-safe access
+        orderId: error.orderId,
       });
       return
     }

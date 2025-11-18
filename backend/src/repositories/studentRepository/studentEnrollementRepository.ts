@@ -9,7 +9,6 @@ import { IOrderRepository } from "../interfaces/IOrderRepository";
 import { IOrder } from "../../models/orderModel";
 import { ICourseFullyPopulated } from "../../models/courseModel";
 
-/** Populated enrollment with full course + modules + chapters */
 type IPopulatedEnrollment = IEnrollment & {
   courseId: ICourseFullyPopulated;
 };

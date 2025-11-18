@@ -1,4 +1,3 @@
-// verification.mapper.ts
 import { IVerificationModel } from "../../models/verificationModel";
 import { VerificationRequestDTO } from "../../dto/adminDTO/verificationRequestDTO";
 
@@ -13,7 +12,6 @@ export function mapVerificationToDTO(
   };
 }
 
-// For array of requests
 export function mapVerificationArrayToDTO(
   requests: IVerificationModel[],
 ): VerificationRequestDTO[] {

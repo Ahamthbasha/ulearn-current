@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StatusCode } from "../../utils/enums";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
+import { InstructorSlotDetailMessages } from "../../utils/constants";
 
 export class InstructorSlotBookingController
   implements IInstructorSlotBookingController
@@ -23,7 +24,7 @@ export class InstructorSlotBookingController
       if (!req.user?.id) {
         res.status(StatusCode.UNAUTHORIZED).json({
           success: false,
-          message: "Authentication required",
+          message: InstructorSlotDetailMessages.AUTHENTICATION_REQUIRED,
         });
         return;
       }

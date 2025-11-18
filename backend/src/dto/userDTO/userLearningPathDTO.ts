@@ -14,8 +14,6 @@ export interface LearningPathDetailDTO {
   learningPathId: string;
   title: string;
   description: string;
-  // instructorId: string;
-  // instructorName: string;
   noOfCourses: number;
   hoursOfCourses: number;
   courses: { courseId: string; courseName: string }[];

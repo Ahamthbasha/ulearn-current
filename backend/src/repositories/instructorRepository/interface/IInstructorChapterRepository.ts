@@ -2,7 +2,7 @@ import { CreateChapterDTO, IChapter } from "../../../models/chapterModel";
 
 export interface IInstructorChapterRepository {
   createChapter(data: CreateChapterDTO): Promise<IChapter>;
-  getChaptersByModule(moduleId: string): Promise<IChapter[]>; // Changed
+  getChaptersByModule(moduleId: string): Promise<IChapter[]>; 
   getChapterById(chapterId: string): Promise<IChapter | null>;
   updateChapter(
     chapterId: string,

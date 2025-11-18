@@ -30,7 +30,7 @@ export class StudentOrderRepository
           status: 1,
           createdAt: -1,
         },
-        [{ path: "userId", select: "username email" }], // Populate with specific fields
+        [{ path: "userId", select: "username email" }], 
       );
       return { orders: data, total };
     }
@@ -52,7 +52,7 @@ export class StudentOrderRepository
         page,
         limit,
         { createdAt: -1 },
-        [{ path: "userId", select: "username email" }], // Populate with specific fields
+        [{ path: "userId", select: "username email" }],
       );
       return { orders: data, total };
     }
@@ -97,7 +97,7 @@ export class StudentOrderRepository
       { $limit: limit },
       {
         $lookup: {
-          from: "users", // Replace with your actual users collection name
+          from: "users",
           localField: "userId",
           foreignField: "_id",
           as: "userId",
@@ -111,7 +111,7 @@ export class StudentOrderRepository
       },
       {
         $project: {
-          "userId.password": 0, // Exclude sensitive fields
+          "userId.password": 0,
           "userId.__v": 0,
         },
       },
@@ -137,10 +137,10 @@ export class StudentOrderRepository
       return await query
         .populate({
           path: "userId",
-          select: "username email", // Only select needed fields
+          select: "username email",
         })
         .session(session)
-        .lean() // Use lean() for better performance if you don't need mongoose documents
+        .lean()
         .exec();
     }
 

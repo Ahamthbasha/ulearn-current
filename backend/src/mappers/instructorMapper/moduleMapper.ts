@@ -1,11 +1,10 @@
-// mappers/instructorMapper/moduleMapper.ts
 import { IModule } from "../../models/moduleModel";
 import { ModuleDTO } from "../../dto/instructorDTO/moduleDTO";
 import { formatDuration } from "../../utils/formatDuration";
 
 export interface ModuleDTOWithDuration extends ModuleDTO {
-  duration: string; // seconds as string
-  durationFormatted: string; // "1h 2m 3s"
+  duration: string;
+  durationFormatted: string;
 }
 
 export function mapModuleToDTO(module: IModule): ModuleDTOWithDuration {
@@ -15,7 +14,7 @@ export function mapModuleToDTO(module: IModule): ModuleDTOWithDuration {
     moduleNumber: module.moduleNumber,
     description: module.description,
     courseId: module.courseId.toString(),
-    duration: module.duration || "0", // raw seconds
+    duration: module.duration || "0",
     durationFormatted: formatDuration(module.duration || "0"),
     createdAt: module.createdAt,
     updatedAt: module.updatedAt,

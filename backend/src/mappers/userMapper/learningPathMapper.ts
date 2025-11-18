@@ -73,7 +73,7 @@ export async function mapLearningPathToDTO(
     _id: learningPath._id.toString(),
     title: learningPath.title,
     description: learningPath.description,
-    studentId: learningPath.studentId.toString(), // Changed from instructorId
+    studentId: learningPath.studentId.toString(),
     items,
     totalPrice,
     isPurchased: learningPath.isPurchased,

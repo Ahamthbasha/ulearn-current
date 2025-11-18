@@ -42,8 +42,6 @@ export class AdminCourseOfferService implements IAdminCourseOfferService {
   ): Promise<ICourseOfferDetailDTO> {
     const offer = await this._adminCourseOfferRepo.findByIdPopulated(offerId);
     if (!offer) throw new Error("Course offer request not found.");
-
-    // Check if the course is verified before approving the offer
     if (status === "approved" && !offer.courseId.isVerified) {
       throw new Error(
         "Cannot approve offer: The associated course is not verified.",

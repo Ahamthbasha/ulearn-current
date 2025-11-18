@@ -24,8 +24,6 @@ import {
 import type { AxiosError } from "axios";
 import type { CourseDetailsResponse } from "../interface/adminCourseDetailInterface";
 
-
-// === Component ===
 const AdminCourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();

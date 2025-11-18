@@ -13,7 +13,7 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
 
   const togglePassword = () => {
     setShowPassword(!showPassword);
-    setTimeout(() => setShowPassword(false), 1000); // Optional auto-hide
+    setTimeout(() => setShowPassword(false), 1000); 
   };
 
   return (

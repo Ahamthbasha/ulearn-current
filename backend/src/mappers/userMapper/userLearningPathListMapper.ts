@@ -27,7 +27,6 @@ export async function mapToLearningPathListDTOUSER(
     ? await getPresignedUrl(path.thumbnailUrl)
     : "";
 
-  // Handle category
   let categoryId = "";
   let categoryName = "";
   if (path.category) {
@@ -48,11 +47,10 @@ export async function mapToLearningPathListDTOUSER(
     }
   }
 
-  // Calculate totalPrice
   let totalPrice = 0;
   if (path.courses && path.courses.length > 0) {
     for (const course of path.courses) {
-      if (!course._id || !course.isPublished) continue; // Skip unpublished or invalid courses
+      if (!course._id || !course.isPublished) continue;
 
       const offer = offers.get(course._id.toString());
       if (offer && offer.isActive && offer.status === "approved") {

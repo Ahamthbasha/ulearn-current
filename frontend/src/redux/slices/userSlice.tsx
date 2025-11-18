@@ -14,7 +14,6 @@ const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    // This assumes the payload matches the shape returned by backend (e.g., username, _id, profilePicUrl)
     setUser: (
       state,
       action: PayloadAction<{

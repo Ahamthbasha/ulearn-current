@@ -1,4 +1,4 @@
-// === Types ===
+
 export interface Module {
   moduleId: string;
   moduleTitle: string;

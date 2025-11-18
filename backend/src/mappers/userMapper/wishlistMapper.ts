@@ -9,7 +9,7 @@ export const mapWishlistToDTO = (
   learningPathDetailsMap: Map<string, { price: number; thumbnailUrl: string }>,
 ): WishlistItemDTO[] => {
   return wishlist
-    .filter((item) => item.courseId || item.learningPathId) // Filter out invalid items
+    .filter((item) => item.courseId || item.learningPathId)
     .map((item) => {
       if (item.courseId && (item.courseId as ICourse)._id) {
         const course = item.courseId as ICourse;
@@ -42,7 +42,6 @@ export const mapWishlistToDTO = (
           type: "learningPath" as const,
         };
       }
-      // Return a default DTO for invalid items (optional, can be removed if filtering is sufficient)
       return {
         itemId: "",
         name: "Invalid Item",
@@ -51,5 +50,5 @@ export const mapWishlistToDTO = (
         type: item.courseId ? ("course" as const) : ("learningPath" as const),
       };
     })
-    .filter((dto) => dto.itemId !== ""); // Remove invalid items
+    .filter((dto) => dto.itemId !== "");
 };

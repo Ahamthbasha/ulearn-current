@@ -41,7 +41,7 @@ export const mapToLearningPathDTO = async (
 export const mapToLearningPathDetailsDTO = async (
   learningPath: ILearningPath & { thumbnailUrl: string; totalPrice: number },
   enrollment: ILearningPathEnrollment,
-  courses: EnrichedCourse[], // ← NOW ACCEPTS EnrichedCourse[]
+  courses: EnrichedCourse[],
   orderRepository: IOrderRepository,
   userId: Types.ObjectId,
 ): Promise<LearningPathDetailsDTO> => {

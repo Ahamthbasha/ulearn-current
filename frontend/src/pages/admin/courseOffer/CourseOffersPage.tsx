@@ -10,7 +10,6 @@ import { Eye } from "lucide-react";
 import { useDebounce } from "../../../hooks/UseDebounce";
 import type { IAdminCourseOffer,GetCourseOffersResult,CourseOfferApiResponse } from "../interface/adminInterface";
 
-
 const AdminCourseOfferListPage: React.FC = () => {
   const navigate = useNavigate();
   const [offers, setOffers] = useState<IAdminCourseOffer[]>([]);

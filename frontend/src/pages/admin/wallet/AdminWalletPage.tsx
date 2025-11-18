@@ -99,9 +99,8 @@ export default function AdminWalletPage() {
     fetchTransactions(1);
   }, []);
 
-  // Generate pagination buttons (show current, ±2, first, last on mobile)
   const getPaginationButtons = () => {
-    const maxButtons = 5; // Limit for mobile
+    const maxButtons = 5;
     if (totalPages <= maxButtons) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }

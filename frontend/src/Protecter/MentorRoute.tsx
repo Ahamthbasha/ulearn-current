@@ -8,7 +8,7 @@ const MentorRoute = () => {
   const [isMentor, setIsMentor] = useState<boolean | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const hasChecked = useRef(false); // Prevents double execution
+  const hasChecked = useRef(false);
 
   useEffect(() => {
     if (hasChecked.current) return;

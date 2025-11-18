@@ -3,7 +3,7 @@ import { UserListDTO } from "../../dto/adminDTO/userListDTO";
 
 export const toUserListDTO = (user: IUser): UserListDTO => {
   const formattedDate = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-GB") // dd/mm/yyyy
+    ? new Date(user.createdAt).toLocaleDateString("en-GB") 
     : "";
 
   return {
@@ -11,7 +11,7 @@ export const toUserListDTO = (user: IUser): UserListDTO => {
     name: user.username,
     email: user.email,
     status: user.isBlocked,
-    createdAt: formattedDate.replace(/\//g, "-"), // dd-mm-yyyy
+    createdAt: formattedDate.replace(/\//g, "-"),
   };
 };
 

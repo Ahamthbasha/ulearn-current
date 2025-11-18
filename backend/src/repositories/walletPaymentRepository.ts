@@ -14,7 +14,7 @@ export class WalletPaymentRepository implements IWalletPaymentRepository {
       }
 
       const order = await razorpay.orders.create({
-        amount: amount * 100, // Convert to paise
+        amount: amount * 100,
         currency: "INR",
         receipt: `wallet_rcpt_${Date.now()}`,
         payment_capture: true,

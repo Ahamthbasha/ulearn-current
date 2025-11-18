@@ -18,8 +18,6 @@ import type { EntityTableProps } from '../../../components/common/interface/comm
 import { toast } from 'react-toastify';
 import { isStudentLoggedIn } from '../../../utils/auth';
 import { type CartItemDTO } from '../../../types/interfaces/IStudentInterface';
-
-// Extend DTO to satisfy EntityTable typing
 type ExtendedLearningPathListDTO = LearningPathListDTO & Record<string, unknown>;
 
 const LearningPathListTable: React.FC = () => {

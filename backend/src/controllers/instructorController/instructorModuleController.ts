@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { IInstructorModuleController } from "./interfaces/IInstructorModuleController";
 import { IInstructorModuleService } from "../../services/instructorServices/interface/IInstructorModuleService";
 import { StatusCode } from "../../utils/enums";
-import { ModuleErrorMessages, ModuleSuccessMessages } from "../../utils/constants";
+import { InstructorModuleMessages, ModuleErrorMessages, ModuleSuccessMessages } from "../../utils/constants";
 import { IModule } from "../../models/moduleModel";
 import { IInstructorCourseService } from "../../services/instructorServices/interface/IInstructorCourseService";
 
@@ -111,7 +111,6 @@ async updateModule(
       description?: string;
     };
 
-    // Get original module
     const originalModule = await this._moduleService.getModuleById(moduleId);
     if (!originalModule) {
       res.status(StatusCode.NOT_FOUND).json({
@@ -123,7 +122,6 @@ async updateModule(
 
     const courseId = originalModule.courseId.toString();
 
-    // Only check title conflict if title is being updated
     if (moduleTitle?.trim()) {
       const existing = await this._moduleService.findByTitleAndCourseId(
         courseId,
@@ -140,7 +138,6 @@ async updateModule(
       }
     }
 
-    // Build update payload — NEVER include moduleNumber
     const updatedModuleData: Partial<IModule> = {};
 
     if (moduleTitle !== undefined) updatedModuleData.moduleTitle = moduleTitle.trim();
@@ -149,7 +146,7 @@ async updateModule(
     if (Object.keys(updatedModuleData).length === 0) {
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: "No valid fields provided to update",
+        message: InstructorModuleMessages.NO_VALID_FIELDS_PROVIDED,
       });
       return;
     }
@@ -189,7 +186,6 @@ async updateModule(
         return;
       }
 
-      // Sync course duration (module removed)
       await this._courseService.updateCourseDuration(module.courseId.toString());
 
       res.status(StatusCode.OK).json({ success: true, message: ModuleSuccessMessages.MODULE_DELETED });

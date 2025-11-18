@@ -1,4 +1,3 @@
-// src/mappers/userMapper/mapCourseViewing.ts
 import { IEnrollment } from "../../models/enrollmentModel";
 import { ICourseFullyPopulated } from "../../models/courseModel";
 import {
@@ -14,8 +13,6 @@ export const mapToCourseViewingResponse = async (
   getPresignedUrl: (url: string) => Promise<string>
 ): Promise<CourseViewingResponseDTO> => {
   const course = enrollment.courseId;
-
-  // Presigned URLs for thumbnail & demo
   const [thumbnail, demoVideo] = await Promise.all([
     course.thumbnailUrl ? getPresignedUrl(course.thumbnailUrl) : Promise.resolve(""),
     course.demoVideo?.url ? getPresignedUrl(course.demoVideo.url) : Promise.resolve(""),
@@ -30,7 +27,6 @@ export const mapToCourseViewingResponse = async (
     let moduleSeconds = 0;
     const chapters: ChapterViewingDTO[] = [];
 
-    // === Chapters ===
     for (const chapter of module.chapters || []) {
       const videoUrl = chapter.videoUrl ? await getPresignedUrl(chapter.videoUrl) : "";
       const chapterSeconds = chapter.duration ?? 0;
@@ -52,7 +48,6 @@ export const mapToCourseViewingResponse = async (
       });
     }
 
-// === Quiz (Safe Handling) ===
 let quizDto: ModuleViewingDTO["quiz"] = null;
 
 if (module.quiz) {
@@ -68,7 +63,7 @@ if (module.quiz) {
     questions: module.quiz.questions.map(q => ({
       questionText: q.questionText,
       options: q.options,
-      correctAnswer: q.correctAnswer, // optional: hide if you don't want to expose
+      correctAnswer: q.correctAnswer,
     })),
     isPassed: quizResult?.isPassed,
     scorePercentage: quizResult?.scorePercentage,
@@ -98,7 +93,6 @@ if (module.quiz) {
     modules,
   };
 
-  // Certificate URL
   let certificateUrl: string | null = null;
   if (enrollment.certificateGenerated && enrollment.certificateUrl) {
     certificateUrl = await getPresignedUrl(enrollment.certificateUrl);

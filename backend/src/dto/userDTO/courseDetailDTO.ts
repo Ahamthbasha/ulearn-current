@@ -23,7 +23,6 @@ export interface IQuizDTO {
   }[];
 }
 
-/** One module as it is returned to the front‑end */
 export interface IModuleDTO {
   moduleId: string;
   moduleTitle: string;

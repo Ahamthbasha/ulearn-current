@@ -12,26 +12,8 @@ import { Eye, EyeOff, Info, MessageSquare } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
 import { useDebounce } from "../../../hooks/UseDebounce";
+import type { AdminCourse,GetCoursesResult,CourseApiResponse } from "../interface/adminInterface";
 
-// Define the interface with index signature for DataTable compatibility
-export interface AdminCourse extends Record<string, unknown> {
-  _id: string;
-  courseId: string;
-  courseName: string;
-  isListed: boolean;
-}
-
-// API response type
-interface CourseApiResponse {
-  courseId: string;
-  courseName: string;
-  isListed: boolean;
-}
-
-interface GetCoursesResult {
-  data: CourseApiResponse[];
-  total: number;
-}
 
 const AdminCourseManagementPage = () => {
   const [courses, setCourses] = useState<AdminCourse[]>([]);

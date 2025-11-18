@@ -1,5 +1,3 @@
-// middlewares/errorHandler.ts
-
 import { Request, Response, NextFunction } from "express";
 import { appLogger } from "../utils/logger";
 import { isAppError, isError } from "../utils/error";
@@ -15,22 +13,17 @@ export const errorHandler = (
   let message = "Internal Server Error";
   let isOperational = false;
 
-  // Handle AppError instances
   if (isAppError(err)) {
     statusCode = err.statusCode;
     message = err.message;
     isOperational = err.isOperational;
   } 
-  // Handle standard Error instances
   else if (isError(err)) {
     message = err.message;
   }
-  // Handle unknown error types
   else if (typeof err === "string") {
     message = err;
   }
-
-  // Log error details
   appLogger.error("API error", {
     statusCode,
     message,
@@ -40,8 +33,6 @@ export const errorHandler = (
     ip: req.ip,
     stack: isError(err) ? err.stack : undefined,
   });
-
-  // Send response
   res.status(statusCode).json({
     success: false,
     message,

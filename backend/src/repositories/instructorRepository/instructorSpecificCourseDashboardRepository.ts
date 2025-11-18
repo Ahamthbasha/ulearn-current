@@ -27,21 +27,15 @@ export class InstructorSpecificCourseDashboardRepository
     let totalRevenue = 0;
 
     for (const order of orders || []) {
-      // Check standalone courses
       const standaloneCourse = order.courses.find((c) =>
         c.courseId.equals(courseId),
       );
-      // Check learning path courses
       const learningPathCourses = order.learningPaths
         .flatMap((lp) => lp.courses)
         .filter((c) => c.courseId.equals(courseId));
-
-      // Calculate total courses (standalone + learning path courses)
       const totalCourses =
         order.courses.length +
         order.learningPaths.reduce((sum, lp) => sum + lp.courses.length, 0);
-
-      // Process standalone course
       if (standaloneCourse) {
         let finalCoursePrice =
           standaloneCourse.offerPrice || standaloneCourse.coursePrice;
@@ -57,8 +51,6 @@ export class InstructorSpecificCourseDashboardRepository
           (finalCoursePrice * INSTRUCTOR_REVENUE_SHARE).toFixed(2),
         );
       }
-
-      // Process learning path courses
       for (const lpCourse of learningPathCourses) {
         let finalCoursePrice = lpCourse.offerPrice || lpCourse.coursePrice;
         if (order.coupon && totalCourses > 0) {
@@ -104,21 +96,15 @@ export class InstructorSpecificCourseDashboardRepository
     const monthlyMap = new Map<string, number>();
 
     for (const order of orders || []) {
-      // Check standalone courses
       const standaloneCourse = order.courses.find((c) =>
         c.courseId.equals(courseId),
       );
-      // Check learning path courses
       const learningPathCourses = order.learningPaths
         .flatMap((lp) => lp.courses)
         .filter((c) => c.courseId.equals(courseId));
-
-      // Calculate total courses (standalone + learning path courses)
       const totalCourses =
         order.courses.length +
         order.learningPaths.reduce((sum, lp) => sum + lp.courses.length, 0);
-
-      // Process standalone course
       if (standaloneCourse) {
         let finalCoursePrice =
           standaloneCourse.offerPrice || standaloneCourse.coursePrice;
@@ -142,8 +128,6 @@ export class InstructorSpecificCourseDashboardRepository
           ),
         );
       }
-
-      // Process learning path courses
       for (const lpCourse of learningPathCourses) {
         let finalCoursePrice = lpCourse.offerPrice || lpCourse.coursePrice;
         if (order.coupon && totalCourses > 0) {
@@ -202,7 +186,6 @@ export class InstructorSpecificCourseDashboardRepository
   }[];
   total: number;
 }> {
-  // Helper: format date to "01-Jan-2025 03:30 PM"
   const formatDate = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, "0");
     const monthNames = [
@@ -258,7 +241,6 @@ export class InstructorSpecificCourseDashboardRepository
       throw new Error("Invalid range");
   }
 
-  // === 1. Get total count ===
   const totalPipeline = [
     {
       $match: {
@@ -276,7 +258,6 @@ export class InstructorSpecificCourseDashboardRepository
   const totalResult = await this._orderRepo.aggregate<{ total: number }>(totalPipeline);
   const total = totalResult[0]?.total ?? 0;
 
-  // === 2. Get paginated orders using GenericRepository.paginate ===
   const paginated = await this._orderRepo.paginate(
     {
       status: "SUCCESS",
@@ -291,7 +272,6 @@ export class InstructorSpecificCourseDashboardRepository
     { createdAt: -1 },
   );
 
-  // Type-safe: paginated.data is HydratedDocument<IOrder>[]
   const orders = paginated.data;
   const enrollments = await this.getCourseEnrollmentCount(courseId);
   const results: {
@@ -308,7 +288,7 @@ export class InstructorSpecificCourseDashboardRepository
     totalEnrollments: number;
   }[] = [];
 
-  const INSTRUCTOR_REVENUE_SHARE = 0.9; // Adjust as needed
+  const INSTRUCTOR_REVENUE_SHARE = 0.9;
 
   for (const order of orders) {
     const totalCourses =
@@ -320,7 +300,6 @@ export class InstructorSpecificCourseDashboardRepository
         ? Number((order.coupon.discountAmount / totalCourses).toFixed(2))
         : 0;
 
-    // Standalone course
     const standaloneCourse = order.courses.find((c) => c.courseId.equals(courseId));
     if (standaloneCourse) {
       let finalCoursePrice = standaloneCourse.offerPrice ?? standaloneCourse.coursePrice;
@@ -343,7 +322,6 @@ export class InstructorSpecificCourseDashboardRepository
       });
     }
 
-    // Learning path courses
     for (const lp of order.learningPaths) {
       for (const c of lp.courses) {
         if (c.courseId.equals(courseId)) {

@@ -3,14 +3,14 @@ import { ChapterDTO } from "../../../dto/instructorDTO/chapterDTO";
 
 export interface IInstructorChapterService {
   createChapter(data: CreateChapterDTO): Promise<ChapterDTO>;
-  getChaptersByModule(moduleId: string): Promise<ChapterDTO[]>; // Changed
+  getChaptersByModule(moduleId: string): Promise<ChapterDTO[]>; 
   getChapterById(chapterId: string): Promise<IChapter | null>;
   updateChapter(
     chapterId: string,
     data: Partial<IChapter>
   ): Promise<ChapterDTO | null>;
   deleteChapter(chapterId: string): Promise<IChapter | null>;
-  findByTitleOrNumberAndModuleId( // Changed
+  findByTitleOrNumberAndModuleId( 
     moduleId: string,
     chapterTitle: string,
     chapterNumber: number,

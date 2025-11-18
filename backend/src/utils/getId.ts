@@ -12,10 +12,9 @@ export interface CustomRequest extends Request {
   };
 }
 
-// Define an interface for decoded token payload
 interface TokenPayload {
   id?: string;
-  [key: string]: unknown; // Allow additional properties
+  [key: string]: unknown;
 }
 
 const getId = (req: CustomRequest): string | null => {

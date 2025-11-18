@@ -13,8 +13,6 @@ import {
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
 import { handleControllerError, BadRequestError } from "../../utils/errorHandlerUtil";
-
-// Define allowed range types
 type ReportRange = "daily" | "weekly" | "monthly" | "yearly" | "custom";
 type ReportFormat = "pdf" | "excel";
 
@@ -58,7 +56,6 @@ export class InstructorSpecificCourseDashboardController
         throw new BadRequestError(INSTRUCTOR_ERROR_MESSAGE.INVALID_COURSE_ID);
       }
 
-      // Safely extract and narrow range
       const rangeStr = Array.isArray(range) ? range[0] : range;
       if (typeof rangeStr !== "string" || !ALLOWED_RANGES.includes(rangeStr as ReportRange)) {
         throw new BadRequestError(INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE_TYPE);
@@ -82,7 +79,7 @@ export class InstructorSpecificCourseDashboardController
       const { data, total } =
         await this._dashboardService.getCourseRevenueReport(
           new Types.ObjectId(courseId),
-          rangeValue, // Now correctly typed
+          rangeValue,
           pageNum,
           limitNum,
           start,
@@ -105,14 +102,12 @@ export class InstructorSpecificCourseDashboardController
         throw new BadRequestError(INSTRUCTOR_ERROR_MESSAGE.INVALID_COURSE_ID);
       }
 
-      // Narrow range
       const rangeStr = Array.isArray(range) ? range[0] : range;
       if (typeof rangeStr !== "string" || !ALLOWED_RANGES.includes(rangeStr as ReportRange)) {
         throw new BadRequestError(INSTRUCTOR_ERROR_MESSAGE.INVALID_RANGE_TYPE);
       }
       const rangeValue: ReportRange = rangeStr as ReportRange;
 
-      // Narrow format
       const formatStr = Array.isArray(format) ? format[0] : format;
       if (typeof formatStr !== "string" || !ALLOWED_FORMATS.includes(formatStr as ReportFormat)) {
         throw new BadRequestError(INSTRUCTOR_ERROR_MESSAGE.FORMAT_ERROR);
@@ -128,7 +123,7 @@ export class InstructorSpecificCourseDashboardController
 
       const rawData = await this._dashboardService.getCourseRevenueReport(
         new Types.ObjectId(courseId),
-        rangeValue, // Correctly typed
+        rangeValue,
         1,
         10000,
         start,

@@ -66,7 +66,6 @@ export class InstructorWalletController implements IInstructorWalletController {
         });
         return;
       }
-
       res.status(StatusCode.OK).json({ success: true, wallet });
     } catch (error) {
       appLogger.error("error in debit wallet", error);

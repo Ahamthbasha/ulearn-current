@@ -18,8 +18,8 @@ export interface IWithdrawalRequest extends Document {
     bankName: string;
   };
   status: "pending" | "approved" | "rejected";
-  adminId?: Types.ObjectId; // ID of the admin who processes the request
-  remarks?: string; // Optional remarks for approval/rejection
+  adminId?: Types.ObjectId;
+  remarks?: string;
   createdAt: Date;
   updatedAt: Date;
 }

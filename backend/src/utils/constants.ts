@@ -1,4 +1,45 @@
+export const StudentLMSMessages = {
+  UNAUTHORIZED_LMS : "Unauthorized: You do not own this learning path",
+  UNAUTHORIZED:"Unauthorized: Student ID not found",
+  TITLE_VALIDATION:"Title must be a string between 3 and 100 characters",
+  DESCRIPTION_VALIDATION:"Description must be a string between 10 and 1000 characters",
+  INVALID_CATEGORY_ID:"Invalid category ID",
+  INVALID_FORMAT : "Invalid items format",
+  ITEMS_VALIDATION:"Items must be a non-empty array",
+  COURSEID_ORDER_VALIDATION:"Each item must have a valid courseId and a positive order number",
+  THUMBNAIL_REQUIRED:"Thumbnail is required",
+  THUMBNAIL_VALIDATION:"Thumbnail must be an image (JPEG, PNG, or GIF)",
+}
+
+export const InstructorSlotDetailMessages = {
+  AUTHENTICATION_REQUIRED : "Authentication required",
+}
+
+export const InstructorCourseOfferMessages = {
+  OFFER_SUBMITTED_TO_ADMIN : "Offer submitted for admin approval.",
+  OFFER_UPDATED_AND_RESUBMITTED_FOR_APPROVAL : "Offer updated and resubmitted for approval.",
+  OFFER_RESUBMITTED : "Offer resubmitted for approval.",
+  OFFER_DELETED_SUCCESSFULLY : "Offer deleted successfully.",
+}
+
+export const InstructorModuleMessages = {
+  NO_VALID_FIELDS_PROVIDED : "No valid fields provided to update",
+}
+
+export const AdminReviewMessages = {
+  FAILED_TO_FETCH_REVIEWS : "Failed to fetch reviews",
+  REVIEW_ID_REQUIRED : "Review ID is required",
+  FAILED_TO_DELETE_REVIEW : "Failed to delete review",
+  REJECTION_REASON_REQUIRED : "Rejection reason is required",
+  FAILED_TO_REJECT_REVIEW:"Failed to reject review",
+  FAILED_TO_APPROVE_REVIEW:"Failed to approve review",
+  REVIEW_NOT_FOUND : "Review not found or deleted",
+  FAILED_TO_FETCH_REVIEW : "Failed to fetch review",
+}
+
 export const InstructorReviewMessages = {
+  FAILED_TO_FETCH_REVIEW_STATS:"Failed to fetch review stats",
+  COURSE_REVIEW_FETCHED:"Course review stats fetched successfully",
     FETCH_SUCCESS: "Reviews fetched successfully",
     FLAG_SUCCESS: "Review flagged successfully",
     FLAG_FAIL: "Review not found or you are not authorized to flag it",
@@ -547,6 +588,8 @@ export const QuizSuccessMessages = {
   QUESTION_DELETED: "Question deleted successfully",
 };
 
+
+
 export const QuizErrorMessages = {
   QUIZ_NOT_FOUND_FOR_THIS_MODULE:"No quiz found for this module",
   MODULE_ID_REQUIRED : "moduleId is required",
@@ -565,6 +608,10 @@ export const ChapterErrorMessages = {
   CHAPTER_NOT_FOUND: "chapter not found",
   CHAPTER_NUMBER_ALREADY_EXIST:
     "Chapter with this number already exists in this course",
+  CHAPTER_INVALID_VIDEO_DURATION:"Invalid video duration",
+  INVALID_DURATION_PROVIDED:"Invalid duration provided",
+  DURATION_REQUIRED:"Duration is required when uploading new video",
+  NO_VALID_FIELDS_PROVIDED_TO_UPDATE : "No valid fields provided to update",
 };
 
 export const ChapterSuccessMessages = {

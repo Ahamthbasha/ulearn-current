@@ -62,7 +62,6 @@ export class InstructorVerificationController {
           );
         }
 
-        // ✅ If rejected → allow re-verification (update the request)
         const updatedRequest = await this._verificationService.reverifyRequest(
           name,
           email,
@@ -78,7 +77,6 @@ export class InstructorVerificationController {
         return;
       }
 
-      // 🔰 First-time submission
       const newRequest = await this._verificationService.sendVerifyRequest(
         name,
         email,

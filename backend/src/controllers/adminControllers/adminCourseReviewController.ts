@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { IAdminCourseReviewService } from "../../services/adminServices/interface/IAdminCourseReviewService";
 import { IAdminCourseReviewController } from "./interface/IAdminCourseReviewController";
 import { StatusCode } from "../../utils/enums";
+import { appLogger } from "../../utils/logger";
+import { AdminReviewMessages } from "../../utils/constants";
 
 export class AdminCourseReviewController implements IAdminCourseReviewController {
   private _adminCourseReviewService: IAdminCourseReviewService;
@@ -31,10 +33,10 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
         },
       });
     } catch (error) {
-      console.error("Error in getAllReviews:", error);
+      appLogger.error("Error in getAllReviews:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to fetch reviews",
+        message: AdminReviewMessages.FAILED_TO_FETCH_REVIEWS,
       });
     }
   }
@@ -46,7 +48,7 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
       if (!reviewId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Review ID is required",
+          message: AdminReviewMessages.REVIEW_ID_REQUIRED,
         });
         return;
       }
@@ -55,10 +57,10 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
 
       res.status(result.success ? StatusCode.OK : StatusCode.NOT_FOUND).json(result);
     } catch (error) {
-      console.error("Error in deleteReview:", error);
+      appLogger.error("Error in deleteReview:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to delete review",
+        message: AdminReviewMessages.FAILED_TO_DELETE_REVIEW,
       });
     }
   }
@@ -71,7 +73,7 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
       if (!reviewId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Review ID is required",
+          message: AdminReviewMessages.REVIEW_ID_REQUIRED,
         });
         return;
       }
@@ -79,7 +81,7 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
       if (!reason?.trim()) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Rejection reason is required",
+          message: AdminReviewMessages.REJECTION_REASON_REQUIRED,
         });
         return;
       }
@@ -88,10 +90,10 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
 
       res.status(result.success ? StatusCode.OK : StatusCode.NOT_FOUND).json(result);
     } catch (error) {
-      console.error("Error in rejectReview:", error);
+      appLogger.error("Error in rejectReview:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to reject review",
+        message: AdminReviewMessages.FAILED_TO_REJECT_REVIEW,
       });
     }
   }
@@ -103,7 +105,7 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
       if (!reviewId) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: "Review ID is required",
+          message: AdminReviewMessages.REVIEW_ID_REQUIRED,
         });
         return;
       }
@@ -112,10 +114,10 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
 
       res.status(result.success ? StatusCode.OK : StatusCode.NOT_FOUND).json(result);
     } catch (error) {
-      console.error("Error in approveReview:", error);
+      appLogger.error("Error in approveReview:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Failed to approve review",
+        message: AdminReviewMessages.FAILED_TO_APPROVE_REVIEW,
       });
     }
   }
@@ -127,7 +129,7 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
     if (!reviewId) {
       res.status(StatusCode.BAD_REQUEST).json({
         success: false,
-        message: "Review ID is required",
+        message: AdminReviewMessages.REVIEW_ID_REQUIRED,
       });
       return;
     }
@@ -137,7 +139,7 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
     if (!review) {
       res.status(StatusCode.NOT_FOUND).json({
         success: false,
-        message: "Review not found or deleted",
+        message: AdminReviewMessages.REVIEW_NOT_FOUND,
       });
       return;
     }
@@ -147,10 +149,10 @@ export class AdminCourseReviewController implements IAdminCourseReviewController
       data: review,
     });
   } catch (error) {
-    console.error("Error in getReviewById:", error);
+    appLogger.error("Error in getReviewById:", error);
     res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to fetch review",
+      message: AdminReviewMessages.FAILED_TO_FETCH_REVIEW,
     });
   }
 }

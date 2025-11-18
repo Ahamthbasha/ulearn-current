@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { ICart } from "../../models/cartModel";
 import { CartItemDTO } from "../../dto/userDTO/cartCourseDTO";
-import { IEnrollment } from "../../models/enrollmentModel"; // Adjust path as needed
+import { IEnrollment } from "../../models/enrollmentModel";
 
 export const mapCartToDTO = (
   cart: ICart,
@@ -35,7 +35,6 @@ export const mapCartToDTO = (
     });
   }
 
-  // Map learning paths
   if (Array.isArray(cart.learningPaths)) {
     cart.learningPaths.forEach((lp) => {
       const lpId =

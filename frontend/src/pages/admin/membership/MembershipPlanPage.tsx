@@ -13,23 +13,8 @@ import {
 } from "../../../api/action/AdminActionApi";
 import { toast } from "react-toastify";
 import { useDebounce } from "../../../hooks/UseDebounce";
-import type { IMembershipPlan } from "../interface/adminInterface";
+import type { AdminApiError, GetMembershipPlansResult, IMembershipPlan } from "../interface/adminInterface";
 
-// API response type for membership plans
-interface GetMembershipPlansResult {
-  plans: IMembershipPlan[];
-  total: number;
-  success?: boolean;
-}
-
-// API error response type
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
 
 const MembershipPlanPage = () => {
   const [plans, setPlans] = useState<IMembershipPlan[]>([]);
@@ -62,7 +47,7 @@ const MembershipPlanPage = () => {
       setTotal(response.total || 0);
       setError(null);
     } catch (err) {
-      const apiError = err as ApiError;
+      const apiError = err as AdminApiError;
       const msg = apiError?.response?.data?.message || "Failed to load membership plans";
       setError(msg);
       toast.error(msg);
@@ -113,7 +98,7 @@ const MembershipPlanPage = () => {
       await deleteMembership(selectedPlan._id);
       toast.success("Membership plan deleted");
     } catch (err) {
-      const apiError = err as ApiError;
+      const apiError = err as AdminApiError;
       fetchPlans();
       toast.error(apiError?.response?.data?.message || "Failed to delete membership plan");
     } finally {
@@ -139,7 +124,7 @@ const MembershipPlanPage = () => {
         `Plan ${selectedPlan.isActive ? "deactivated" : "activated"} successfully`
       );
     } catch (err) {
-      const apiError = err as ApiError;
+      const apiError = err as AdminApiError;
       setPlans(prev =>
         prev.map(plan =>
           plan._id === selectedPlan._id

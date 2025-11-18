@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { ICourseOffer } from "../../models/courseOfferModel"; // Updated to use CourseOffer model
+import { ICourseOffer } from "../../models/courseOfferModel";
 
 export interface PopulatedCourse {
   _id: Types.ObjectId;
@@ -8,7 +8,7 @@ export interface PopulatedCourse {
   price?: number;
   effectivePrice?: number;
   isVerified?: boolean;
-  offer?: ICourseOffer | null; // Reference the full ICourseOffer interface
+  offer?: ICourseOffer | null;
 }
 
 export interface LearningPathItemDTO {

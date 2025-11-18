@@ -124,7 +124,7 @@ const AddChapterPage = () => {
       formData.append("chapterNumber", String(nextChapterNumber));
       formData.append("moduleId", moduleId);
       formData.append("video", videoFile);
-      formData.append("duration", String(duration)); // ← SEND DURATION
+      formData.append("duration", String(duration)); 
 
       await createChapter(formData);
       toast.success("Chapter created successfully");

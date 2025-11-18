@@ -9,16 +9,8 @@ import DataTable, {
   type ActionButton,
   type PaginationProps,
 } from "../../../components/AdminComponents/DataTable";
-import { type MembershipOrderDTO } from "../interface/adminInterface";
+import { type MembershipOrderDTO, type MembershipOrderRecord } from "../interface/adminInterface";
 
-// Extended interface to satisfy Record<string, unknown> constraint
-interface MembershipOrderRecord extends Record<string, unknown> {
-  orderId: string;
-  instructorName: string;
-  membershipName: string;
-  price: number;
-  status: string;
-}
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
@@ -34,7 +26,6 @@ const Orders: React.FC = () => {
   const debouncedSearch = useDebounce(searchTerm, 1000);
   const limit = 5;
 
-  // Updated status options including "cancelled"
   const statusOptions = [
     { value: "", label: "All Status" },
     { value: "paid", label: "Paid" },

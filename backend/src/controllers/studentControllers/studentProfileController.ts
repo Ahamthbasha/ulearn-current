@@ -19,7 +19,7 @@ export class StudentProfileController implements IStudentProfileController {
     this._studentProfileService = studentProfileService;
   }
 
-  public async getProfile(
+  async getProfile(
     req: AuthenticatedRequest,
     res: Response,
   ): Promise<void> {
@@ -57,7 +57,7 @@ export class StudentProfileController implements IStudentProfileController {
     }
   }
 
-  public async updateProfile(
+  async updateProfile(
     req: AuthenticatedRequest,
     res: Response,
   ): Promise<void> {
@@ -116,7 +116,7 @@ export class StudentProfileController implements IStudentProfileController {
     }
   }
 
-  public async updatePassword(
+  async updatePassword(
     req: AuthenticatedRequest,
     res: Response,
   ): Promise<void> {

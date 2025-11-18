@@ -27,25 +27,22 @@ import {
 export class InstructorAllCourseDashboardController
   implements IInstructorAllDashboardController
 {
-  private readonly _allDashboardService: IInstructorAllCourseDashboardService;
+  private  _allDashboardService: IInstructorAllCourseDashboardService;
 
   constructor(allDashboardService: IInstructorAllCourseDashboardService) {
     this._allDashboardService = allDashboardService;
   }
 
-/** GET /dashboard */
 async getDashboard(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const instructorId = req.user?.id;
     if (!instructorId)
       throwAppError(UnauthorizedError, INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_UNAUTHORIZED);
 
-    // Use correct return type
     const data = await this._allDashboardService.getInstructorDashboard(
       new Types.ObjectId(instructorId)
     );
 
-    // Only process topCourses (no topLearningPaths)
     const topCoursesWithUrls = await Promise.all(
       data.topCourses.map(
         async (c: ITopSellingCourse): Promise<ITopSellingCourse & { thumbnailUrl: string }> => ({
@@ -55,13 +52,11 @@ async getDashboard(req: AuthenticatedRequest, res: Response): Promise<void> {
       )
     );
 
-    // Return only course dashboard data
     res.status(StatusCode.OK).json({
       success: true,
       data: {
         ...data,
         topCourses: topCoursesWithUrls,
-        // No topLearningPaths
       },
     });
   } catch (error) {
@@ -69,7 +64,6 @@ async getDashboard(req: AuthenticatedRequest, res: Response): Promise<void> {
   }
 }
 
-  /** GET /detailed-revenue */
   async getDetailedRevenueReport(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const instructorId = req.user?.id;
@@ -115,7 +109,6 @@ async getDashboard(req: AuthenticatedRequest, res: Response): Promise<void> {
     }
   }
 
-  /** GET /export-revenue */
  async exportRevenueReport(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const instructorId = req.user?.id;
@@ -149,9 +142,8 @@ async getDashboard(req: AuthenticatedRequest, res: Response): Promise<void> {
     if (!result.data.length)
       throwAppError(NotFoundError, INSTRUCTOR_ERROR_MESSAGE.NO_DATA_FOUND);
 
-    // Map to ReportData (course-centric)
     const reportData: ReportData[] = result.data.map((item: IRevenueReportItem): ReportData => ({
-      orderId: item.orderId.toString(), // already string
+      orderId: item.orderId.toString(),
       date: item.date,
       instructorRevenue: item.instructorRevenue,
       totalOrderAmount: item.totalOrderAmount,

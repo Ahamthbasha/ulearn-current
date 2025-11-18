@@ -1,4 +1,3 @@
-// transactionDTO.ts
 export interface ITransactionDTO {
   amount: number;
   type: "credit" | "debit";
@@ -12,5 +11,5 @@ export interface ITransactionResponseDTO {
   type: "credit" | "debit";
   description: string;
   txnId: string;
-  date: string; // formatted
+  date: string;
 }

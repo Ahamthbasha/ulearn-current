@@ -17,9 +17,9 @@ export const getViewableUrl = async (key: string): Promise<string> => {
   const s3 = new AWS.S3();
 
   const params = {
-    Bucket: BUCKET_NAME!, // non-null assertion
+    Bucket: BUCKET_NAME!, 
     Key: key,
-    Expires: 60 * 5, // 5 minutes
+    Expires: 60 * 5,
     ResponseContentDisposition: `inline; filename="${key.split("/").pop()}"`, // 👈 opens in browser
   };
 

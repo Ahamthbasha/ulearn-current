@@ -1,4 +1,3 @@
-// src/repositories/interfaces/ILearningPathRepository.ts
 import { ClientSession, PopulateOptions } from "mongoose";
 import { IGenericRepository } from "../genericRepository";
 import { ILearningPath } from "../../models/learningPathModel";

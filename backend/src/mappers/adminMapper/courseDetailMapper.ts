@@ -61,7 +61,6 @@ export const mapModuleToDTO = async (
 };
 
 export const mapQuizToDTO = (quiz: IQuiz): QuizDetailsDTO => {
-  // Cast each question as IQuestions to fix 'unknown' _id type error
   const questionsDTO: QuestionDTO[] = quiz.questions.map((question) => {
     const q = question as IQuestions;
     return {

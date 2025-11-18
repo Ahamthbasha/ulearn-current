@@ -38,7 +38,7 @@ export class StudentLearningPathService implements IStudentLearningPathService {
 
       const learningPath =
         await this._learningPathRepository.createLearningPath(data);
-      await learningPath.totalPrice; // Ensure totalPrice is computed
+      await learningPath.totalPrice;
       return await mapLearningPathToDTO(learningPath);
     } catch (error) {
       const errorMessage = error instanceof Error && error.message
