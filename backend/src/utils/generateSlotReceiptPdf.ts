@@ -4,6 +4,9 @@ import { IBooking } from "../models/bookingModel";
 import { ISlot } from "../models/slotModel";
 import { IInstructor } from "../models/instructorModel";
 import { IUser } from "../models/userModel";
+import { formatInTimeZone } from "date-fns-tz";
+
+const IST = "Asia/Kolkata";
 
 export const generateSlotReceiptPdf = (
   res: Response,
@@ -51,7 +54,7 @@ export const generateSlotReceiptPdf = (
 
   doc.y = 85;
 
-  // Section Title
+  // Booking Summary Title
   doc.fontSize(12).fillColor(primary).text("Booking Summary", 40, doc.y);
 
   doc
@@ -62,24 +65,20 @@ export const generateSlotReceiptPdf = (
 
   const summaryY = doc.y + 25;
 
-  // Booking ID and Date
+  // Booking ID & Date Booked (IST)
+  const bookedDate = formatInTimeZone(
+    booking.createdAt,
+    IST,
+    "dd MMM yyyy, h:mm a"
+  );
+
   doc
     .fontSize(9)
     .fillColor(secondary)
     .text(`Booking ID: ${booking._id.toString()}`, 40, summaryY)
-    .text(
-      `Date Booked: ${new Date(booking.createdAt).toLocaleString("en-IN", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`,
-      40,
-      summaryY + 15,
-    );
+    .text(`Date Booked: ${bookedDate}`, 40, summaryY + 15);
 
-  // Status badge
+  // Status Badge
   const statusColor = booking.paymentStatus === "paid" ? success : "#dc2626";
   doc
     .rect(doc.page.width - 110, summaryY + 5, 70, 20)
@@ -99,7 +98,7 @@ export const generateSlotReceiptPdf = (
 
   doc.y = summaryY + 45;
 
-  // Section Renderer
+  // Helper: Section Renderer
   const section = (title: string, rows: { label: string; value: string }[]) => {
     doc.fontSize(11).fillColor(primary).text(title, 40, doc.y);
 
@@ -137,46 +136,40 @@ export const generateSlotReceiptPdf = (
     doc.y = y + 10;
   };
 
+  // Student Info
   section("Student Information", [
     { label: "Name", value: booking.studentId.username || "N/A" },
     { label: "Email", value: booking.studentId.email || "N/A" },
   ]);
 
+  // Instructor Info
   section("Instructor Information", [
     { label: "Name", value: booking.instructorId.username || "N/A" },
     { label: "Email", value: booking.instructorId.email || "N/A" },
   ]);
 
-  const start = new Date(booking.slotId.startTime);
-  const end = new Date(booking.slotId.endTime);
-  const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+  // Slot Details — FULLY IST CORRECT
+  const startTime = booking.slotId.startTime;
+  const endTime = booking.slotId.endTime;
+
+  const dateStr = formatInTimeZone(startTime, IST, "dd MMM yyyy");
+  const startTimeStr = formatInTimeZone(startTime, IST, "h:mm a");
+  const endTimeStr = formatInTimeZone(endTime, IST, "h:mm a");
+  const duration = Math.round(
+    (new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60)
+  );
 
   section("Slot Details", [
-    {
-      label: "Date",
-      value: start.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-    },
-    {
-      label: "Time",
-      value: `${start.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })} - ${end.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`,
-    },
+    { label: "Date", value: dateStr },
+    { label: "Time", value: `${startTimeStr} - ${endTimeStr}` },
     { label: "Duration", value: `${duration} minutes` },
   ]);
 
+  // Payment Details
   section("Payment Details", [
     { label: "Amount", value: `INR ${booking.slotId.price.toFixed(2)}` },
     { label: "Status", value: booking.paymentStatus.toUpperCase() },
-    { label: "Transaction ID", value: booking.txnId || "N/A" },
+    { label: "Transaction ID", value: booking.txnId || "Wallet Payment" },
   ]);
 
   // Total Box
@@ -215,7 +208,7 @@ export const generateSlotReceiptPdf = (
     })
     .text("This is a computer-generated receipt.", 0, doc.y + 24, {
       align: "right",
-      width: doc.page.width - 40,
+      width:  doc.page.width - 40,
     });
 
   doc.end();
