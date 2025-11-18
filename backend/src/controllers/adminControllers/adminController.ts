@@ -64,13 +64,13 @@ async login(req: Request, res: Response): Promise<void> {
       httpOnly: true,
       secure: isProduction, // HTTPS only in production
       sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
     res
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
+      .cookie("accessToken", accessToken,cookieOptions)
+      .cookie("refreshToken", refreshToken,cookieOptions)
       .status(StatusCode.OK)
       .send({
         success: true,
