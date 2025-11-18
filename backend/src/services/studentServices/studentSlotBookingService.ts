@@ -617,7 +617,7 @@ return {
 
     const slot = (await this._slotRepo.findOne(
       { _id: slotId, isBooked: false },
-      [{ path: "instructorId", select: "username email" }],
+      [{ path: "instructorId", select: "username email _id" }],
     )) as PopulatedSlot;
 
     if (!slot) {
@@ -692,7 +692,7 @@ return {
   const session = await mongoose.startSession();
   try {
     return await session.withTransaction(async () => {
-      // Find the failed booking with populated fields
+
       const booking = await this._bookingRepo.findOne(
         {
           _id: new Types.ObjectId(bookingId),
@@ -700,8 +700,14 @@ return {
           status: "failed",
         },
         [
-          { path: "slotId" },
-          { path: "instructorId", select: "username email" },
+          { 
+            path: "slotId", 
+            populate: { 
+              path: "instructorId", 
+              select: "username email _id" 
+            } 
+          },
+          { path: "instructorId", select: "username email _id" },
         ],
         session,
       );
@@ -711,6 +717,8 @@ return {
       const slot = booking.slotId as ISlot;
       if (!slot || typeof slot === "string")
         throw new Error("Slot not populated");
+      if (!slot.instructorId || typeof slot.instructorId === "string")
+        throw new Error("Instructor not populated in slot");
       if (slot.isBooked) throw new Error("SLOT_ALREADY_BOOKED");
 
       // Mark stale pending bookings as failed
