@@ -2,7 +2,7 @@ import UserModel, { IUser } from "../../models/userModel";
 import { GenericRepository } from "../genericRepository";
 import { IAdminUserRepository } from "./interface/IAdminUserRepository";
 import {Types} from "mongoose"
-export class AdmiUserRespository
+export class AdminUserRespository
   extends GenericRepository<IUser>
   implements IAdminUserRepository
 {

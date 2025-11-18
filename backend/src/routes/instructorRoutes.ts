@@ -19,7 +19,7 @@ import {
   instructorCourseOfferController,
   instructorModuleController,
   instructorCourseReviewController,
-} from "../config/dependencyInjector";
+} from "../config/dependencyInjector/instructorDependencyInjector";
 import upload from "../utils/multer";
 
 import authenticateToken from "../middlewares/authenticatedRoutes";

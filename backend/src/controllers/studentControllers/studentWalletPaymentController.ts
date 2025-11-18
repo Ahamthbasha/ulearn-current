@@ -5,8 +5,9 @@ import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
 import { StudentErrorMessages } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
+import { IStudentWalletPaymentController } from "./interfaces/IStudentWalletPaymentController";
 
-export class StudentWalletPaymentController {
+export class StudentWalletPaymentController implements IStudentWalletPaymentController {
   private _walletPaymentService: IWalletPaymentService;
   constructor(walletPaymentService: IWalletPaymentService) {
     this._walletPaymentService = walletPaymentService;

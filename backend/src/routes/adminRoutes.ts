@@ -13,7 +13,7 @@ import {
   adminCouponController,
   adminCourseOfferController,
   adminCourseReviewController,
-} from "../config/dependencyInjector";
+} from "../config/dependencyInjector/adminDependencyInjector";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 
 import { isAdmin } from "../middlewares/roleAuth";

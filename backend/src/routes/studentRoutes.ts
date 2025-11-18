@@ -19,7 +19,7 @@ import {
   studentLmsEnrollmentController,
   studentLearningPathController,
   studentCourseReviewController,
-} from "../config/dependencyInjector";
+} from "../config/dependencyInjector/studentDependencyInjector";
 import upload from "../utils/multer";
 import authenticateToken from "../middlewares/authenticatedRoutes";
 import { isStudent } from "../middlewares/roleAuth";
