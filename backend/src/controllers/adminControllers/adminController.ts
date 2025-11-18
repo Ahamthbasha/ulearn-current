@@ -58,12 +58,12 @@ async login(req: Request, res: Response): Promise<void> {
     });
 
     // Production-ready cookie settings
-    const isProduction = process.env.NODE_ENV === "production";
+    // const isProduction = process.env.NODE_ENV === "production";
     
     const cookieOptions = {
       httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? ("none" as const) : ("lax" as const), // Allow cross-origin
+      secure: true,
+      sameSite: "none" as const,
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };

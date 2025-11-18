@@ -119,7 +119,7 @@ const app = express();
 const port: number = Number(process.env.PORT) || 3000;
 
 // Filter only valid string origins
-const allowedOrigins: string[] = [process.env.FRONTEND_URL ?? ""].filter(
+const allowedOrigins: string[] = [process.env.FRONTEND_URL ?? "https://ulearnfrontend.onrender.com"].filter(
   (url): url is string => Boolean(url),
 );
 
