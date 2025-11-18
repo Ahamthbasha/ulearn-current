@@ -69,6 +69,10 @@ import { AdmiUserRespository } from "../repositories/adminRepository/adminUserRe
 
 import { IAdminInstructorRepository } from "../repositories/adminRepository/interface/IAdminInstructorRepository";
 import { AdminInstructorRespository } from "../repositories/adminRepository/adminInstructorRepository";
+import { IHashService } from "../services/interface/IHashService";
+import { HashService } from "../services/hashService";
+
+const hashService : IHashService = new HashService()
 
 const adminUserRepository: IAdminUserRepository = new AdmiUserRespository();
 
@@ -83,6 +87,7 @@ const adminService: IAdminService = new AdminService(adminRespository);
 const adminController: IAdminController = new AdminController(
   adminService,
   jwtService,
+  hashService
 );
 
 //////////////////////admin verification //////////////////////////////////////////

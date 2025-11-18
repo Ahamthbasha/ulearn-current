@@ -10,86 +10,104 @@ import {
 } from "../../utils/constants";
 import { IJwtService } from "../../services/interface/IJwtService";
 import { appLogger } from "../../utils/logger";
+import { IHashService } from "src/services/interface/IHashService";
 
 config();
 
 export class AdminController implements IAdminController {
   private _adminService: IAdminService;
   private _JWT: IJwtService;
+  private _hashService : IHashService
 
-  constructor(adminService: IAdminService, jwtService: IJwtService) {
+  constructor(adminService: IAdminService, jwtService: IJwtService,hashService:IHashService) {
     this._adminService = adminService;
     this._JWT = jwtService;
+    this._hashService = hashService
   }
 
 async login(req: Request, res: Response): Promise<void> {
-  try {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
 
-    const adminEmail = process.env.ADMINEMAIL;
-    const adminPassword = process.env.ADMINPASSWORD;
+      const adminEmail = process.env.ADMINEMAIL;
+      const adminPassword = process.env.ADMINPASSWORD;
 
-    if (email !== adminEmail || password !== adminPassword) {
-      res.send({
+      if (email !== adminEmail) {
+        res.send({
+          success: false,
+          message: AdminErrorMessages.EMAIL_INCORRECT,
+        });
+        return;
+      }
+
+      let admin = await this._adminService.getAdminData(email);
+
+      if (!admin) {
+        const hashedPassword = await this._hashService.hashPassword(adminPassword!);
+        admin = await this._adminService.createAdmin({ 
+          email, 
+          password: hashedPassword 
+        });
+      }
+
+      const isPasswordValid = await this._hashService.comparePassword(
+        password,
+        admin!.password
+      );
+
+      if (!isPasswordValid) {
+        res.send({
+          success: false,
+          message: AdminErrorMessages.PASSWORD_INCORRECT,
+        });
+        return;
+      }
+
+      const accessToken = await this._JWT.accessToken({
+        email,
+        role: Roles.ADMIN,
+        id: admin?._id,
+      });
+
+      const refreshToken = await this._JWT.refreshToken({
+        email,
+        role: Roles.ADMIN,
+        id: admin?._id,
+      });
+
+      const isProduction = process.env.NODE_ENV === "production";
+      
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? ("none" as const) : ("lax" as const),
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      };
+
+      res
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .status(StatusCode.OK)
+        .send({
+          success: true,
+          message: AdminSuccessMessages.LOGIN_SUCCESS,
+          token: accessToken,
+          data: {
+            email,
+            role: Roles.ADMIN,
+            name: Roles.ADMIN,
+            adminId: admin?._id,
+          },
+        });
+    } catch (error) {
+      appLogger.error("Admin login error", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
         success: false,
-        message:
-          email !== adminEmail
-            ? AdminErrorMessages.EMAIL_INCORRECT
-            : AdminErrorMessages.PASSWORD_INCORRECT,
+        message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
       });
-      return;
     }
-
-    let admin = await this._adminService.getAdminData(email);
-    if (!admin) {
-      admin = await this._adminService.createAdmin({ email, password });
-    }
-
-    const accessToken = await this._JWT.accessToken({
-      email,
-      role: Roles.ADMIN,
-      id: admin?._id,
-    });
-
-    const refreshToken = await this._JWT.refreshToken({
-      email,
-      role: Roles.ADMIN,
-      id: admin?._id,
-    });
-
-    const isProduction = process.env.NODE_ENV === "production";
-    
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? ("none" as const) : ("lax" as const),
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    };
-
-    res
-      .cookie("accessToken", accessToken,cookieOptions)
-      .cookie("refreshToken", refreshToken,cookieOptions)
-      .status(StatusCode.OK)
-      .send({
-        success: true,
-        message: AdminSuccessMessages.LOGIN_SUCCESS,
-        token: accessToken,
-        data: {
-          email,
-          role: Roles.ADMIN,
-          name: Roles.ADMIN,
-          adminId: admin?._id,
-        },
-      });
-  } catch (error) {
-    appLogger.error("Admin login error", error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).send({
-      success: false,
-      message: AdminErrorMessages.INTERNAL_SERVER_ERROR,
-    });
   }
-}
 
 
   async logout(_req: Request, res: Response): Promise<void> {
@@ -107,7 +125,7 @@ async login(req: Request, res: Response): Promise<void> {
   }
   async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
-      
+
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";

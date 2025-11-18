@@ -9,7 +9,6 @@ export interface IAdminRepository {
   createAdmin(adminData: IAdmin): Promise<IAdmin | null>;
 
   //fetch users and instructors
-
   getAllUsers(
     page: number,
     limit: number,
