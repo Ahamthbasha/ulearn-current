@@ -115,11 +115,37 @@ export class InstructorCourseRepository
   }
 
   async getScheduledCourses(): Promise<ICourse[]> {
+    // Get current time in UTC (MongoDB stores dates in UTC)
     const nowUTC = new Date();
+    
+    console.log('\n=== Checking for Scheduled Courses ===');
+    console.log('Current time (UTC):', nowUTC.toISOString());
+    console.log('Current time (IST):', nowUTC.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
+    console.log('Query: { publishDate: { $lte:', nowUTC.toISOString(), '}, isPublished: false }');
+    
     const courses = await this.find({
       publishDate: { $lte: nowUTC, $exists: true, $ne: null },
       isPublished: false,
     });
+
+    console.log(`Found ${courses.length} course(s) to publish`);
+    
+    if (courses.length > 0) {
+      courses.forEach((course, index) => {
+        const publishDateUTC = course.publishDate;
+        const timeDiff = publishDateUTC ? nowUTC.getTime() - publishDateUTC.getTime() : 0;
+        const minutesDiff = Math.floor(timeDiff / 60000);
+        
+        console.log(`\nCourse ${index + 1}:`);
+        console.log(`  - Name: ${course.courseName}`);
+        console.log(`  - ID: ${course._id}`);
+        console.log(`  - publishDate (UTC): ${publishDateUTC?.toISOString()}`);
+        console.log(`  - publishDate (IST): ${publishDateUTC?.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
+        console.log(`  - isPublished: ${course.isPublished}`);
+        console.log(`  - Time passed since publish time: ${minutesDiff} minute(s)`);
+      });
+    }
+    console.log('=== End Scheduled Courses Check ===\n');
 
     return courses;
   }

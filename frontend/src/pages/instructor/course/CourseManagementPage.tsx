@@ -117,10 +117,7 @@ const CourseManagementPage = () => {
       toast.error("Please select a publish date and time");
       return;
     }
-
     const selectedDate = new Date(publishDate);
-    
-    // Validate it's in the future
     const now = new Date();
     if (selectedDate <= now) {
       toast.error("Publish date must be in the future");
@@ -128,19 +125,7 @@ const CourseManagementPage = () => {
     }
 
     try {
-      // Convert IST to UTC before sending to backend
-      // The datetime-local input gives us a date in local timezone (IST)
-      // We need to convert this to UTC
-      
-      // Method 1: Send with IST timezone offset
-      const publishDateWithTimezone = `${publishDate}:00+05:30`;
-      
-      console.log("Scheduling publish:");
-      console.log("  - User selected (IST):", publishDate);
-      console.log("  - Sending to backend:", publishDateWithTimezone);
-      console.log("  - Selected date object:", selectedDate.toISOString());
-      console.log("  - Current time:", now.toISOString());
-      
+      const publishDateWithTimezone = `${publishDate}:00+05:30`;      
       const res = await publishCourse(courseId, publishDateWithTimezone);
       toast.success(res?.message || "Course scheduled for publishing");
       await fetchCourseDetails();
