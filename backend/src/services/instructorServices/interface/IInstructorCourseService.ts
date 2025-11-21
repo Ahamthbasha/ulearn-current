@@ -1,7 +1,7 @@
 import { ICourse } from "../../../models/courseModel";
 import { InstructorCourseDTO } from "../../../dto/instructorDTO/instructorCourseDTO";
 import { CourseResponseDto } from "../../../dto/instructorDTO/courseDetailsDTO";
-import { ValidationResult } from "src/interface/instructorInterface/IInstructorInterface";
+import { ValidationResult } from "../../../interface/instructorInterface/IInstructorInterface";
 
 export interface IInstructorCourseService {
   createCourse(courseData: ICourse): Promise<ICourse>;
