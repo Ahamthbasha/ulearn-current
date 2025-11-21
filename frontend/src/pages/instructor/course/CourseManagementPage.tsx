@@ -74,8 +74,6 @@ const CourseManagementPage = () => {
         }
         const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hours24.toString().padStart(2, "0")}:${minutes.padStart(2, "0")}`;
         setPublishDate(formattedDate);
-        
-        console.log("Loaded existing publish date:", formattedDate);
       } catch (error) {
         console.error("Error parsing publishDate:", error);
         setPublishDate("");

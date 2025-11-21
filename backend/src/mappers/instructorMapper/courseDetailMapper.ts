@@ -18,6 +18,7 @@ function formatDateTo12Hour(date: Date): string {
     const [, day, month, year, hours, minutes, ampm] = match;
     return `${day}-${month}-${year} ${hours}:${minutes} ${ampm.toUpperCase()}`;
   }
+
   const utcTime = date.getTime();
   const istOffset = 5.5 * 60 * 60 * 1000; 
   const istDate = new Date(utcTime + istOffset);

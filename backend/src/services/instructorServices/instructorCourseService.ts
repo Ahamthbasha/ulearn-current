@@ -155,71 +155,70 @@ export class InstructorCourseService implements IInstructorCourseService {
     return !!existing;
   }
 
-async canSubmitForVerification(courseId: string): Promise<ValidationResult> {
-  const modules = await this._moduleRepository.getModulesByCourse(courseId);
+  async canSubmitForVerification(courseId: string): Promise<ValidationResult> {
+    const modules = await this._moduleRepository.getModulesByCourse(courseId);
 
-  if (modules.length === 0) {
+    if (modules.length === 0) {
+      return {
+        isValid: false,
+        errors: [
+          {
+            moduleId: "",
+            moduleTitle: "No modules created",
+            missingChapters: true,
+            missingQuiz: true,
+          },
+        ],
+      };
+    }
+
+    const errors: ModuleValidationError[] = [];
+
+    for (const module of modules) {
+      const [chapters, quiz] = await Promise.all([
+        this._chapterRepository.getChaptersByModule(module._id.toString()),
+        this._quizRepository?.getQuizByModuleId
+          ? this._quizRepository.getQuizByModuleId(module._id.toString())
+          : Promise.resolve(null),
+      ]);
+
+      const hasChapter = Array.isArray(chapters) && chapters.length > 0;
+      const hasQuiz = this.isValidQuiz(quiz);
+
+      if (!hasChapter || !hasQuiz) {
+        errors.push({
+          moduleId: module._id.toString(),
+          moduleTitle: module.moduleTitle,
+          missingChapters: !hasChapter,
+          missingQuiz: !hasQuiz,
+        });
+      }
+    }
+
     return {
-      isValid: false,
-      errors: [
-        {
-          moduleId: "",
-          moduleTitle: "No modules created",
-          missingChapters: true,
-          missingQuiz: true,
-        },
-      ],
+      isValid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 
-  const errors: ModuleValidationError[] = [];
+  async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
+    const validation = await this.canSubmitForVerification(courseId);
 
-  for (const module of modules) {
-    const [chapters, quiz] = await Promise.all([
-      this._chapterRepository.getChaptersByModule(module._id.toString()),
-      this._quizRepository?.getQuizByModuleId
-        ? this._quizRepository.getQuizByModuleId(module._id.toString())
-        : Promise.resolve(null),
-    ]);
+    if (!validation.isValid) {
+      const errorMessage = validation.errors
+        ? validation.errors
+            .map(
+              (err) =>
+                `Module "${err.moduleTitle}" is missing chapters: ${err.missingChapters}, missing quiz: ${err.missingQuiz}`
+            )
+            .join("; ")
+        : "Course validation failed.";
 
-    const hasChapter = Array.isArray(chapters) && chapters.length > 0;
-    const hasQuiz = this.isValidQuiz(quiz);
-
-    if (!hasChapter || !hasQuiz) {
-      errors.push({
-        moduleId: module._id.toString(),
-        moduleTitle: module.moduleTitle,
-        missingChapters: !hasChapter,
-        missingQuiz: !hasQuiz,
-      });
+      throw new Error(`Course cannot be submitted for verification: ${errorMessage}`);
     }
+
+    return await this._courseRepository.submitCourseForVerification(courseId);
   }
-
-  return {
-    isValid: errors.length === 0,
-    errors: errors.length > 0 ? errors : undefined,
-  };
-}
-
-async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
-  const validation = await this.canSubmitForVerification(courseId);
-
-  if (!validation.isValid) {
-    const errorMessage = validation.errors
-      ? validation.errors
-          .map(
-            (err) =>
-              `Module "${err.moduleTitle}" is missing chapters: ${err.missingChapters}, missing quiz: ${err.missingQuiz}`
-          )
-          .join("; ")
-      : "Course validation failed.";
-
-    throw new Error(`Course cannot be submitted for verification: ${errorMessage}`);
-  }
-
-  return await this._courseRepository.submitCourseForVerification(courseId);
-}
-
 
   async publishCourse(
     courseId: string,
@@ -236,53 +235,47 @@ async submitCourseForVerification(courseId: string): Promise<ICourse | null> {
     );
   }
 
-async canPublishCourse(courseId: string): Promise<boolean> {
-  // Check if course has at least one module
-  const modules = await this._moduleRepository.getModulesByCourse(courseId);
-  
-  if (modules.length === 0) {
-    return false;
-  }
-
-  // Check if ALL modules have chapters AND quizzes
-  for (const module of modules) {
-    const [chapters, quiz] = await Promise.all([
-      this._chapterRepository.getChaptersByModule(module._id.toString()),
-      this._quizRepository?.getQuizByModuleId
-        ? this._quizRepository.getQuizByModuleId(module._id.toString())
-        : Promise.resolve(null),
-    ]);
-
-    // Check if module has at least one chapter
-    const hasChapter = Array.isArray(chapters) && chapters.length > 0;
+  async canPublishCourse(courseId: string): Promise<boolean> {
+    const modules = await this._moduleRepository.getModulesByCourse(courseId);
     
-    // Check if module has a valid quiz with questions
-    const hasQuiz = this.isValidQuiz(quiz);
-
-    // If ANY module is missing chapters or quiz, cannot publish
-    if (!hasChapter || !hasQuiz) {
+    if (modules.length === 0) {
       return false;
     }
+
+    for (const module of modules) {
+      const [chapters, quiz] = await Promise.all([
+        this._chapterRepository.getChaptersByModule(module._id.toString()),
+        this._quizRepository?.getQuizByModuleId
+          ? this._quizRepository.getQuizByModuleId(module._id.toString())
+          : Promise.resolve(null),
+      ]);
+
+      const hasChapter = Array.isArray(chapters) && chapters.length > 0;
+      const hasQuiz = this.isValidQuiz(quiz);
+
+      if (!hasChapter || !hasQuiz) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  return true;
-}
-
-private isValidQuiz(quiz: unknown): boolean {
-  if (quiz === null || quiz === undefined) {
-    return false;
+  private isValidQuiz(quiz: unknown): boolean {
+    if (quiz === null || quiz === undefined) {
+      return false;
+    }
+    
+    if (typeof quiz !== "object") {
+      return false;
+    }
+    
+    const quizObj = quiz as Record<string, unknown>;
+    
+    if (!("questions" in quizObj)) {
+      return false;
+    }
+    
+    return Array.isArray(quizObj.questions) && quizObj.questions.length > 0;
   }
-  
-  if (typeof quiz !== "object") {
-    return false;
-  }
-  
-  const quizObj = quiz as Record<string, unknown>;
-  
-  if (!("questions" in quizObj)) {
-    return false;
-  }
-  
-  return Array.isArray(quizObj.questions) && quizObj.questions.length > 0;
-}
 }

@@ -79,13 +79,7 @@ export class InstructorCourseController implements IInstructorCourseController {
       };
       
       if (courseData.publishDate) {
-        const publishDate = new Date(courseData.publishDate);
-        console.log('Creating course with publishDate:');
-        console.log('  - Received:', courseData.publishDate);
-        console.log('  - Parsed (UTC):', publishDate.toISOString());
-        console.log('  - Parsed (IST):', publishDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
-        
-        courseData.publishDate = publishDate;
+        courseData.publishDate = new Date(courseData.publishDate);
       }
 
       const createdCourse = await this._courseService.createCourse(courseData);
@@ -159,13 +153,7 @@ export class InstructorCourseController implements IInstructorCourseController {
       }
 
       if (courseData.publishDate) {
-        const publishDate = new Date(courseData.publishDate);
-        console.log('Updating course with publishDate:');
-        console.log('  - Received:', courseData.publishDate);
-        console.log('  - Parsed (UTC):', publishDate.toISOString());
-        console.log('  - Parsed (IST):', publishDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
-        
-        courseData.publishDate = publishDate;
+        courseData.publishDate = new Date(courseData.publishDate);
       }
 
       courseData.courseName = courseName;
@@ -327,32 +315,16 @@ export class InstructorCourseController implements IInstructorCourseController {
       let parsedPublishDate: Date | undefined;
       
       if (publishDate) {
-        // JavaScript's Date constructor automatically handles timezone offsets
-        // Frontend sends: "2025-11-21T10:20:00+05:30"
-        // This will be correctly parsed as UTC: "2025-11-21T04:50:00.000Z"
         parsedPublishDate = new Date(publishDate);
         
-        console.log('Publishing course with schedule:');
-        console.log('  - Received publishDate:', publishDate);
-        console.log('  - Parsed as UTC:', parsedPublishDate.toISOString());
-        console.log('  - Will display as IST:', parsedPublishDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
-        console.log('  - Current time (UTC):', new Date().toISOString());
-        console.log('  - Current time (IST):', new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
-        
-        // Validate it's in the future (compare in UTC)
         const now = new Date();
         if (parsedPublishDate <= now) {
-          console.log('  - Validation failed: publishDate is in the past or now');
-          console.log('  - Difference (ms):', parsedPublishDate.getTime() - now.getTime());
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
             message: INSTRUCTOR_ERROR_MESSAGE.INVALID_PUBLISH_DATE,
           });
           return;
         }
-        
-        console.log('  - Validation passed: publishDate is in the future');
-        console.log('  - Time until publish (ms):', parsedPublishDate.getTime() - now.getTime());
       }
 
       const updatedCourse = await this._courseService.publishCourse(
