@@ -11,7 +11,6 @@ import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { IInstructorModuleRepository } from "../../repositories/instructorRepository/interface/IInstructorModuleRepository";
 import { ModuleValidationError, ValidationResult } from "../../interface/instructorInterface/IInstructorInterface";
 
-
 export class InstructorCourseService implements IInstructorCourseService {
   private _courseRepository: IInstructorCourseRepository;
   private _chapterRepository: IInstructorChapterRepository;

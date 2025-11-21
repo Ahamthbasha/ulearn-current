@@ -30,10 +30,6 @@ function formatDateTo12Hour(date: Date): string {
   const ampm = hours >= 12 ? "PM" : "AM";
   const hours12 = hours % 12 || 12;
 
-  console.log('Formatting date for display:');
-  console.log('  - UTC input:', date.toISOString());
-  console.log('  - IST output:', `${day}-${month}-${year} ${hours12}:${minutes} ${ampm}`);
-
   return `${day}-${month}-${year} ${hours12}:${minutes} ${ampm}`;
 }
 
