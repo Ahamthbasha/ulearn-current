@@ -11,7 +11,6 @@ export interface IAdmin extends Document {
   email: string;
   password: string;
   role: string;
-  profilePicUrl?: string;
 }
 
 const adminSchema: Schema<IAdmin> = new Schema(
@@ -28,10 +27,6 @@ const adminSchema: Schema<IAdmin> = new Schema(
       type: String,
       required: false,
       default: "admin",
-    },
-    profilePicUrl: {
-      type: String,
-      required: false,
     },
   },
   { timestamps: true },

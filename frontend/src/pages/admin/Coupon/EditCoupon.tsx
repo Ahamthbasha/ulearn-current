@@ -23,7 +23,29 @@ const EditCouponPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  // UPDATED: Convert DD-MM-YYYY (from backend) to YYYY-MM-DD (for input field)
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = (): string => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Get the minimum date (either original date or today, whichever is earlier)
+  const getMinDate = (originalDate: string): string => {
+    if (!originalDate) return getTodayDate();
+    
+    const original = new Date(originalDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    original.setHours(0, 0, 0, 0);
+    
+    // Return the earlier date between original and today
+    return original < today ? originalDate : getTodayDate();
+  };
+
+  // Convert DD-MM-YYYY (from backend) to YYYY-MM-DD (for input field)
   const convertToInputDateFormat = (date: string): string => {
     // Backend sends DD-MM-YYYY, convert to YYYY-MM-DD for HTML input
     const [day, month, year] = date.split('-');
@@ -70,7 +92,7 @@ const EditCouponPage: React.FC = () => {
     return message;
   };
 
-  // UPDATED: Dynamic validation schema
+  // Dynamic validation schema
   const getValidationSchema = (originalDate: string) => {
     return Yup.object({
       code: Yup.string()
@@ -151,7 +173,7 @@ const EditCouponPage: React.FC = () => {
     try {
       if (!couponId) throw new Error('Invalid coupon ID');
       
-      // UPDATED: Send date as-is (YYYY-MM-DD) - backend now accepts this format
+      // Send date as-is (YYYY-MM-DD) - backend now accepts this format
       await editCoupon(couponId, values);
       navigate('/admin/coupons');
     } catch (err: unknown) {
@@ -226,6 +248,7 @@ const EditCouponPage: React.FC = () => {
                 name="expiryDate"
                 label="Expiry Date"
                 placeholder="Select expiry date"
+                min={getMinDate(originalExpiryDate)}
               />
               <InputField
                 type="number"

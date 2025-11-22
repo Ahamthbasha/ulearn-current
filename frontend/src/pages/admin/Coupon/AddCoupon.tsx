@@ -38,6 +38,15 @@ const AddCouponPage: React.FC = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // Get today's date in YYYY-MM-DD format for the min attribute
+  const getTodayDate = (): string => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const initialValues: CouponData = {
     code: '',
     discount: undefined as unknown as number,
@@ -101,6 +110,7 @@ const AddCouponPage: React.FC = () => {
                 name="expiryDate"
                 label="Expiry Date"
                 placeholder="Select expiry date"
+                min={getTodayDate()}
               />
               <InputField
                 type="number"
