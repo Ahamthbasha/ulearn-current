@@ -1,0 +1,168 @@
+import { Response } from "express";
+import { IStudentEnrollmentController } from "./interfaces/IStudentEnrollmentController";
+import { IStudentEnrollmentService } from "../../services/studentServices/interface/IStudentEnrollmentService";
+import { StatusCode } from "../../utils/enums";
+import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
+import { Types } from "mongoose";
+import {
+  StudentErrorMessages,
+  StudentSuccessMessages,
+} from "../../utils/constants";
+import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { handleControllerError } from "../../utils/errorHandlerUtil";
+import { mapToCourseViewingResponse } from "../../mappers/userMapper/mapCourseViewing";
+
+export class StudentEnrollmentController implements IStudentEnrollmentController {
+  private readonly _enrollmentService: IStudentEnrollmentService;
+
+  constructor(enrollmentService: IStudentEnrollmentService) {
+    this._enrollmentService = enrollmentService;
+  }
+
+  async getAllEnrolledCourses(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const userId = new Types.ObjectId(req.user?.id);
+      const courses = await this._enrollmentService.getAllEnrolledCourses(userId);
+      res.status(StatusCode.OK).json({ success: true, courses });
+    } catch (error: unknown) {
+      handleControllerError(error, res);
+    }
+  }
+
+  async getEnrollmentCourseDetails(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const userId = new Types.ObjectId(req.user?.id);
+      const courseId = new Types.ObjectId(req.params.courseId);
+
+      const enrollment = await this._enrollmentService.getEnrollmentCourseWithDetails(userId, courseId);
+      if (!enrollment) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: StudentErrorMessages.STUDENT_ENROLLMENT_NOT_FOUND,
+        });
+        return;
+      }
+
+      const mappedResponse = await mapToCourseViewingResponse(enrollment,getPresignedUrl)
+
+      res.status(StatusCode.OK).json({
+        success: true,
+       mappedResponse
+      });
+    } catch (error: unknown) {
+      handleControllerError(error, res);
+    }
+  }
+
+  async completeChapter(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const userId = new Types.ObjectId(req.user?.id);
+      const { courseId, chapterId } = req.body;
+
+      const updatedEnrollment = await this._enrollmentService.completeChapter(
+        userId,
+        new Types.ObjectId(courseId),
+        new Types.ObjectId(chapterId),
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: StudentSuccessMessages.CHAPTER_COMPLETED,
+        enrollment: updatedEnrollment,
+      });
+    } catch (error: unknown) {
+      handleControllerError(error, res);
+    }
+  }
+
+  async submitQuizResult(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const userId = new Types.ObjectId(req.user?.id);
+      const { courseId, quizId, correctAnswers, totalQuestions } = req.body;
+
+      if (!courseId || !quizId || correctAnswers == null || totalQuestions == null) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: StudentErrorMessages.QUIZ_DATA_MISSING,
+        });
+        return;
+      }
+
+      const scorePercentage = (correctAnswers / totalQuestions) * 100;
+
+      const enrollment = await this._enrollmentService.submitQuizResult(
+        userId,
+        new Types.ObjectId(courseId),
+        {
+          quizId: new Types.ObjectId(quizId),
+          correctAnswers,
+          totalQuestions,
+          scorePercentage,
+        },
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: StudentSuccessMessages.QUIZ_RESULT_SUBMITTED,
+        enrollment,
+      });
+    } catch (error: unknown) {
+      handleControllerError(error, res);
+    }
+  }
+
+  async checkAllChaptersCompleted(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const userId = new Types.ObjectId(req.user?.id);
+      const courseId = new Types.ObjectId(req.params.courseId);
+
+      const allCompleted = await this._enrollmentService.areAllChaptersCompleted(userId, courseId);
+      res.status(StatusCode.OK).json({ success: true, allCompleted });
+    } catch (error: unknown) {
+      handleControllerError(error, res);
+    }
+  }
+
+  async getCertificateUrl(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const userId = new Types.ObjectId(req.user?.id);
+      const courseId = new Types.ObjectId(req.params.courseId);
+
+      const enrollment = await this._enrollmentService.getEnrollmentCourseWithDetails(userId, courseId);
+
+      if (!enrollment?.certificateGenerated || !enrollment.certificateUrl) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: StudentErrorMessages.CERTIFICATE_NOT_AVAILABLE,
+        });
+        return;
+      }
+
+      const presignedCertificateUrl = await getPresignedUrl(enrollment.certificateUrl);
+      res.status(StatusCode.OK).json({
+        success: true,
+        certificateUrl: presignedCertificateUrl,
+      });
+    } catch (error: unknown) {
+      handleControllerError(error, res);
+    }
+  }
+}

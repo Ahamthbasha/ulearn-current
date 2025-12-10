@@ -1,0 +1,37 @@
+import React from "react";
+import classNames from "classnames";
+import { type CardProps } from "./interface/commonComponent";
+
+const Card: React.FC<CardProps> = ({
+  title,
+  children,
+  className = "",
+  footer,
+  header,
+  withShadow = true,
+  padded = true,
+}) => {
+  return (
+    <div
+      className={classNames(
+        "bg-white rounded-2xl",
+        withShadow && "shadow-md",
+        className
+      )}
+    >
+      {header && <div className="border-b p-4">{header}</div>}
+
+      {title && (
+        <div className="border-b p-4">
+          <h2 className="text-lg font-semibold">{title}</h2>
+        </div>
+      )}
+
+      <div className={classNames(padded ? "p-4" : "")}>{children}</div>
+
+      {footer && <div className="border-t p-4">{footer}</div>}
+    </div>
+  );
+};
+
+export default Card;

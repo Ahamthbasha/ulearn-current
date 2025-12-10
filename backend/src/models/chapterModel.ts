@@ -1,0 +1,36 @@
+import { Schema, Types, model, Document } from "mongoose";
+
+export interface IChapter extends Document {
+  _id: Types.ObjectId;
+  chapterTitle: string;
+  moduleId: Types.ObjectId; 
+  position:number;
+  chapterNumber?: number;
+  description: string;
+  videoUrl: string;
+  duration:number;
+  createdAt?: Date;
+}
+
+export interface CreateChapterDTO {
+  chapterTitle: string;
+  moduleId: Types.ObjectId;
+  description: string;
+  videoUrl: string;
+  chapterNumber?: number;
+}
+
+const ChapterSchema = new Schema<IChapter>(
+  {
+    chapterTitle: { type: String, required: true },
+    moduleId: { type: Schema.Types.ObjectId, ref: "Module", required: true },
+    position: { type: Number, required: true },
+    chapterNumber: { type: Number },
+    description: { type: String, required: true },
+    videoUrl: { type: String, required: true },
+    duration: { type: Number, default:0 },
+  },
+  { timestamps: true }
+);
+
+export const ChapterModel = model<IChapter>("Chapter", ChapterSchema);

@@ -1,0 +1,68 @@
+import { Schema, model, Types, Document } from "mongoose";
+
+export interface ISlot extends Document {
+  _id: Types.ObjectId;
+  instructorId: Types.ObjectId;
+  startTime: Date;
+  endTime: Date;
+  price: number;
+  isBooked: boolean;
+  recurrenceRule?: {
+    daysOfWeek: number[];
+    startDate: Date;
+    endDate: Date;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const SlotSchema = new Schema<ISlot>(
+  {
+    instructorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Instructor",
+      required: true,
+    },
+    startTime: {
+      type: Date,
+      required: true,
+    },
+    endTime: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (this: ISlot, value: Date) {
+          return value > this.startTime;
+        },
+        message: "endTime must be after startTime",
+      },
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: [0, "Price must be a non-negative number"],
+    },
+    isBooked: {
+      type: Boolean,
+      default: false,
+    },
+    recurrenceRule: {
+      type: {
+        daysOfWeek: [{ type: Number, min: 0, max: 6 }],
+        startDate: { type: Date },
+        endDate: { type: Date },
+      },
+      required: false,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+export default model<ISlot>("Slot", SlotSchema);
+
+
+export function isSlot(obj: Types.ObjectId | ISlot): obj is ISlot {
+  return (obj as ISlot).endTime !== undefined;
+}
