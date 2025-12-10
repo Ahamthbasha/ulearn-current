@@ -3,7 +3,11 @@ import dotenv from "dotenv";
 if (process.env.NODE_ENV === "production") {
   dotenv.config();
 } else {
+<<<<<<< HEAD
   dotenv.config({ path: ".env.development" });
+=======
+  dotenv.config({ path: ".env.development" }); 
+>>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
 }
 
 import express from "express";
@@ -119,9 +123,15 @@ const app = express();
 const port: number = Number(process.env.PORT) || 3000;
 
 // Filter only valid string origins
+<<<<<<< HEAD
 const allowedOrigins: string[] = [
   process.env.FRONTEND_URL ?? "https://ulearnfrontend.onrender.com",
 ].filter((url): url is string => Boolean(url));
+=======
+const allowedOrigins: string[] = [process.env.FRONTEND_URL ?? "https://ulearnfrontend.onrender.com"].filter(
+  (url): url is string => Boolean(url),
+);
+>>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
 
 const corsOptions: CorsOptions = {
   credentials: true,
@@ -159,10 +169,16 @@ app.use(errorHandler);
 
 // Process-level error logging
 process.on("unhandledRejection", (reason: unknown) => {
+<<<<<<< HEAD
   const errorDetails =
     reason instanceof Error
       ? { message: reason.message, stack: reason.stack }
       : { reason: String(reason) };
+=======
+  const errorDetails = reason instanceof Error
+    ? { message: reason.message, stack: reason.stack }
+    : { reason: String(reason) };
+>>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
   appLogger.error("Unhandled Promise Rejection", errorDetails);
 });
 
@@ -183,10 +199,14 @@ const start = async (): Promise<void> => {
       await redisClient.ping();
       appLogger.info("Redis connected successfully");
     } catch (redisError: unknown) {
+<<<<<<< HEAD
       const errorMessage =
         redisError instanceof Error
           ? redisError.message
           : "Unknown Redis error";
+=======
+      const errorMessage = redisError instanceof Error ? redisError.message : "Unknown Redis error";
+>>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
       appLogger.warn(
         "Redis connection failed, OTP functionality may be limited",
         { error: errorMessage },
@@ -226,11 +246,19 @@ const start = async (): Promise<void> => {
       );
     });
   } catch (error: unknown) {
+<<<<<<< HEAD
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error starting server";
+=======
+    const errorMessage = error instanceof Error ? error.message : "Unknown error starting server";
+>>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
     appLogger.error("Failed to start server", { error: errorMessage });
     process.exit(1);
   }
 };
 
+<<<<<<< HEAD
 start();
+=======
+start();
+>>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
