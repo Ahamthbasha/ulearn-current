@@ -178,11 +178,6 @@ async function initializeSocketIO(io: TypedServer): Promise<void> {
       const token = extractToken(socket);
       const jwtService = new JwtService();
       const JWT_SECRET = process.env.JWT_SECRET || "MYLIFEMYRULE";
-<<<<<<< HEAD
-
-=======
-      
->>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
       if (!JWT_SECRET) {
         throw new Error("JWT Secret not configured");
       }
@@ -190,18 +185,11 @@ async function initializeSocketIO(io: TypedServer): Promise<void> {
       const decodedToken = (await jwtService.verifyToken(
         token,
       )) as DecodedToken;
-<<<<<<< HEAD
-
-=======
-      
->>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
       if (!decodedToken?.email || !decodedToken?.role) {
         throw new Error("Invalid or malformed token");
       }
 
       let entity: Entity | null = null;
-<<<<<<< HEAD
-
       if (decodedToken.role === "student") {
         entity = (await studentCollection.findOne({
           email: decodedToken.email,
@@ -210,15 +198,6 @@ async function initializeSocketIO(io: TypedServer): Promise<void> {
         entity = (await instructorCollection.findOne({
           email: decodedToken.email,
         })) as Entity | null;
-=======
-      
-      if (decodedToken.role === "student") {
-        entity = await studentCollection.findOne({ email: decodedToken.email }) as Entity | null;
-      } else if (decodedToken.role === "instructor") {
-        entity = await instructorCollection.findOne({
-          email: decodedToken.email,
-        }) as Entity | null;
->>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
       } else {
         throw new Error("Invalid role in token");
       }
@@ -232,12 +211,8 @@ async function initializeSocketIO(io: TypedServer): Promise<void> {
       socket.data.role = decodedToken.role;
       next();
     } catch (error) {
-<<<<<<< HEAD
       const errorMessage =
         error instanceof Error ? error.message : "Authentication failed";
-=======
-      const errorMessage = error instanceof Error ? error.message : "Authentication failed";
->>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
       next(new Error(errorMessage));
     }
   });
@@ -345,8 +320,4 @@ function extractToken(socket: Socket): string {
   return token;
 }
 
-<<<<<<< HEAD
 export { initializeSocketIO, SocketManager };
-=======
-export { initializeSocketIO, SocketManager };
->>>>>>> ec3e6c08317125de2f01dd2619ec77d688dc78cc
