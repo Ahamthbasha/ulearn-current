@@ -1,52 +1,54 @@
 export const StudentLMSMessages = {
-  UNAUTHORIZED_LMS : "Unauthorized: You do not own this learning path",
-  UNAUTHORIZED:"Unauthorized: Student ID not found",
-  TITLE_VALIDATION:"Title must be a string between 3 and 100 characters",
-  DESCRIPTION_VALIDATION:"Description must be a string between 10 and 1000 characters",
-  INVALID_CATEGORY_ID:"Invalid category ID",
-  INVALID_FORMAT : "Invalid items format",
-  ITEMS_VALIDATION:"Items must be a non-empty array",
-  COURSEID_ORDER_VALIDATION:"Each item must have a valid courseId and a positive order number",
-  THUMBNAIL_REQUIRED:"Thumbnail is required",
-  THUMBNAIL_VALIDATION:"Thumbnail must be an image (JPEG, PNG, or GIF)",
-}
+  UNAUTHORIZED_LMS: "Unauthorized: You do not own this learning path",
+  UNAUTHORIZED: "Unauthorized: Student ID not found",
+  TITLE_VALIDATION: "Title must be a string between 3 and 100 characters",
+  DESCRIPTION_VALIDATION:
+    "Description must be a string between 10 and 1000 characters",
+  INVALID_CATEGORY_ID: "Invalid category ID",
+  INVALID_FORMAT: "Invalid items format",
+  ITEMS_VALIDATION: "Items must be a non-empty array",
+  COURSEID_ORDER_VALIDATION:
+    "Each item must have a valid courseId and a positive order number",
+  THUMBNAIL_REQUIRED: "Thumbnail is required",
+  THUMBNAIL_VALIDATION: "Thumbnail must be an image (JPEG, PNG, or GIF)",
+};
 
 export const InstructorSlotDetailMessages = {
-  AUTHENTICATION_REQUIRED : "Authentication required",
-}
+  AUTHENTICATION_REQUIRED: "Authentication required",
+};
 
 export const InstructorCourseOfferMessages = {
-  OFFER_SUBMITTED_TO_ADMIN : "Offer submitted for admin approval.",
-  OFFER_UPDATED_AND_RESUBMITTED_FOR_APPROVAL : "Offer updated and resubmitted for approval.",
-  OFFER_RESUBMITTED : "Offer resubmitted for approval.",
-  OFFER_DELETED_SUCCESSFULLY : "Offer deleted successfully.",
-}
+  OFFER_SUBMITTED_TO_ADMIN: "Offer submitted for admin approval.",
+  OFFER_UPDATED_AND_RESUBMITTED_FOR_APPROVAL:
+    "Offer updated and resubmitted for approval.",
+  OFFER_RESUBMITTED: "Offer resubmitted for approval.",
+  OFFER_DELETED_SUCCESSFULLY: "Offer deleted successfully.",
+};
 
 export const InstructorModuleMessages = {
-  NO_VALID_FIELDS_PROVIDED : "No valid fields provided to update",
-}
+  NO_VALID_FIELDS_PROVIDED: "No valid fields provided to update",
+};
 
 export const AdminReviewMessages = {
-  FAILED_TO_FETCH_REVIEWS : "Failed to fetch reviews",
-  REVIEW_ID_REQUIRED : "Review ID is required",
-  FAILED_TO_DELETE_REVIEW : "Failed to delete review",
-  REJECTION_REASON_REQUIRED : "Rejection reason is required",
-  FAILED_TO_REJECT_REVIEW:"Failed to reject review",
-  FAILED_TO_APPROVE_REVIEW:"Failed to approve review",
-  REVIEW_NOT_FOUND : "Review not found or deleted",
-  FAILED_TO_FETCH_REVIEW : "Failed to fetch review",
-}
+  FAILED_TO_FETCH_REVIEWS: "Failed to fetch reviews",
+  REVIEW_ID_REQUIRED: "Review ID is required",
+  FAILED_TO_DELETE_REVIEW: "Failed to delete review",
+  REJECTION_REASON_REQUIRED: "Rejection reason is required",
+  FAILED_TO_REJECT_REVIEW: "Failed to reject review",
+  FAILED_TO_APPROVE_REVIEW: "Failed to approve review",
+  REVIEW_NOT_FOUND: "Review not found or deleted",
+  FAILED_TO_FETCH_REVIEW: "Failed to fetch review",
+};
 
 export const InstructorReviewMessages = {
-  FAILED_TO_FETCH_REVIEW_STATS:"Failed to fetch review stats",
-  COURSE_REVIEW_FETCHED:"Course review stats fetched successfully",
-    FETCH_SUCCESS: "Reviews fetched successfully",
-    FLAG_SUCCESS: "Review flagged successfully",
-    FLAG_FAIL: "Review not found or you are not authorized to flag it",
-    UNAUTHORIZED: "Unauthorized access",
-    INTERNAL_ERROR: "Failed to process request",
-}
-
+  FAILED_TO_FETCH_REVIEW_STATS: "Failed to fetch review stats",
+  COURSE_REVIEW_FETCHED: "Course review stats fetched successfully",
+  FETCH_SUCCESS: "Reviews fetched successfully",
+  FLAG_SUCCESS: "Review flagged successfully",
+  FLAG_FAIL: "Review not found or you are not authorized to flag it",
+  UNAUTHORIZED: "Unauthorized access",
+  INTERNAL_ERROR: "Failed to process request",
+};
 
 export const ReviewMessages = {
   UNAUTHORIZED: "Unauthorized",
@@ -56,9 +58,8 @@ export const ReviewMessages = {
   INTERNAL_ERROR: "Internal server error",
 };
 
-
 export const ModuleErrorMessages = {
-  INVALID_ORDEREDIDS:"Invalid orderedIds",
+  INVALID_ORDEREDIDS: "Invalid orderedIds",
   MODULE_NOT_FOUND: "Module not found",
   MODULE_ALREADY_EXIST: "Module with this title already exists",
   MODULE_NUMBER_ALREADY_EXIST: "Module with this number already exists",
@@ -69,20 +70,23 @@ export const ModuleSuccessMessages = {
   MODULE_UPDATED: "Module updated successfully",
   MODULE_DELETED: "Module deleted successfully",
   MODULE_RETRIEVED: "Module(s) retrieved successfully",
-  MODULE_REORDERED :"Modules reordered successfully",
+  MODULE_REORDERED: "Modules reordered successfully",
 };
 
-
-
 export const VALID_OFFER_STATUSES = ["approved", "rejected"] as const;
-export type OfferStatus = typeof VALID_OFFER_STATUSES[number];
+export type OfferStatus = (typeof VALID_OFFER_STATUSES)[number];
 
-export const VALID_ORDER_STATUSES = ["pending", "paid", "failed","cancelled"] as const;
-export type OrderStatus = typeof VALID_ORDER_STATUSES[number];
+export const VALID_ORDER_STATUSES = [
+  "pending",
+  "paid",
+  "failed",
+  "cancelled",
+] as const;
+export type OrderStatus = (typeof VALID_ORDER_STATUSES)[number];
 
 export const INSTRUCTOR_MESSAGES = {
-  INSTRUCTOR_CREATED_SUCCESSFULLY : "instructor created successfully",
-  FAILED_TO_CREATE_INSTRUCTOR:"Failed to create instructor",
+  INSTRUCTOR_CREATED_SUCCESSFULLY: "instructor created successfully",
+  FAILED_TO_CREATE_INSTRUCTOR: "Failed to create instructor",
   // General Messages
   EMAIL_PASSWORD_USERNAME_REQUIRED:
     "Email, password, and username are required",
@@ -121,7 +125,7 @@ export const INSTRUCTOR_MESSAGES = {
 };
 
 export const AdminErrorMessages = {
-  UNEXPECTED_ERROR:"An unexpected error occurred",
+  UNEXPECTED_ERROR: "An unexpected error occurred",
   REJECTION_REASON_REQUIRED: "Rejection reason needed",
   INVALID_INPUT: "input invalid",
   INVALID_CREDENTIALS: "Invalid email or password.",
@@ -165,7 +169,7 @@ export const AdminErrorMessages = {
 };
 
 export const AdminSuccessMessages = {
-  ADMIN_WALLET_RECHARGED_SUCCESSFULLY:"admin wallet recharged successfully",
+  ADMIN_WALLET_RECHARGED_SUCCESSFULLY: "admin wallet recharged successfully",
   ADMIN_APPROVE_WITHDRAWAL: "Withdrawal request approved successfully",
   ADMIN_REJECT_WITHDRAWAL: "Withdrawal request rejected successfully",
   LOGIN_SUCCESS: "Welcome Admin",
@@ -224,7 +228,7 @@ export const InstructorSuccessMessages = {
 };
 
 export const InstructorErrorMessages = {
-  NO_VALID_FIELDS_PROVIDED:"No valid fields provided for update",
+  NO_VALID_FIELDS_PROVIDED: "No valid fields provided for update",
   // Auth & Signup
   USER_ALREADY_EXISTS: "User already exists. Please log in instead.",
   USER_NOT_FOUND: "No user found with this email.",
@@ -258,7 +262,8 @@ export const InstructorErrorMessages = {
   INSTRUCTOR_BLOCKED: "you are blocked by admin",
   UNAUTHORIZED: "you are not verified",
 
-  PASSWORD_UPDATE_FAILED: "password updation failed you may enter wrong password",
+  PASSWORD_UPDATE_FAILED:
+    "password updation failed you may enter wrong password",
   OTP_EXPIRED: "otp is expired.Request new One",
   OTP_NOT_FOUND: "otp is not found",
   BANK_ACCOUNT_UPDATE_FAILED: "bank account updation failed",
@@ -544,7 +549,8 @@ export const CategoryErrorMsg = {
 };
 
 export const CourseErrorMessages = {
-  SUBMIT_VERIFICATION_CONDITION:"Course must have at least one chapter and one quiz with questions to submit for verification",
+  SUBMIT_VERIFICATION_CONDITION:
+    "Course must have at least one chapter and one quiz with questions to submit for verification",
   MISSING_FILES: "Missing files.",
   COURSE_NOT_FOUND: "Course not found.",
   COURSE_ID_NOT_FOUND: "CourseId not found.",
@@ -588,34 +594,33 @@ export const QuizSuccessMessages = {
   QUESTION_DELETED: "Question deleted successfully",
 };
 
-
-
 export const QuizErrorMessages = {
-  QUIZ_NOT_FOUND_FOR_THIS_MODULE:"No quiz found for this module",
-  MODULE_ID_REQUIRED : "moduleId is required",
-  QUIZ_ALREADY_CREATED : "Quiz already created for this module",
+  QUIZ_NOT_FOUND_FOR_THIS_MODULE: "No quiz found for this module",
+  MODULE_ID_REQUIRED: "moduleId is required",
+  QUIZ_ALREADY_CREATED: "Quiz already created for this module",
   QUIZ_NOT_FOUND: "Quiz not found",
   QUIZ_OR_QUESTION_NOT_FOUND: "Quiz or question not found",
   QUESTION_ALREADY_EXISTS: "Question already exists in the quiz",
-  ANOTHER_QUESTION_SAME_TEXT: "Another question with the same text already exists",
+  ANOTHER_QUESTION_SAME_TEXT:
+    "Another question with the same text already exists",
 };
 
 export const ChapterErrorMessages = {
-  CHAPTER_INVALID_ORDERIDS:"Invalid orderedIds",
+  CHAPTER_INVALID_ORDERIDS: "Invalid orderedIds",
   CHAPTER_ALREADY_EXIST:
     "Chapter already exists with this title in this course",
   CHAPTER_REQUIRE_VIDEOFILE: "Video file is required",
   CHAPTER_NOT_FOUND: "chapter not found",
   CHAPTER_NUMBER_ALREADY_EXIST:
     "Chapter with this number already exists in this course",
-  CHAPTER_INVALID_VIDEO_DURATION:"Invalid video duration",
-  INVALID_DURATION_PROVIDED:"Invalid duration provided",
-  DURATION_REQUIRED:"Duration is required when uploading new video",
-  NO_VALID_FIELDS_PROVIDED_TO_UPDATE : "No valid fields provided to update",
+  CHAPTER_INVALID_VIDEO_DURATION: "Invalid video duration",
+  INVALID_DURATION_PROVIDED: "Invalid duration provided",
+  DURATION_REQUIRED: "Duration is required when uploading new video",
+  NO_VALID_FIELDS_PROVIDED_TO_UPDATE: "No valid fields provided to update",
 };
 
 export const ChapterSuccessMessages = {
-  CHAPTER_REORDERED:"Chapters reordered successfully",
+  CHAPTER_REORDERED: "Chapters reordered successfully",
   CHAPTER_CREATED: "chapter created successfully",
   CHAPTER_RETRIEVED: "Course related chapters are retrieved",
   CHAPTER_UPDATED: "Chapter is updated successfully",
@@ -705,7 +710,7 @@ export const MembershipMessages = {
 };
 
 export const ResponseMessages = {
-  INSTRUCTOR_ID:"instructor id is required",
+  INSTRUCTOR_ID: "instructor id is required",
   MISSING_DATA: "Missing data",
   INSTRUCTOR_NOT_FOUND: "Instructor not found",
   ALREADY_ACTIVE_MEMBERSHIP: "You already have an active membership plan.",
@@ -822,12 +827,12 @@ export const INSTRUCTOR_SUCCESS_MESSAGE = {
 };
 
 export const SERVER_ERROR = {
-  UNKNOWN_ERROR : "unknown error",
+  UNKNOWN_ERROR: "unknown error",
   INTERNAL_SERVER_ERROR: "internal server error",
 };
 
 export const MESSAGES = {
-  FAILED_TO_CREATE_USER:"Failed to create user",
+  FAILED_TO_CREATE_USER: "Failed to create user",
   RESET_TOKEN_REQUIRED: "Reset token is required",
   // General Messages
   EMAIL_REQUIRED: "Email is required",
@@ -852,7 +857,7 @@ export const MESSAGES = {
   FAILED_TO_CREATE_OTP: "Failed to create OTP",
   INCORRECT_OTP: "Incorrect OTP",
   USER_NOT_EXIST_WITH_THIS_EMAIL: "user is not exist with this email",
-  INVALID_PASSWORD:"Invalid password",
+  INVALID_PASSWORD: "Invalid password",
   INVALID_CREDENTIALS: "Invalid email or password",
   ACCOUNT_BLOCKED: "Account is blocked",
   USER_NOT_FOUND: "User not found",
@@ -863,11 +868,11 @@ export const MESSAGES = {
 };
 
 export const COUPONMESSAGE = {
-  COUPON_CREATION_FAILED:"Coupon creation failed",
-  COUPON_FETCH_FAILED:"Coupon fetch failed",
-  COUPON_UPDATE_FAILED:"Coupon update failed",
-  COUPON_DELETION_FAILED:"Coupon delete failed",
-  COUPON_STATUS_TOGGLE_FAILED:"",
+  COUPON_CREATION_FAILED: "Coupon creation failed",
+  COUPON_FETCH_FAILED: "Coupon fetch failed",
+  COUPON_UPDATE_FAILED: "Coupon update failed",
+  COUPON_DELETION_FAILED: "Coupon delete failed",
+  COUPON_STATUS_TOGGLE_FAILED: "",
   COUPON_NOT_FOUND: "Coupon not found",
   COUPON_DELETED_SUCCESSFULLY: "Coupon deleted successfully",
 };
@@ -928,10 +933,10 @@ export const COURSE_OFFER_SUCCESS_MESSAGE = {
 };
 
 export const COURSE_OFFER_ERROR_MESSAGE = {
-  INVALID_INPUT_STATUS:"Invalid input status",
-  INVALID_INPUT_OFFER_ID:"Invalid input offer id",
+  INVALID_INPUT_STATUS: "Invalid input status",
+  INVALID_INPUT_OFFER_ID: "Invalid input offer id",
   INVALID_INPUT: "Invalid input data",
-  INVALID_INPUT_REVIEWS:"Invalid input reviews",
+  INVALID_INPUT_REVIEWS: "Invalid input reviews",
   OFFER_NOT_FOUND: "Offer not found",
   GENERIC: "An error occurred while processing the request",
 };
@@ -958,7 +963,6 @@ export const STUDENT_ERROR_MESSAGE = {
   CERTIFICATE_NOT_AVAILABLE: "Certificate not available",
 };
 
-
 export const MEMBERSHIP_ORDER_ERROR_MESSAGE = {
   GENERIC: "An unexpected error occurred",
   FAILED_TO_FETCH_ORDERS: "Failed to fetch orders",
@@ -976,11 +980,13 @@ export const MEMBERSHIP_ORDER_SUCCESS_MESSAGE = {
 export const StudentLearningPathErrorMessages = {
   UNAUTHORIZED_STUDENT_ID_NOT_FOUND: "Unauthorized: Student ID not found",
   TITLE_LENGTH_INVALID: "Title must be a string between 3 and 100 characters",
-  DESCRIPTION_LENGTH_INVALID: "Description must be a string between 10 and 1000 characters",
+  DESCRIPTION_LENGTH_INVALID:
+    "Description must be a string between 10 and 1000 characters",
   INVALID_CATEGORY_ID: "Invalid category ID",
   INVALID_ITEMS_FORMAT: "Invalid items format",
   ITEMS_MUST_BE_NON_EMPTY_ARRAY: "Items must be a non-empty array",
-  ITEM_INVALID_STRUCTURE: "Each item must have a valid courseId and a positive order number",
+  ITEM_INVALID_STRUCTURE:
+    "Each item must have a valid courseId and a positive order number",
   THUMBNAIL_REQUIRED: "Thumbnail is required",
   THUMBNAIL_INVALID_FORMAT: "Thumbnail must be an image (JPEG, PNG, or GIF)",
   ALREADY_CREATED: "Learning path with this title is already created",

@@ -45,7 +45,7 @@ export class StudentController implements IStudentController {
           success: false,
           message: `${MESSAGES.EMAIL_REQUIRED}, ${MESSAGES.PASSWORD_REQUIRED}, and ${MESSAGES.USERNAME_REQUIRED}`,
         });
-        return
+        return;
       }
 
       const saltRound = 10;
@@ -59,7 +59,7 @@ export class StudentController implements IStudentController {
           success: false,
           message: MESSAGES.USER_ALREADY_EXISTS,
         });
-        return
+        return;
       } else {
         const otp = await this._otpGenerator.createOtpDigit();
 
@@ -71,7 +71,7 @@ export class StudentController implements IStudentController {
             success: false,
             message: MESSAGES.FAILED_TO_CREATE_OTP,
           });
-          return
+          return;
         }
 
         await this._emailSender.sentEmailVerification("Student", email, otp);
@@ -88,16 +88,17 @@ export class StudentController implements IStudentController {
           message: MESSAGES.SIGNUP_SUCCESS,
           token,
         });
-        return
+        return;
       }
     } catch (error) {
       appLogger.error("Student SignUp Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error instanceof Error? error.message : SERVER_ERROR.UNKNOWN_ERROR
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
-      return
+      return;
     }
   }
 
@@ -110,7 +111,7 @@ export class StudentController implements IStudentController {
           success: false,
           message: MESSAGES.EMAIL_REQUIRED,
         });
-        return
+        return;
       }
 
       const existingOtp = await this._otpService.otpExists(email);
@@ -129,7 +130,7 @@ export class StudentController implements IStudentController {
           success: false,
           message: MESSAGES.FAILED_TO_CREATE_OTP,
         });
-        return
+        return;
       }
 
       await this._emailSender.sentEmailVerification("Student", email, otp);
@@ -143,218 +144,217 @@ export class StudentController implements IStudentController {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error instanceof Error ?error.message : SERVER_ERROR.UNKNOWN_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
 
+  async createUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { otp } = req.body;
 
+      if (!otp) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.OTP_REQUIRED,
+        });
+        return;
+      }
 
-async createUser(req: Request, res: Response): Promise<void> {
-  try {
-    const { otp } = req.body;
+      const token = req.headers["the-verify-token"] || "";
+      if (typeof token !== "string") {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
+        return;
+      }
 
-    if (!otp) {
-      res.status(StatusCode.BAD_REQUEST).json({
+      const decodeRaw = await this._JWT.verifyToken(token);
+
+      if (typeof decodeRaw === "string") {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
+        return;
+      }
+
+      const decode = decodeRaw as TokenPayload;
+
+      if (!decode || !decode.email) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
+        return;
+      }
+
+      const isOtpValid = await this._otpService.verifyOtp(decode.email, otp);
+
+      if (!isOtpValid) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.INCORRECT_OTP,
+        });
+        return;
+      }
+
+      const existingUser = await this._studentService.findByEmail(decode.email);
+      if (existingUser) {
+        res.status(StatusCode.CONFLICT).json({
+          success: false,
+          message: MESSAGES.USER_ALREADY_EXISTS,
+        });
+        return;
+      }
+
+      const userData = {
+        email: decode.email,
+        password: decode.password,
+        username: decode.username,
+        role: decode.role || Roles.STUDENT,
+      };
+
+      const user = await this._studentService.createUser(userData as any);
+
+      if (user) {
+        const accessToken = await this._JWT.accessToken({
+          id: user._id,
+          email: user.email,
+          role: user.role,
+        });
+        const refreshToken = await this._JWT.refreshToken({
+          id: user._id,
+          email: user.email,
+          role: user.role,
+        });
+
+        const isProduction = process.env.NODE_ENV === "production";
+
+        const cookieOptions = {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: isProduction ? ("none" as const) : ("lax" as const),
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        };
+
+        res
+          .status(StatusCode.CREATED)
+          .cookie("accessToken", accessToken, cookieOptions)
+          .cookie("refreshToken", refreshToken, cookieOptions)
+          .json({
+            success: true,
+            message: MESSAGES.USER_CREATED,
+            user: {
+              id: user._id,
+              email: user.email,
+              username: user.username,
+              role: user.role,
+            },
+          });
+        return;
+      } else {
+        res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          message: MESSAGES.FAILED_TO_CREATE_USER,
+        });
+        return;
+      }
+    } catch (error) {
+      appLogger.error("Create User Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: MESSAGES.OTP_REQUIRED,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
-      return;
     }
+  }
 
-    const token = req.headers["the-verify-token"] || "";
-    if (typeof token !== "string") {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: StudentErrorMessages.TOKEN_INVALID,
-      });
-      return;
-    }
+  async login(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
 
-    const decodeRaw = await this._JWT.verifyToken(token);
+      if (!email || !password) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.PASSWORD_REQUIRED}`,
+        });
+        return;
+      }
 
-    if (typeof decodeRaw === "string") {
-      res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: StudentErrorMessages.TOKEN_INVALID,
-      });
-      return;
-    }
+      const student = await this._studentService.findByEmail(email);
 
-    const decode = decodeRaw as TokenPayload;
+      if (!student) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: MESSAGES.USER_NOT_EXIST_WITH_THIS_EMAIL,
+        });
+        return;
+      }
 
-    if (!decode || !decode.email) {
-      res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: StudentErrorMessages.TOKEN_INVALID,
-      });
-      return;
-    }
+      if (student.isBlocked) {
+        res.status(StatusCode.FORBIDDEN).json({
+          success: false,
+          message: MESSAGES.ACCOUNT_BLOCKED,
+        });
+        return;
+      }
 
-    const isOtpValid = await this._otpService.verifyOtp(decode.email, otp);
+      const passwordMatch = await bcrypt.compare(password, student.password);
 
-    if (!isOtpValid) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: MESSAGES.INCORRECT_OTP,
-      });
-      return;
-    }
+      if (!passwordMatch) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: MESSAGES.INVALID_PASSWORD,
+        });
+        return;
+      }
 
-    const existingUser = await this._studentService.findByEmail(decode.email);
-    if (existingUser) {
-      res.status(StatusCode.CONFLICT).json({
-        success: false,
-        message: MESSAGES.USER_ALREADY_EXISTS,
-      });
-      return;
-    }
+      const role = student.role;
+      const id = student.id;
 
-    const userData = {
-      email: decode.email,
-      password: decode.password,
-      username: decode.username,
-      role: decode.role || Roles.STUDENT,
-    };
-
-    const user = await this._studentService.createUser(userData as any);
-
-    if (user) {
-      const accessToken = await this._JWT.accessToken({
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      });
-      const refreshToken = await this._JWT.refreshToken({
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      });
+      const accessToken = await this._JWT.accessToken({ id, role, email });
+      const refreshToken = await this._JWT.refreshToken({ id, role, email });
 
       const isProduction = process.env.NODE_ENV === "production";
-      
+
       const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? ("none" as const) : ("lax" as const),
         maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
       };
 
       res
-        .status(StatusCode.CREATED)
+        .status(StatusCode.OK)
         .cookie("accessToken", accessToken, cookieOptions)
         .cookie("refreshToken", refreshToken, cookieOptions)
         .json({
           success: true,
-          message: MESSAGES.USER_CREATED,
+          message: MESSAGES.LOGIN_SUCCESS,
           user: {
-            id: user._id,
-            email: user.email,
-            username: user.username,
-            role: user.role,
+            id: student.id,
+            email: student.email,
+            username: student.username,
+            role: student.role,
+            isBlocked: student.isBlocked,
           },
         });
       return;
-    } else {
+    } catch (error) {
+      appLogger.error("Login Error:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: MESSAGES.FAILED_TO_CREATE_USER,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
-      return;
     }
-  } catch (error) {
-    appLogger.error("Create User Error:", error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
-    });
   }
-}
-
-
-async login(req: Request, res: Response): Promise<void> {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.PASSWORD_REQUIRED}`,
-      });
-      return;
-    }
-
-    const student = await this._studentService.findByEmail(email);
-
-    if (!student) {
-      res.status(StatusCode.NOT_FOUND).json({
-        success: false,
-        message: MESSAGES.USER_NOT_EXIST_WITH_THIS_EMAIL,
-      });
-      return;
-    }
-
-    if (student.isBlocked) {
-      res.status(StatusCode.FORBIDDEN).json({
-        success: false,
-        message: MESSAGES.ACCOUNT_BLOCKED,
-      });
-      return;
-    }
-
-    const passwordMatch = await bcrypt.compare(password, student.password);
-
-    if (!passwordMatch) {
-      res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: MESSAGES.INVALID_PASSWORD,
-      });
-      return;
-    }
-
-    const role = student.role;
-    const id = student.id;
-
-    const accessToken = await this._JWT.accessToken({ id, role, email });
-    const refreshToken = await this._JWT.refreshToken({ id, role, email });
-
-    const isProduction = process.env.NODE_ENV === "production";
-    
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? ("none" as const) : ("lax" as const),
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/"
-    };
-
-    res
-      .status(StatusCode.OK)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .json({
-        success: true,
-        message: MESSAGES.LOGIN_SUCCESS,
-        user: {
-          id: student.id,
-          email: student.email,
-          username: student.username,
-          role: student.role,
-          isBlocked: student.isBlocked,
-        },
-      });
-    return;
-  } catch (error) {
-    appLogger.error("Login Error:", error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
-    });
-  }
-}
-
 
   async logout(_req: Request, res: Response): Promise<void> {
     try {
@@ -370,7 +370,8 @@ async login(req: Request, res: Response): Promise<void> {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error:error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
@@ -423,59 +424,61 @@ async login(req: Request, res: Response): Promise<void> {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
 
-async verifyResetOtp(req: Request, res: Response): Promise<void> {
-  try {
-    const { email, otp } = req.body;
+  async verifyResetOtp(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, otp } = req.body;
 
-    if (!email || !otp) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.OTP_REQUIRED}`,
-      });
-      return;
-    }
-
-    const isOtpValid = await this._otpService.verifyOtp(email, otp);
-
-    if (isOtpValid) {
-      let token = await this._JWT.createToken({ email });
-
-      const isProduction = process.env.NODE_ENV === "production";
-      
-      const cookieOptions = {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? ("none" as const) : ("lax" as const),
-        maxAge: 15 * 60 * 1000,
-      };
-
-      res
-        .status(StatusCode.OK)
-        .cookie("forgotToken", token, cookieOptions)
-        .json({
-          success: true,
-          message: MESSAGES.REDIERCTING_PASSWORD_RESET_PAGE,
+      if (!email || !otp) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: `${MESSAGES.EMAIL_REQUIRED} and ${MESSAGES.OTP_REQUIRED}`,
         });
-    } else {
-      res.status(StatusCode.BAD_REQUEST).json({
+        return;
+      }
+
+      const isOtpValid = await this._otpService.verifyOtp(email, otp);
+
+      if (isOtpValid) {
+        let token = await this._JWT.createToken({ email });
+
+        const isProduction = process.env.NODE_ENV === "production";
+
+        const cookieOptions = {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: isProduction ? ("none" as const) : ("lax" as const),
+          maxAge: 15 * 60 * 1000,
+        };
+
+        res
+          .status(StatusCode.OK)
+          .cookie("forgotToken", token, cookieOptions)
+          .json({
+            success: true,
+            message: MESSAGES.REDIERCTING_PASSWORD_RESET_PAGE,
+          });
+      } else {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: MESSAGES.INCORRECT_OTP,
+        });
+      }
+    } catch (error) {
+      appLogger.error("Verify Reset OTP Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: MESSAGES.INCORRECT_OTP,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
-  } catch (error) {
-    appLogger.error("Verify Reset OTP Error:", error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
-    });
   }
-}
 
   async forgotResendOtp(req: Request, res: Response): Promise<void> {
     try {
@@ -511,7 +514,8 @@ async verifyResetOtp(req: Request, res: Response): Promise<void> {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
@@ -538,21 +542,21 @@ async verifyResetOtp(req: Request, res: Response): Promise<void> {
       }
 
       let data = await this._JWT.verifyToken(token);
-if (typeof data === "string") {
-  res.status(StatusCode.UNAUTHORIZED).json({
-    success: false,
-    message: StudentErrorMessages.TOKEN_INVALID,
-  });
-  return;
-}
+      if (typeof data === "string") {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
+        return;
+      }
 
-if (!data.email) {
-  res.status(StatusCode.UNAUTHORIZED).json({
-    success: false,
-    message: StudentErrorMessages.TOKEN_INVALID,
-  });
-  return;
-}
+      if (!data.email) {
+        res.status(StatusCode.UNAUTHORIZED).json({
+          success: false,
+          message: StudentErrorMessages.TOKEN_INVALID,
+        });
+        return;
+      }
 
       const hashedPassword = await bcrypt.hash(password, 10);
       const passwordReset = await this._studentService.resetPassword(
@@ -577,105 +581,107 @@ if (!data.email) {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-        error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
       });
     }
   }
 
   async doGoogleLogin(req: Request, res: Response): Promise<void> {
-  try {
-    const { name, email } = req.body;
+    try {
+      const { name, email } = req.body;
 
-    if (!name || !email) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: MESSAGES.NAME_REQUIRED,
-      });
-      return;
-    }
-
-    const existingUser = await this._studentService.findByEmail(email);
-
-    const isProduction = process.env.NODE_ENV === "production";
-    
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? ("none" as const) : ("lax" as const),
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path:"/"
-    };
-
-    if (!existingUser) {
-      const user = await this._studentService.googleLogin(name, email);
-
-      if (user) {
-        const role = user.role;
-        const accessToken = await this._JWT.accessToken({
-          id: user._id,
-          email,
-          role,
-        });
-        const refreshToken = await this._JWT.refreshToken({
-          id: user._id,
-          email,
-          role,
-        });
-
-        res
-          .status(StatusCode.OK)
-          .cookie("accessToken", accessToken, cookieOptions)
-          .cookie("refreshToken", refreshToken, cookieOptions)
-          .json({
-            success: true,
-            message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
-            user: {
-              id: user._id,
-              email: user.email,
-              username: user.username,
-              role: user.role,
-            },
-          });
-      }
-    } else {
-      if (!existingUser.isBlocked) {
-        const role = existingUser.role;
-        const id = existingUser._id;
-        const accessToken = await this._JWT.accessToken({ id, email, role });
-        const refreshToken = await this._JWT.refreshToken({
-          id,
-          email,
-          role,
-        });
-
-        res
-          .status(StatusCode.OK)
-          .cookie("accessToken", accessToken, cookieOptions)
-          .cookie("refreshToken", refreshToken, cookieOptions)
-          .json({
-            success: true,
-            message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
-            user: {
-              id: existingUser._id,
-              email: existingUser.email,
-              username: existingUser.username,
-              role: existingUser.role,
-            },
-          });
-      } else {
-        res.status(StatusCode.FORBIDDEN).json({
+      if (!name || !email) {
+        res.status(StatusCode.BAD_REQUEST).json({
           success: false,
-          message: MESSAGES.ACCOUNT_BLOCKED,
+          message: MESSAGES.NAME_REQUIRED,
         });
+        return;
       }
+
+      const existingUser = await this._studentService.findByEmail(email);
+
+      const isProduction = process.env.NODE_ENV === "production";
+
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? ("none" as const) : ("lax" as const),
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: "/",
+      };
+
+      if (!existingUser) {
+        const user = await this._studentService.googleLogin(name, email);
+
+        if (user) {
+          const role = user.role;
+          const accessToken = await this._JWT.accessToken({
+            id: user._id,
+            email,
+            role,
+          });
+          const refreshToken = await this._JWT.refreshToken({
+            id: user._id,
+            email,
+            role,
+          });
+
+          res
+            .status(StatusCode.OK)
+            .cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", refreshToken, cookieOptions)
+            .json({
+              success: true,
+              message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
+              user: {
+                id: user._id,
+                email: user.email,
+                username: user.username,
+                role: user.role,
+              },
+            });
+        }
+      } else {
+        if (!existingUser.isBlocked) {
+          const role = existingUser.role;
+          const id = existingUser._id;
+          const accessToken = await this._JWT.accessToken({ id, email, role });
+          const refreshToken = await this._JWT.refreshToken({
+            id,
+            email,
+            role,
+          });
+
+          res
+            .status(StatusCode.OK)
+            .cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", refreshToken, cookieOptions)
+            .json({
+              success: true,
+              message: MESSAGES.GOOGLE_LOGIN_SUCCESS,
+              user: {
+                id: existingUser._id,
+                email: existingUser.email,
+                username: existingUser.username,
+                role: existingUser.role,
+              },
+            });
+        } else {
+          res.status(StatusCode.FORBIDDEN).json({
+            success: false,
+            message: MESSAGES.ACCOUNT_BLOCKED,
+          });
+        }
+      }
+    } catch (error) {
+      appLogger.error("Google Login Error:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
+        error:
+          error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
+      });
     }
-  } catch (error) {
-    appLogger.error("Google Login Error:", error);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: SERVER_ERROR.INTERNAL_SERVER_ERROR,
-      error: error instanceof Error ? error.message : SERVER_ERROR.UNKNOWN_ERROR,
-    });
   }
-}
 }

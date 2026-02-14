@@ -5,6 +5,7 @@ const authenticationRoutes = {
     studentResendOtp:"/api/student/resendOtp",
     studentVerifyOtp:"/api/student/createUser",
     studentLogin:"/api/student/login",
+    // http://localhost:3000/api/student/login
     studentLogout:"/api/student/logout",
     studentVerifyEmail:"/api/student/verifyEmail",
     studentVerifyResetOtp:"/api/student/verifyResetOtp",

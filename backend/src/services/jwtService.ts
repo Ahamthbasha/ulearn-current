@@ -36,9 +36,9 @@ export class JwtService implements IJwtService {
     try {
       const secret = process.env.JWT_SECRET || "MYLIFEMYRULE";
       const decoded = jwt.verify(token, secret);
-      if(typeof decoded === "string"){
-        return decoded
-      }else{
+      if (typeof decoded === "string") {
+        return decoded;
+      } else {
         return decoded;
       }
     } catch (error) {

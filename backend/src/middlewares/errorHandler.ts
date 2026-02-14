@@ -7,7 +7,7 @@ export const errorHandler = (
   err: unknown,
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void => {
   let statusCode = StatusCode.INTERNAL_SERVER_ERROR;
   let message = "Internal Server Error";
@@ -17,11 +17,9 @@ export const errorHandler = (
     statusCode = err.statusCode;
     message = err.message;
     isOperational = err.isOperational;
-  } 
-  else if (isError(err)) {
+  } else if (isError(err)) {
     message = err.message;
-  }
-  else if (typeof err === "string") {
+  } else if (typeof err === "string") {
     message = err;
   }
   appLogger.error("API error", {
