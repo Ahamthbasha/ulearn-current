@@ -1143,7 +1143,18 @@ const Graph = ({
         />
         <YAxis stroke="#6b7280" fontSize={10} className="sm:text-xs" />
         <Tooltip
-          formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
+          formatter={(value: number | string | (number | string)[] | undefined) => {
+            // Handle array case
+            if (Array.isArray(value)) {
+              return ["₹0", "Revenue"];
+            }
+            // Handle number case
+            if (typeof value === 'number') {
+              return [`₹${value.toLocaleString()}`, "Revenue"];
+            }
+            // Handle string or undefined case
+            return ["₹0", "Revenue"];
+          }}
           labelStyle={{ color: "#374151" }}
           contentStyle={{
             backgroundColor: "#ffffff",
