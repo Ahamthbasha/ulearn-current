@@ -525,6 +525,38 @@ const monthMap = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
+// ────────────────────────────────────────────────
+// Interface for Recharts custom tooltip props
+// ────────────────────────────────────────────────
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name?: string;
+    value?: number | string;
+    color?: string;
+    dataKey?: string | number;
+    fill?: string;
+  }>;
+  label?: string | number;
+}
+
+// ────────────────────────────────────────────────
+// Custom tooltip (no any)
+const CustomRevenueTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const entry = payload[0];
+
+  return (
+    <div className="bg-white border border-gray-300 rounded p-3 shadow-md text-sm min-w-[160px]">
+      <p className="font-medium text-gray-800 mb-1">{label ?? "N/A"}</p>
+      <p className="text-green-700 font-semibold">
+        Revenue: ₹{Number(entry?.value ?? 0).toLocaleString()}
+      </p>
+    </div>
+  );
+};
+
 const SpecificDashboardPage = () => {
   const { courseId } = useParams();
   const [loading, setLoading] = useState(true);
@@ -600,9 +632,6 @@ const SpecificDashboardPage = () => {
 
       setReportLoading(true);
       const response = await specificCourseReport(courseId, filter, startDate, endDate, page, limit);
-
-      console.log("Raw Response:", JSON.stringify(response, null, 2));
-      console.log("Response Data:", JSON.stringify(response.data, null, 2));
 
       if (!response || !response.data) {
         throw new Error("Invalid response from server");
@@ -761,24 +790,7 @@ const SpecificDashboardPage = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis tickFormatter={(v) => `₹${v}`} />
-              <Tooltip 
-                formatter={(value: number | string | (number | string)[] | null | undefined) => {
-                  // Handle array case
-                  if (Array.isArray(value)) {
-                    return ["₹0", "Revenue"];
-                  }
-                  // Handle null/undefined case
-                  if (value == null) {
-                    return ["₹0", "Revenue"];
-                  }
-                  // Handle number case
-                  if (typeof value === 'number') {
-                    return [`₹${value.toLocaleString()}`, "Revenue"];
-                  }
-                  // Handle string case
-                  return ["₹0", "Revenue"];
-                }} 
-              />
+              <Tooltip content={<CustomRevenueTooltip />} />
               <Legend />
               <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
             </BarChart>
