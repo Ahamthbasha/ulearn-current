@@ -261,7 +261,14 @@ const SpecificDashboardPage = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis tickFormatter={(v) => `₹${v}`} />
-              <Tooltip formatter={(v: number) => [`₹${v.toLocaleString()}`, "Revenue"]} />
+              <Tooltip 
+                formatter={(value: number | string | Array<number | string>) => {
+                  if (typeof value === 'number') {
+                    return [`₹${value.toLocaleString()}`, "Revenue"];
+                  }
+                  return ["₹0", "Revenue"];
+                }} 
+              />
               <Legend />
               <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
             </BarChart>
