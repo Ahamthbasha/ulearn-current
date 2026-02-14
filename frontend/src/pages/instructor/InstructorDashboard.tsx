@@ -506,7 +506,6 @@
 
 
 
-
 import { useEffect, useState } from "react";
 import {
   XAxis,
@@ -882,9 +881,13 @@ const InstructorDashboard = () => {
                 <XAxis dataKey="month" stroke="#666" fontSize={10} />
                 <YAxis stroke="#666" fontSize={10} />
                 <Tooltip
-                  formatter={(value: number | string | (number | string)[] | undefined, name: string) => {
+                  formatter={(value: number | string | (number | string)[] | null | undefined, name: string) => {
                     // Handle array case
                     if (Array.isArray(value)) {
+                      return [0, name === "sales" ? "Sales" : "Revenue"];
+                    }
+                    // Handle null/undefined case
+                    if (value == null) {
                       return [0, name === "sales" ? "Sales" : "Revenue"];
                     }
                     // Handle number case
@@ -895,7 +898,7 @@ const InstructorDashboard = () => {
                         return [`₹${value}`, "Revenue"];
                       }
                     }
-                    // Handle string or undefined case
+                    // Handle string case
                     return [0, name === "sales" ? "Sales" : "Revenue"];
                   }}
                 />
@@ -927,16 +930,20 @@ const InstructorDashboard = () => {
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value: number | string | (number | string)[] | undefined) => {
+                      formatter={(value: number | string | (number | string)[] | null | undefined) => {
                         // Handle array case
                         if (Array.isArray(value)) {
+                          return ["0", "Sales"];
+                        }
+                        // Handle null/undefined case
+                        if (value == null) {
                           return ["0", "Sales"];
                         }
                         // Handle number case
                         if (typeof value === 'number') {
                           return [`${value} sales`, "Sales"];
                         }
-                        // Handle string or undefined case
+                        // Handle string case
                         return ["0", "Sales"];
                       }} 
                     />
