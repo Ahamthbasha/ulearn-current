@@ -504,8 +504,6 @@
 
 
 
-
-
 import { useEffect, useState } from "react";
 import {
   XAxis,
@@ -527,6 +525,67 @@ import {
 } from "../../api/action/InstructorActionApi";
 
 import type { IDashboardData, IRevenueReportItem } from "../../types/interfaces/IdashboardTypes";
+
+// ────────────────────────────────────────────────
+// Type that matches what Recharts actually passes to custom tooltip
+// ────────────────────────────────────────────────
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name?: string;
+    value?: number | string;
+    color?: string;
+    dataKey?: string | number;
+    fill?: string;
+  }>;
+  label?: string | number;
+}
+
+// ────────────────────────────────────────────────
+// Custom Tooltip for Monthly Bar Chart
+// ────────────────────────────────────────────────
+const CustomMonthlyTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  if (!active || !payload || payload.length === 0) return null;
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[180px]">
+      <p className="font-semibold text-gray-800 mb-2">{label ?? "N/A"}</p>
+      {payload.map((entry, index) => (
+        <p
+          key={`item-${index}`}
+          className="flex justify-between items-center gap-6 py-0.5"
+        >
+          <span style={{ color: entry.color }} className="font-medium">
+            {entry.name === "sales" ? "Sales" : "Revenue"}
+          </span>
+          <span className="font-semibold text-right">
+            {entry.name === "sales"
+              ? entry.value
+              : `₹${Number(entry.value ?? 0).toLocaleString()}`}
+          </span>
+        </p>
+      ))}
+    </div>
+  );
+};
+
+// ────────────────────────────────────────────────
+// Custom Tooltip for Category Pie Chart
+// ────────────────────────────────────────────────
+const CustomCategoryTooltip = ({ active, payload }: CustomTooltipProps) => {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const entry = payload[0];
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[160px]">
+      <p className="font-semibold text-gray-800 mb-1">{entry?.name ?? "Unknown"}</p>
+      <p className="text-gray-700">
+        Sales: <span className="font-bold">{entry?.value ?? 0}</span>
+      </p>
+    </div>
+  );
+};
 
 const InstructorDashboard = () => {
   const [dashboardData, setDashboardData] = useState<IDashboardData | null>(null);
@@ -712,17 +771,9 @@ const InstructorDashboard = () => {
             <select
               value={reportRange}
               onChange={(e) => {
-                const value = e.target.value;
-                if (
-                  value === "daily" ||
-                  value === "weekly" ||
-                  value === "monthly" ||
-                  value === "yearly" ||
-                  value === "custom"
-                ) {
-                  setReportRange(value);
-                  setCurrentPage(1);
-                }
+                const value = e.target.value as typeof reportRange;
+                setReportRange(value);
+                setCurrentPage(1);
               }}
               className="border rounded px-2 sm:px-3 py-1 sm:py-2 w-full sm:w-auto"
             >
@@ -732,6 +783,7 @@ const InstructorDashboard = () => {
               <option value="yearly">Yearly</option>
               <option value="custom">Custom</option>
             </select>
+
             {reportRange === "custom" && (
               <>
                 <input
@@ -880,28 +932,7 @@ const InstructorDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#666" fontSize={10} />
                 <YAxis stroke="#666" fontSize={10} />
-                <Tooltip
-                  formatter={(value: number | string | (number | string)[] | null | undefined, name: string) => {
-                    // Handle array case
-                    if (Array.isArray(value)) {
-                      return [0, name === "sales" ? "Sales" : "Revenue"];
-                    }
-                    // Handle null/undefined case
-                    if (value == null) {
-                      return [0, name === "sales" ? "Sales" : "Revenue"];
-                    }
-                    // Handle number case
-                    if (typeof value === 'number') {
-                      if (name === "sales") {
-                        return [value, "Sales"];
-                      } else {
-                        return [`₹${value}`, "Revenue"];
-                      }
-                    }
-                    // Handle string case
-                    return [0, name === "sales" ? "Sales" : "Revenue"];
-                  }}
-                />
+                <Tooltip content={<CustomMonthlyTooltip />} />
                 <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -929,24 +960,7 @@ const InstructorDashboard = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      formatter={(value: number | string | (number | string)[] | null | undefined) => {
-                        // Handle array case
-                        if (Array.isArray(value)) {
-                          return ["0", "Sales"];
-                        }
-                        // Handle null/undefined case
-                        if (value == null) {
-                          return ["0", "Sales"];
-                        }
-                        // Handle number case
-                        if (typeof value === 'number') {
-                          return [`${value} sales`, "Sales"];
-                        }
-                        // Handle string case
-                        return ["0", "Sales"];
-                      }} 
-                    />
+                    <Tooltip content={<CustomCategoryTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
