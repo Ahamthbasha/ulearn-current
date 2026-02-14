@@ -1095,7 +1095,7 @@ const Card = ({
   icon,
 }: {
   title: string;
-  value: any;
+  value: number | string | undefined;
   green?: boolean;
   icon?: string;
 }) => (
@@ -1123,7 +1123,7 @@ const Graph = ({
   color,
 }: {
   title: string;
-  data: any[];
+  data: { name: string; total: number }[];
   color: string;
 }) => (
   <div className="bg-white shadow-sm rounded-xl p-4 sm:p-6 border border-gray-100">

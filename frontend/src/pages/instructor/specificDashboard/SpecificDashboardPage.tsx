@@ -60,7 +60,7 @@ const SpecificDashboardPage = () => {
         setLoading(true);
         const response = await specificCourseDashboard(courseId);
         setDashboard(response.data);
-      } catch (err) {
+      } catch {
         toast.error("Failed to load course dashboard");
       } finally {
         setLoading(false);
