@@ -12,12 +12,17 @@ import { appLogger } from "../../utils/logger";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
 import IAdminVerificationController from "./interface/IAdminVerificationController";
 
-export class AdminVerificationController implements IAdminVerificationController {
-    private _verificationService: IAdminVerificationService
-    private _emailService: IEmail
-  constructor(verificationService:IAdminVerificationService,emailService:IEmail) {
-    this._verificationService = verificationService
-    this._emailService = emailService
+export class AdminVerificationController
+  implements IAdminVerificationController
+{
+  private _verificationService: IAdminVerificationService;
+  private _emailService: IEmail;
+  constructor(
+    verificationService: IAdminVerificationService,
+    emailService: IEmail,
+  ) {
+    this._verificationService = verificationService;
+    this._emailService = emailService;
   }
 
   async getAllRequests(req: Request, res: Response): Promise<void> {
@@ -25,14 +30,14 @@ export class AdminVerificationController implements IAdminVerificationController
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.max(
         1,
-        Math.min(100, parseInt(req.query.limit as string) || 10)
+        Math.min(100, parseInt(req.query.limit as string) || 10),
       );
       const search = (req.query.search as string) || "";
 
       const { data, total } = await this._verificationService.getAllRequests(
         page,
         limit,
-        search
+        search,
       );
 
       res.status(StatusCode.OK).json({
@@ -52,7 +57,7 @@ export class AdminVerificationController implements IAdminVerificationController
   async getRequestData(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.params;
-      
+
       if (!email) {
         throw new BadRequestError("Email parameter is required");
       }
@@ -62,13 +67,13 @@ export class AdminVerificationController implements IAdminVerificationController
 
       if (!requestData) {
         throw new NotFoundError(
-          AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND
+          AdminErrorMessages.ADMIN_VERIFICATION_REQUEST_NOT_FOUND,
         );
       }
 
-      res.status(StatusCode.OK).json({ 
-        success: true, 
-        data: requestData 
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: requestData,
       });
     } catch (error) {
       appLogger.error("Error getting verification request data", { error });
@@ -87,20 +92,20 @@ export class AdminVerificationController implements IAdminVerificationController
 
       if (status !== "approved" && status !== "rejected") {
         throw new BadRequestError(
-          AdminErrorMessages.ADMIN_INVALID_REQUEST_STATUS
+          AdminErrorMessages.ADMIN_INVALID_REQUEST_STATUS,
         );
       }
 
       if (status === "rejected" && !reason) {
         throw new BadRequestError(
-          AdminErrorMessages.ADMIN_VERIFICATION_REJECTION
+          AdminErrorMessages.ADMIN_VERIFICATION_REJECTION,
         );
       }
 
       const approvedRequest = await this._verificationService.approveRequest(
         email,
         status,
-        reason
+        reason,
       );
 
       if (!approvedRequest) {
@@ -125,8 +130,8 @@ export class AdminVerificationController implements IAdminVerificationController
         });
       }
     } catch (error) {
-      appLogger.error("Error approving/rejecting verification request", { 
-        error 
+      appLogger.error("Error approving/rejecting verification request", {
+        error,
       });
       handleControllerError(error, res);
     }

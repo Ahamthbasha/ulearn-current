@@ -57,7 +57,7 @@ export class AdminVerificationRepository
   ): Promise<IVerificationModel | null> {
     try {
       const instructor = await this.findOne({ email });
-      
+
       if (!instructor) {
         throw new NotFoundError(InstructorErrorMessages.INSTRUCTOR_NOT_FOUND);
       }
@@ -71,14 +71,17 @@ export class AdminVerificationRepository
       };
 
       const updated = await this.update(instructorId, updateData);
-      
+
       if (!updated) {
         throw new InternalServerError("Failed to update verification request");
       }
 
       return updated;
     } catch (error) {
-      if (error instanceof NotFoundError || error instanceof InternalServerError) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof InternalServerError
+      ) {
         throw error;
       }
       appLogger.error("Error in approveRequest repository", { error });

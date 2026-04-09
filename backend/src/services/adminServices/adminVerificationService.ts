@@ -9,7 +9,6 @@ import {
   mapVerificationArrayToDTO,
   mapVerificationToDTO,
 } from "../../mappers/adminMapper/verificationListMapper";
-import { getViewableUrl } from "../../utils/getViewableUrl";
 import { NotFoundError, InternalServerError } from "../../utils/error";
 import { appLogger } from "../../utils/logger";
 
@@ -41,7 +40,7 @@ export class AdminVerificationService implements IAdminVerificationService {
       if (error instanceof InternalServerError) {
         throw error;
       }
-      
+
       appLogger.error("Error in getAllRequests service", { error });
       throw new InternalServerError("Failed to retrieve verification requests");
     }
@@ -53,15 +52,14 @@ export class AdminVerificationService implements IAdminVerificationService {
     try {
       const request =
         await this._verificationRepository.getRequestDataByEmail(email);
-      
+
       if (!request) {
         return null;
       }
 
-      const resumeUrl = await getViewableUrl(request.resumeUrl);
-      const degreeCertificateUrl = await getViewableUrl(
-        request.degreeCertificateUrl,
-      );
+      // With Cloudinary, URLs are directly accessible - no need for presigned URLs
+      const resumeUrl = request.resumeUrl;
+      const degreeCertificateUrl = request.degreeCertificateUrl;
 
       return {
         id: request._id.toString(),
@@ -75,9 +73,11 @@ export class AdminVerificationService implements IAdminVerificationService {
       if (error instanceof InternalServerError) {
         throw error;
       }
-      
+
       appLogger.error("Error in getRequestDataByEmail service", { error });
-      throw new InternalServerError("Failed to retrieve verification request details");
+      throw new InternalServerError(
+        "Failed to retrieve verification request details",
+      );
     }
   }
 
@@ -96,9 +96,9 @@ export class AdminVerificationService implements IAdminVerificationService {
         try {
           await this._instructorService.setInstructorVerified(email);
         } catch (error) {
-          appLogger.error("Error setting instructor verified status", { 
-            error, 
-            email 
+          appLogger.error("Error setting instructor verified status", {
+            error,
+            email,
           });
         }
       }
@@ -106,12 +106,12 @@ export class AdminVerificationService implements IAdminVerificationService {
       return result ? mapVerificationToDTO(result) : null;
     } catch (error) {
       if (
-        error instanceof NotFoundError || 
+        error instanceof NotFoundError ||
         error instanceof InternalServerError
       ) {
         throw error;
       }
-      
+
       appLogger.error("Error in approveRequest service", { error });
       throw new InternalServerError("Failed to process verification request");
     }
