@@ -1,50 +1,3 @@
-// {
-//   "compilerOptions": {
-//     "target": "ES2020",
-//     "module": "CommonJS", 
-//     "lib": ["ES2020"], 
-
-
-//     "rootDir": "./src", 
-//     "outDir": "./dist", 
-//     "moduleResolution": "node", 
-//     "esModuleInterop": true,
-//     "resolveJsonModule": true, 
-//     "allowSyntheticDefaultImports": true, // Allow `import fs from 'fs'`
-//     "baseUrl": "./", // Enable relative imports from project root
-//     "paths": {
-//       "@controllers/*": ["src/controllers/*"],
-//       "@db/*": ["src/db/*"],
-//       "@routes/*": ["src/routes/*"],
-//       "@dto/*": ["src/DTO/*"]
-//     },
-
-//     /* Strictness & Type Checking */
-//     "strict": true, // Enable all strict type checks
-//     "noImplicitAny": true,
-//     "strictNullChecks": true,
-//     "noUnusedLocals": true,
-//     "noUnusedParameters": true,
-//     "noImplicitReturns": true,
-//     "noFallthroughCasesInSwitch": true,
-
-//     /* Emit Settings */
-//     "sourceMap": true, // Generate .map files for debugging
-//     "removeComments": true, // Clean output JS
-//     "declaration": true, // Generate .d.ts type files
-//     "declarationMap": true,
-//     "emitDecoratorMetadata": true, // If using decorators (optional)
-//     "experimentalDecorators": true, // Needed for class-validator, class-transformer
-
-//     /* Interop & Consistency */
-//     "forceConsistentCasingInFileNames": true
-//   },
-//   "include": ["src/**/*"],
-//   "exclude": ["node_modules", "dist"]
-// }
-
-
-
 {
   "compilerOptions": {
     "target": "ES2020",
@@ -58,12 +11,13 @@
     "resolveJsonModule": true, 
     "allowSyntheticDefaultImports": true,
     
-    /* Path mapping without deprecated baseUrl */
+    /* Path mapping */
+    "baseUrl": "./",
     "paths": {
-      "@controllers/*": ["./src/controllers/*"],
-      "@db/*": ["./src/db/*"],
-      "@routes/*": ["./src/routes/*"],
-      "@dto/*": ["./src/DTO/*"]
+      "@controllers/*": ["src/controllers/*"],
+      "@db/*": ["src/db/*"],
+      "@routes/*": ["src/routes/*"],
+      "@dto/*": ["src/DTO/*"]
     },
 
     /* Strictness & Type Checking */
@@ -86,8 +40,8 @@
     /* Interop & Consistency */
     "forceConsistentCasingInFileNames": true,
     
-    /* Suppress deprecation warnings for Node.js 10 resolution */
-    "ignoreDeprecations": "6.0"
+    /* Skip type checking of declaration files */
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
