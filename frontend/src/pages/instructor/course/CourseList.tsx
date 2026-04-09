@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Edit, Trash, Eye, Filter } from "lucide-react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +16,6 @@ import { useDebounce } from "../../../hooks/UseDebounce";
 import { type TableCourse } from "../interface/instructorInterface";
 import { AxiosError } from "axios";
 
-
 const CourseListPage = () => {
   const [courses, setCourses] = useState<TableCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +32,8 @@ const CourseListPage = () => {
 
   const navigate = useNavigate();
 
-  const fetchCourses = async () => {
+  // Wrap fetchCourses in useCallback to prevent recreation on every render
+  const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetchInstructorCourses({
@@ -45,19 +45,22 @@ const CourseListPage = () => {
       const data = (response?.data || []) as TableCourse[];
       setCourses(data);
       setTotal(response?.total || 0);
+      setError(null);
     } catch (err: unknown) {
-      if(err instanceof AxiosError){
+      if (err instanceof AxiosError) {
         toast.error("Failed to fetch courses");
         setError(err.message || "Failed to fetch data");
+      } else {
+        setError("An unexpected error occurred");
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, debouncedSearch, statusFilter]); // Dependencies for fetchCourses
 
   useEffect(() => {
     fetchCourses();
-  }, [page, debouncedSearch, statusFilter]);
+  }, [fetchCourses]); // Now fetchCourses is stable
 
   const confirmDelete = (course: TableCourse) => {
     setCourseToDelete(course);
@@ -68,10 +71,9 @@ const CourseListPage = () => {
     if (!courseToDelete) return;
     try {
       await instructorDeleteCourse(courseToDelete.courseId);
-      toast.success("Course deleted");
-      setCourses((prev) => prev.filter((c) => c.courseId !== courseToDelete.courseId));
-      setTotal((prev) => prev - 1);
-    } catch (err) {
+      toast.success("Course deleted successfully");
+      await fetchCourses(); // Refresh the list
+    } catch {
       toast.error("Failed to delete course");
     } finally {
       setIsModalOpen(false);
@@ -153,7 +155,7 @@ const CourseListPage = () => {
               <span className="hidden sm:inline">
                 {isPublished ? "Published" : "Unpublished"}
               </span>
-              <span className="sm:hidden">{isPublished ? "Published" : "Unpublished"}</span>
+              <span className="sm:hidden">{isPublished ? "Pub" : "Unpub"}</span>
             </span>
           </div>
         );
@@ -185,7 +187,6 @@ const CourseListPage = () => {
     },
   ];
 
-  // Responsive filter component
   const StatusFilter = () => (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 p-4 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg sm:rounded-none">
       <div className="flex items-center gap-2 mb-2 sm:mb-0">
@@ -214,7 +215,6 @@ const CourseListPage = () => {
     </div>
   );
 
-  // Responsive stats component
   const CourseStats = () => {
     const publishedCount = courses.filter((c) => c.status === true).length;
     const unpublishedCount = courses.filter((c) => c.status === false).length;
@@ -239,9 +239,7 @@ const CourseListPage = () => {
   };
 
   const getConfirmationMessage = () => {
-    return `Are you sure you want to delete the course "${
-      courseToDelete?.courseName || ""
-    }"? This action cannot be undone and will permanently remove all course content.`;
+    return `Are you sure you want to delete the course "${courseToDelete?.courseName || ""}"? This action cannot be undone and will permanently remove all course content.`;
   };
 
   return (

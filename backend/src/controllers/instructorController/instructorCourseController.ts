@@ -9,7 +9,10 @@ import {
   INSTRUCTOR_ERROR_MESSAGE,
   INSTRUCTOR_SUCCESS_MESSAGE,
 } from "../../utils/constants";
-import { uploadToS3Bucket } from "../../utils/s3Bucket";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../../utils/cloudinary";
 
 export class InstructorCourseController implements IInstructorCourseController {
   private _courseService: IInstructorCourseService;
@@ -61,23 +64,23 @@ export class InstructorCourseController implements IInstructorCourseController {
         return;
       }
 
-      const thumbnailKey = await uploadToS3Bucket(
+      const thumbnailUrl = await uploadToCloudinary(
         files.thumbnail[0],
         "thumbnails",
       );
-      const demoVideoKey = await uploadToS3Bucket(
+      const demoVideoUrl = await uploadToCloudinary(
         files.demoVideos[0],
         "demoVideos",
       );
 
       courseData.courseName = courseName;
       courseData.instructorId = instructorId;
-      courseData.thumbnailUrl = thumbnailKey;
+      courseData.thumbnailUrl = thumbnailUrl;
       courseData.demoVideo = {
         type: "video",
-        url: demoVideoKey,
+        url: demoVideoUrl,
       };
-      
+
       if (courseData.publishDate) {
         courseData.publishDate = new Date(courseData.publishDate);
       }
@@ -134,21 +137,21 @@ export class InstructorCourseController implements IInstructorCourseController {
       };
 
       if (files?.thumbnail) {
-        const thumbnailKey = await uploadToS3Bucket(
+        const thumbnailUrl = await uploadToCloudinary(
           files.thumbnail[0],
           "thumbnails",
         );
-        courseData.thumbnailUrl = thumbnailKey;
+        courseData.thumbnailUrl = thumbnailUrl;
       }
 
       if (files?.demoVideos) {
-        const demoVideoKey = await uploadToS3Bucket(
+        const demoVideoUrl = await uploadToCloudinary(
           files.demoVideos[0],
           "demoVideos",
         );
         courseData.demoVideo = {
           type: "video",
-          url: demoVideoKey,
+          url: demoVideoUrl,
         };
       }
 
@@ -188,6 +191,17 @@ export class InstructorCourseController implements IInstructorCourseController {
   ): Promise<void> {
     try {
       const { courseId } = req.params;
+
+      // Get course to delete files from Cloudinary
+      const course = await this._courseService.getCourseById(courseId);
+      if (course) {
+        // Access properties through the DTO
+        if ((course as any).thumbnailUrl)
+          await deleteFromCloudinary((course as any).thumbnailUrl);
+        if ((course as any).demoVideo?.url)
+          await deleteFromCloudinary((course as any).demoVideo.url);
+      }
+
       const deleted = await this._courseService.deleteCourse(courseId);
       if (!deleted) {
         res
@@ -313,10 +327,10 @@ export class InstructorCourseController implements IInstructorCourseController {
       }
 
       let parsedPublishDate: Date | undefined;
-      
+
       if (publishDate) {
         parsedPublishDate = new Date(publishDate);
-        
+
         const now = new Date();
         if (parsedPublishDate <= now) {
           res.status(StatusCode.BAD_REQUEST).json({
@@ -369,7 +383,8 @@ export class InstructorCourseController implements IInstructorCourseController {
         return;
       }
 
-      const canSubmit = await this._courseService.canSubmitForVerification(courseId);
+      const canSubmit =
+        await this._courseService.canSubmitForVerification(courseId);
 
       if (!canSubmit.isValid) {
         res.status(StatusCode.BAD_REQUEST).json({

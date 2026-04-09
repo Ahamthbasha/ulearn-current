@@ -20,12 +20,9 @@ function isCategoryPopulated(obj: unknown): obj is ICategoryPopulated {
 
 export async function mapToLearningPathDetailDTO(
   path: ILearningPath,
-  getPresignedUrl: (key: string) => Promise<string>,
   offers: Map<string, ICourseOffer>,
 ): Promise<LearningPathDetailDTO> {
-  const thumbnailUrl = path.thumbnailUrl
-    ? await getPresignedUrl(path.thumbnailUrl)
-    : "";
+  const thumbnailUrl = path.thumbnailUrl || "";
 
   let categoryId = "";
   let categoryName = "";

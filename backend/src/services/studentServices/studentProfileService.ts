@@ -2,7 +2,6 @@ import { IStudentProfileService } from "./interface/IStudentProfileService";
 import { IStudentProfileRepository } from "../../repositories/studentRepository/interface/IStudentProfileRepository";
 import { IUser } from "../../models/userModel";
 import { toStudentProfileDTO } from "../../mappers/userMapper/studentProfileMapper";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { StudentProfileDTO } from "../../dto/userDTO/studentProfileDTO";
 
 export class StudentProfileService implements IStudentProfileService {
@@ -16,9 +15,7 @@ export class StudentProfileService implements IStudentProfileService {
     const user = await this._studentProfileRepository.getByEmail(email);
     if (!user) return null;
 
-    const profilePicUrl = user.profilePicUrl
-      ? await getPresignedUrl(user.profilePicUrl)
-      : undefined;
+    const profilePicUrl = user.profilePicUrl || undefined;
 
     return toStudentProfileDTO(user, profilePicUrl);
   }
@@ -33,9 +30,7 @@ export class StudentProfileService implements IStudentProfileService {
     );
     if (!updatedUser) return null;
 
-    const profilePicUrl = updatedUser.profilePicUrl
-      ? await getPresignedUrl(updatedUser.profilePicUrl)
-      : undefined;
+    const profilePicUrl = updatedUser.profilePicUrl || undefined;
 
     return toStudentProfileDTO(updatedUser, profilePicUrl);
   }

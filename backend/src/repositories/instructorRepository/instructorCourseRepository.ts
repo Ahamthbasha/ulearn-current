@@ -8,12 +8,10 @@ export class InstructorCourseRepository
   extends GenericRepository<ICourse>
   implements IInstructorCourseRepository
 {
-  private _moduleRepository : IInstructorModuleRepository
-  constructor(
-    moduleRepository : IInstructorModuleRepository
-  ) {
+  private _moduleRepository: IInstructorModuleRepository;
+  constructor(moduleRepository: IInstructorModuleRepository) {
     super(CourseModel);
-    this._moduleRepository = moduleRepository
+    this._moduleRepository = moduleRepository;
   }
 
   async createCourse(courseData: ICourse): Promise<ICourse> {
@@ -21,7 +19,6 @@ export class InstructorCourseRepository
   }
 
   async updateCourseDuration(courseId: string): Promise<void> {
-    
     const modules = await this._moduleRepository.getModulesByCourse(courseId);
 
     const totalDurationSeconds = modules.reduce((sum, module) => {
@@ -116,7 +113,7 @@ export class InstructorCourseRepository
 
   async getScheduledCourses(): Promise<ICourse[]> {
     const nowUTC = new Date();
-    
+
     return await this.find({
       publishDate: { $lte: nowUTC, $exists: true, $ne: null },
       isPublished: false,

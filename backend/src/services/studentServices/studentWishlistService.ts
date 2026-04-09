@@ -3,7 +3,6 @@ import { mapWishlistToDTO } from "../../mappers/userMapper/wishlistMapper";
 import { IStudentCourseRepository } from "../../repositories/studentRepository/interface/IStudentCourseRepository";
 import { IStudentLmsRepo } from "../../repositories/studentRepository/interface/IStudentLmsRepo";
 import { IStudentCourseOfferRepository } from "../../repositories/studentRepository/interface/IStudentCourseOfferRepo";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { Types } from "mongoose";
 import { IStudentWishlistService } from "./interface/IStudentWishlistService";
 import { IStudentWishlistRepository } from "../../repositories/studentRepository/interface/IStudentWishlistRepository";
@@ -11,7 +10,6 @@ import { IWishlist } from "../../models/wishlistModel";
 import { ICourse } from "../../models/courseModel";
 import { ILearningPath } from "../../models/learningPathModel";
 import { ICourseOffer } from "../../models/courseOfferModel";
-import { appLogger } from "../../utils/logger";
 
 export class StudentWishlistService implements IStudentWishlistService {
   private _wishlistRepository: IStudentWishlistRepository;
@@ -66,21 +64,12 @@ export class StudentWishlistService implements IStudentWishlistService {
       string,
       { price: number; thumbnailUrl: string }
     >();
-    const allCourseIds = new Set<string>(courseIds); // Track all course IDs for offer fetching
+    const allCourseIds = new Set<string>(courseIds);
 
     for (const details of courseDetailsResults) {
       if (details.course) {
-        let thumbnailUrl = details.course.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for course ${details.course._id}:`,
-              error,
-            );
-          }
-        }
+        const thumbnailUrl = details.course.thumbnailUrl || "";
+
         courseDetailsMap.set(details.course._id.toString(), {
           price: details.course.effectivePrice ?? details.course.price,
           thumbnailUrl,
@@ -107,17 +96,8 @@ export class StudentWishlistService implements IStudentWishlistService {
         new Types.ObjectId(id),
       );
       if (learningPathResult.path) {
-        let thumbnailUrl = learningPathResult.path.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for learning path ${id}:`,
-              error,
-            );
-          }
-        }
+        // With Cloudinary, URLs are directly accessible - no presigned URL needed
+        const thumbnailUrl = learningPathResult.path.thumbnailUrl || "";
 
         // Calculate totalPrice for the learning path
         const courseIds =

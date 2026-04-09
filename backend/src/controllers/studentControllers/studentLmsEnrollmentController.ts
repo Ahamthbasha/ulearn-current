@@ -2,7 +2,6 @@ import { Response } from "express";
 import { IStudentLmsEnrollmentService } from "../../services/studentServices/interface/IStudentLmsEnrollmentService";
 import { IStudentLmsEnrollmentController } from "./interfaces/IStudentLmsEnrollmentController";
 import { AuthenticatedRequest } from "../../middlewares/authenticatedRoutes";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { StatusCode } from "../../utils/enums";
 import {
   STUDENT_ERROR_MESSAGE,
@@ -126,6 +125,7 @@ export class StudentLmsEnrollmentController
         userId,
         learningPathId,
       );
+
       if (
         !details.enrollment.certificateGenerated ||
         !details.enrollment.certificateUrl
@@ -136,12 +136,9 @@ export class StudentLmsEnrollmentController
         return;
       }
 
-      const presignedCertificateUrl = await getPresignedUrl(
-        details.enrollment.certificateUrl,
-      );
       res
         .status(StatusCode.OK)
-        .json({ data: { certificateUrl: presignedCertificateUrl } });
+        .json({ data: { certificateUrl: details.enrollment.certificateUrl } });
     } catch (error) {
       res
         .status(StatusCode.INTERNAL_SERVER_ERROR)

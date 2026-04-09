@@ -1,7 +1,6 @@
 import { IStudentInstructorListingService } from "./interface/IStudentInstructorListingService";
 import { IStudentInstructorListingRepository } from "../../repositories/studentRepository/interface/IStudentInstructorListingRepository";
 import { IInstructor } from "../../models/instructorModel";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 
 export class StudentInstructorListingService
   implements IStudentInstructorListingService
@@ -30,14 +29,10 @@ export class StudentInstructorListingService
         expertise,
       );
 
-    const updatedData = await Promise.all(
-      data.map(async (mentor) => {
-        if (mentor.profilePicUrl) {
-          mentor.profilePicUrl = await getPresignedUrl(mentor.profilePicUrl);
-        }
-        return mentor;
-      }),
-    );
+    const updatedData = data.map((mentor) => {
+      // Profile pic URL is already a direct Cloudinary URL
+      return mentor;
+    });
 
     return { data: updatedData as IInstructor[], total };
   }
@@ -48,9 +43,6 @@ export class StudentInstructorListingService
     if (!mentor) return null;
 
     const mentorObj = mentor.toObject();
-    if (mentor.profilePicUrl) {
-      mentorObj.profilePicUrl = await getPresignedUrl(mentor.profilePicUrl);
-    }
     return mentorObj as IInstructor;
   }
 

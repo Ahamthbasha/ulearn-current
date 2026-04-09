@@ -3,7 +3,6 @@ import { IInstructorProfileRepository } from "../../repositories/instructorRepos
 import { IInstructor } from "../../models/instructorModel";
 import { InstructorProfileDTO } from "../../models/instructorModel";
 import { toInstructorProfileDTO } from "../../mappers/instructorMapper/instructorProfileMapper";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import bcrypt from "bcrypt";
 
 export class InstructorProfileService implements IInstructorProfileService {
@@ -20,9 +19,7 @@ export class InstructorProfileService implements IInstructorProfileService {
       return null;
     }
 
-    const profilePicUrl = instructor.profilePicUrl
-      ? await getPresignedUrl(instructor.profilePicUrl)
-      : undefined;
+    const profilePicUrl = instructor.profilePicUrl || undefined;
 
     return toInstructorProfileDTO(instructor, profilePicUrl);
   }
@@ -40,9 +37,7 @@ export class InstructorProfileService implements IInstructorProfileService {
       return null;
     }
 
-    const profilePicUrl = updatedInstructor.profilePicUrl
-      ? await getPresignedUrl(updatedInstructor.profilePicUrl)
-      : undefined;
+    const profilePicUrl = updatedInstructor.profilePicUrl || undefined;
 
     return toInstructorProfileDTO(updatedInstructor, profilePicUrl);
   }
@@ -106,9 +101,7 @@ export class InstructorProfileService implements IInstructorProfileService {
       return null;
     }
 
-    const profilePicUrl = updatedInstructor.profilePicUrl
-      ? await getPresignedUrl(updatedInstructor.profilePicUrl)
-      : undefined;
+    const profilePicUrl = updatedInstructor.profilePicUrl || undefined;
 
     return toInstructorProfileDTO(updatedInstructor, profilePicUrl);
   }

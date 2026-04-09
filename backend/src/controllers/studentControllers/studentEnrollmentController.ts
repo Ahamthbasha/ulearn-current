@@ -8,11 +8,12 @@ import {
   StudentErrorMessages,
   StudentSuccessMessages,
 } from "../../utils/constants";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
 import { mapToCourseViewingResponse } from "../../mappers/userMapper/mapCourseViewing";
 
-export class StudentEnrollmentController implements IStudentEnrollmentController {
+export class StudentEnrollmentController
+  implements IStudentEnrollmentController
+{
   private readonly _enrollmentService: IStudentEnrollmentService;
 
   constructor(enrollmentService: IStudentEnrollmentService) {
@@ -25,7 +26,8 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
   ): Promise<void> {
     try {
       const userId = new Types.ObjectId(req.user?.id);
-      const courses = await this._enrollmentService.getAllEnrolledCourses(userId);
+      const courses =
+        await this._enrollmentService.getAllEnrolledCourses(userId);
       res.status(StatusCode.OK).json({ success: true, courses });
     } catch (error: unknown) {
       handleControllerError(error, res);
@@ -40,7 +42,12 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
 
-      const enrollment = await this._enrollmentService.getEnrollmentCourseWithDetails(userId, courseId);
+      const enrollment =
+        await this._enrollmentService.getEnrollmentCourseWithDetails(
+          userId,
+          courseId,
+        );
+
       if (!enrollment) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
@@ -49,11 +56,11 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
         return;
       }
 
-      const mappedResponse = await mapToCourseViewingResponse(enrollment,getPresignedUrl)
+      const mappedResponse = await mapToCourseViewingResponse(enrollment);
 
       res.status(StatusCode.OK).json({
         success: true,
-       mappedResponse
+        mappedResponse,
       });
     } catch (error: unknown) {
       handleControllerError(error, res);
@@ -92,7 +99,12 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
       const userId = new Types.ObjectId(req.user?.id);
       const { courseId, quizId, correctAnswers, totalQuestions } = req.body;
 
-      if (!courseId || !quizId || correctAnswers == null || totalQuestions == null) {
+      if (
+        !courseId ||
+        !quizId ||
+        correctAnswers == null ||
+        totalQuestions == null
+      ) {
         res.status(StatusCode.BAD_REQUEST).json({
           success: false,
           message: StudentErrorMessages.QUIZ_DATA_MISSING,
@@ -131,7 +143,8 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
 
-      const allCompleted = await this._enrollmentService.areAllChaptersCompleted(userId, courseId);
+      const allCompleted =
+        await this._enrollmentService.areAllChaptersCompleted(userId, courseId);
       res.status(StatusCode.OK).json({ success: true, allCompleted });
     } catch (error: unknown) {
       handleControllerError(error, res);
@@ -146,7 +159,11 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
       const userId = new Types.ObjectId(req.user?.id);
       const courseId = new Types.ObjectId(req.params.courseId);
 
-      const enrollment = await this._enrollmentService.getEnrollmentCourseWithDetails(userId, courseId);
+      const enrollment =
+        await this._enrollmentService.getEnrollmentCourseWithDetails(
+          userId,
+          courseId,
+        );
 
       if (!enrollment?.certificateGenerated || !enrollment.certificateUrl) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -156,10 +173,9 @@ export class StudentEnrollmentController implements IStudentEnrollmentController
         return;
       }
 
-      const presignedCertificateUrl = await getPresignedUrl(enrollment.certificateUrl);
       res.status(StatusCode.OK).json({
         success: true,
-        certificateUrl: presignedCertificateUrl,
+        certificateUrl: enrollment.certificateUrl, // Direct Cloudinary URL
       });
     } catch (error: unknown) {
       handleControllerError(error, res);

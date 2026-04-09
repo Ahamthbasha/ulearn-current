@@ -1,7 +1,6 @@
 import { IEnrollment } from "../../models/enrollmentModel";
 import { IOrder } from "../../models/orderModel";
 import { EnrolledCourseDTO } from "../../dto/userDTO/enrollmentCourseDTO";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { ICourse } from "../../models/courseModel";
 import { appLogger } from "../../utils/logger";
 import { formatDuration } from "../../utils/formatDuration";
@@ -25,16 +24,14 @@ export const mapEnrollmentToDTO = async (
       ? orderCourse.offerPrice
       : (orderCourse?.coursePrice ?? course.price);
 
-  const thumbnailUrl = course.thumbnailUrl
-    ? await getPresignedUrl(course.thumbnailUrl)
-    : "";
+  const thumbnailUrl = course.thumbnailUrl || "";
 
   return {
     courseId: enrollment.courseId.toString(),
     thumbnailUrl,
     courseName: course.courseName,
     description: course.description,
-    duration:formatDuration(course.duration),
+    duration: formatDuration(course.duration),
     completionStatus: enrollment.completionStatus,
     certificateGenerated: enrollment.certificateGenerated,
     completionPercentage: enrollment.completionPercentage,

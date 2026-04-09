@@ -31,11 +31,12 @@ export interface ICourse extends Document {
   discountedPrice?: number;
   publishDate?: Date;
   modules?: IModulePopulated[];
-  averageRating:number;
-  totalRatings:number;
+  averageRating: number;
+  totalRatings: number;
 }
 
-export interface ICourseFullyPopulated extends Omit<ICourse, "instructorId" | "category"> {
+export interface ICourseFullyPopulated
+  extends Omit<ICourse, "instructorId" | "category"> {
   instructorId: IInstructorPopulated;
   category: ICategoryPopulated;
   modules: IModulePopulated[];
@@ -49,7 +50,11 @@ const demoVideoSchema = new Schema<IDemoVideo>({
 const CourseSchema = new Schema<ICourse>(
   {
     courseName: { type: String, required: true },
-    instructorId: { type: Schema.Types.ObjectId, ref: "Instructor", required: true },
+    instructorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Instructor",
+      required: true,
+    },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
     description: { type: String, required: true },
     demoVideo: demoVideoSchema,
@@ -66,7 +71,11 @@ const CourseSchema = new Schema<ICourse>(
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
     totalRatings: { type: Number, default: 0 },
   },
-  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
 
 CourseSchema.index({ courseName: "text" });

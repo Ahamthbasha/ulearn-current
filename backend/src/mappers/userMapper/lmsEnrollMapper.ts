@@ -20,8 +20,13 @@ export const mapToLearningPathDTO = async (
   orderRepository: IOrderRepository,
   userId: Types.ObjectId,
 ): Promise<LearningPathDTO> => {
-  const order = await orderRepository.findByUserAndLearningPath(userId, learningPath._id);
-  const lpOrder = order?.learningPaths.find((lp) => lp.learningPathId.equals(learningPath._id));
+  const order = await orderRepository.findByUserAndLearningPath(
+    userId,
+    learningPath._id,
+  );
+  const lpOrder = order?.learningPaths.find((lp) =>
+    lp.learningPathId.equals(learningPath._id),
+  );
   const totalPrice = lpOrder?.totalPrice ?? 0;
 
   return {
@@ -45,14 +50,22 @@ export const mapToLearningPathDetailsDTO = async (
   orderRepository: IOrderRepository,
   userId: Types.ObjectId,
 ): Promise<LearningPathDetailsDTO> => {
-  const order = await orderRepository.findByUserAndLearningPath(userId, learningPath._id);
-  const lpOrder = order?.learningPaths.find((lp) => lp.learningPathId.equals(learningPath._id));
+  const order = await orderRepository.findByUserAndLearningPath(
+    userId,
+    learningPath._id,
+  );
+  const lpOrder = order?.learningPaths.find((lp) =>
+    lp.learningPathId.equals(learningPath._id),
+  );
   const totalPrice = lpOrder?.totalPrice ?? learningPath.totalPrice;
 
   const courseDetails: CourseDetailsDTO[] = courses.map((course) => {
-    const orderItem = lpOrder?.courses.find((c) => c.courseId.equals(course._id));
+    const orderItem = lpOrder?.courses.find((c) =>
+      c.courseId.equals(course._id),
+    );
     const price = orderItem?.coursePrice ?? course.price;
-    const effectivePrice = orderItem?.offerPrice ?? course.effectivePrice ?? price;
+    const effectivePrice =
+      orderItem?.offerPrice ?? course.effectivePrice ?? price;
 
     const isCompleted = enrollment.completedCourses.some(
       (cc) => cc.courseId.equals(course._id) && cc.isCompleted,
@@ -63,7 +76,7 @@ export const mapToLearningPathDetailsDTO = async (
       order: course.order,
       courseName: course.courseName,
       description: course.description ?? "",
-      duration:formatDuration(course.duration),
+      duration: formatDuration(course.duration),
       price,
       effectivePrice,
       thumbnailUrl: course.thumbnailUrl,
@@ -73,7 +86,9 @@ export const mapToLearningPathDetailsDTO = async (
     };
   });
 
-  const unlockedCourses = (enrollment.unlockedCourses || []).map((id) => id.toString());
+  const unlockedCourses = (enrollment.unlockedCourses || []).map((id) =>
+    id.toString(),
+  );
 
   return {
     learningPathId: learningPath._id.toString(),

@@ -51,7 +51,6 @@ const ProfileSchema = Yup.object().shape({
           .map((s) => s.trim())
           .filter(Boolean);
         if (expertise.length === 0 || expertise.length > 10) return false;
-        // Each expertise must contain at least one letter and can have numbers, spaces, hyphens, underscores
         return expertise.every((exp) =>
           /^(?=.*[a-zA-Z])[a-zA-Z0-9\s\-_]{2,50}$/.test(exp)
         );
@@ -59,10 +58,10 @@ const ProfileSchema = Yup.object().shape({
     ),
 });
 
-
 const InstructorProfileEditPage = () => {
   const [initialValues, setInitialValues] = useState<ProfileFormValues | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string>("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -78,6 +77,7 @@ const InstructorProfileEditPage = () => {
             expertise: profile.expertise?.join(", ") || "",
             profilePic: null,
           });
+          // Cloudinary URL is directly accessible
           if (profile.profilePicUrl) {
             setPreviewImage(profile.profilePicUrl);
           }
@@ -139,18 +139,34 @@ const InstructorProfileEditPage = () => {
   ) => {
     const fileInput = event.currentTarget;
     const file = fileInput.files?.[0];
+    
+    // Clear previous error
+    setImageError("");
+    
     const allowedTypes = [
       "image/jpeg",
       "image/png",
       "image/jpg",
       "image/webp",
     ];
+    
+    const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (file) {
+      // Validate file type
       if (!allowedTypes.includes(file.type)) {
-        toast.error(
-          "Only image files (JPG, JPEG, PNG, WebP) are allowed"
-        );
+        const errorMsg = "Only image files (JPG, JPEG, PNG, WebP) are allowed";
+        setImageError(errorMsg);
+        toast.error(errorMsg);
+        fileInput.value = "";
+        return;
+      }
+
+      // Validate file size
+      if (file.size > maxSize) {
+        const errorMsg = "Image size must be less than 5MB";
+        setImageError(errorMsg);
+        toast.error(errorMsg);
         fileInput.value = "";
         return;
       }
@@ -163,11 +179,29 @@ const InstructorProfileEditPage = () => {
           setPreviewImage(reader.result);
         }
       };
+      reader.onerror = () => {
+        toast.error("Failed to read image file");
+      };
       reader.readAsDataURL(file);
     }
   };
 
-  if (!initialValues) return <div className="p-4">Loading...</div>;
+  const handleImageError = () => {
+    console.error("Failed to load profile image from Cloudinary");
+    setPreviewImage(null);
+    toast.warning("Could not load profile image");
+  };
+
+  if (!initialValues) {
+    return (
+      <div className="p-6 flex justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 flex justify-center">
@@ -178,7 +212,7 @@ const InstructorProfileEditPage = () => {
           validationSchema={ProfileSchema}
           onSubmit={handleSubmit}
         >
-          {({ setFieldValue }) => (
+          {({ setFieldValue, isSubmitting }) => (
             <Form className="space-y-4">
               <InputField
                 name="name"
@@ -205,32 +239,52 @@ const InstructorProfileEditPage = () => {
                 </label>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/jpg,image/webp"
                   onChange={(event) => handleFileChange(event, setFieldValue)}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Allowed formats: JPG, JPEG, PNG, WebP (Max size: 5MB)
+                </p>
+                {imageError && (
+                  <p className="text-xs text-red-600 mt-1">
+                    ⚠️ {imageError}
+                  </p>
+                )}
 
                 {previewImage && (
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    className="w-24 h-24 rounded-full mt-2 object-cover"
-                  />
+                  <div className="mt-3">
+                    <img
+                      src={previewImage}
+                      alt="Profile Preview"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-blue-500"
+                      onError={handleImageError}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Profile picture (Cloudinary)
+                    </p>
+                  </div>
                 )}
               </div>
 
-              <div className="pt-4 flex justify-between">
+              <div className="pt-4 flex justify-between gap-4">
                 <button
                   type="button"
-                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition-colors"
                   onClick={() => navigate("/instructor/profile")}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  disabled={isSubmitting}
+                  className={`bg-blue-600 text-white px-4 py-2 rounded transition-colors ${
+                    isSubmitting
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-blue-700"
+                  }`}
                 >
-                  Save
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </Form>

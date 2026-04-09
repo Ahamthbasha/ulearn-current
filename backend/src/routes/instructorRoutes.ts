@@ -277,8 +277,8 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorModuleController.reorderModules.bind(instructorModuleController)
-)
+  instructorModuleController.reorderModules.bind(instructorModuleController),
+);
 
 // chapter
 router.get(
@@ -340,8 +340,8 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorChapterController.reorderChapters.bind(instructorChapterController)
-)
+  instructorChapterController.reorderChapters.bind(instructorChapterController),
+);
 
 /////////////////quiz controller
 
@@ -350,34 +350,32 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.createQuiz.bind(instructorQuizController)
-)
-
+  instructorQuizController.createQuiz.bind(instructorQuizController),
+);
 
 router.get(
   "/modules/:moduleId/quiz",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.getQuizByModuleId.bind(instructorQuizController)
-)
+  instructorQuizController.getQuizByModuleId.bind(instructorQuizController),
+);
 
 router.delete(
   "/quizzes/:quizId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.deleteQuiz.bind(instructorQuizController)
-)
+  instructorQuizController.deleteQuiz.bind(instructorQuizController),
+);
 
 router.get(
   "/quizzes/:quizId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.getQuizById.bind(instructorQuizController)
-)
-
+  instructorQuizController.getQuizById.bind(instructorQuizController),
+);
 
 //question
 
@@ -386,33 +384,34 @@ router.post(
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.addQuestion.bind(instructorQuizController)
-)
+  instructorQuizController.addQuestion.bind(instructorQuizController),
+);
 
 router.patch(
   "/quizzes/:quizId/questions/:questionId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.updateQuestion.bind(instructorQuizController)
-)
+  instructorQuizController.updateQuestion.bind(instructorQuizController),
+);
 
 router.delete(
   "/quizzes/:quizId/questions/:questionId",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.deleteQuestion.bind(instructorQuizController)
-)
-
+  instructorQuizController.deleteQuestion.bind(instructorQuizController),
+);
 
 router.get(
   "/modules/:moduleId/quiz/questions",
   authenticateToken,
   restrictBlockedUser,
   isInstructor,
-  instructorQuizController.getPaginatedQuestionsByModuleId.bind(instructorQuizController)
-)
+  instructorQuizController.getPaginatedQuestionsByModuleId.bind(
+    instructorQuizController,
+  ),
+);
 
 /////////////////////////instructor dashboard///////////////////////////////////
 
@@ -830,22 +829,28 @@ router.get(
   "/courses/:courseId/reviews",
   authenticateToken,
   isInstructor,
-  instructorCourseReviewController.getReviews.bind(instructorCourseReviewController)
-)
+  instructorCourseReviewController.getReviews.bind(
+    instructorCourseReviewController,
+  ),
+);
 
 router.get(
   "/courses/:courseId/reviewStat",
   authenticateToken,
   isInstructor,
-  instructorCourseReviewController.getReviewStats.bind(instructorCourseReviewController)
-)
+  instructorCourseReviewController.getReviewStats.bind(
+    instructorCourseReviewController,
+  ),
+);
 
 router.patch(
   "/review/:reviewId/flag",
   authenticateToken,
   isInstructor,
-  instructorCourseReviewController.flagReview.bind(instructorCourseReviewController)
-)
+  instructorCourseReviewController.flagReview.bind(
+    instructorCourseReviewController,
+  ),
+);
 
 const instructorRoutes = router;
 

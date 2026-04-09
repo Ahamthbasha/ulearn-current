@@ -8,8 +8,7 @@ import {
 } from "../../dto/userDTO/learningPathDTO";
 import { IStudentLearningPathRepository } from "../../repositories/studentRepository/interface/IStudentsideLMSRepo";
 import { IStudentLearningPathService } from "./interface/IStudentsideLMSService";
-import { uploadToS3Bucket, IMulterFile } from "../../utils/s3Bucket";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import { uploadToCloudinary } from "../../utils/cloudinary";
 import {
   mapLearningPathToDTO,
   mapLearningPathsToListDTO,
@@ -25,15 +24,15 @@ export class StudentLearningPathService implements IStudentLearningPathService {
 
   async createLearningPath(
     data: CreateLearningPathDTO,
-    thumbnail?: IMulterFile,
+    thumbnail?: Express.Multer.File,
   ): Promise<LearningPathDTO> {
     try {
       if (thumbnail) {
-        const thumbnailKey = await uploadToS3Bucket(
+        const thumbnailUrl = await uploadToCloudinary(
           thumbnail,
           `learning-paths/${data.studentId}`,
         );
-        data.thumbnailUrl = thumbnailKey;
+        data.thumbnailUrl = thumbnailUrl;
       }
 
       const learningPath =
@@ -41,11 +40,8 @@ export class StudentLearningPathService implements IStudentLearningPathService {
       await learningPath.totalPrice;
       return await mapLearningPathToDTO(learningPath);
     } catch (error) {
-      const errorMessage = error instanceof Error && error.message
-      appLogger.error(
-        "Error in createLearningPath:",
-        errorMessage
-      );
+      const errorMessage = error instanceof Error && error.message;
+      appLogger.error("Error in createLearningPath:", errorMessage);
       throw new Error(`Failed to create learning path: ${errorMessage}`);
     }
   }
@@ -53,7 +49,7 @@ export class StudentLearningPathService implements IStudentLearningPathService {
   async updateLearningPath(
     learningPathId: string,
     data: Partial<ILearningPath>,
-    thumbnail?: IMulterFile,
+    thumbnail?: Express.Multer.File,
   ): Promise<LearningPathDTO | null> {
     try {
       const existingLearningPath =
@@ -66,11 +62,11 @@ export class StudentLearningPathService implements IStudentLearningPathService {
         const studentId =
           data.studentId?.toString() ||
           existingLearningPath.studentId.toString();
-        const thumbnailKey = await uploadToS3Bucket(
+        const thumbnailUrl = await uploadToCloudinary(
           thumbnail,
           `learning-paths/${studentId}`,
         );
-        data.thumbnailUrl = thumbnailKey;
+        data.thumbnailUrl = thumbnailUrl;
       }
 
       const updated = await this._learningPathRepository.updateLearningPath(
@@ -83,11 +79,8 @@ export class StudentLearningPathService implements IStudentLearningPathService {
       await updated.totalPrice; // Ensure totalPrice is computed
       return await mapLearningPathToDTO(updated);
     } catch (error) {
-      const errorMessage = error instanceof Error && error.message
-      appLogger.error(
-        "Error in updateLearningPath:",
-        errorMessage,
-      );
+      const errorMessage = error instanceof Error && error.message;
+      appLogger.error("Error in updateLearningPath:", errorMessage);
       throw new Error(`Failed to update learning path: ${errorMessage}`);
     }
   }
@@ -109,24 +102,23 @@ export class StudentLearningPathService implements IStudentLearningPathService {
 
     await learningPath.totalPrice; // Ensure totalPrice is computed
     const dto = await mapLearningPathToDTO(learningPath);
-    dto.items = await Promise.all(
-      dto.items.map(
-        async (item: {
-          courseId: string;
-          order: number;
-          courseName?: string;
-          thumbnailUrl?: string;
-          price?: number;
-        }) => ({
-          ...item,
-          thumbnailUrl: item.thumbnailUrl
-            ? await getPresignedUrl(item.thumbnailUrl)
-            : undefined,
-        }),
-      ),
+
+    // Fix: Remove async from map since we're not awaiting anything
+    dto.items = dto.items.map(
+      (item: {
+        courseId: string;
+        order: number;
+        courseName?: string;
+        thumbnailUrl?: string;
+        price?: number;
+      }) => ({
+        ...item,
+        thumbnailUrl: item.thumbnailUrl || undefined,
+      }),
     );
+
     if (dto.thumbnailUrl) {
-      dto.thumbnailUrl = await getPresignedUrl(dto.thumbnailUrl);
+      dto.thumbnailUrl = dto.thumbnailUrl;
     }
     return dto;
   }
@@ -144,16 +136,16 @@ export class StudentLearningPathService implements IStudentLearningPathService {
         limit,
         search,
       );
-    const dtos = await Promise.all(
-      mapLearningPathsToListDTO(result.data).map(
-        async (dto: LearningPathListDTO) => {
-          if (dto.thumbnailUrl) {
-            dto.thumbnailUrl = await getPresignedUrl(dto.thumbnailUrl);
-          }
-          return dto;
-        },
-      ),
+
+    const dtos = mapLearningPathsToListDTO(result.data).map(
+      (dto: LearningPathListDTO) => {
+        if (dto.thumbnailUrl) {
+          dto.thumbnailUrl = dto.thumbnailUrl;
+        }
+        return dto;
+      },
     );
+
     return { data: dtos, total: result.total };
   }
 

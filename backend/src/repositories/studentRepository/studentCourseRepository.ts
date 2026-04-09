@@ -1,9 +1,12 @@
 import { IStudentCourseRepository } from "./interface/IStudentCourseRepository";
-import { ICourse, CourseModel, ICourseFullyPopulated } from "../../models/courseModel";
+import {
+  ICourse,
+  CourseModel,
+  ICourseFullyPopulated,
+} from "../../models/courseModel";
 import { GenericRepository } from "../genericRepository";
 import { IChapterReadOnlyRepository } from "../interfaces/IChapterReadOnlyRepository";
 import { IQuizReadOnlyRepository } from "../interfaces/IQuizReadOnlyRepository";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { ICourseOffer } from "../../models/courseOfferModel";
 import { IStudentCourseOfferRepository } from "./interface/IStudentCourseOfferRepo";
 import { appLogger } from "../../utils/logger";
@@ -28,13 +31,11 @@ export class StudentCourseRepository
     this._courseOfferRepo = courseOfferRepo;
   }
 
-  async getAllListedCourses(): Promise<
-    { course: ICourseFullyPopulated }[]
-  > {
+  async getAllListedCourses(): Promise<{ course: ICourseFullyPopulated }[]> {
     const listedCourses = (await this.model
       .find({ isListed: true, isPublished: true })
-      .populate('instructorId')
-      .populate('category')
+      .populate("instructorId")
+      .populate("category")
       .lean()
       .exec()) as unknown as ICourseFullyPopulated[];
 
@@ -45,31 +46,28 @@ export class StudentCourseRepository
       offers.map((offer) => [offer.courseId.toString(), offer]),
     );
 
-    const result = await Promise.all(
-      listedCourses.map(async (course) => {
-        const courseId = course._id.toString();
-        const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
+    const result = listedCourses.map((course) => {
+      const courseId = course._id.toString();
 
-        const offer = offerMap.get(courseId);
-        const discountedPrice =
-          offer && offer.isActive && offer.status === "approved"
-            ? course.price * (1 - offer.discountPercentage / 100)
-            : undefined;
+      const offer = offerMap.get(courseId);
+      const discountedPrice =
+        offer && offer.isActive && offer.status === "approved"
+          ? course.price * (1 - offer.discountPercentage / 100)
+          : undefined;
 
-        appLogger.info(
-          `getAllListedCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`,
-        );
+      appLogger.info(
+        `getAllListedCourses ${courseId}: price=${course.price}, discountedPrice=${discountedPrice}`,
+      );
 
-        return {
-          course: {
-            ...course,
-            thumbnailUrl: signedThumbnailUrl,
-            originalPrice: course.price,
-            discountedPrice,
-          },
-        };
-      }),
-    );
+      return {
+        course: {
+          ...course,
+          thumbnailUrl: course.thumbnailUrl, // Direct Cloudinary URL
+          originalPrice: course.price,
+          discountedPrice,
+        },
+      };
+    });
 
     return result;
   }
@@ -123,8 +121,8 @@ export class StudentCourseRepository
     if (isPriceSorting) {
       const allCourses = (await this.model
         .find(filter)
-        .populate('instructorId')
-        .populate('category')
+        .populate("instructorId")
+        .populate("category")
         .lean()
         .exec()) as unknown as ICourseFullyPopulated[];
 
@@ -163,7 +161,6 @@ export class StudentCourseRepository
         startIndex,
         endIndex,
       );
-
       const result = await Promise.all(
         paginatedCourses.map(async ({ course, effectivePrice }) => {
           const courseId = course._id.toString();
@@ -171,7 +168,6 @@ export class StudentCourseRepository
             await this._chapterRepo.countChaptersByCourse(courseId);
           const quizQuestionCount =
             await this._quizRepo.countQuestionsByCourse(courseId);
-          const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
           const offer = offerMap.get(courseId);
           const discountedPrice =
@@ -186,7 +182,7 @@ export class StudentCourseRepository
           return {
             course: {
               ...course,
-              thumbnailUrl: signedThumbnailUrl,
+              thumbnailUrl: course.thumbnailUrl, // Direct Cloudinary URL
               originalPrice: course.price,
               discountedPrice,
             },
@@ -205,8 +201,8 @@ export class StudentCourseRepository
       .sort(sortOption)
       .skip(skip)
       .limit(limit)
-      .populate('instructorId')
-      .populate('category')
+      .populate("instructorId")
+      .populate("category")
       .lean()
       .exec()) as unknown as ICourseFullyPopulated[];
 
@@ -224,7 +220,6 @@ export class StudentCourseRepository
           await this._chapterRepo.countChaptersByCourse(courseId);
         const quizQuestionCount =
           await this._quizRepo.countQuestionsByCourse(courseId);
-        const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
 
         const offer = offerMap.get(courseId);
         const discountedPrice =
@@ -239,7 +234,7 @@ export class StudentCourseRepository
         return {
           course: {
             ...course,
-            thumbnailUrl: signedThumbnailUrl,
+            thumbnailUrl: course.thumbnailUrl, // Direct Cloudinary URL
             originalPrice: course.price,
             discountedPrice,
           },
@@ -259,8 +254,8 @@ export class StudentCourseRepository
   }> {
     const course = (await this.model
       .findById(courseId)
-      .populate('instructorId')
-      .populate('category')
+      .populate("instructorId")
+      .populate("category")
       .lean()
       .exec()) as unknown as ICourseFullyPopulated | null;
 
@@ -271,9 +266,6 @@ export class StudentCourseRepository
     const quizQuestionCount =
       await this._quizRepo.countQuestionsByCourse(courseId);
 
-    const signedThumbnailUrl = await getPresignedUrl(course.thumbnailUrl);
-    const signedDemoVideoUrl = await getPresignedUrl(course.demoVideo.url);
-
     const offer =
       await this._courseOfferRepo.findValidOfferByCourseId(courseId);
     const discountedPrice =
@@ -283,10 +275,10 @@ export class StudentCourseRepository
 
     const updatedCourse: ICourseFullyPopulated = {
       ...course,
-      thumbnailUrl: signedThumbnailUrl,
+      thumbnailUrl: course.thumbnailUrl, // Direct Cloudinary URL
       demoVideo: {
         ...course.demoVideo,
-        url: signedDemoVideoUrl,
+        url: course.demoVideo.url, // Direct Cloudinary URL
       },
       originalPrice: course.price,
       discountedPrice,
@@ -295,7 +287,9 @@ export class StudentCourseRepository
     return { course: updatedCourse, chapterCount, quizQuestionCount };
   }
 
-  async getCourses(categoryId?: string): Promise<Array<{ _id: string; courseName: string }>> {
+  async getCourses(
+    categoryId?: string,
+  ): Promise<Array<{ _id: string; courseName: string }>> {
     const filter: FilterQuery<ICourse> = { isListed: true, isPublished: true };
     if (categoryId) {
       filter.category = categoryId;
@@ -303,7 +297,7 @@ export class StudentCourseRepository
 
     const listedCourses = await this.model
       .find(filter)
-      .select('_id courseName')
+      .select("_id courseName")
       .lean()
       .exec();
 

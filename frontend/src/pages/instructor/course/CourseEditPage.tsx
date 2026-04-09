@@ -12,15 +12,6 @@ import {
 import { AxiosError } from "axios";
 import type { Category } from "../interface/instructorInterface";
 
-const MAX_VIDEO_SIZE_MB = 200;
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/jpg",
-];
-const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-
 const CourseEditPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -33,9 +24,11 @@ const CourseEditPage = () => {
   const [courseDuration, setCourseDuration] = useState<string>("0");
   const [thumbnailError, setThumbnailError] = useState("");
   const [videoError, setVideoError] = useState("");
+  const [videoLoadError, setVideoLoadError] = useState(false);
 
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const formik = useFormik({
     initialValues: {
@@ -64,20 +57,7 @@ const CourseEditPage = () => {
       description: Yup.string()
         .trim()
         .min(10, "Description must be at least 10 characters")
-        .max(50, "Description must not exceed 50 characters")
-        .matches(
-          /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{10,50}$/,
-          "Description must include meaningful text"
-        )
-        .test(
-          "not-repetitive-symbols",
-          "Description must contain letters or meaningful words",
-          (value) => {
-            if (!value) return false;
-            const stripped = value.replace(/[\s\d\W_]+/g, "");
-            return stripped.length >= 5;
-          }
-        )
+        .max(500, "Description must not exceed 500 characters")
         .required("Description is required"),
 
       category: Yup.string().required("Category is required"),
@@ -135,11 +115,71 @@ const CourseEditPage = () => {
         ]);
 
         const course = courseRes?.data;
-        const categories = categoryRes || [];
+        const categoriesList = categoryRes || [];
 
-        const matchedCategory = categories.find(
-          (cat: Category) => cat._id === course.category?._id
-        );
+        // DEBUG: Log the entire course object to see the structure
+        console.log("=== Course Data from API ===");
+        console.log("Full course object:", course);
+        console.log("Thumbnail related fields:", {
+          thumbnailUrl: course.thumbnailUrl,
+          thumbnailSignedUrl: course.thumbnailSignedUrl,
+          thumbnail: course.thumbnail
+        });
+        console.log("Demo video related fields:", {
+          demoVideo: course.demoVideo,
+          demoVideoUrlSigned: course.demoVideoUrlSigned,
+          demoVideoUrl: course.demoVideoUrl
+        });
+        console.log("Category related fields:", {
+          category: course.category,
+          categoryName: course.categoryName,
+          categoryId: course.categoryId
+        });
+
+  
+
+        // FIXED: Better category matching logic
+        let matchedCategoryId = "";
+        
+        // Try to match by category._id first
+        if (course.category?._id) {
+          const found = categoriesList.find(
+            (cat: Category) => cat._id === course.category._id
+          );
+          if (found) {
+            matchedCategoryId = found._id;
+          }
+        }
+        
+        // If not found by _id, try by categoryName
+        if (!matchedCategoryId && course.category?.categoryName) {
+          const found = categoriesList.find(
+            (cat: Category) => cat.categoryName === course.category.categoryName
+          );
+          if (found) {
+            matchedCategoryId = found._id;
+          }
+        }
+        
+        // If still not found and course has category string directly
+        if (!matchedCategoryId && typeof course.category === 'string') {
+          const found = categoriesList.find(
+            (cat: Category) => cat._id === course.category
+          );
+          if (found) {
+            matchedCategoryId = found._id;
+          }
+        }
+
+        // If category is a string in categoryName field
+        if (!matchedCategoryId && course.categoryName) {
+          const found = categoriesList.find(
+            (cat: Category) => cat.categoryName === course.categoryName
+          );
+          if (found) {
+            matchedCategoryId = found._id;
+          }
+        }
 
         const normalizeLevel = (level: string) => {
           if (!level) return "";
@@ -150,19 +190,32 @@ const CourseEditPage = () => {
         formik.setValues({
           courseName: course.courseName || "",
           description: course.description || "",
-          category: matchedCategory?._id || "",
-          price: course.price || "",
+          category: matchedCategoryId,
+          price: course.price?.toString() || "",
           level: normalizeLevel(course.level || ""),
           thumbnail: null,
           demoVideo: null,
         });
 
-        setExistingThumbnailUrl(course.thumbnailSignedUrl || null);
-        setExistingDemoVideoUrl(course.demoVideo?.urlSigned || null);
+        // FIXED: Get Cloudinary URLs - match the structure from CourseManagementPage
+        // In CourseManagementPage they use: course.thumbnailSignedUrl and course.demoVideoUrlSigned
+        const thumbnailUrl = course.thumbnailSignedUrl || course.thumbnailUrl || null;
+        // Try multiple possible field names for demo video URL
+        const demoUrl = course.demoVideoUrlSigned || 
+                       course.demoVideo?.urlSigned || 
+                       course.demoVideo?.url || 
+                       course.demoVideoUrl ||
+                       null;
+        
+        console.log("Extracted URLs:", { thumbnailUrl, demoUrl });
+        
+        setExistingThumbnailUrl(thumbnailUrl);
+        setExistingDemoVideoUrl(demoUrl);
         setCourseDuration(course.duration || "0");
-        setCategories(categories);
+        setCategories(categoriesList);
         setInitialLoading(false);
-      } catch (err) {
+      } catch(error) {
+        console.error("Error loading course:", error);
         toast.error("Failed to load course");
         navigate("/instructor/courses");
       }
@@ -173,8 +226,15 @@ const CourseEditPage = () => {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setThumbnailError("Only JPG, PNG, WEBP images are allowed");
+    if (!file.type.startsWith("image/")) {
+      setThumbnailError("Please select a valid image file");
+      formik.setFieldValue("thumbnail", null);
+      e.currentTarget.value = "";
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setThumbnailError("Image size must be less than 10MB");
       formik.setFieldValue("thumbnail", null);
       e.currentTarget.value = "";
       return;
@@ -192,15 +252,15 @@ const CourseEditPage = () => {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
 
-    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
-      setVideoError("Only MP4, WEBM, or MOV videos are allowed");
+    if (!file.type.startsWith("video/")) {
+      setVideoError("Please select a valid video file");
       formik.setFieldValue("demoVideo", null);
       e.currentTarget.value = "";
       return;
     }
 
-    if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
-      setVideoError(`Video size must be under ${MAX_VIDEO_SIZE_MB}MB`);
+    if (file.size > 200 * 1024 * 1024) {
+      setVideoError(`Video size must be under 200MB`);
       formik.setFieldValue("demoVideo", null);
       e.currentTarget.value = "";
       return;
@@ -214,17 +274,28 @@ const CourseEditPage = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleVideoError = () => {
+    setVideoLoadError(true);
+    console.error("Video failed to load:", existingDemoVideoUrl);
+  };
+
   const formatDuration = (seconds: string) => {
     const secs = parseInt(seconds) || 0;
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    const s = secs % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
   if (initialLoading) {
     return (
-      <div className="p-8 text-center text-gray-600">
-        Loading course details...
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading course details...</p>
+        </div>
       </div>
     );
   }
@@ -235,7 +306,7 @@ const CourseEditPage = () => {
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
             <h1 className="text-2xl font-bold text-white flex items-center">
-              <span className="mr-3">Edit</span> Edit Course
+              <span className="mr-3">✏️</span> Edit Course
             </h1>
           </div>
 
@@ -245,7 +316,7 @@ const CourseEditPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Course Name
+                    Course Name *
                   </label>
                   <input
                     type="text"
@@ -257,36 +328,14 @@ const CourseEditPage = () => {
                   />
                   {formik.touched.courseName && formik.errors.courseName && (
                     <p className="mt-1 text-sm text-red-600">
-                      Warning: {formik.errors.courseName}
+                      ⚠️ {formik.errors.courseName}
                     </p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formik.values.description}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-all resize-none"
-                  />
-                  {formik.touched.description && formik.errors.description && (
-                    <p className="mt-1 text-sm text-red-600">
-                      Warning: {formik.errors.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Category
+                    Category *
                   </label>
                   <select
                     name="category"
@@ -306,15 +355,36 @@ const CourseEditPage = () => {
                   </select>
                   {formik.touched.category && formik.errors.category && (
                     <p className="mt-1 text-sm text-red-600">
-                      Warning: {formik.errors.category}
+                      ⚠️ {formik.errors.category}
                     </p>
                   )}
                 </div>
+              </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  name="description"
+                  value={formik.values.description}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-all resize-none"
+                />
+                {formik.touched.description && formik.errors.description && (
+                  <p className="mt-1 text-sm text-red-600">
+                    ⚠️ {formik.errors.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Price */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Price (₹)
+                    Price (₹) *
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -322,6 +392,7 @@ const CourseEditPage = () => {
                     </span>
                     <input
                       type="number"
+                      step="0.01"
                       name="price"
                       value={formik.values.price}
                       onChange={formik.handleChange}
@@ -332,17 +403,15 @@ const CourseEditPage = () => {
                   </div>
                   {formik.touched.price && formik.errors.price && (
                     <p className="mt-1 text-sm text-red-600">
-                      Warning: {formik.errors.price}
+                      ⚠️ {formik.errors.price}
                     </p>
                   )}
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Level */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Difficulty Level
+                    Difficulty Level *
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {["Beginner", "Intermediate", "Advanced"].map((level) => (
@@ -368,42 +437,38 @@ const CourseEditPage = () => {
                   </div>
                   {formik.touched.level && formik.errors.level && (
                     <p className="mt-1 text-sm text-red-600">
-                      Warning: {formik.errors.level}
+                      ⚠️ {formik.errors.level}
                     </p>
                   )}
                 </div>
+              </div>
 
-                {/* Auto-Calculated Duration */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Total Duration
-                  </label>
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <svg
-                          className="w-5 h-5 text-blue-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-lg font-bold text-blue-900">
-                          {formatDuration(courseDuration)}
-                        </p>
-                        <p className="text-xs text-blue-600 mt-1">
-                          Auto-calculated from all chapter videos
-                        </p>
-                      </div>
-                    </div>
+              {/* Auto-Calculated Duration */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-semibold text-blue-800">Total Course Duration</p>
+                    <p className="text-2xl font-bold text-blue-900">
+                      {formatDuration(courseDuration)}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Auto-calculated from all chapter videos
+                    </p>
                   </div>
                 </div>
               </div>
@@ -420,6 +485,10 @@ const CourseEditPage = () => {
                       src={existingThumbnailUrl}
                       alt="Current thumbnail"
                       className="w-full h-48 object-cover rounded-xl shadow-md mb-3"
+                      onError={(e) => {
+                        console.error("Thumbnail failed to load:", existingThumbnailUrl);
+                        e.currentTarget.src = "https://via.placeholder.com/400x200?text=No+Image";
+                      }}
                     />
                   )}
                   <input
@@ -431,9 +500,12 @@ const CourseEditPage = () => {
                   />
                   {thumbnailError && (
                     <p className="mt-1 text-sm text-red-600">
-                      Warning: {thumbnailError}
+                      ⚠️ {thumbnailError}
                     </p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Leave empty to keep current thumbnail
+                  </p>
                 </div>
 
                 {/* Demo Video */}
@@ -441,12 +513,43 @@ const CourseEditPage = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Demo Video
                   </label>
-                  {existingDemoVideoUrl && (
-                    <video
-                      src={existingDemoVideoUrl}
-                      controls
-                      className="w-full h-48 rounded-xl shadow-md mb-3 object-cover"
-                    />
+                  {existingDemoVideoUrl && !videoLoadError && (
+                    <div className="relative">
+                      <video
+                        ref={videoRef}
+                        controls
+                        className="w-full h-48 rounded-xl shadow-md mb-3 object-cover bg-black"
+                        onError={handleVideoError}
+                        controlsList="nodownload"
+                        preload="metadata"
+                      >
+                        <source src={existingDemoVideoUrl} type="video/mp4" />
+                        <source src={existingDemoVideoUrl} type="video/webm" />
+                        <source src={existingDemoVideoUrl} type="video/quicktime" />
+                        Your browser does not support the video tag.
+                      </video>
+                      <p className="text-xs text-gray-500 text-center mt-1">
+                        Current demo video (Cloudinary)
+                      </p>
+                    </div>
+                  )}
+                  {videoLoadError && existingDemoVideoUrl && (
+                    <div className="w-full h-48 rounded-xl shadow-md mb-3 bg-gray-100 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm text-gray-500">Video preview not available</p>
+                        <a 
+                          href={existingDemoVideoUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-500 hover:text-blue-700 mt-1 inline-block"
+                        >
+                          Open video in new tab
+                        </a>
+                      </div>
+                    </div>
                   )}
                   <input
                     ref={videoInputRef}
@@ -457,9 +560,12 @@ const CourseEditPage = () => {
                   />
                   {videoError && (
                     <p className="mt-1 text-sm text-red-600">
-                      Warning: {videoError}
+                      ⚠️ {videoError}
                     </p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Leave empty to keep current video
+                  </p>
                 </div>
               </div>
 
@@ -506,7 +612,7 @@ const CourseEditPage = () => {
                       Updating...
                     </div>
                   ) : (
-                    "Update Course"
+                    "💾 Update Course"
                   )}
                 </button>
               </div>

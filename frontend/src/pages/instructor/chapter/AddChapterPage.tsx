@@ -12,6 +12,23 @@ import { Loader2 } from "lucide-react";
 
 const textOnlyRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
+// Allowed video MIME types
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/mpeg",
+  "video/quicktime",
+  "video/x-msvideo",
+  "video/x-matroska",
+  "video/webm",
+  "video/ogg",
+  "video/3gpp",
+  "video/x-ms-wmv",
+  "video/x-flv"
+];
+
+// Allowed video extensions
+const ALLOWED_VIDEO_EXTENSIONS = [".mp4", ".mpeg", ".mov", ".avi", ".mkv", ".webm", ".ogg", ".3gp", ".wmv", ".flv"];
+
 const chapterSchema = Yup.object().shape({
   chapterTitle: Yup.string()
     .transform((value) => value.trim())
@@ -24,11 +41,42 @@ const chapterSchema = Yup.object().shape({
   description: Yup.string()
     .transform((value) => value.trim())
     .min(10, "Description must be at least 10 characters long")
-    .max(100, "chapter description should not exceed 100 characters")
+    .max(100, "Chapter description should not exceed 100 characters")
     .matches(textOnlyRegex, "Description must contain only letters and single spaces")
     .test("not-blank", "Description cannot be only spaces", (value) => !!value && value.trim().length >= 10)
     .required("Description is required"),
 });
+
+// Helper function to validate video file
+const isValidVideoFile = (file: File): { isValid: boolean; error?: string } => {
+  // Check MIME type
+  if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+    return {
+      isValid: false,
+      error: `Invalid video format. Allowed formats: ${ALLOWED_VIDEO_EXTENSIONS.join(", ")}`
+    };
+  }
+
+  // Check file extension
+  const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
+  if (!ALLOWED_VIDEO_EXTENSIONS.includes(fileExtension)) {
+    return {
+      isValid: false,
+      error: `Invalid file extension. Allowed extensions: ${ALLOWED_VIDEO_EXTENSIONS.join(", ")}`
+    };
+  }
+
+  // Check file size (max 500MB)
+  const maxSize = 500 * 1024 * 1024; // 500MB
+  if (file.size > maxSize) {
+    return {
+      isValid: false,
+      error: "Video file size must be less than 500MB"
+    };
+  }
+
+  return { isValid: true };
+};
 
 const AddChapterPage = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
@@ -39,6 +87,7 @@ const AddChapterPage = () => {
   const [duration, setDuration] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [nextChapterNumber, setNextChapterNumber] = useState<number>(1);
+  const [validationError, setValidationError] = useState<string>("");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Fetch next chapter number
@@ -58,10 +107,20 @@ const AddChapterPage = () => {
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    
+    // Clear previous validation error and preview
+    setValidationError("");
+    setVideoPreview(null);
+    setVideoFile(null);
+    setDuration(0);
+    
     if (!file) return;
 
-    if (!file.type.startsWith("video/")) {
-      toast.error("Only video files are allowed.");
+    // Validate video file
+    const validation = isValidVideoFile(file);
+    if (!validation.isValid) {
+      setValidationError(validation.error || "Invalid video file");
+      toast.error(validation.error || "Invalid video file");
       e.target.value = "";
       return;
     }
@@ -76,45 +135,57 @@ const AddChapterPage = () => {
     video.onloadedmetadata = () => {
       const dur = Math.ceil(video.duration);
       setDuration(dur);
-      URL.revokeObjectURL(url); // Clean up
+      URL.revokeObjectURL(url);
     };
     video.onerror = () => {
       toast.error("Failed to read video duration");
       setDuration(0);
+      setValidationError("Failed to read video duration");
     };
   };
 
- const getErrorMessage = (error: unknown): string => {
-  // 1. Check if it's an Axios-like error
-  if (
-    error &&
-    typeof error === "object" &&
-    "response" in error &&
-    error.response &&
-    typeof error.response === "object" &&
-    "data" in error.response
-  ) {
-    const data = error.response.data;
+  const getErrorMessage = (error: unknown): string => {
+    if (
+      error &&
+      typeof error === "object" &&
+      "response" in error &&
+      error.response &&
+      typeof error.response === "object" &&
+      "data" in error.response
+    ) {
+      const data = error.response.data;
 
-    // 2. Check if data is object and has message
-    if (data && typeof data === "object" && "message" in data && typeof data.message === "string") {
-      return data.message;
+      if (data && typeof data === "object" && "message" in data && typeof data.message === "string") {
+        return data.message;
+      }
+
+      if (typeof data === "string") {
+        return data;
+      }
     }
 
-    // 3. Fallback: data might be string
-    if (typeof data === "string") {
-      return data;
-    }
-  }
-
-  // 4. Fallback to Error.message
-  return error instanceof Error ? error.message : "Chapter creation failed";
-};
+    return error instanceof Error ? error.message : "Chapter creation failed";
+  };
 
   const handleSubmit = async (values: { chapterTitle: string; description: string }) => {
     if (!moduleId) return toast.error("Invalid module ID");
-    if (!videoFile) return toast.error("Video file is required.");
-    if (duration === 0) return toast.error("Failed to extract video duration");
+    
+    if (!videoFile) {
+      toast.error("Please select a video file.");
+      return;
+    }
+    
+    if (duration === 0) {
+      toast.error("Failed to extract video duration. Please try another video file.");
+      return;
+    }
+
+    // Re-validate video before submission
+    const validation = isValidVideoFile(videoFile);
+    if (!validation.isValid) {
+      toast.error(validation.error || "Invalid video file");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -124,7 +195,7 @@ const AddChapterPage = () => {
       formData.append("chapterNumber", String(nextChapterNumber));
       formData.append("moduleId", moduleId);
       formData.append("video", videoFile);
-      formData.append("duration", String(duration)); 
+      formData.append("duration", String(duration));
 
       await createChapter(formData);
       toast.success("Chapter created successfully");
@@ -160,19 +231,37 @@ const AddChapterPage = () => {
                 <label className="block text-sm font-medium text-gray-700">Video File *</label>
                 <input
                   type="file"
-                  accept="video/*"
+                  accept={ALLOWED_VIDEO_TYPES.join(",")}
                   onChange={handleVideoChange}
                   className="w-full px-4 py-2 mt-1 border rounded bg-gray-100"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Allowed formats: {ALLOWED_VIDEO_EXTENSIONS.join(", ")} (Max size: 500MB)
+                </p>
+                {validationError && (
+                  <p className="text-xs text-red-600 mt-1">
+                    ⚠️ {validationError}
+                  </p>
+                )}
               </div>
 
               {videoPreview && (
                 <div className="mt-2">
-                  <video ref={videoRef} controls src={videoPreview} className="w-full max-h-96 rounded" />
+                  <video 
+                    ref={videoRef} 
+                    controls 
+                    src={videoPreview} 
+                    className="w-full max-h-96 rounded"
+                  />
+                  {duration > 0 && (
+                    <p className="text-sm text-green-600 mt-2">
+                      ✓ Duration: {Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}
+                    </p>
+                  )}
                 </div>
               )}
 
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || !videoFile || duration === 0}>
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="animate-spin w-4 h-4" />

@@ -7,7 +7,6 @@ import {
 } from "../../dto/userDTO/userLearningPathDTO";
 import { mapToLearningPathListDTOUSER } from "../../mappers/userMapper/userLearningPathListMapper";
 import { mapToLearningPathDetailDTO } from "../../mappers/userMapper/userLearnPathDetailMapper";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { appLogger } from "../../utils/logger";
 
 export class StudentLmsService implements IStudentLmsService {
@@ -39,11 +38,7 @@ export class StudentLmsService implements IStudentLmsService {
     const mappedPaths = await Promise.all(
       paths.map(async (path) => {
         try {
-          return await mapToLearningPathListDTOUSER(
-            path,
-            getPresignedUrl,
-            offers,
-          );
+          return await mapToLearningPathListDTOUSER(path, offers);
         } catch (error) {
           appLogger.error(`Error mapping learning path ${path._id}:`, error);
           return null;
@@ -85,6 +80,6 @@ export class StudentLmsService implements IStudentLmsService {
       return null;
     }
 
-    return mapToLearningPathDetailDTO(path, getPresignedUrl, offers);
+    return mapToLearningPathDetailDTO(path, offers);
   }
 }

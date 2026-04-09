@@ -1,12 +1,15 @@
 import { IStudentModuleRepository } from "./interface/IStudentModuleRepository";
-import { IModule, ModuleModel, IModulePopulated } from "../../models/moduleModel";
+import {
+  IModule,
+  ModuleModel,
+  IModulePopulated,
+} from "../../models/moduleModel";
 import { IChapter } from "../../models/chapterModel";
 import {
   IModuleDTO,
   IChapterDTO,
   IQuizDTO,
 } from "../../dto/userDTO/courseDetailDTO";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { formatDuration } from "../../utils/formatDuration";
 import { GenericRepository } from "../genericRepository";
 
@@ -32,32 +35,30 @@ export class StudentModuleRepository
           select: "questions",
         },
       ],
-      { position: 1 }
+      { position: 1 },
     )) as IModulePopulated[];
 
     const result: IModuleDTO[] = [];
 
     for (const mod of modules) {
-      // Build chapters DTO & get presigned URLs + format durations for chapters
-      const chaptersDTO: IChapterDTO[] = await Promise.all(
-        (mod.chapters ?? []).map(async (ch: IChapter) => ({
+      // Build chapters DTO - With Cloudinary, URLs are directly accessible
+      const chaptersDTO: IChapterDTO[] = (mod.chapters ?? []).map(
+        (ch: IChapter) => ({
           chapterId: ch._id.toString(),
           chapterTitle: ch.chapterTitle,
           description: ch.description,
-          videoUrl: await getPresignedUrl(ch.videoUrl),
+          videoUrl: ch.videoUrl, // Direct Cloudinary URL
           duration: formatDuration(ch.duration ?? 0), // e.g. "2h 15m"
           position: ch.position ?? 0,
-        }))
+        }),
       );
 
       // Count of chapters in module
       const chapterCount = chaptersDTO.length;
 
       // Module duration is sum of raw chapter durations (seconds), format once
-      const totalSeconds = mod.chapters?.reduce(
-        (sum, ch) => sum + (ch.duration ?? 0),
-        0
-      ) ?? 0;
+      const totalSeconds =
+        mod.chapters?.reduce((sum, ch) => sum + (ch.duration ?? 0), 0) ?? 0;
 
       // Build quiz DTO if exists
       let quizDTO: IQuizDTO | undefined;
@@ -77,12 +78,10 @@ export class StudentModuleRepository
         moduleTitle: mod.moduleTitle,
         description: mod.description,
         duration: formatDuration(totalSeconds), // format total module duration string
-
         position: mod.position ?? 0,
         chapters: chaptersDTO,
-        chapterCount:chapterCount,
+        chapterCount: chapterCount,
         quiz: quizDTO,
-
       });
     }
 

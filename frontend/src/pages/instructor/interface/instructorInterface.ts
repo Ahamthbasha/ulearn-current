@@ -102,7 +102,7 @@ export interface CourseManagement {
   courseName: string;
   categoryName: string;
   level: string;
-  durationFormatted: string;
+  duration: string;
   price: number;
   description: string;
   thumbnailSignedUrl?: string;

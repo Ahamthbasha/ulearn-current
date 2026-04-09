@@ -1,5 +1,11 @@
-import { ILearningPath, CreateLearningPathDTO } from "../../../models/learningPathModel";
-import { LearningPathDTO, LearningPathListDTO } from "../../../dto/userDTO/learningPathDTO";
+import {
+  ILearningPath,
+  CreateLearningPathDTO,
+} from "../../../models/learningPathModel";
+import {
+  LearningPathDTO,
+  LearningPathListDTO,
+} from "../../../dto/userDTO/learningPathDTO";
 import { IMulterFile } from "../../../utils/s3Bucket";
 
 export interface IStudentLearningPathService {

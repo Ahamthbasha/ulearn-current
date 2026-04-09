@@ -17,7 +17,7 @@ export interface CourseDetailsDTO {
   order: number;
   courseName: string;
   description: string;
-  duration:string;
+  duration: string;
   price: number;
   effectivePrice: number;
   thumbnailUrl: string;

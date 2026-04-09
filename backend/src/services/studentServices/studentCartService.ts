@@ -4,7 +4,6 @@ import { IStudentCartService } from "./interface/IStudentCartService";
 import { IStudentCartRepository } from "../../repositories/studentRepository/interface/IStudentCartRepository";
 import { CartItemDTO } from "../../dto/userDTO/cartCourseDTO";
 import { mapCartToDTO } from "../../mappers/userMapper/cartMapper";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { IStudentCourseRepository } from "../../repositories/studentRepository/interface/IStudentCourseRepository";
 import { IStudentLmsRepo } from "../../repositories/studentRepository/interface/IStudentLmsRepo";
 import { ILearningPath } from "../../models/learningPathModel";
@@ -25,7 +24,7 @@ export class StudentCartService implements IStudentCartService {
     courseRepository: IStudentCourseRepository,
     lmsRepository: IStudentLmsRepo,
     courseOfferRepository: IStudentCourseOfferRepository,
-    enrollmentRepository: IEnrollmentRepository
+    enrollmentRepository: IEnrollmentRepository,
   ) {
     this._cartRepository = cartRepository;
     this._courseRepository = courseRepository;
@@ -45,7 +44,7 @@ export class StudentCartService implements IStudentCartService {
     const enrolledCourseIdSet = new Set(
       enrolledCourseIds
         ? enrolledCourseIds.map((e) => e.courseId.toString())
-        : []
+        : [],
     );
 
     const courseIds = Array.isArray(cart.courses)
@@ -55,7 +54,7 @@ export class StudentCartService implements IStudentCartService {
               ? course.toString()
               : "courseName" in course && course._id
                 ? course._id.toString()
-                : null
+                : null,
           )
           .filter((id): id is string => id !== null)
       : [];
@@ -67,7 +66,7 @@ export class StudentCartService implements IStudentCartService {
               ? lp.toString()
               : "title" in lp && lp._id
                 ? lp._id.toString()
-                : null
+                : null,
           )
           .filter((id): id is string => id !== null)
       : [];
@@ -82,7 +81,7 @@ export class StudentCartService implements IStudentCartService {
     if (learningPathIds.length > 0) {
       const learningPathsResult =
         await this._lmsRepository.getLearningPathsByIds(
-          learningPathIds.map((id) => new Types.ObjectId(id))
+          learningPathIds.map((id) => new Types.ObjectId(id)),
         );
       const learningPaths: ILearningPath[] = learningPathsResult.paths;
 
@@ -90,7 +89,7 @@ export class StudentCartService implements IStudentCartService {
         const lpCourseIds = lp.items.map((item) =>
           item.courseId instanceof Types.ObjectId
             ? item.courseId.toString()
-            : item.courseId._id.toString()
+            : item.courseId._id.toString(),
         );
         lpCourseIds.forEach((id) => allCourseIds.add(id));
       }
@@ -98,7 +97,7 @@ export class StudentCartService implements IStudentCartService {
 
     // Fetch course details and offers for all course IDs
     const courseDetailsPromises = Array.from(allCourseIds).map((id) =>
-      this._courseRepository.getCourseDetails(id)
+      this._courseRepository.getCourseDetails(id),
     );
     const courseDetailsResults = await Promise.all(courseDetailsPromises);
     const courseDetailsMap = new Map<
@@ -107,25 +106,16 @@ export class StudentCartService implements IStudentCartService {
     >();
 
     const offers = await this._courseOfferRepository.findValidOffersByCourseIds(
-      Array.from(allCourseIds)
+      Array.from(allCourseIds),
     );
     const offerMap = new Map<string, ICourseOffer>(
-      offers.map((offer) => [offer.courseId.toString(), offer])
+      offers.map((offer) => [offer.courseId.toString(), offer]),
     );
 
     for (const details of courseDetailsResults) {
       if (details.course) {
-        let thumbnailUrl = details.course.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for course ${details.course._id}:`,
-              error
-            );
-          }
-        }
+        const thumbnailUrl = details.course.thumbnailUrl || "";
+
         const courseId = details.course._id.toString();
         const offer = offerMap.get(courseId);
         const basePrice = details.course.price;
@@ -144,27 +134,17 @@ export class StudentCartService implements IStudentCartService {
     if (learningPathIds.length > 0) {
       const learningPathsResult =
         await this._lmsRepository.getLearningPathsByIds(
-          learningPathIds.map((id) => new Types.ObjectId(id))
+          learningPathIds.map((id) => new Types.ObjectId(id)),
         );
       const learningPaths: ILearningPath[] = learningPathsResult.paths;
 
       for (const lp of learningPaths) {
-        let thumbnailUrl = lp.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for learning path ${lp._id}:`,
-              error
-            );
-          }
-        }
+        const thumbnailUrl = lp.thumbnailUrl || "";
 
         const lpCourseIds = lp.items.map((item) =>
           item.courseId instanceof Types.ObjectId
             ? item.courseId.toString()
-            : item.courseId._id.toString()
+            : item.courseId._id.toString(),
         );
         let totalPrice = 0;
         for (const courseId of lpCourseIds) {
@@ -185,7 +165,7 @@ export class StudentCartService implements IStudentCartService {
       cart,
       courseDetailsMap,
       learningPathDetailsMap,
-      enrolledCourseIds || []
+      enrolledCourseIds || [],
     );
     return cartDTO;
   }
@@ -193,7 +173,7 @@ export class StudentCartService implements IStudentCartService {
   async addToCart(
     userId: Types.ObjectId,
     itemId: Types.ObjectId,
-    type: "course" | "learningPath"
+    type: "course" | "learningPath",
   ): Promise<CartItemDTO[] | null> {
     let updatedCart: ICart;
     if (type === "course") {
@@ -209,7 +189,7 @@ export class StudentCartService implements IStudentCartService {
               ? course.toString()
               : "courseName" in course && course._id
                 ? course._id.toString()
-                : null
+                : null,
           )
           .filter((id): id is string => id !== null)
       : [];
@@ -221,7 +201,7 @@ export class StudentCartService implements IStudentCartService {
               ? lp.toString()
               : "title" in lp && lp._id
                 ? lp._id.toString()
-                : null
+                : null,
           )
           .filter((id): id is string => id !== null)
       : [];
@@ -236,7 +216,7 @@ export class StudentCartService implements IStudentCartService {
     if (learningPathIds.length > 0) {
       const learningPathsResult =
         await this._lmsRepository.getLearningPathsByIds(
-          learningPathIds.map((id) => new Types.ObjectId(id))
+          learningPathIds.map((id) => new Types.ObjectId(id)),
         );
       const learningPaths: ILearningPath[] = learningPathsResult.paths;
 
@@ -244,7 +224,7 @@ export class StudentCartService implements IStudentCartService {
         const lpCourseIds = lp.items.map((item) =>
           item.courseId instanceof Types.ObjectId
             ? item.courseId.toString()
-            : item.courseId._id.toString()
+            : item.courseId._id.toString(),
         );
         lpCourseIds.forEach((id) => allCourseIds.add(id));
       }
@@ -252,7 +232,7 @@ export class StudentCartService implements IStudentCartService {
 
     // Fetch course details and offers for all course IDs
     const courseDetailsPromises = Array.from(allCourseIds).map((id) =>
-      this._courseRepository.getCourseDetails(id)
+      this._courseRepository.getCourseDetails(id),
     );
     const courseDetailsResults = await Promise.all(courseDetailsPromises);
     const courseDetailsMap = new Map<
@@ -262,25 +242,16 @@ export class StudentCartService implements IStudentCartService {
 
     // Fetch offers for all courses
     const offers = await this._courseOfferRepository.findValidOffersByCourseIds(
-      Array.from(allCourseIds)
+      Array.from(allCourseIds),
     );
     const offerMap = new Map<string, ICourseOffer>(
-      offers.map((offer) => [offer.courseId.toString(), offer])
+      offers.map((offer) => [offer.courseId.toString(), offer]),
     );
 
     for (const details of courseDetailsResults) {
       if (details.course) {
-        let thumbnailUrl = details.course.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for course ${details.course._id}:`,
-              error
-            );
-          }
-        }
+        const thumbnailUrl = details.course.thumbnailUrl || "";
+
         const courseId = details.course._id.toString();
         const offer = offerMap.get(courseId);
         const basePrice = details.course.price;
@@ -289,7 +260,7 @@ export class StudentCartService implements IStudentCartService {
             ? basePrice * (1 - offer.discountPercentage / 100)
             : basePrice;
         appLogger.info(
-          `Course ${courseId}: basePrice=${basePrice}, offer=${JSON.stringify(offer)}, finalPrice=${price}`
+          `Course ${courseId}: basePrice=${basePrice}, offer=${JSON.stringify(offer)}, finalPrice=${price}`,
         );
         courseDetailsMap.set(courseId, {
           price,
@@ -301,28 +272,18 @@ export class StudentCartService implements IStudentCartService {
     if (learningPathIds.length > 0) {
       const learningPathsResult =
         await this._lmsRepository.getLearningPathsByIds(
-          learningPathIds.map((id) => new Types.ObjectId(id))
+          learningPathIds.map((id) => new Types.ObjectId(id)),
         );
       const learningPaths: ILearningPath[] = learningPathsResult.paths;
 
       for (const lp of learningPaths) {
-        let thumbnailUrl = lp.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for learning path ${lp._id}:`,
-              error
-            );
-          }
-        }
+        const thumbnailUrl = lp.thumbnailUrl || "";
 
         // Calculate total price using courseDetailsMap
         const lpCourseIds = lp.items.map((item) =>
           item.courseId instanceof Types.ObjectId
             ? item.courseId.toString()
-            : item.courseId._id.toString()
+            : item.courseId._id.toString(),
         );
         let totalPrice = 0;
         for (const courseId of lpCourseIds) {
@@ -342,7 +303,7 @@ export class StudentCartService implements IStudentCartService {
     const cartDTO = mapCartToDTO(
       updatedCart,
       courseDetailsMap,
-      learningPathDetailsMap
+      learningPathDetailsMap,
     );
     return cartDTO;
   }
@@ -350,7 +311,7 @@ export class StudentCartService implements IStudentCartService {
   async removeFromCart(
     userId: Types.ObjectId,
     itemId: Types.ObjectId,
-    type: "course" | "learningPath"
+    type: "course" | "learningPath",
   ): Promise<CartItemDTO[] | null> {
     let updatedCart: ICart | null;
     if (type === "course") {
@@ -358,7 +319,7 @@ export class StudentCartService implements IStudentCartService {
     } else {
       updatedCart = await this._cartRepository.removeLearningPath(
         userId,
-        itemId
+        itemId,
       );
     }
     if (!updatedCart) return null;
@@ -371,7 +332,7 @@ export class StudentCartService implements IStudentCartService {
               ? course.toString()
               : "courseName" in course && course._id
                 ? course._id.toString()
-                : null
+                : null,
           )
           .filter((id): id is string => id !== null)
       : [];
@@ -383,7 +344,7 @@ export class StudentCartService implements IStudentCartService {
               ? lp.toString()
               : "title" in lp && lp._id
                 ? lp._id.toString()
-                : null
+                : null,
           )
           .filter((id): id is string => id !== null)
       : [];
@@ -398,7 +359,7 @@ export class StudentCartService implements IStudentCartService {
     if (learningPathIds.length > 0) {
       const learningPathsResult =
         await this._lmsRepository.getLearningPathsByIds(
-          learningPathIds.map((id) => new Types.ObjectId(id))
+          learningPathIds.map((id) => new Types.ObjectId(id)),
         );
       const learningPaths: ILearningPath[] = learningPathsResult.paths;
 
@@ -406,7 +367,7 @@ export class StudentCartService implements IStudentCartService {
         const lpCourseIds = lp.items.map((item) =>
           item.courseId instanceof Types.ObjectId
             ? item.courseId.toString()
-            : item.courseId._id.toString()
+            : item.courseId._id.toString(),
         );
         lpCourseIds.forEach((id) => allCourseIds.add(id));
       }
@@ -414,7 +375,7 @@ export class StudentCartService implements IStudentCartService {
 
     // Fetch course details and offers for all course IDs
     const courseDetailsPromises = Array.from(allCourseIds).map((id) =>
-      this._courseRepository.getCourseDetails(id)
+      this._courseRepository.getCourseDetails(id),
     );
     const courseDetailsResults = await Promise.all(courseDetailsPromises);
     const courseDetailsMap = new Map<
@@ -424,25 +385,16 @@ export class StudentCartService implements IStudentCartService {
 
     // Fetch offers for all courses
     const offers = await this._courseOfferRepository.findValidOffersByCourseIds(
-      Array.from(allCourseIds)
+      Array.from(allCourseIds),
     );
     const offerMap = new Map<string, ICourseOffer>(
-      offers.map((offer) => [offer.courseId.toString(), offer])
+      offers.map((offer) => [offer.courseId.toString(), offer]),
     );
 
     for (const details of courseDetailsResults) {
       if (details.course) {
-        let thumbnailUrl = details.course.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for course ${details.course._id}:`,
-              error
-            );
-          }
-        }
+        const thumbnailUrl = details.course.thumbnailUrl || "";
+
         const courseId = details.course._id.toString();
         const offer = offerMap.get(courseId);
         const basePrice = details.course.price;
@@ -451,7 +403,7 @@ export class StudentCartService implements IStudentCartService {
             ? basePrice * (1 - offer.discountPercentage / 100)
             : basePrice;
         appLogger.info(
-          `Course ${courseId}: basePrice=${basePrice}, offer=${JSON.stringify(offer)}, finalPrice=${price}`
+          `Course ${courseId}: basePrice=${basePrice}, offer=${JSON.stringify(offer)}, finalPrice=${price}`,
         );
         courseDetailsMap.set(courseId, {
           price,
@@ -464,28 +416,18 @@ export class StudentCartService implements IStudentCartService {
     if (learningPathIds.length > 0) {
       const learningPathsResult =
         await this._lmsRepository.getLearningPathsByIds(
-          learningPathIds.map((id) => new Types.ObjectId(id))
+          learningPathIds.map((id) => new Types.ObjectId(id)),
         );
       const learningPaths: ILearningPath[] = learningPathsResult.paths;
 
       for (const lp of learningPaths) {
-        let thumbnailUrl = lp.thumbnailUrl || "";
-        if (thumbnailUrl && !thumbnailUrl.includes("AWSAccessKeyId")) {
-          try {
-            thumbnailUrl = await getPresignedUrl(thumbnailUrl);
-          } catch (error) {
-            appLogger.error(
-              `Failed to generate presigned URL for learning path ${lp._id}:`,
-              error
-            );
-          }
-        }
+        const thumbnailUrl = lp.thumbnailUrl || "";
 
         // Calculate total price using courseDetailsMap
         const lpCourseIds = lp.items.map((item) =>
           item.courseId instanceof Types.ObjectId
             ? item.courseId.toString()
-            : item.courseId._id.toString()
+            : item.courseId._id.toString(),
         );
         let totalPrice = 0;
         for (const courseId of lpCourseIds) {
@@ -505,7 +447,7 @@ export class StudentCartService implements IStudentCartService {
     const cartDTO = mapCartToDTO(
       updatedCart,
       courseDetailsMap,
-      learningPathDetailsMap
+      learningPathDetailsMap,
     );
     return cartDTO;
   }

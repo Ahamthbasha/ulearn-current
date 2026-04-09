@@ -2,8 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { IInstructorChapterController } from "./interfaces/IInstructorChapterController";
 import { IInstructorChapterService } from "../../services/instructorServices/interface/IInstructorChapterService";
 import { StatusCode } from "../../utils/enums";
-import { uploadToS3Bucket } from "../../utils/s3Bucket";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../../utils/cloudinary";
 import {
   ChapterErrorMessages,
   ChapterSuccessMessages,
@@ -18,8 +20,13 @@ export class InstructorChapterController
 {
   private _chapterService: IInstructorChapterService;
   private _moduleService: IInstructorModuleService;
-  private _courseService: IInstructorCourseService
-  constructor(chapterService: IInstructorChapterService,moduleService:IInstructorModuleService,courseService:IInstructorCourseService) {
+  private _courseService: IInstructorCourseService;
+
+  constructor(
+    chapterService: IInstructorChapterService,
+    moduleService: IInstructorModuleService,
+    courseService: IInstructorCourseService,
+  ) {
     this._chapterService = chapterService;
     this._moduleService = moduleService;
     this._courseService = courseService;
@@ -28,27 +35,28 @@ export class InstructorChapterController
   async createChapter(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
-      const { chapterTitle, chapterNumber, description, moduleId ,duration} = req.body;
+      const { chapterTitle, chapterNumber, description, moduleId, duration } =
+        req.body;
       const parsedDuration = parseInt(duration);
-    if (isNaN(parsedDuration) || parsedDuration <= 0) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: ChapterErrorMessages.CHAPTER_INVALID_VIDEO_DURATION,
-      });
-      return
-    }
 
+      if (isNaN(parsedDuration) || parsedDuration <= 0) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_INVALID_VIDEO_DURATION,
+        });
+        return;
+      }
 
       const existing =
         await this._chapterService.findByTitleOrNumberAndModuleId(
           moduleId,
           chapterTitle,
-          Number(chapterNumber)
+          Number(chapterNumber),
         );
-      
+
       if (existing) {
         res.status(StatusCode.CONFLICT).json({
           success: false,
@@ -71,27 +79,21 @@ export class InstructorChapterController
         return;
       }
 
-      const videoUrl = await uploadToS3Bucket(
-        {
-          originalname: videoFile.originalname,
-          buffer: videoFile.buffer,
-          mimetype: videoFile.mimetype,
-        },
-        "chapters/videos"
-      );
+      // Upload to Cloudinary instead of S3
+      const videoUrl = await uploadToCloudinary(videoFile, "chapters/videos");
 
       const chapterDTO = {
         chapterTitle,
         moduleId,
         description,
         videoUrl,
-        duration:parsedDuration
+        duration: parsedDuration,
       };
 
       const chapter = await this._chapterService.createChapter(chapterDTO);
 
-      await syncDurations(this._moduleService,this._courseService,moduleId)
-      
+      await syncDurations(this._moduleService, this._courseService, moduleId);
+
       res.status(StatusCode.CREATED).json({
         success: true,
         message: ChapterSuccessMessages.CHAPTER_CREATED,
@@ -105,7 +107,7 @@ export class InstructorChapterController
   async getChaptersByModule(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { moduleId } = req.params;
@@ -129,7 +131,7 @@ export class InstructorChapterController
       const result = await this._chapterService.paginateChapters(
         filter,
         pageNum,
-        limitNum
+        limitNum,
       );
 
       res.status(StatusCode.OK).json({
@@ -143,146 +145,167 @@ export class InstructorChapterController
     }
   }
 
-async updateChapter(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    const { chapterId } = req.params;
-    const { chapterTitle, chapterNumber, description, duration } = req.body as {
-      chapterTitle?: string;
-      chapterNumber?: string;
-      description?: string;
-      duration?: string;
-    };
+  async updateChapter(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { chapterId } = req.params;
+      const { chapterTitle, chapterNumber, description, duration } =
+        req.body as {
+          chapterTitle?: string;
+          chapterNumber?: string;
+          description?: string;
+          duration?: string;
+        };
 
-    const originalChapter = await this._chapterService.getChapterById(chapterId);
-    if (!originalChapter) {
-      res.status(StatusCode.NOT_FOUND).json({
-        success: false,
-        message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
-      });
-      return
-    }
+      const originalChapter =
+        await this._chapterService.getChapterById(chapterId);
+      if (!originalChapter) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
+        });
+        return;
+      }
 
-    const moduleId = originalChapter.moduleId.toString();
+      const moduleId = originalChapter.moduleId.toString();
 
-    if (chapterTitle || chapterNumber) {
-      const titleToCheck = chapterTitle?.trim();
-      const numberToCheck = chapterNumber ? Number(chapterNumber) : undefined;
+      if (chapterTitle || chapterNumber) {
+        const titleToCheck = chapterTitle?.trim();
+        const numberToCheck = chapterNumber ? Number(chapterNumber) : undefined;
 
-      if (titleToCheck || (numberToCheck !== undefined && !isNaN(numberToCheck))) {
-        const existing = await this._chapterService.findByTitleOrNumberAndModuleId(
-          moduleId,
-          titleToCheck ?? "",
-          numberToCheck ?? 0,
-          chapterId
-        );
+        if (
+          titleToCheck ||
+          (numberToCheck !== undefined && !isNaN(numberToCheck))
+        ) {
+          const existing =
+            await this._chapterService.findByTitleOrNumberAndModuleId(
+              moduleId,
+              titleToCheck ?? "",
+              numberToCheck ?? 0,
+              chapterId,
+            );
 
-        if (existing) {
-          const isTitleConflict = titleToCheck && existing.chapterTitle.toLowerCase() === titleToCheck.toLowerCase();
-          const isNumberConflict = numberToCheck !== undefined && existing.chapterNumber === numberToCheck;
+          if (existing) {
+            const isTitleConflict =
+              titleToCheck &&
+              existing.chapterTitle.toLowerCase() ===
+                titleToCheck.toLowerCase();
+            const isNumberConflict =
+              numberToCheck !== undefined &&
+              existing.chapterNumber === numberToCheck;
 
-          let errorMessage = "";
-          if (isTitleConflict && isNumberConflict) {
-            errorMessage = "Chapter title and number already exist";
-          } else if (isTitleConflict) {
-            errorMessage = ChapterErrorMessages.CHAPTER_ALREADY_EXIST;
-          } else if (isNumberConflict) {
-            errorMessage = ChapterErrorMessages.CHAPTER_NUMBER_ALREADY_EXIST;
-          }
+            let errorMessage = "";
+            if (isTitleConflict && isNumberConflict) {
+              errorMessage = "Chapter title and number already exist";
+            } else if (isTitleConflict) {
+              errorMessage = ChapterErrorMessages.CHAPTER_ALREADY_EXIST;
+            } else if (isNumberConflict) {
+              errorMessage = ChapterErrorMessages.CHAPTER_NUMBER_ALREADY_EXIST;
+            }
 
-          if (errorMessage) {
-            res.status(StatusCode.CONFLICT).json({
-              success: false,
-              message: errorMessage,
-            });
-            return
+            if (errorMessage) {
+              res.status(StatusCode.CONFLICT).json({
+                success: false,
+                message: errorMessage,
+              });
+              return;
+            }
           }
         }
       }
-    }
 
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-    const videoFile = files?.["video"]?.[0];
+      const files = req.files as
+        | { [fieldname: string]: Express.Multer.File[] }
+        | undefined;
+      const videoFile = files?.["video"]?.[0];
 
-    let videoUrl: string | undefined = originalChapter.videoUrl;
-    let finalDuration: number = originalChapter.duration;
+      let videoUrl: string | undefined = originalChapter.videoUrl;
+      let finalDuration: number = originalChapter.duration;
 
-    if (videoFile) {
-      videoUrl = await uploadToS3Bucket(
-        {
-          originalname: videoFile.originalname,
-          buffer: videoFile.buffer,
-          mimetype: videoFile.mimetype,
-        },
-        "chapters/videos"
-      );
+      if (videoFile) {
+        // Delete old video from Cloudinary if it exists
+        if (originalChapter.videoUrl) {
+          await deleteFromCloudinary(originalChapter.videoUrl);
+        }
 
-      if (duration) {
-        const parsed = parseInt(duration, 10);
-        if (!isNaN(parsed) && parsed > 0) {
-          finalDuration = parsed;
+        // Upload new video to Cloudinary
+        videoUrl = await uploadToCloudinary(videoFile, "chapters/videos");
+
+        if (duration) {
+          const parsed = parseInt(duration, 10);
+          if (!isNaN(parsed) && parsed > 0) {
+            finalDuration = parsed;
+          } else {
+            res.status(StatusCode.BAD_REQUEST).json({
+              success: false,
+              message: ChapterErrorMessages.INVALID_DURATION_PROVIDED,
+            });
+            return;
+          }
         } else {
           res.status(StatusCode.BAD_REQUEST).json({
             success: false,
-            message: ChapterErrorMessages.INVALID_DURATION_PROVIDED,
+            message: ChapterErrorMessages.DURATION_REQUIRED,
           });
-          return
+          return;
         }
-      } else {
-        res.status(StatusCode.BAD_REQUEST).json({
-          success:  false,
-          message: ChapterErrorMessages.DURATION_REQUIRED,
-        });
-        return
       }
-    }
 
-    const updatedChapterData: Partial<IChapter> = {};
+      const updatedChapterData: Partial<IChapter> = {};
 
-    if (chapterTitle !== undefined) updatedChapterData.chapterTitle = chapterTitle.trim();
-    if (chapterNumber !== undefined) {
-      const num = Number(chapterNumber);
-      if (!isNaN(num)) updatedChapterData.chapterNumber = num;
-    }
-    if (description !== undefined) updatedChapterData.description = description;
-    if (videoUrl !== originalChapter.videoUrl) updatedChapterData.videoUrl = videoUrl;
-    if (finalDuration !== originalChapter.duration) updatedChapterData.duration = finalDuration;
+      if (chapterTitle !== undefined)
+        updatedChapterData.chapterTitle = chapterTitle.trim();
+      if (chapterNumber !== undefined) {
+        const num = Number(chapterNumber);
+        if (!isNaN(num)) updatedChapterData.chapterNumber = num;
+      }
+      if (description !== undefined)
+        updatedChapterData.description = description;
+      if (videoUrl !== originalChapter.videoUrl)
+        updatedChapterData.videoUrl = videoUrl;
+      if (finalDuration !== originalChapter.duration)
+        updatedChapterData.duration = finalDuration;
 
-    if (Object.keys(updatedChapterData).length === 0) {
-      res.status(StatusCode.BAD_REQUEST).json({
-        success: false,
-        message: ChapterErrorMessages.NO_VALID_FIELDS_PROVIDED_TO_UPDATE,
+      if (Object.keys(updatedChapterData).length === 0) {
+        res.status(StatusCode.BAD_REQUEST).json({
+          success: false,
+          message: ChapterErrorMessages.NO_VALID_FIELDS_PROVIDED_TO_UPDATE,
+        });
+        return;
+      }
+
+      const updated = await this._chapterService.updateChapter(
+        chapterId,
+        updatedChapterData,
+      );
+
+      if (!updated) {
+        res.status(StatusCode.NOT_FOUND).json({
+          success: false,
+          message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
+        });
+        return;
+      }
+
+      await syncDurations(this._moduleService, this._courseService, moduleId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: updated,
+        message: ChapterSuccessMessages.CHAPTER_UPDATED,
       });
-      return
+    } catch (error) {
+      next(error);
     }
-
-    const updated = await this._chapterService.updateChapter(chapterId, updatedChapterData);
-    if (!updated) {
-      res.status(StatusCode.NOT_FOUND).json({
-        success: false,
-        message: ChapterErrorMessages.CHAPTER_NOT_FOUND,
-      });
-      return
-    }
-    await syncDurations(this._moduleService, this._courseService, moduleId);
-
-    res.status(StatusCode.OK).json({
-      success: true,
-      data: updated,
-      message: ChapterSuccessMessages.CHAPTER_UPDATED,
-    });
-  } catch (error) {
-    next(error);
   }
-}
 
   async deleteChapter(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { chapterId } = req.params;
@@ -298,9 +321,14 @@ async updateChapter(
 
       const moduleId = chapter.moduleId.toString();
 
+      // Delete video from Cloudinary before deleting the chapter record
+      if (chapter.videoUrl) {
+        await deleteFromCloudinary(chapter.videoUrl);
+      }
+
       const deleted = await this._chapterService.deleteChapter(chapterId);
 
-      await syncDurations(this._moduleService,this._courseService,moduleId)
+      await syncDurations(this._moduleService, this._courseService, moduleId);
 
       if (!deleted) {
         res.status(StatusCode.NOT_FOUND).json({
@@ -324,7 +352,7 @@ async updateChapter(
   async getChapterById(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const { chapterId } = req.params;
@@ -337,17 +365,11 @@ async updateChapter(
         });
         return;
       }
-      let videoPresignedUrl = null;
-
-      if (chapter.videoUrl) {
-        videoPresignedUrl = await getPresignedUrl(chapter.videoUrl);
-      }
-
       res.status(StatusCode.OK).json({
         success: true,
         data: {
           ...chapter.toObject(),
-          videoPresignedUrl,
+          videoUrl: chapter.videoUrl, // Direct Cloudinary URL
         },
       });
     } catch (error) {
@@ -355,7 +377,11 @@ async updateChapter(
     }
   }
 
-  async reorderChapters(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async reorderChapters(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { moduleId } = req.params;
       const { orderedIds } = req.body as { orderedIds: string[] };
@@ -368,7 +394,10 @@ async updateChapter(
         return;
       }
 
-      const result = await this._chapterService.reorderChapters(moduleId, orderedIds);
+      const result = await this._chapterService.reorderChapters(
+        moduleId,
+        orderedIds,
+      );
 
       res.status(StatusCode.OK).json({
         success: true,

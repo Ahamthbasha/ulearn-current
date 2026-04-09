@@ -1,8 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { PlusCircle, ArrowLeft, GripVertical, Edit2, Trash2, BookOpen, Clock } from "lucide-react";
-import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
+import {
+  PlusCircle,
+  ArrowLeft,
+  GripVertical,
+  Edit2,
+  Trash2,
+  BookOpen,
+  Clock,
+} from "lucide-react";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import Card from "../../../components/common/Card";
 import { useDebounce } from "../../../hooks/UseDebounce";
 import {
@@ -11,7 +24,33 @@ import {
   getModuleById,
   reorderChapters,
 } from "../../../api/action/InstructorActionApi";
-import { type Chapter } from "../interface/instructorInterface";
+import type { Chapter } from "../interface/instructorInterface";
+
+// API Response types
+interface ModuleResponse {
+  moduleTitle: string;
+  courseId: string;
+}
+
+interface ChapterFromAPI {
+  moduleId: string;
+  chapterId: string;
+  chapterTitle: string;
+  videoUrl: string;
+  chapterNumber: number;
+  duration: number;
+  durationFormatted: string;
+}
+
+interface ChaptersResponse {
+  data: ChapterFromAPI[];
+  total: number;
+}
+
+interface ReorderResponse {
+  data: ChapterFromAPI[];
+  total: number;
+}
 
 const ChapterManagementPage = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
@@ -20,15 +59,15 @@ const ChapterManagementPage = () => {
   const [moduleTitle, setModuleTitle] = useState<string>("");
   const [courseId, setCourseId] = useState<string>("");
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit] = useState(5);
-  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [search, setSearch] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(5);
+  const [total, setTotal] = useState<number>(0);
 
   const debouncedSearch = useDebounce(search, 500);
 
-  const fetchChapters = async () => {
+  const fetchChapters = useCallback(async (): Promise<void> => {
     if (!moduleId) return;
 
     try {
@@ -38,29 +77,40 @@ const ChapterManagementPage = () => {
         getChaptersByModule(moduleId, page, limit, debouncedSearch),
       ]);
 
-      setModuleTitle(moduleRes?.moduleTitle || "Unknown Module");
-      setCourseId(moduleRes?.courseId || "");
+      // Type assertion for module response
+      const moduleData = moduleRes as ModuleResponse;
+      setModuleTitle(moduleData?.moduleTitle || "Unknown Module");
+      setCourseId(moduleData?.courseId || "");
 
-      const mappedChapters: Chapter[] = (chapterRes?.data || []).map((c: any) => ({
-        ...c,
-        chapterId: String(c.chapterId),
-        durationFormatted: c.durationFormatted || "0m 0s",
-      }));
+      // Type assertion for chapters response
+      const chaptersData = chapterRes as ChaptersResponse;
+      const mappedChapters: Chapter[] = (chaptersData?.data || []).map(
+        (chapter: ChapterFromAPI) => ({
+          _id: chapter.chapterId,
+          chapterId: chapter.chapterId,
+          moduleId: chapter.moduleId,
+          chapterTitle: chapter.chapterTitle,
+          videoUrl: chapter.videoUrl,
+          chapterNumber: chapter.chapterNumber,
+          duration: chapter.duration,
+          durationFormatted: chapter.durationFormatted || "0m 0s",
+        }),
+      );
 
       setChapters(mappedChapters);
-      setTotal(chapterRes?.total || 0);
+      setTotal(chaptersData?.total || 0);
     } catch {
       toast.error("Failed to load chapters");
     } finally {
       setLoading(false);
     }
-  };
+  }, [moduleId, page, limit, debouncedSearch]);
 
   useEffect(() => {
     fetchChapters();
-  }, [moduleId, page, debouncedSearch]);
+  }, [fetchChapters]);
 
-  const handleDragEnd = async (result: DropResult) => {
+  const handleDragEnd = async (result: DropResult): Promise<void> => {
     if (!result.destination || !moduleId) return;
 
     const items = Array.from(chapters);
@@ -68,29 +118,45 @@ const ChapterManagementPage = () => {
     items.splice(result.destination.index, 0, moved);
     setChapters(items);
 
-    const orderedIds = items.map((c) => c.chapterId);
+    const orderedIds = items.map((chapter) => chapter.chapterId);
 
     try {
-      const response = await reorderChapters(moduleId, orderedIds);
-      const updatedChapters = (response.data || []).map((c: any) => ({
-        ...c,
-        chapterId: String(c.chapterId),
-        durationFormatted: c.durationFormatted || "0m 0s",
-      }));
+      const response = (await reorderChapters(moduleId, orderedIds)) as ReorderResponse;
+      const updatedChapters: Chapter[] = (response.data || []).map(
+        (chapter: ChapterFromAPI) => ({
+          _id: chapter.chapterId,
+          chapterId: chapter.chapterId,
+          moduleId: chapter.moduleId,
+          chapterTitle: chapter.chapterTitle,
+          videoUrl: chapter.videoUrl,
+          chapterNumber: chapter.chapterNumber,
+          duration: chapter.duration,
+          durationFormatted: chapter.durationFormatted || "0m 0s",
+        }),
+      );
       setChapters(updatedChapters);
       setTotal(response.total || updatedChapters.length);
       toast.success("Order saved!");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save order");
+    } catch (error: unknown) {
+      const errorMessage =
+        error && typeof error === "object" && "response" in error && error.response && 
+        typeof error.response === "object" && "data" in error.response &&
+        error.response.data && typeof error.response.data === "object" &&
+        "message" in error.response.data
+          ? (error.response.data.message as string)
+          : "Failed to save order";
+      toast.error(errorMessage);
       await fetchChapters();
     }
   };
 
-  const handleEdit = (chapter: Chapter) => {
-    navigate(`/instructor/modules/${moduleId}/chapters/${chapter.chapterId}/edit`);
+  const handleEdit = (chapter: Chapter): void => {
+    navigate(
+      `/instructor/modules/${moduleId}/chapters/${chapter.chapterId}/edit`,
+    );
   };
 
-  const handleDelete = async (chapter: Chapter) => {
+  const handleDelete = async (chapter: Chapter): Promise<void> => {
     try {
       await deleteChapter(chapter.chapterId);
       toast.success("Chapter deleted");
@@ -100,15 +166,28 @@ const ChapterManagementPage = () => {
     }
   };
 
-  const handleAddChapter = () => {
+  const handleAddChapter = (): void => {
     navigate(`/instructor/modules/${moduleId}/chapters/add`);
   };
 
-  const handleBackToModules = () => {
+  const handleBackToModules = (): void => {
     navigate(`/instructor/course/${courseId}/modules`);
   };
 
   const totalPages = Math.ceil(total / limit);
+
+  // Helper function to get video filename from URL
+  const getVideoFileName = (videoUrl: string): string => {
+    if (!videoUrl) return "Video file";
+    try {
+      const urlParts = videoUrl.split("/");
+      const filename = urlParts[urlParts.length - 1];
+      // Remove query parameters if any
+      return filename.split("?")[0] || "Video file";
+    } catch {
+      return "Video file";
+    }
+  };
 
   return (
     <div className="px-4 py-6 max-w-7xl mx-auto">
@@ -141,7 +220,7 @@ const ChapterManagementPage = () => {
               type="text"
               placeholder="Search chapters..."
               value={search}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setPage(1);
                 setSearch(e.target.value);
               }}
@@ -164,7 +243,11 @@ const ChapterManagementPage = () => {
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="chapters">
                 {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-3"
+                  >
                     {chapters.map((chapter, index) => (
                       <Draggable
                         key={chapter.chapterId}
@@ -182,7 +265,9 @@ const ChapterManagementPage = () => {
                                 : provided.draggableProps.style?.transform,
                             }}
                             className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 ${
-                              snapshot.isDragging ? "shadow-xl ring-2 ring-blue-500" : ""
+                              snapshot.isDragging
+                                ? "shadow-xl ring-2 ring-blue-500"
+                                : ""
                             }`}
                           >
                             <div className="flex items-center gap-3 p-4">
@@ -211,7 +296,7 @@ const ChapterManagementPage = () => {
                                     </h3>
                                     <div className="flex items-center gap-4 mt-1">
                                       <p className="text-sm text-gray-500 truncate flex-1">
-                                        {chapter.videoUrl.split("/").pop() || "Video file"}
+                                        {getVideoFileName(chapter.videoUrl)}
                                       </p>
                                       {/* Duration - Desktop */}
                                       <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500 font-medium">
@@ -276,19 +361,21 @@ const ChapterManagementPage = () => {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-8 gap-2 flex-wrap">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => setPage(pageNum)}
-                  className={`min-w-10 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                    page === pageNum
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={`min-w-10 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                      page === pageNum
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ),
+              )}
             </div>
           )}
         </div>

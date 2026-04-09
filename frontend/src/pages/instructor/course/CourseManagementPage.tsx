@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -23,7 +23,8 @@ const CourseManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [publishDate, setPublishDate] = useState<string>("");
 
-  const fetchCourseDetails = async () => {
+  // Wrap fetchCourseDetails in useCallback to fix dependency warning
+  const fetchCourseDetails = useCallback(async () => {
     if (!courseId) {
       toast.error("Course ID is missing");
       return;
@@ -36,17 +37,17 @@ const CourseManagementPage = () => {
       } else {
         throw new Error("Invalid response data");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load course details");
       setCourse(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId]);
 
   useEffect(() => {
     fetchCourseDetails();
-  }, [courseId]);
+  }, [fetchCourseDetails]);
 
   const handleOpenPublishModal = () => {
     if (!course?.isVerified) {
@@ -56,24 +57,9 @@ const CourseManagementPage = () => {
     setIsModalOpen(true);
     if (course?.publishDate) {
       try {
-        const match = course.publishDate.match(
-          /^(\d{2})-(\d{2})-(\d{4})\s(\d{1,2}):(\d{2})\s(AM|PM)$/
-        );
-        if (!match) {
-          console.error("Date format mismatch:", course.publishDate);
-          setPublishDate("");
-          return;
-        }
-
-        const [, day, month, year, hours, minutes, ampm] = match;
-        let hours24 = parseInt(hours, 10);
-        if (ampm === "PM" && hours24 !== 12) {
-          hours24 += 12;
-        } else if (ampm === "AM" && hours24 === 12) {
-          hours24 = 0;
-        }
-        const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hours24.toString().padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-        setPublishDate(formattedDate);
+        // Handle the date format from backend
+        const publishDateStr = course.publishDate;
+        setPublishDate(publishDateStr);
       } catch (error) {
         console.error("Error parsing publishDate:", error);
         setPublishDate("");
@@ -130,8 +116,7 @@ const CourseManagementPage = () => {
       handleClosePublishModal();
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        const errMsg =
-          error?.response?.data?.message || "Failed to schedule publish";
+        const errMsg = error?.response?.data?.message || "Failed to schedule publish";
         toast.error(errMsg);
       }
     }
@@ -149,8 +134,7 @@ const CourseManagementPage = () => {
       handleClosePublishModal();
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        const errMsg =
-          error?.response?.data?.message || "Failed to cancel schedule";
+        const errMsg = error?.response?.data?.message || "Failed to cancel schedule";
         toast.error(errMsg);
       }
     }
@@ -167,21 +151,16 @@ const CourseManagementPage = () => {
       await fetchCourseDetails();
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        const errMsg =
-          error?.response?.data?.message ||
-          "Failed to submit course for verification";
+        const errMsg = error?.response?.data?.message || "Failed to submit course for verification";
         toast.error(errMsg);
       }
     }
   };
 
-  // Get minimum datetime for datetime-local input (current time in IST)
   const getMinDateTime = () => {
     const now = new Date();
-    // Add 1 minute to current time to ensure it's always in future
     now.setMinutes(now.getMinutes() + 1);
     
-    // Format as YYYY-MM-DDTHH:mm for datetime-local
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
@@ -191,8 +170,25 @@ const CourseManagementPage = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  const formatDuration = (seconds?: string) => {
+    const secs = parseInt(seconds || "0") || 0;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
+
   if (loading) {
-    return <div className="text-center py-8">Loading course details...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading course details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!course) {
@@ -220,7 +216,7 @@ const CourseManagementPage = () => {
           <div>
             <p className="font-semibold">Duration:</p>
             <p className="font-medium text-blue-600">
-              {course.durationFormatted || "0m 0s"}
+              {formatDuration(course.duration)}
             </p>
           </div>
           <div>
@@ -229,7 +225,9 @@ const CourseManagementPage = () => {
           </div>
           <div>
             <p className="font-semibold">Verification Status:</p>
-            <p>{course.isVerified ? "Verified" : "Not Verified"}</p>
+            <p className={course.isVerified ? "text-green-600" : "text-yellow-600"}>
+              {course.isVerified ? "✓ Verified" : "Not Verified"}
+            </p>
           </div>
           <div>
             <p className="font-semibold">Submitted for Verification:</p>
@@ -237,17 +235,19 @@ const CourseManagementPage = () => {
           </div>
           <div>
             <p className="font-semibold">Published:</p>
-            <p>{course.isPublished ? "Yes" : "No"}</p>
+            <p className={course.isPublished ? "text-green-600" : "text-gray-600"}>
+              {course.isPublished ? "Yes" : "No"}
+            </p>
           </div>
           {course.review && (
             <div className="col-span-2">
               <p className="font-semibold text-red-600">Admin Review:</p>
-              <p>{course.review}</p>
+              <p className="bg-red-50 p-2 rounded">{course.review}</p>
             </div>
           )}
           <div className="col-span-2">
             <p className="font-semibold">Description:</p>
-            <p className="whitespace-pre-wrap">{course.description}</p>
+            <p className="whitespace-pre-wrap text-gray-700">{course.description}</p>
           </div>
           {course.thumbnailSignedUrl && (
             <div className="col-span-2">
@@ -281,16 +281,16 @@ const CourseManagementPage = () => {
       <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
         <button
           onClick={() => navigate(`/instructor/course/${courseId}/modules`)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow transition-all"
         >
-          View Modules
+          📚 View Modules
         </button>
         {!course.isSubmitted && !course.isVerified && (
           <button
             onClick={handleSubmitForVerification}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow transition-all"
           >
-            Submit for Verification
+            📝 Submit for Verification
           </button>
         )}
         {course.isPublished ? (
@@ -299,12 +299,12 @@ const CourseManagementPage = () => {
               disabled
               className="bg-green-600 text-white px-5 py-2 rounded-md text-sm font-medium shadow opacity-70 cursor-not-allowed"
             >
-              Course Published
+              ✅ Course Published
             </button>
 
             <button
               onClick={() => navigate(`/instructor/courses/${courseId}/reviews`)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow flex items-center gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow flex items-center gap-2 transition-all"
             >
               <Star className="w-4 h-4" />
               View Reviews
@@ -313,28 +313,28 @@ const CourseManagementPage = () => {
         ) : course.publishDate ? (
           <button
             onClick={handleOpenPublishModal}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+            className="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow transition-all"
           >
-            Edit Publish Schedule
+            📅 Edit Publish Schedule
           </button>
         ) : (
           <button
             onClick={handleOpenPublishModal}
             disabled={!course.isVerified}
-            className={`bg-yellow-600 text-white px-5 py-2 rounded-md text-sm font-medium shadow ${
+            className={`bg-yellow-600 text-white px-5 py-2 rounded-md text-sm font-medium shadow transition-all ${
               !course.isVerified
                 ? "opacity-70 cursor-not-allowed"
                 : "hover:bg-yellow-700"
             }`}
           >
-            Publish Course
+            🚀 Publish Course
           </button>
         )}
         <button
           onClick={() => navigate(`/instructor/courseDashboard/${courseId}`)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-md text-sm font-medium shadow transition-all"
         >
-          View Course Dashboard
+          📊 View Course Dashboard
         </button>
       </div>
 

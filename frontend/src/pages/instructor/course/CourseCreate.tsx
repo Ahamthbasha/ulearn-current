@@ -12,14 +12,6 @@ import InputField from "../../../components/common/InputField";
 import { type Category } from "../interface/instructorInterface";
 import { AxiosError } from "axios";
 
-const MAX_VIDEO_SIZE_MB = 200;
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/jpg",
-];
-
 const CourseCreatePage = () => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -34,7 +26,7 @@ const CourseCreatePage = () => {
       try {
         const res = await getInstructorCategories();
         setCategories(res);
-      } catch (error) {
+      } catch{
         toast.error("Failed to fetch categories");
       }
     };
@@ -48,30 +40,17 @@ const CourseCreatePage = () => {
       .max(30, "Course name must not exceed 30 characters")
       .matches(
         /^[A-Za-z ]{6,30}$/,
-        "Only letters and spaces allowed, 6-30 characters"
+        "Only letters and spaces allowed, 6-30 characters",
       )
       .test("not-only-spaces", "Course name cannot be just spaces", (value) =>
-        Boolean(value && value.trim().replace(/\s/g, "").length >= 6)
+        Boolean(value && value.trim().replace(/\s/g, "").length >= 6),
       )
       .required("Course name is required"),
 
     description: Yup.string()
       .trim()
       .min(10, "Description must be at least 10 characters")
-      .max(50, "Description must not exceed 50 characters")
-      .matches(
-        /^(?![\d\s\W]+$)[A-Za-z0-9\s.,;:'"()\-?!]{10,50}$/,
-        "Description must include meaningful text, not just symbols or numbers"
-      )
-      .test(
-        "not-repetitive-symbols",
-        "Description must contain letters or meaningful words",
-        (value) => {
-          if (!value) return false;
-          const stripped = value.replace(/[\s\d\W_]+/g, "");
-          return stripped.length >= 5;
-        }
-      )
+      .max(500, "Description must not exceed 500 characters")
       .required("Description is required"),
 
     category: Yup.string().required("Category is required"),
@@ -81,17 +60,21 @@ const CourseCreatePage = () => {
       .positive("Price must be greater than zero")
       .min(100, "Price must be at least ₹100")
       .max(999999, "Price cannot exceed ₹9,99,999")
-      .test("decimal-places", "Price can have maximum 2 decimal places", (value) => {
-        if (!value) return true;
-        const decimalPlaces = value.toString().split('.')[1];
-        return !decimalPlaces || decimalPlaces.length <= 2;
-      })
+      .test(
+        "decimal-places",
+        "Price can have maximum 2 decimal places",
+        (value) => {
+          if (!value) return true;
+          const decimalPlaces = value.toString().split(".")[1];
+          return !decimalPlaces || decimalPlaces.length <= 2;
+        },
+      )
       .required("Price is required"),
 
     level: Yup.string()
       .oneOf(
         ["Beginner", "Intermediate", "Advanced"],
-        "Invalid level selection"
+        "Invalid level selection",
       )
       .required("Level is required"),
   });
@@ -130,7 +113,9 @@ const CourseCreatePage = () => {
         navigate("/instructor/courses");
       } catch (err: unknown) {
         if (err instanceof AxiosError) {
-          toast.error(err?.response?.data?.message || "Failed to create course");
+          toast.error(
+            err?.response?.data?.message || "Failed to create course",
+          );
         } else {
           toast.error("An unexpected error occurred");
         }
@@ -144,11 +129,20 @@ const CourseCreatePage = () => {
     const file = e.currentTarget.files?.[0];
     setThumbnailError("");
     if (file) {
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        setThumbnailError("Only JPG, PNG, or WebP image formats are allowed");
+      // Basic client-side validation (backend will do full validation)
+      if (!file.type.startsWith("image/")) {
+        setThumbnailError("Please select a valid image file");
         e.currentTarget.value = "";
         return;
       }
+      
+      // Max 10MB for images
+      if (file.size > 10 * 1024 * 1024) {
+        setThumbnailError("Image size must be less than 10MB");
+        e.currentTarget.value = "";
+        return;
+      }
+      
       formik.setFieldValue("thumbnail", file);
 
       const reader = new FileReader();
@@ -161,15 +155,17 @@ const CourseCreatePage = () => {
     const file = e.currentTarget.files?.[0];
     setVideoError("");
     if (file) {
+      // Basic client-side validation
       if (!file.type.startsWith("video/")) {
-        setVideoError("Only valid video files are allowed");
+        setVideoError("Please select a valid video file");
         e.currentTarget.value = "";
         return;
       }
 
-      const maxSize = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+      // Max 200MB for videos
+      const maxSize = 200 * 1024 * 1024;
       if (file.size > maxSize) {
-        setVideoError(`Video size must be under ${MAX_VIDEO_SIZE_MB}MB`);
+        setVideoError(`Video size must be under 200MB`);
         e.currentTarget.value = "";
         return;
       }
@@ -193,7 +189,8 @@ const CourseCreatePage = () => {
                 Create New Course
               </h1>
               <p className="mt-2 text-sm sm:text-base text-gray-600">
-                Design and publish your next course to inspire learners worldwide
+                Design and publish your next course to inspire learners
+                worldwide
               </p>
             </div>
           </div>
@@ -208,22 +205,22 @@ const CourseCreatePage = () => {
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center">
-                  <span className="mr-3">Book</span>
+                  <span className="mr-3">📚</span>
                   Course Information
                 </h2>
               </div>
-              
+
               <div className="p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                   {/* Left Column */}
                   <div className="space-y-6">
-                    <InputField 
-                      name="courseName" 
-                      label="Course Name"
-                    />
-                    
+                    <InputField name="courseName" label="Course Name" />
+
                     <div>
-                      <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label
+                        htmlFor="description"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
+                      >
                         Course Description
                       </label>
                       <textarea
@@ -236,16 +233,20 @@ const CourseCreatePage = () => {
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:outline-none focus:border-amber-500 focus:bg-white transition-all duration-200 resize-none"
                         placeholder="Provide a compelling description of your course..."
                       />
-                      {formik.touched.description && formik.errors.description && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="mr-1">Warning:</span>
-                          {formik.errors.description}
-                        </p>
-                      )}
+                      {formik.touched.description &&
+                        formik.errors.description && (
+                          <p className="mt-2 text-sm text-red-600 flex items-center">
+                            <span className="mr-1">⚠️</span>
+                            {formik.errors.description}
+                          </p>
+                        )}
                     </div>
 
                     <div>
-                      <label htmlFor="category" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label
+                        htmlFor="category"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
+                      >
                         Category
                       </label>
                       <div className="relative">
@@ -267,14 +268,24 @@ const CourseCreatePage = () => {
                           ))}
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <svg
+                            className="w-5 h-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
                           </svg>
                         </div>
                       </div>
                       {formik.touched.category && formik.errors.category && (
                         <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="mr-1">Warning:</span>
+                          <span className="mr-1">⚠️</span>
                           {formik.errors.category}
                         </p>
                       )}
@@ -285,15 +296,21 @@ const CourseCreatePage = () => {
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="price" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label
+                          htmlFor="price"
+                          className="block text-sm font-semibold text-gray-700 mb-2"
+                        >
                           Price (₹)
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                            ₹
+                          </span>
                           <input
                             id="price"
                             name="price"
                             type="number"
+                            step="0.01"
                             value={formik.values.price}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
@@ -303,7 +320,7 @@ const CourseCreatePage = () => {
                         </div>
                         {formik.touched.price && formik.errors.price && (
                           <p className="mt-2 text-sm text-red-600 flex items-center">
-                            <span className="mr-1">Warning:</span>
+                            <span className="mr-1">⚠️</span>
                             {formik.errors.price}
                           </p>
                         )}
@@ -311,34 +328,41 @@ const CourseCreatePage = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="level" className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label
+                        htmlFor="level"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
+                      >
                         Difficulty Level
                       </label>
                       <div className="grid grid-cols-3 gap-3">
-                        {["Beginner", "Intermediate", "Advanced"].map((level) => (
-                          <label
-                            key={level}
-                            className={`flex items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                              formik.values.level === level
-                                ? "border-amber-500 bg-amber-50 text-amber-700"
-                                : "border-gray-200 bg-gray-50 hover:border-amber-300 hover:bg-amber-25"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="level"
-                              value={level}
-                              checked={formik.values.level === level}
-                              onChange={formik.handleChange}
-                              className="sr-only"
-                            />
-                            <span className="text-sm font-medium">{level}</span>
-                          </label>
-                        ))}
+                        {["Beginner", "Intermediate", "Advanced"].map(
+                          (level) => (
+                            <label
+                              key={level}
+                              className={`flex items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                                formik.values.level === level
+                                  ? "border-amber-500 bg-amber-50 text-amber-700"
+                                  : "border-gray-200 bg-gray-50 hover:border-amber-300 hover:bg-amber-25"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="level"
+                                value={level}
+                                checked={formik.values.level === level}
+                                onChange={formik.handleChange}
+                                className="sr-only"
+                              />
+                              <span className="text-sm font-medium">
+                                {level}
+                              </span>
+                            </label>
+                          ),
+                        )}
                       </div>
                       {formik.touched.level && formik.errors.level && (
                         <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="mr-1">Warning:</span>
+                          <span className="mr-1">⚠️</span>
                           {formik.errors.level}
                         </p>
                       )}
@@ -352,20 +376,20 @@ const CourseCreatePage = () => {
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center">
-                  <span className="mr-3">Video</span>
+                  <span className="mr-3">🎬</span>
                   Course Media
                 </h2>
               </div>
-              
+
               <div className="p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Thumbnail Upload */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                      <span className="mr-2">Image</span>
+                      <span className="mr-2">🖼️</span>
                       Course Thumbnail
                     </h3>
-                    
+
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-amber-400 transition-colors duration-200">
                       {thumbnailPreview ? (
                         <div className="space-y-4">
@@ -376,7 +400,7 @@ const CourseCreatePage = () => {
                           />
                           <div className="flex justify-center">
                             <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-200">
-                              <span className="mr-2">Refresh</span>
+                              <span className="mr-2">🔄</span>
                               Change Image
                               <input
                                 type="file"
@@ -391,12 +415,26 @@ const CourseCreatePage = () => {
                       ) : (
                         <label className="cursor-pointer block text-center">
                           <div className="mb-4">
-                            <svg className="w-16 h-16 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <svg
+                              className="w-16 h-16 text-gray-400 mx-auto"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
                             </svg>
                           </div>
-                          <p className="text-lg font-medium text-gray-700 mb-1">Upload Thumbnail</p>
-                          <p className="text-sm text-gray-500">JPG, PNG, or WebP (Max 10MB)</p>
+                          <p className="text-lg font-medium text-gray-700 mb-1">
+                            Upload Thumbnail
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            JPG, PNG, WebP (Max 10MB)
+                          </p>
                           <input
                             type="file"
                             name="thumbnail"
@@ -409,7 +447,7 @@ const CourseCreatePage = () => {
                     </div>
                     {thumbnailError && (
                       <p className="text-red-600 text-sm flex items-center">
-                        <span className="mr-1">Warning:</span>
+                        <span className="mr-1">⚠️</span>
                         {thumbnailError}
                       </p>
                     )}
@@ -418,10 +456,10 @@ const CourseCreatePage = () => {
                   {/* Video Upload */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                      <span className="mr-2">Video</span>
+                      <span className="mr-2">🎥</span>
                       Demo Video
                     </h3>
-                    
+
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-400 transition-colors duration-200">
                       {videoPreview ? (
                         <div className="space-y-4">
@@ -432,7 +470,7 @@ const CourseCreatePage = () => {
                           />
                           <div className="flex justify-center">
                             <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200">
-                              <span className="mr-2">Refresh</span>
+                              <span className="mr-2">🔄</span>
                               Change Video
                               <input
                                 type="file"
@@ -447,12 +485,26 @@ const CourseCreatePage = () => {
                       ) : (
                         <label className="cursor-pointer block text-center">
                           <div className="mb-4">
-                            <svg className="w-16 h-16 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            <svg
+                              className="w-16 h-16 text-gray-400 mx-auto"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
                             </svg>
                           </div>
-                          <p className="text-lg font-medium text-gray-700 mb-1">Upload Demo Video</p>
-                          <p className="text-sm text-gray-500">MP4, AVI, MOV (Max {MAX_VIDEO_SIZE_MB}MB)</p>
+                          <p className="text-lg font-medium text-gray-700 mb-1">
+                            Upload Demo Video
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            MP4, MOV, AVI (Max 200MB)
+                          </p>
                           <input
                             type="file"
                             name="demoVideo"
@@ -465,7 +517,7 @@ const CourseCreatePage = () => {
                     </div>
                     {videoError && (
                       <p className="text-red-600 text-sm flex items-center">
-                        <span className="mr-1">Warning:</span>
+                        <span className="mr-1">⚠️</span>
                         {videoError}
                       </p>
                     )}
@@ -483,7 +535,7 @@ const CourseCreatePage = () => {
               >
                 Cancel
               </button>
-              
+
               <button
                 type="submit"
                 disabled={submitting}
@@ -519,7 +571,7 @@ const CourseCreatePage = () => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center">
-                    Create Course
+                    ✨ Create Course
                   </div>
                 )}
               </button>

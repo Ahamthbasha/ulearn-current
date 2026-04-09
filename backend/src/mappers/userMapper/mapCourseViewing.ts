@@ -10,13 +10,11 @@ import { formatDuration } from "../../utils/formatDuration";
 
 export const mapToCourseViewingResponse = async (
   enrollment: IEnrollment & { courseId: ICourseFullyPopulated },
-  getPresignedUrl: (url: string) => Promise<string>
 ): Promise<CourseViewingResponseDTO> => {
   const course = enrollment.courseId;
-  const [thumbnail, demoVideo] = await Promise.all([
-    course.thumbnailUrl ? getPresignedUrl(course.thumbnailUrl) : Promise.resolve(""),
-    course.demoVideo?.url ? getPresignedUrl(course.demoVideo.url) : Promise.resolve(""),
-  ]);
+
+  const thumbnail = course.thumbnailUrl || "";
+  const demoVideo = course.demoVideo?.url || "";
 
   const modules: ModuleViewingDTO[] = [];
   let totalCourseSeconds = 0;
@@ -28,14 +26,15 @@ export const mapToCourseViewingResponse = async (
     const chapters: ChapterViewingDTO[] = [];
 
     for (const chapter of module.chapters || []) {
-      const videoUrl = chapter.videoUrl ? await getPresignedUrl(chapter.videoUrl) : "";
+      const videoUrl = chapter.videoUrl || "";
       const chapterSeconds = chapter.duration ?? 0;
       moduleSeconds += chapterSeconds;
       totalCourseSeconds += chapterSeconds;
       totalLectures++;
 
       const isCompleted = enrollment.completedChapters.some(
-        (c) => c.chapterId.toString() === chapter._id.toString() && c.isCompleted
+        (c) =>
+          c.chapterId.toString() === chapter._id.toString() && c.isCompleted,
       );
 
       chapters.push({
@@ -48,27 +47,27 @@ export const mapToCourseViewingResponse = async (
       });
     }
 
-let quizDto: ModuleViewingDTO["quiz"] = null;
+    let quizDto: ModuleViewingDTO["quiz"] = null;
 
-if (module.quiz) {
-  totalQuizzes++;
+    if (module.quiz) {
+      totalQuizzes++;
 
-  const quizResult = enrollment.completedQuizzes.find(
-    (q) => q.quizId.toString() === module.quiz!._id.toString()
-  );
+      const quizResult = enrollment.completedQuizzes.find(
+        (q) => q.quizId.toString() === module.quiz!._id.toString(),
+      );
 
-  quizDto = {
-    id: module.quiz._id.toString(),
-    questionsCount: module.quiz.questions.length,
-    questions: module.quiz.questions.map(q => ({
-      questionText: q.questionText,
-      options: q.options,
-      correctAnswer: q.correctAnswer,
-    })),
-    isPassed: quizResult?.isPassed,
-    scorePercentage: quizResult?.scorePercentage,
-  };
-}
+      quizDto = {
+        id: module.quiz._id.toString(),
+        questionsCount: module.quiz.questions.length,
+        questions: module.quiz.questions.map((q) => ({
+          questionText: q.questionText,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+        })),
+        isPassed: quizResult?.isPassed,
+        scorePercentage: quizResult?.scorePercentage,
+      };
+    }
 
     modules.push({
       id: module._id.toString(),
@@ -93,9 +92,10 @@ if (module.quiz) {
     modules,
   };
 
+  // Certificate URL - direct Cloudinary URL if available
   let certificateUrl: string | null = null;
   if (enrollment.certificateGenerated && enrollment.certificateUrl) {
-    certificateUrl = await getPresignedUrl(enrollment.certificateUrl);
+    certificateUrl = enrollment.certificateUrl; // Direct Cloudinary URL
   }
 
   return {

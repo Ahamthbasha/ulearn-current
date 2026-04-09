@@ -10,22 +10,26 @@ import {
 } from "../../utils/constants";
 import { IJwtService } from "../../services/interface/IJwtService";
 import { appLogger } from "../../utils/logger";
-import { IHashService } from "src/services/interface/IHashService";
+import { IHashService } from "../../services/interface/IHashService";
 
 config();
 
 export class AdminController implements IAdminController {
   private _adminService: IAdminService;
   private _JWT: IJwtService;
-  private _hashService : IHashService
+  private _hashService: IHashService;
 
-  constructor(adminService: IAdminService, jwtService: IJwtService,hashService:IHashService) {
+  constructor(
+    adminService: IAdminService,
+    jwtService: IJwtService,
+    hashService: IHashService,
+  ) {
     this._adminService = adminService;
     this._JWT = jwtService;
-    this._hashService = hashService
+    this._hashService = hashService;
   }
 
-async login(req: Request, res: Response): Promise<void> {
+  async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
 
@@ -43,16 +47,18 @@ async login(req: Request, res: Response): Promise<void> {
       let admin = await this._adminService.getAdminData(email);
 
       if (!admin) {
-        const hashedPassword = await this._hashService.hashPassword(adminPassword!);
-        admin = await this._adminService.createAdmin({ 
-          email, 
-          password: hashedPassword 
+        const hashedPassword = await this._hashService.hashPassword(
+          adminPassword!,
+        );
+        admin = await this._adminService.createAdmin({
+          email,
+          password: hashedPassword,
         });
       }
 
       const isPasswordValid = await this._hashService.comparePassword(
         password,
-        admin!.password
+        admin!.password,
       );
 
       if (!isPasswordValid) {
@@ -76,7 +82,7 @@ async login(req: Request, res: Response): Promise<void> {
       });
 
       const isProduction = process.env.NODE_ENV === "production";
-      
+
       const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
@@ -109,7 +115,6 @@ async login(req: Request, res: Response): Promise<void> {
     }
   }
 
-
   async logout(_req: Request, res: Response): Promise<void> {
     try {
       res.clearCookie("accessToken");
@@ -125,7 +130,6 @@ async login(req: Request, res: Response): Promise<void> {
   }
   async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
-
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";
@@ -147,14 +151,14 @@ async login(req: Request, res: Response): Promise<void> {
         page,
         totalPages: Math.ceil(total / limit),
       });
-      return
+      return;
     } catch (error) {
       appLogger.error("Error fetching users:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.FETCH_ERROR,
       });
-      return
+      return;
     }
   }
 
@@ -179,14 +183,14 @@ async login(req: Request, res: Response): Promise<void> {
         page: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
       });
-      return
+      return;
     } catch (error) {
       appLogger.error("Error fetching instructors:", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.FETCH_ERROR,
       });
-      return
+      return;
     }
   }
 
@@ -201,7 +205,7 @@ async login(req: Request, res: Response): Promise<void> {
           success: false,
           message: ResponseError.USER_NOT_FOUND,
         });
-        return
+        return;
       }
 
       const emailId = userData.email;
@@ -217,14 +221,14 @@ async login(req: Request, res: Response): Promise<void> {
           ? ResponseError.ACCOUNT_BLOCKED
           : ResponseError.ACCOUNT_UNBLOCKED,
       });
-      return
+      return;
     } catch (error) {
       appLogger.error("Error blocking user", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.INTERNAL_SERVER_ERROR,
       });
-      return
+      return;
     }
   }
 
@@ -238,7 +242,7 @@ async login(req: Request, res: Response): Promise<void> {
           success: false,
           message: ResponseError.NOT_FOUND,
         });
-        return
+        return;
       }
 
       const emailId = userData.email;
@@ -255,14 +259,14 @@ async login(req: Request, res: Response): Promise<void> {
           ? ResponseError.ACCOUNT_BLOCKED
           : ResponseError.ACCOUNT_UNBLOCKED,
       });
-      return
+      return;
     } catch (error) {
       appLogger.error("Error blocking instructor", error);
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: ResponseError.INTERNAL_SERVER_ERROR,
       });
-      return
+      return;
     }
   }
 }

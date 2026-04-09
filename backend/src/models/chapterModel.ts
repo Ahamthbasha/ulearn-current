@@ -3,12 +3,12 @@ import { Schema, Types, model, Document } from "mongoose";
 export interface IChapter extends Document {
   _id: Types.ObjectId;
   chapterTitle: string;
-  moduleId: Types.ObjectId; 
-  position:number;
+  moduleId: Types.ObjectId;
+  position: number;
   chapterNumber?: number;
   description: string;
   videoUrl: string;
-  duration:number;
+  duration: number;
   createdAt?: Date;
 }
 
@@ -28,9 +28,9 @@ const ChapterSchema = new Schema<IChapter>(
     chapterNumber: { type: Number },
     description: { type: String, required: true },
     videoUrl: { type: String, required: true },
-    duration: { type: Number, default:0 },
+    duration: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const ChapterModel = model<IChapter>("Chapter", ChapterSchema);

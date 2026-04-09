@@ -7,9 +7,11 @@ import { IInstructorChapterRepository } from "../../repositories/instructorRepos
 import { IInstructorQuizRepository } from "../../repositories/instructorRepository/interface/IInstructorQuizRepository";
 import { mapCourseToInstructorDTO } from "../../mappers/instructorMapper/instructorCourseMapper";
 import { mapToCourseResponseDto } from "../../mappers/instructorMapper/courseDetailMapper";
-import { getPresignedUrl } from "../../utils/getPresignedUrl";
 import { IInstructorModuleRepository } from "../../repositories/instructorRepository/interface/IInstructorModuleRepository";
-import { ModuleValidationError, ValidationResult } from "../../interface/instructorInterface/IInstructorInterface";
+import {
+  ModuleValidationError,
+  ValidationResult,
+} from "../../interface/instructorInterface/IInstructorInterface";
 
 export class InstructorCourseService implements IInstructorCourseService {
   private _courseRepository: IInstructorCourseRepository;
@@ -21,7 +23,7 @@ export class InstructorCourseService implements IInstructorCourseService {
     courseRepository: IInstructorCourseRepository,
     chapterRepository: IInstructorChapterRepository,
     quizRepository: IInstructorQuizRepository,
-    moduleRepository:IInstructorModuleRepository
+    moduleRepository: IInstructorModuleRepository,
   ) {
     this._courseRepository = courseRepository;
     this._chapterRepository = chapterRepository;
@@ -48,20 +50,14 @@ export class InstructorCourseService implements IInstructorCourseService {
 
     if (!updatedCourse) return null;
 
-    const thumbnailSignedUrl = updatedCourse.thumbnailUrl
-      ? await getPresignedUrl(updatedCourse.thumbnailUrl)
-      : null;
-
-    const demoVideoSignedUrl = updatedCourse.demoVideo?.url
-      ? await getPresignedUrl(updatedCourse.demoVideo.url)
-      : null;
-
+    // Cloudinary URLs are already permanent - no need for signed URLs
+    // Just return the stored URLs directly
     const responseData = {
       ...updatedCourse.toObject(),
-      thumbnailSignedUrl,
+      thumbnailSignedUrl: updatedCourse.thumbnailUrl, // Direct Cloudinary URL
       demoVideo: {
         ...updatedCourse.demoVideo,
-        urlSigned: demoVideoSignedUrl,
+        urlSigned: updatedCourse.demoVideo?.url, // Direct Cloudinary URL
       },
     };
 
@@ -79,19 +75,13 @@ export class InstructorCourseService implements IInstructorCourseService {
 
     const courseObj = course.toObject();
 
-    const thumbnailSignedUrl = courseObj.thumbnailUrl
-      ? await getPresignedUrl(courseObj.thumbnailUrl)
-      : null;
-
-    const demoVideoSignedUrl = courseObj.demoVideo?.url
-      ? await getPresignedUrl(courseObj.demoVideo.url)
-      : null;
+    // With Cloudinary, URLs are permanent and publicly accessible
     const responseData = {
       ...courseObj,
-      thumbnailSignedUrl,
+      thumbnailSignedUrl: courseObj.thumbnailUrl, // Return as is
       demoVideo: {
         ...courseObj.demoVideo,
-        urlSigned: demoVideoSignedUrl,
+        urlSigned: courseObj.demoVideo?.url, // Return as is
       },
     };
 
@@ -114,18 +104,15 @@ export class InstructorCourseService implements IInstructorCourseService {
         status,
       );
 
-    const coursesWithSignedUrl = await Promise.all(
-      result.data.map(async (course) => {
-        const signedUrl = await getPresignedUrl(course.thumbnailUrl);
-        return mapCourseToInstructorDTO({
-          ...course.toObject(),
-          thumbnailUrl: signedUrl,
-        });
-      }),
-    );
+    const coursesWithUrls = result.data.map((course) => {
+      return mapCourseToInstructorDTO({
+        ...course.toObject(),
+        thumbnailUrl: course.thumbnailUrl, // Direct Cloudinary URL
+      });
+    });
 
     return {
-      data: coursesWithSignedUrl,
+      data: coursesWithUrls,
       total: result.total,
     };
   }
@@ -209,12 +196,14 @@ export class InstructorCourseService implements IInstructorCourseService {
         ? validation.errors
             .map(
               (err) =>
-                `Module "${err.moduleTitle}" is missing chapters: ${err.missingChapters}, missing quiz: ${err.missingQuiz}`
+                `Module "${err.moduleTitle}" is missing chapters: ${err.missingChapters}, missing quiz: ${err.missingQuiz}`,
             )
             .join("; ")
         : "Course validation failed.";
 
-      throw new Error(`Course cannot be submitted for verification: ${errorMessage}`);
+      throw new Error(
+        `Course cannot be submitted for verification: ${errorMessage}`,
+      );
     }
 
     return await this._courseRepository.submitCourseForVerification(courseId);
@@ -237,7 +226,7 @@ export class InstructorCourseService implements IInstructorCourseService {
 
   async canPublishCourse(courseId: string): Promise<boolean> {
     const modules = await this._moduleRepository.getModulesByCourse(courseId);
-    
+
     if (modules.length === 0) {
       return false;
     }
@@ -265,17 +254,17 @@ export class InstructorCourseService implements IInstructorCourseService {
     if (quiz === null || quiz === undefined) {
       return false;
     }
-    
+
     if (typeof quiz !== "object") {
       return false;
     }
-    
+
     const quizObj = quiz as Record<string, unknown>;
-    
+
     if (!("questions" in quizObj)) {
       return false;
     }
-    
+
     return Array.isArray(quizObj.questions) && quizObj.questions.length > 0;
   }
 }
