@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { IInstructorVerificationService } from "../../services/instructorServices/interface/IInstructorVerificationService";
-import { uploadToS3Bucket } from "../../utils/s3Bucket";
+import { uploadToCloudinary } from "../../utils/cloudinary";
 import { StatusCode } from "../../utils/enums";
 import {
   INSTRUCTOR_ERROR_MESSAGE,
@@ -9,13 +9,12 @@ import {
   VerificationSuccessMessages,
 } from "../../utils/constants";
 import { appLogger } from "../../utils/logger";
-import {
-  BadRequestError,
-} from "../../utils/error";
+import { BadRequestError } from "../../utils/error";
 import { handleControllerError } from "../../utils/errorHandlerUtil";
+
 export class InstructorVerificationController {
   private _verificationService: IInstructorVerificationService;
-  
+
   constructor(verificationService: IInstructorVerificationService) {
     this._verificationService = verificationService;
   }
@@ -34,31 +33,35 @@ export class InstructorVerificationController {
 
       if (!degreeCertificate || !resume) {
         throw new BadRequestError(
-          VerificationErrorMessages.NO_DOCUMENTS_RECEIVED
+          VerificationErrorMessages.NO_DOCUMENTS_RECEIVED,
         );
       }
 
       const existingRequest =
         await this._verificationService.getRequestByEmail(email);
 
-      const degreeCertificateUrl = await uploadToS3Bucket(
+      // Upload to Cloudinary instead of S3
+      const degreeCertificateUrl = await uploadToCloudinary(
         degreeCertificate,
-        "degreeCertificate",
+        "verification/degree-certificates",
       );
-      const resumeUrl = await uploadToS3Bucket(resume, "resume");
+      const resumeUrl = await uploadToCloudinary(
+        resume,
+        "verification/resumes",
+      );
 
       if (existingRequest) {
         const currentStatus = existingRequest.status;
 
         if (currentStatus === "pending") {
           throw new BadRequestError(
-            INSTRUCTOR_ERROR_MESSAGE.VERIFICATION_ALREADY_SUBMITTED
+            INSTRUCTOR_ERROR_MESSAGE.VERIFICATION_ALREADY_SUBMITTED,
           );
         }
 
         if (currentStatus === "approved") {
           throw new BadRequestError(
-            INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ALREADY_VERIFIED
+            INSTRUCTOR_ERROR_MESSAGE.INSTRUCTOR_ALREADY_VERIFIED,
           );
         }
 
