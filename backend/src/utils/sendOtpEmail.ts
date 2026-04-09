@@ -12,7 +12,7 @@ export class SendEmail implements IEmail {
       throw new Error("SENDGRID_API_KEY is not set in environment variables");
     }
     sgMail.setApiKey(sendgridApiKey);
-    console.log('✅ Email service initialized with SendGrid HTTP API');
+    console.log("✅ Email service initialized with SendGrid HTTP API");
   }
 
   async sentEmailVerification(
@@ -50,10 +50,13 @@ export class SendEmail implements IEmail {
 
     try {
       const response = await sgMail.send(msg);
-      console.log('✅ Email sent successfully via SendGrid API:', response[0].statusCode);
+      console.log(
+        "✅ Email sent successfully via SendGrid API:",
+        response[0].statusCode,
+      );
       return response;
     } catch (error) {
-      console.error('❌ SendGrid API error:', error);
+      console.error("❌ SendGrid API error:", error);
       throw error;
     }
   }
@@ -91,10 +94,10 @@ export class SendEmail implements IEmail {
 
     try {
       const response = await sgMail.send(msg);
-      console.log('✅ Rejection email sent:', response[0].statusCode);
+      console.log("✅ Rejection email sent:", response[0].statusCode);
       return response;
     } catch (error) {
-      console.error('❌ SendGrid API error:', error);
+      console.error("❌ SendGrid API error:", error);
       throw error;
     }
   }
